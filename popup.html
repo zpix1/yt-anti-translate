@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>YT Anti Translate Options</title>
+</head>
+<style>
+    #disable-button {
+        width: 100px;
+        font-size: 20px;
+    }
+
+    body {
+        width: 200px;
+        height: 200px;
+        text-align: center;
+        font-size: 15px;
+        border-radius: 50px;
+    }
+
+    button {
+        background-color: #008CBA;
+        color: white;
+        border: none;
+        text-align: center;
+        text-decoration: none;
+        font-size: 16px;
+    }
+    .status.disabled {
+        background-color: #f44336;
+    }
+
+    .status.enabled {
+        background-color: #4CAF50;
+    }
+
+    .status {
+        display: block;
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        font-size: 20px;
+        color: #fff;
+        line-height: 100px;
+        text-align: center;
+        background: #000;
+        margin: 0 auto;
+        margin-top: 5px;
+        margin-bottom: 5px;
+    }
+    .header {
+        font-size: 16px;
+    }
+
+    .footer {
+        font-size: 13px;
+        margin-top: 13px;
+        margin-bottom: 5px;
+        font-style: italic;
+    }
+</style>
+
+<body align=center>
+    <div class="header">YT Anti Translate</div>
+    Status:<div class="status enabled" id="status">Enabled</div>
+    <button class='enabled' id="disable-button">Noting</button>
+    <script src="options.js"></script>
+    <div class="footer">Please rate this extension in Chrome Store if it helped you.</div>
+</body>
+
+</html>
