@@ -1,5 +1,4 @@
-
-function save_options() {
+function saveOptions() {
     chrome.storage.sync.get({
         disabled: false
     }, function (items) {
@@ -15,7 +14,7 @@ function save_options() {
     });
 }
 
-function restore_options() {
+function loadOptions() {
     chrome.storage.sync.get({
         disabled: false
     }, function (items) {
@@ -23,10 +22,8 @@ function restore_options() {
         document.getElementById('status').innerText = items.disabled ? 'Disabled' : 'Enabled';
         document.getElementById('status').className = 'status ' + (items.disabled ? 'disabled' : 'enabled');
         document.getElementById('disable-button').className = items.disabled ? 'disabled' : 'enabled';
-        
-        document.getElementById('disable-button').innerText = items.disabled ? 'Enable' : 'Disable';
-        document.getElementById('disable-button').className = items.disabled ? 'disabled' : 'enabled';
     });
 }
-document.addEventListener('DOMContentLoaded', restore_options);
-document.getElementById('disable-button').addEventListener('click', save_options);
+
+document.addEventListener('DOMContentLoaded', loadOptions);
+document.getElementById('disable-button').addEventListener('click', saveOptions);

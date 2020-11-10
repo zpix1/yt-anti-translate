@@ -31,11 +31,7 @@ function untranslateCurrentVideo() {
         // Do not revert already original videos
         return;
     }
-    // let realDescription = window["ytInitialPlayerResponse"].videoDetails.shortDescription;
-    // let translatedDescriptionElement = document.querySelector(".content.style-scope.ytd-video-secondary-info-renderer");
-
     translatedTitleElement.innerText = realTitle;
-    // translatedDescriptionElement.innerHTML = linkify(realDescription);
 }
 
 function untranslateOtherVideos() {
@@ -56,7 +52,7 @@ function untranslateOtherVideos() {
     }
     let compactVideos = document.getElementsByTagName('ytd-compact-video-renderer');    // related videos
     let normalVideos = document.getElementsByTagName('ytd-video-renderer');             // channel page videos
-    let gridVideos = document.getElementsByTagName('ytd-grid-video-renderer');          // channel page videos
+    let gridVideos = document.getElementsByTagName('ytd-grid-video-renderer');          // grid page videos
     
     untranslateArray(compactVideos);
     untranslateArray(normalVideos);
@@ -70,11 +66,11 @@ function untranslate() {
 
 function run() {
     // Change current video title and description
-    // Using MutationObserver couse we can't exactly know the moment when YT js will load video title
+    // Using MutationObserver as we can't exactly know the moment when YT js will load video title
     let target = document.body;
     let config = { childList: true, subtree: true };
     let observer = new MutationObserver(untranslate);
     observer.observe(target, config);
-    
 }
+
 run();
