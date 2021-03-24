@@ -105,11 +105,11 @@ function untranslate() {
 function run() {
     // Change current video title and description
     // Using MutationObserver as we can't exactly know the moment when YT js will load video title
-    // let target = document.body;
-    // let config = { childList: true, subtree: true };
-    // let observer = new MutationObserver(untranslate);
-    // observer.observe(target, config);
-    setInterval(untranslate, 100);
+    let target = document.body;
+    let config = { childList: true, subtree: true };
+    let observer = new MutationObserver(untranslate);
+    observer.observe(target, config);
+    // setInterval(untranslate, 100);
 }
 
 run();
