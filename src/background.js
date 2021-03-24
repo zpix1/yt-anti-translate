@@ -64,7 +64,6 @@ function untranslateCurrentVideo() {
         var div = document.createElement('div');
         div.innerHTML = makeLinksClickable(realDescription) + "\n\nTRANSLATED:\n";
         div.id = FIRST_CHILD_DESC_ID;
-        console.log("KEKW", translatedDescription.children[0]);
         translatedDescription.insertBefore(div, translatedDescription.firstChild);
     }
 }
