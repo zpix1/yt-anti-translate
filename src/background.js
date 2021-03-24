@@ -1,3 +1,7 @@
+var mutationIdx = 0;
+const MUTATION_UPDATE_STEP = 5;
+
+
 function makeHttpObject() {
     try {return new XMLHttpRequest();}
     catch (error) {}
@@ -7,6 +11,10 @@ function makeHttpObject() {
     catch (error) {}
   
     throw new Error("Could not create HTTP request object.");
+}
+
+function makeLinksClickable(html) {
+    return html.replace(/(https?:\/\/[^\s]+)/g, "<a rel='nofollow' target='_blank' dir='auto' class='yt-simple-endpoint style-scope yt-formatted-string' href='$1'>$1</a>");
 }
 
 function get(url, callback) {
@@ -20,18 +28,34 @@ function get(url, callback) {
 }
 
 function untranslateCurrentVideo() {
-    let realTitle = document.querySelector(".ytp-title-link").innerText;
     let translatedTitleElement = document.querySelector(".title").children[0];
+    let translatedDescription = document.querySelector("#description > yt-formatted-string");
+    let realTitle = null;
+    let realDescription = null;
+
+    // At first, try reliable ytInitialPlayerResponse
+    if (ytInitialPlayerResponse.videoDetails) {
+        realTitle = ytInitialPlayerResponse.videoDetails.title;
+        realDescription = ytInitialPlayerResponse.videoDetails.shortDescription;
+    // Then, try bad, but working ytp-title-link
+    } else if (document.querySelector(".ytp-title-link")) {
+        realTitle = document.querySelector(".ytp-title-link").innerText;
+    }
 
     if (!realTitle || !translatedTitleElement) {
         // Do nothing if video is not loaded yet
         return;
     }
+
     if (realTitle === translatedTitleElement.innerText) {
         // Do not revert already original videos
         return;
     }
+
     translatedTitleElement.innerText = realTitle;
+    if (realDescription) {
+        translatedDescription.innerHTML = makeLinksClickable(realDescription);
+    }
 }
 
 function untranslateOtherVideos() {
@@ -60,8 +84,11 @@ function untranslateOtherVideos() {
 }
 
 function untranslate() {
-    untranslateCurrentVideo();
-    untranslateOtherVideos();
+    if (mutationIdx % MUTATION_UPDATE_STEP == 0) {
+        untranslateCurrentVideo();
+        untranslateOtherVideos();
+    }
+    mutationIdx++;
 }
 
 function run() {
