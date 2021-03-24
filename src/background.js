@@ -1,6 +1,6 @@
 var mutationIdx = 0;
-const MUTATION_UPDATE_STEP = 5;
-
+const MUTATION_UPDATE_STEP = 3;
+const FIRST_CHILD_DESC_ID = 'ytantitranslate_desc_div';
 
 function makeHttpObject() {
     try {return new XMLHttpRequest();}
@@ -29,16 +29,9 @@ function get(url, callback) {
 
 function untranslateCurrentVideo() {
     let translatedTitleElement = document.querySelector(".title").children[0];
-    let translatedDescription = document.querySelector("#description > yt-formatted-string");
     let realTitle = null;
-    let realDescription = null;
 
-    // At first, try reliable ytInitialPlayerResponse
-    if (ytInitialPlayerResponse.videoDetails) {
-        realTitle = ytInitialPlayerResponse.videoDetails.title;
-        realDescription = ytInitialPlayerResponse.videoDetails.shortDescription;
-    // Then, try bad, but working ytp-title-link
-    } else if (document.querySelector(".ytp-title-link")) {
+    if (document.querySelector(".ytp-title-link")) {
         realTitle = document.querySelector(".ytp-title-link").innerText;
     }
 
@@ -53,8 +46,26 @@ function untranslateCurrentVideo() {
     }
 
     translatedTitleElement.innerText = realTitle;
+
+
+    let translatedDescription = document.querySelector("#description > yt-formatted-string");
+    let realDescription = null;
+
+    // For description, try ytInitialPlayerResponse, if it is for this video
+    if (ytInitialPlayerResponse.videoDetails && ytInitialPlayerResponse.videoDetails.title === realTitle) {
+        realDescription = ytInitialPlayerResponse.videoDetails.shortDescription;
+    } else {
+        if (translatedDescription.firstChild.id === FIRST_CHILD_DESC_ID) {
+            translatedDescription.removeChild(translatedDescription.firstChild);
+        }
+    }
+
     if (realDescription) {
-        translatedDescription.innerHTML = makeLinksClickable(realDescription);
+        var div = document.createElement('div');
+        div.innerHTML = makeLinksClickable(realDescription) + "\n\nTRANSLATED:\n";
+        div.id = FIRST_CHILD_DESC_ID;
+        console.log("KEKW", translatedDescription.children[0]);
+        translatedDescription.insertBefore(div, translatedDescription.firstChild);
     }
 }
 
@@ -94,10 +105,11 @@ function untranslate() {
 function run() {
     // Change current video title and description
     // Using MutationObserver as we can't exactly know the moment when YT js will load video title
-    let target = document.body;
-    let config = { childList: true, subtree: true };
-    let observer = new MutationObserver(untranslate);
-    observer.observe(target, config);
+    // let target = document.body;
+    // let config = { childList: true, subtree: true };
+    // let observer = new MutationObserver(untranslate);
+    // observer.observe(target, config);
+    setInterval(untranslate, 100);
 }
 
 run();
