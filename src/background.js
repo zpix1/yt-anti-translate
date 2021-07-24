@@ -28,12 +28,18 @@ function get(url, callback) {
 }
 
 function untranslateCurrentVideo() {
-    let translatedTitleElement = document.querySelector(".title").children[0];
+    let translatedTitleElement = document.querySelector("h1.title").children[0];
     let realTitle = null;
 
-    if (document.querySelector(".ytp-title-link")) {
-        realTitle = document.querySelector(".ytp-title-link").innerText;
+    // title link approach
+    // if (document.querySelector(".ytp-title-link")) {
+    //     realTitle = document.querySelector(".ytp-title-link").innerText;
+    // } else
+    // meta approach
+    if (document.querySelector('meta[name="title"]')) {
+        realTitle = document.querySelector('meta[name="title"]').content;
     }
+
 
     if (!realTitle || !translatedTitleElement) {
         // Do nothing if video is not loaded yet
@@ -45,8 +51,9 @@ function untranslateCurrentVideo() {
         return;
     }
 
-    translatedTitleElement.innerText = realTitle;
+    // console.log('curvid', realTitle, translatedTitleElement);
 
+    translatedTitleElement.textContent = realTitle;
 
     let translatedDescription = document.querySelector("#description > yt-formatted-string");
     let realDescription = null;
@@ -102,6 +109,7 @@ function untranslate() {
 }
 
 function run() {
+    console.log('alive')
     // Change current video title and description
     // Using MutationObserver as we can't exactly know the moment when YT js will load video title
     let target = document.body;
