@@ -27,6 +27,11 @@ function get(url, callback) {
     };
 }
 
+function trimYoutube(title) {
+    console.log(t)
+    return title.replace(/ - YouTube$/, '');
+}
+
 function untranslateCurrentVideo() {
     let translatedTitleElement = document.querySelector("h1.title").children[0];
     let realTitle = null;
@@ -35,11 +40,16 @@ function untranslateCurrentVideo() {
     // if (document.querySelector(".ytp-title-link")) {
     //     realTitle = document.querySelector(".ytp-title-link").innerText;
     // } else
-    // meta approach
-    if (document.querySelector('meta[name="title"]')) {
+    // document title approach
+    console.log(document.title)
+    if (document.title) {
+        realTitle = trimYoutube(document.title);
+    } else if (document.querySelector('meta[name="title"]')) {
         realTitle = document.querySelector('meta[name="title"]').content;
     }
 
+
+    console.log(realTitle, translatedTitleElement.innerText);
 
     if (!realTitle || !translatedTitleElement) {
         // Do nothing if video is not loaded yet
@@ -50,8 +60,6 @@ function untranslateCurrentVideo() {
         // Do not revert already original videos
         return;
     }
-
-    // console.log('curvid', realTitle, translatedTitleElement);
 
     translatedTitleElement.textContent = realTitle;
 
@@ -69,7 +77,7 @@ function untranslateCurrentVideo() {
 
     if (realDescription) {
         var div = document.createElement('div');
-        div.innerHTML = makeLinksClickable(realDescription) + "\n\nTRANSLATED:\n";
+        div.innerHTML = makeLinksClickable(realDescription) + "\n\n<b>TRANSLATED (added by <a class='yt-simple-endpoint style-scope yt-formatted-string' href='https://chrome.google.com/webstore/detail/youtube-anti-translate/ndpmhjnlfkgfalaieeneneenijondgag?hl=ru'>Youtube Anti Translate</a>):</b>\n";
         div.id = FIRST_CHILD_DESC_ID;
         translatedDescription.insertBefore(div, translatedDescription.firstChild);
     }
