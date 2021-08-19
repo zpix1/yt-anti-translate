@@ -1,0 +1,1 @@
+zip -r YoutubeAntiTranslate.zip pages src icon48.png manifest.json

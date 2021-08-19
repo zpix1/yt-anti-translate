@@ -28,7 +28,6 @@ function get(url, callback) {
 }
 
 function trimYoutube(title) {
-    console.log(t)
     return title.replace(/ - YouTube$/, '');
 }
 
@@ -41,15 +40,11 @@ function untranslateCurrentVideo() {
     //     realTitle = document.querySelector(".ytp-title-link").innerText;
     // } else
     // document title approach
-    console.log(document.title)
     if (document.title) {
         realTitle = trimYoutube(document.title);
     } else if (document.querySelector('meta[name="title"]')) {
         realTitle = document.querySelector('meta[name="title"]').content;
     }
-
-
-    console.log(realTitle, translatedTitleElement.innerText);
 
     if (!realTitle || !translatedTitleElement) {
         // Do nothing if video is not loaded yet
@@ -117,7 +112,6 @@ function untranslate() {
 }
 
 function run() {
-    console.log('alive')
     // Change current video title and description
     // Using MutationObserver as we can't exactly know the moment when YT js will load video title
     let target = document.body;
