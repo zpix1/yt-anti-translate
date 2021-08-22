@@ -8,8 +8,8 @@ jobs:
       - uses: actions/checkout@main
       - name: Zip
         run: |
-          ls
-          zip -r dist.zip app/*
+          cd app
+          zip -r ../dist.zip app/*
       - uses: trmcnvn/chrome-addon@v2
         with:
           # extension is only necessary when updating an existing addon,
