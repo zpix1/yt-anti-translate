@@ -1,0 +1,20 @@
+name: Publish to chrome web store
+on:
+  push:
+jobs:
+  zip-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: montudor/action-zip@v1
+        with:
+          args: zip -r dist.zip app/*
+      - uses: trmcnvn/chrome-addon@v2
+        with:
+          # extension is only necessary when updating an existing addon,
+          # omitting it will create a new addon
+          extension: ndpmhjnlfkgfalaieeneneenijondgag
+          zip: dist.zip
+          client-id: ${{ secrets.CHROME_CLIENT_ID }}
+          client-secret: ${{ secrets.CHROME_CLIENT_SECRET }}
+          refresh-token: ${{ secrets.CHROME_REFRESH_TOKEN }}
