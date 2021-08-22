@@ -13,10 +13,11 @@ jobs:
           cd ..
           ls
       - uses: Klemensas/chrome-extension-upload-action@1.4.1
+      - name: Upload & release
+        uses: mnao305/chrome-extension-upload@1.1.1
         with:
-          refresh-token: ${{ secrets.CHROME_REFRESH_TOKEN }}
+          file-path: dist.zip
+          extension-id: ndpmhjnlfkgfalaieeneneenijondgag
           client-id: ${{ secrets.CHROME_CLIENT_ID }}
           client-secret: ${{ secrets.CHROME_CLIENT_SECRET }}
-          file-name: './dist.zip'
-          app-id: 'ndpmhjnlfkgfalaieeneneenijondgag'
-          publish: true
+          refresh-token: ${{ secrets.CHROME_REFRESH_TOKEN }}
