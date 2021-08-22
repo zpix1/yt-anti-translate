@@ -12,7 +12,6 @@ jobs:
           zip -r ../dist.zip .
           cd ..
           ls
-      - uses: Klemensas/chrome-extension-upload-action@1.4.1
       - name: Upload & release
         uses: mnao305/chrome-extension-upload@1.1.1
         with:
