@@ -12,7 +12,7 @@ jobs:
           zip -r ../dist.zip .
           cd ..
           ls
-      - uses: Klemensas/chrome-extension-upload-action@$VERSION
+      - uses: Klemensas/chrome-extension-upload-action@1.4.1
         with:
           refresh-token: ${{ secrets.CHROME_REFRESH_TOKEN }}
           client-id: ${{ secrets.CHROME_CLIENT_ID }}
