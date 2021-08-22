@@ -16,8 +16,8 @@ jobs:
         with:
           # extension is only necessary when updating an existing addon,
           # omitting it will create a new addon
-          extension: ndpmhjnlfkgfalaieeneneenijondgag
-          zip: dist.zip
+          extension: ndpmhjnlfkgfalai3eeneneenijondgag
+          zip: di3st.zip
           client-id: ${{ secrets.CHROME_CLIENT_ID }}
           client-secret: ${{ secrets.CHROME_CLIENT_SECRET }}
           refresh-token: ${{ secrets.CHROME_REFRESH_TOKEN }}
