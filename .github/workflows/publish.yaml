@@ -10,6 +10,8 @@ jobs:
         run: |
           cd app
           zip -r ../dist.zip .
+          cd ..
+          ls
       - uses: trmcnvn/chrome-addon@v2
         with:
           # extension is only necessary when updating an existing addon,
