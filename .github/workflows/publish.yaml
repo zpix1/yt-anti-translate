@@ -12,12 +12,12 @@ jobs:
           zip -r ../dist.zip .
           cd ..
           ls
-      - uses: trmcnvn/chrome-addon@v2
+      - uses: trmcnvn/chrome-addon@main
         with:
           # extension is only necessary when updating an existing addon,
           # omitting it will create a new addon
-          extension: ndpmhjnlfkgfalai3eeneneenijondgag
-          zip: di3st.zip
+          extension: ndpmhjnlfkgfalaieeneneenijondgag
+          zip: dist.zip
           client-id: ${{ secrets.CHROME_CLIENT_ID }}
           client-secret: ${{ secrets.CHROME_CLIENT_SECRET }}
           refresh-token: ${{ secrets.CHROME_REFRESH_TOKEN }}
