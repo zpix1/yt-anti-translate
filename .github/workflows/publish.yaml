@@ -9,7 +9,7 @@ jobs:
       - name: Zip
         run: |
           cd app
-          zip -r ../dist.zip app/*
+          zip -r ../dist.zip .
       - uses: trmcnvn/chrome-addon@v2
         with:
           # extension is only necessary when updating an existing addon,
