@@ -61,9 +61,13 @@ function untranslateCurrentVideo() {
     let translatedDescription = document.querySelector("#description > yt-formatted-string");
     let realDescription = null;
 
-    // For description, try ytInitialPlayerResponse, if it is for this video
-    if (ytInitialPlayerResponse.videoDetails && ytInitialPlayerResponse.videoDetails.title === realTitle) {
-        realDescription = ytInitialPlayerResponse.videoDetails.shortDescription;
+    // For description, try ytInitialPlayerResponse object Youtube creates whenever you open video page, if it is for this video
+    if (!window.ytInitialPlayerResponse){
+        console.log("ytInitialPlayerResponse is undefined"); //easy debugging and unnoticeable for users
+        return;
+    } 
+    if (window.ytInitialPlayerResponse.videoDetails && window.ytInitialPlayerResponse.videoDetails.title === realTitle) {
+        realDescription = window.ytInitialPlayerResponse.videoDetails.shortDescription;
     } else {
         if (translatedDescription.firstChild.id === FIRST_CHILD_DESC_ID) {
             translatedDescription.removeChild(translatedDescription.firstChild);
