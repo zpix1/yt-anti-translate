@@ -32,7 +32,7 @@ function trimYoutube(title) {
 }
 
 function untranslateCurrentVideo() {
-    let translatedTitleElement = document.querySelector("h1.title").children[0];
+    let translatedTitleElement = document.querySelector("#container > h1 > yt-formatted-string");
     let realTitle = null;
 
     // title link approach
