@@ -1,7 +1,7 @@
 {
     "update_url": "https://clients2.google.com/service/update2/crx",
     "name": "YouTube Anti Translate",
-    "version": "1.4.7",
+    "version": "1.4.8",
     "description": "A small extension to disable YT video titles autotranslation.",
     "manifest_version": 2,
     "content_scripts": [{
