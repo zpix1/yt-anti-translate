@@ -8,10 +8,7 @@ jobs:
       - uses: actions/checkout@main
       - name: Zip
         run: |
-          cd app
-          zip -r ../dist.zip .
-          cd ..
-          ls
+          zip -r dist.zip app/*
       - name: Upload & release
         uses: mnao305/chrome-extension-upload@1.1.1
         with:
