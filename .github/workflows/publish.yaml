@@ -10,7 +10,7 @@ jobs:
         run: |
           zip -r dist.zip app/*
       - name: Upload & release
-        uses: zpix1/chrome-extension-upload@1.1.1
+        uses: zpix1/chrome-extension-upload@1.1.2
         with:
           file-path: dist.zip
           extension-id: ndpmhjnlfkgfalaieeneneenijondgag
