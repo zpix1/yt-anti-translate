@@ -1,6 +1,14 @@
+// (function () {
 var mutationIdx = 0;
 const MUTATION_UPDATE_STEP = 3;
 const FIRST_CHILD_DESC_ID = 'ytantitranslate_desc_div';
+
+// Using MutationObserver as we can't exactly know the moment when YT js will load video title
+const observer = new MutationObserver(untranslate);
+
+const CURRENT_VIDEO_TITLE_TAG = 'ytantitranslatecurrentvideotitle';
+const CURRENT_VIDEO_DESC_TAG = 'ytantitranslatecurrentvideodesc';
+const OTHER_VIDEO_TITLE_TAG = 'ytantitranslateothervideotitle';
 
 function makeHttpObject() {
     try {return new XMLHttpRequest();}
@@ -35,11 +43,6 @@ function untranslateCurrentVideo() {
     let translatedTitleElement = document.querySelector("#container > h1 > yt-formatted-string");
     let realTitle = null;
 
-    // title link approach
-    // if (document.querySelector(".ytp-title-link")) {
-    //     realTitle = document.querySelector(".ytp-title-link").innerText;
-    // } else
-    // document title approach
     if (document.title) {
         realTitle = trimYoutube(document.title);
     } else if (document.querySelector('meta[name="title"]')) {
@@ -56,6 +59,7 @@ function untranslateCurrentVideo() {
         return;
     }
 
+    translatedTitleElement.dataset[CURRENT_VIDEO_TITLE_TAG] = translatedTitleElement.textContent;
     translatedTitleElement.textContent = realTitle;
 
     let translatedDescription = document.querySelector("#description > yt-formatted-string");
@@ -75,7 +79,7 @@ function untranslateCurrentVideo() {
     }
 
     if (realDescription) {
-        var div = document.createElement('div');
+        const div = document.createElement('div');
         div.innerHTML = makeLinksClickable(realDescription) + "\n\n<b>TRANSLATED (added by <a class='yt-simple-endpoint style-scope yt-formatted-string' href='https://chrome.google.com/webstore/detail/youtube-anti-translate/ndpmhjnlfkgfalaieeneneenijondgag?hl=ru'>Youtube Anti Translate</a>):</b>\n";
         div.id = FIRST_CHILD_DESC_ID;
         translatedDescription.insertBefore(div, translatedDescription.firstChild);
@@ -109,9 +113,9 @@ function untranslateOtherVideos() {
                     const title = JSON.parse(response.responseText).title;
                     const titleElement = video.querySelector('#video-title');
                     if (title != titleElement.innerText) {
-                        console.log(`translated from ${titleElement.innerText} to ${title}`);
                         if (titleElement) {
-                            video.querySelector('#video-title').innerText = title;
+                            titleElement.dataset[OTHER_VIDEO_TITLE_TAG] = titleElement.innerText;
+                            titleElement.innerText = title;
                         }
                     }
                 });
@@ -123,15 +127,6 @@ function untranslateOtherVideos() {
     untranslateArray(document.querySelectorAll('ytd-rich-item-renderer'));
     untranslateArray(document.querySelectorAll('ytd-compact-video-renderer'));
     untranslateArray(document.querySelectorAll('ytd-grid-video-renderer'));
-
-
-    // let compactVideos = document.getElementsByTagName('ytd-compact-video-renderer');    // related videos
-    // let normalVideos = document.getElementsByTagName('ytd-video-renderer');             // channel page videos
-    // let gridVideos = document.getElementsByTagName('ytd-grid-video-renderer');          // grid page videos
-    
-    // untranslateArray(compactVideos);
-    // untranslateArray(normalVideos);
-    // untranslateArray(gridVideos);
 }
 
 function untranslate() {
@@ -142,14 +137,46 @@ function untranslate() {
     mutationIdx++;
 }
 
-function run() {
-    // Change current video title and description
-    // Using MutationObserver as we can't exactly know the moment when YT js will load video title
-    let target = document.body;
-    let config = { childList: true, subtree: true };
-    let observer = new MutationObserver(untranslate);
-    observer.observe(target, config);
-    // setInterval(untranslate, 100);
+function undoUnTranslation() {
+    const videoTitle = document.querySelector('[data-' + CURRENT_VIDEO_TITLE_TAG + ']');
+    if (videoTitle) {
+        videoTitle.textContent = videoTitle.dataset[CURRENT_VIDEO_TITLE_TAG];
+        delete videoTitle.dataset[CURRENT_VIDEO_TITLE_TAG];
+    }
+
+    const videoDesc = document.querySelector('#' + FIRST_CHILD_DESC_ID);
+    if (videoDesc) {
+        videoDesc.remove();
+    }
+
+    const otherVideoTitle = document.querySelectorAll('[data-' + OTHER_VIDEO_TITLE_TAG + ']');
+    Array.prototype.slice.call(otherVideoTitle).forEach(function(item) {
+        item.innerText = item.dataset[OTHER_VIDEO_TITLE_TAG];
+        delete item.dataset[OTHER_VIDEO_TITLE_TAG];
+    });
 }
 
-run();
+
+function enableUnTranslation() {
+    let target = document.body;
+    let config = { childList: true, subtree: true };
+    observer.observe(target, config);
+}
+
+function disableUnTranslation() {
+    observer.disconnect();
+    undoUnTranslation();
+}
+
+chrome.runtime.onMessage.addListener(
+    function(request, sender, sendResponse) {
+        console.log(request.sender);
+        if (!sender.tab) {
+            console.log('got message');
+        }
+        console.log('a message');
+        // if (request.greeting === "hello")
+        // sendResponse({farewell: "goodbye"});
+    }
+);
+// })();

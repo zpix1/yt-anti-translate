@@ -3,6 +3,10 @@ function saveOptions() {
         disabled: false
     }, function (items) {
         let disabled = !items.disabled;
+        chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+            chrome.tabs.sendMessage(tabs[0].id, {action: disabled ? 'disable' : 'enable'});
+        });
+        console.log('sent bred');
         chrome.storage.sync.set({
             disabled: disabled,
         }, function () {
