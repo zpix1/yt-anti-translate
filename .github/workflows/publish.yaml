@@ -1,6 +1,4 @@
 name: Publish to chrome web store
-on:
-  push:
 jobs:
   zip-and-publish:
     runs-on: ubuntu-latest

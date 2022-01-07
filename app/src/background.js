@@ -62,10 +62,10 @@ function untranslateCurrentVideo() {
     let realDescription = null;
 
     // For description, try ytInitialPlayerResponse object Youtube creates whenever you open video page, if it is for this video
-    if (!window.ytInitialPlayerResponse){
-        console.log("ytInitialPlayerResponse is undefined"); //easy debugging and unnoticeable for users
+    if (!window.ytInitialPlayerResponse) {
         return;
-    } 
+    }
+
     if (window.ytInitialPlayerResponse.videoDetails && window.ytInitialPlayerResponse.videoDetails.title === realTitle) {
         realDescription = window.ytInitialPlayerResponse.videoDetails.shortDescription;
     } else {
@@ -86,25 +86,52 @@ function untranslateOtherVideos() {
     function untranslateArray(otherVideos) {
         for (let i = 0; i < otherVideos.length; i++) {
             let video = otherVideos[i];
-            let videoId = video.querySelector('#thumbnail').href;
+
+            // video was deleted
+            if (!video) {
+                return;
+            }
+
+            let videoThumbnail = video.querySelector('#thumbnail');
+
+            // false positive result detected
+            if (!videoThumbnail) {
+                continue;
+            }
+
+            let videoId = videoThumbnail.href;
+
             if ((!video.untranslatedByExtension) || (video.untranslatedKey !== videoId)) { // do not request same video multiply times
                 let href = video.querySelector('a');
                 video.untranslatedByExtension = true;
                 video.untranslatedKey = videoId;
                 get('https://www.youtube.com/oembed?url=' + href.href, function (response) {
                     const title = JSON.parse(response.responseText).title;
-                    video.querySelector('#video-title').innerText = title;
+                    const titleElement = video.querySelector('#video-title');
+                    if (title != titleElement.innerText) {
+                        console.log(`translated from ${titleElement.innerText} to ${title}`);
+                        if (titleElement) {
+                            video.querySelector('#video-title').innerText = title;
+                        }
+                    }
                 });
             }
         }
     }
-    let compactVideos = document.getElementsByTagName('ytd-compact-video-renderer');    // related videos
-    let normalVideos = document.getElementsByTagName('ytd-video-renderer');             // channel page videos
-    let gridVideos = document.getElementsByTagName('ytd-grid-video-renderer');          // grid page videos
+
+    untranslateArray(document.querySelectorAll('ytd-video-renderer'));
+    untranslateArray(document.querySelectorAll('ytd-rich-item-renderer'));
+    untranslateArray(document.querySelectorAll('ytd-compact-video-renderer'));
+    untranslateArray(document.querySelectorAll('ytd-grid-video-renderer'));
+
+
+    // let compactVideos = document.getElementsByTagName('ytd-compact-video-renderer');    // related videos
+    // let normalVideos = document.getElementsByTagName('ytd-video-renderer');             // channel page videos
+    // let gridVideos = document.getElementsByTagName('ytd-grid-video-renderer');          // grid page videos
     
-    untranslateArray(compactVideos);
-    untranslateArray(normalVideos);
-    untranslateArray(gridVideos);
+    // untranslateArray(compactVideos);
+    // untranslateArray(normalVideos);
+    // untranslateArray(gridVideos);
 }
 
 function untranslate() {
