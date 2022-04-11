@@ -1,10 +1,14 @@
 function saveOptions() {
+    if (document.getElementById('reload-checkbox').checked) {
+        chrome.tabs.reload();
+    }
     chrome.storage.sync.get({
-        disabled: false
+        disabled: false,
+        autoreloadOption: true
     }, function (items) {
         let disabled = !items.disabled;
         chrome.storage.sync.set({
-            disabled: disabled,
+            disabled: disabled
         }, function () {
             document.getElementById('disable-button').innerText = disabled ? 'Enable' : 'Disable';
             document.getElementById('status').innerText = disabled ? 'Disabled' : 'Enabled';
@@ -16,14 +20,27 @@ function saveOptions() {
 
 function loadOptions() {
     chrome.storage.sync.get({
-        disabled: false
+        disabled: false,
+        autoreloadOption: true
     }, function (items) {
         document.getElementById('disable-button').innerText = items.disabled ? 'Enable' : 'Disable';
         document.getElementById('status').innerText = items.disabled ? 'Disabled' : 'Enabled';
         document.getElementById('status').className = 'status ' + (items.disabled ? 'disabled' : 'enabled');
         document.getElementById('disable-button').className = items.disabled ? 'disabled' : 'enabled';
+        document.getElementById('reload-checkbox').checked = items.autoreloadOption;
     });
 }
 
+function checkboxUpdate() {
+    chrome.storage.sync.set({
+        autoreloadOption: document.getElementById('reload-checkbox').checked
+    });
+}
+
+function addListeners() {
+    document.getElementById('disable-button').addEventListener('click', saveOptions);
+    document.getElementById('reload-checkbox').addEventListener('click', checkboxUpdate);
+}
+
 document.addEventListener('DOMContentLoaded', loadOptions);
-document.getElementById('disable-button').addEventListener('click', saveOptions);
+document.addEventListener('DOMContentLoaded', addListeners);

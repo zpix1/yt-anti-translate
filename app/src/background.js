@@ -42,6 +42,8 @@ function untranslateCurrentVideo() {
     // document title approach
     if (document.title) {
         realTitle = trimYoutube(document.title);
+        // remove notification counter
+        realTitle = realTitle.replace(/^\(\d+\)/, '');
     } else if (document.querySelector('meta[name="title"]')) {
         realTitle = document.querySelector('meta[name="title"]').content;
     }
@@ -58,7 +60,7 @@ function untranslateCurrentVideo() {
 
     translatedTitleElement.textContent = realTitle;
 
-    let translatedDescription = document.querySelector("#description > yt-formatted-string");
+    let translatedDescription = document.querySelector("#description .ytd-video-secondary-info-renderer");
     let realDescription = null;
 
     // For description, try ytInitialPlayerResponse object Youtube creates whenever you open video page, if it is for this video

@@ -25,11 +25,17 @@
         text-align: center;
         text-decoration: none;
         font-size: 16px;
+        padding: 5px;
+        border-radius: 5px;
     }
 
     button:focus {
         outline: none;
         box-shadow: none;
+    }
+
+    button:hover {
+	    box-shadow: inset 0 0 0 3px #3a7999;
     }
     
     .status.disabled {
@@ -65,16 +71,27 @@
         margin-bottom: 5px;
         font-style: italic;
     }
+
+    .reload-page {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
     .changelog {
         font-size: 12px;
     }
-     @media (prefers-color-scheme: dark) {
-    body { background-color:  black; color: white; }
+    
+    @media (prefers-color-scheme: dark) {
+        body { 
+            background-color:  black; 
+            color: white; 
+        }
     }
 </style>
 
 <body>
-    <div class="header">YT Anti Translate 1.5.0</div>
+    <div class="header">YT Anti Translate 1.5.1</div>
 
     Status:
     <div class="status enabled" id="status">Enabled</div>
@@ -82,9 +99,13 @@
     <button style="cursor: pointer;" class='enabled' id="disable-button"></button>
 
     <script src="/src/options.js"></script>
-    <div class="footer">Don't forget to reload page (Ctrl+R) after enabling or disabling YT Anti Translate.</div>
+    <div class="footer reload-page">
+        Reload page automatically
+        <input id="reload-checkbox" type="checkbox" checked />
+    </div>
 
-    <div class="footer">Please <a href="https://chrome.google.com/webstore/detail/yt-anti-translate/ndpmhjnlfkgfalaieeneneenijondgag">rate</a> this extension in Chrome Store if it helped you.
+    <div class="footer">
+        Please <a href="https://chrome.google.com/webstore/detail/yt-anti-translate/ndpmhjnlfkgfalaieeneneenijondgag">rate</a> this extension in Chrome Store if it helped you.
     </div>
 </body>
 
