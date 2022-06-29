@@ -32,7 +32,7 @@ function trimYoutube(title) {
 }
 
 function untranslateCurrentVideo() {
-    let translatedTitleElement = document.querySelector("#container > h1 > yt-formatted-string");
+    const translatedTitleElement = document.querySelector("h1 > yt-formatted-string");
     let realTitle = null;
 
     // title link approach
@@ -60,28 +60,36 @@ function untranslateCurrentVideo() {
 
     translatedTitleElement.textContent = realTitle;
 
-    let translatedDescription = document.querySelector("#description .ytd-video-secondary-info-renderer");
-    let realDescription = null;
+    // disabled bugged description untranslation
+    // const translatedDescriptions = [document.querySelector("#description .ytd-video-secondary-info-renderer"), document.getElementById('description-inline-expander')];
 
-    // For description, try ytInitialPlayerResponse object Youtube creates whenever you open video page, if it is for this video
-    if (!window.ytInitialPlayerResponse) {
-        return;
-    }
+    // let realDescription = null;
 
-    if (window.ytInitialPlayerResponse.videoDetails && window.ytInitialPlayerResponse.videoDetails.title === realTitle) {
-        realDescription = window.ytInitialPlayerResponse.videoDetails.shortDescription;
-    } else {
-        if (translatedDescription.firstChild.id === FIRST_CHILD_DESC_ID) {
-            translatedDescription.removeChild(translatedDescription.firstChild);
-        }
-    }
+    // // For description, try ytInitialPlayerResponse object Youtube creates whenever you open video page, if it is for this video
+    // if (!window.ytInitialPlayerResponse) {
+    //     return;
+    // }
 
-    if (realDescription) {
-        var div = document.createElement('div');
-        div.innerHTML = makeLinksClickable(realDescription) + "\n\n<b>TRANSLATED (added by <a class='yt-simple-endpoint style-scope yt-formatted-string' href='https://chrome.google.com/webstore/detail/youtube-anti-translate/ndpmhjnlfkgfalaieeneneenijondgag?hl=ru'>Youtube Anti Translate</a>):</b>\n";
-        div.id = FIRST_CHILD_DESC_ID;
-        translatedDescription.insertBefore(div, translatedDescription.firstChild);
-    }
+    // if (window.ytInitialPlayerResponse.videoDetails && window.ytInitialPlayerResponse.videoDetails.title === realTitle) {
+    //     realDescription = window.ytInitialPlayerResponse.videoDetails.shortDescription;
+    // } else {
+    //     for (const translatedDescription of translatedDescriptions) {
+    //         if (translatedDescription.firstChild.id === FIRST_CHILD_DESC_ID) {
+    //             translatedDescription.removeChild(translatedDescription.firstChild);
+    //         }
+    //     }
+    // }
+
+    // console.log(realDescription, translatedDescriptions);
+
+    // if (realDescription) {
+    //     // for (const translatedDescription of translatedDescriptions) {
+    //     //     const div = document.createElement('div');
+    //     //     div.innerHTML = makeLinksClickable(realDescription) + "\n\n<b>TRANSLATED (added by <a class='yt-simple-endpoint style-scope yt-formatted-string' href='https://chrome.google.com/webstore/detail/youtube-anti-translate/ndpmhjnlfkgfalaieeneneenijondgag?hl=ru'>Youtube Anti Translate</a>):</b>\n";
+    //     //     div.id = FIRST_CHILD_DESC_ID;
+    //     //     translatedDescription.insertBefore(div, translatedDescription.firstChild);
+    //     // }
+    // }
 }
 
 function untranslateOtherVideos() {
