@@ -9,4 +9,4 @@ It is much easier to use than it's analogs (as [YoutubeAutotranslateCanceler](ht
 Just install it from chrome extensions store (https://chrome.google.com/webstore/detail/yt-anti-translate/ndpmhjnlfkgfalaieeneneenijondgag).
 
 ## Etc
-If this extenstion really helped you, consider supporting me on [Patreon](https://www.patreon.com/zpix1).
+If this extenstion really helped you, ~~consider supporting me on [Patreon](https://www.patreon.com/zpix1)~~ you are welcome!.
