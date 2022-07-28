@@ -1,6 +1,8 @@
 var mutationIdx = 0;
+let titleReplace = [];
 const MUTATION_UPDATE_STEP = 3;
 const FIRST_CHILD_DESC_ID = 'ytantitranslate_desc_div';
+const cache = new Map();
 
 function makeHttpObject() {
     try {return new XMLHttpRequest();}
@@ -17,12 +19,18 @@ function makeLinksClickable(html) {
     return html.replace(/(https?:\/\/[^\s]+)/g, "<a rel='nofollow' target='_blank' dir='auto' class='yt-simple-endpoint style-scope yt-formatted-string' href='$1'>$1</a>");
 }
 
+
 function get(url, callback) {
+    if (cache.has(url)) {
+        callback(cache.get(url));
+        return;
+    }
     var request = makeHttpObject();
     request.open("GET", url, true);
     request.send(null);
     request.onreadystatechange = function() {
     if (request.readyState == 4)
+        cache.set(url, request);
         callback(request);
     };
 }
@@ -33,32 +41,44 @@ function trimYoutube(title) {
 
 function untranslateCurrentVideo() {
     const translatedTitleElement = document.querySelector("h1 > yt-formatted-string");
-    let realTitle = null;
 
     // title link approach
     // if (document.querySelector(".ytp-title-link")) {
     //     realTitle = document.querySelector(".ytp-title-link").innerText;
     // } else
     // document title approach
-    if (document.title) {
-        realTitle = trimYoutube(document.title);
-        // remove notification counter
-        realTitle = realTitle.replace(/^\(\d+\)/, '');
-    } else if (document.querySelector('meta[name="title"]')) {
-        realTitle = document.querySelector('meta[name="title"]').content;
-    }
+    // title approach (does not work anymore)
+    // if (document.title) {
+    //     realTitle = trimYoutube(document.title);
+    //     // remove notification counter
+    //     realTitle = realTitle.replace(/^\(\d+\)/, '');
+    // } else 
+    // if (document.querySelector('meta[name="title"]')) {
+    //     realTitle = document.querySelector('meta[name="title"]').content;
+    // }
 
-    if (!realTitle || !translatedTitleElement) {
-        // Do nothing if video is not loaded yet
-        return;
-    }
+    get('https://www.youtube.com/oembed?url=' + document.location.href, function (response) {
+        const realTitle = JSON.parse(response.responseText).title;
 
-    if (realTitle === translatedTitleElement.innerText) {
-        // Do not revert already original videos
-        return;
-    }
+        if (!realTitle || !translatedTitleElement) {
+            // Do nothing if video is not loaded yet
+            return;
+        }
+    
+        document.title = document.title.replace(translatedTitleElement.textContent, realTitle);
 
-    translatedTitleElement.textContent = realTitle;
+        if (realTitle === translatedTitleElement.textContent) {
+            // Do not revert already original videos
+            return;
+        }
+    
+        // untranslate video
+        translatedTitleElement.textContent = realTitle;
+        // translatedTitleElement.untranslatedByExtension = true;
+    });
+    
+
+    
 
     // disabled bugged description untranslation
     // const translatedDescriptions = [document.querySelector("#description .ytd-video-secondary-info-renderer"), document.getElementById('description-inline-expander')];
