@@ -28,10 +28,11 @@ function get(url, callback) {
     var request = makeHttpObject();
     request.open("GET", url, true);
     request.send(null);
-    request.onreadystatechange = function() {
-    if (request.readyState == 4)
-        cache.set(url, request);
-        callback(request);
+    request.onreadystatechange = function () {
+        if (request.readyState == 4) {
+            cache.set(url, request);
+            callback(request);
+        }
     };
 }
 
@@ -58,6 +59,10 @@ function untranslateCurrentVideo() {
     // }
 
     get('https://www.youtube.com/oembed?url=' + document.location.href, function (response) {
+        if (response.status !== 200) {
+            return;
+        }
+
         const realTitle = JSON.parse(response.responseText).title;
 
         if (!realTitle || !translatedTitleElement) {
@@ -136,6 +141,10 @@ function untranslateOtherVideos() {
                 video.untranslatedByExtension = true;
                 video.untranslatedKey = videoId;
                 get('https://www.youtube.com/oembed?url=' + href.href, function (response) {
+                    if (response.status !== 200) {
+                        return;
+                    }
+
                     const title = JSON.parse(response.responseText).title;
                     const titleElement = video.querySelector('#video-title');
                     if (title != titleElement.innerText) {
