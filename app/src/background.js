@@ -1,6 +1,6 @@
 var mutationIdx = 0;
 let titleReplace = [];
-const MUTATION_UPDATE_STEP = 3;
+const MUTATION_UPDATE_STEP = 1;
 const FIRST_CHILD_DESC_ID = 'ytantitranslate_desc_div';
 const cache = new Map();
 
@@ -40,6 +40,20 @@ function trimYoutube(title) {
     return title.replace(/ - YouTube$/, '');
 }
 
+function setTitleNode(text, afterNode) {
+    if (document.getElementById('yt-anti-translate-fake-node')) {
+        const node = document.getElementById('yt-anti-translate-fake-node');
+        node.textContent = text;
+        return;
+    }
+
+    const node = document.createElement('span');
+    node.className = 'style-scope ytd-video-primary-info-renderer';
+    node.id = 'yt-anti-translate-fake-node';
+    node.textContent = text;
+    afterNode.after(node);
+}
+
 function untranslateCurrentVideo() {
     const translatedTitleElement = document.querySelector("h1 > yt-formatted-string");
 
@@ -76,14 +90,17 @@ function untranslateCurrentVideo() {
             // Do not revert already original videos
             return;
         }
-    
-        // untranslate video
-        translatedTitleElement.textContent = realTitle;
+
+        // untranslate video by creating its copy
+        translatedTitleElement.style.visibility = 'hidden';
+        translatedTitleElement.style.display = 'none';
+
+        setTitleNode(realTitle, translatedTitleElement);
+
+        // translatedTitleElement.textContent = realTitle;
+        // translatedTitleElement.removeAttribute('is-empty');
         // translatedTitleElement.untranslatedByExtension = true;
     });
-    
-
-    
 
     // disabled bugged description untranslation
     // const translatedDescriptions = [document.querySelector("#description .ytd-video-secondary-info-renderer"), document.getElementById('description-inline-expander')];
@@ -147,8 +164,8 @@ function untranslateOtherVideos() {
 
                     const title = JSON.parse(response.responseText).title;
                     const titleElement = video.querySelector('#video-title');
-                    if (title != titleElement.innerText) {
-                        console.log(`translated from ${titleElement.innerText} to ${title}`);
+                    if (title !== titleElement.innerText) {
+                        console.log(`[YoutubeAntiTranslate] translated from "${titleElement.innerText}" to "${title}"`);
                         if (titleElement) {
                             video.querySelector('#video-title').innerText = title;
                         }
