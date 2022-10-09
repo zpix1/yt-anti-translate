@@ -95,6 +95,8 @@ function untranslateCurrentVideo() {
         translatedTitleElement.style.visibility = 'hidden';
         translatedTitleElement.style.display = 'none';
 
+        console.log(`[YoutubeAntiTranslate] translated title to "${realTitle}"`);
+
         setTitleNode(realTitle, translatedTitleElement);
 
         // translatedTitleElement.textContent = realTitle;
