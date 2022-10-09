@@ -1,6 +1,6 @@
 var mutationIdx = 0;
 let titleReplace = [];
-const MUTATION_UPDATE_STEP = 1;
+const MUTATION_UPDATE_STEP = 2;
 const FIRST_CHILD_DESC_ID = 'ytantitranslate_desc_div';
 const cache = new Map();
 
@@ -144,7 +144,7 @@ function untranslateOtherVideos() {
                 return;
             }
 
-            let videoThumbnail = video.querySelector('#thumbnail');
+            let videoThumbnail = video.querySelector('a#thumbnail');
 
             // false positive result detected
             if (!videoThumbnail) {
@@ -179,6 +179,7 @@ function untranslateOtherVideos() {
     untranslateArray(document.querySelectorAll('ytd-rich-item-renderer'));
     untranslateArray(document.querySelectorAll('ytd-compact-video-renderer'));
     untranslateArray(document.querySelectorAll('ytd-grid-video-renderer'));
+    untranslateArray(document.querySelectorAll('ytd-playlist-video-renderer'));
 
 
     // let compactVideos = document.getElementsByTagName('ytd-compact-video-renderer');    // related videos
