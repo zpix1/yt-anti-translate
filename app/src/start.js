@@ -6,7 +6,7 @@ chrome.storage.sync.get({
     if (!items.disabled) {
         var s = document.createElement('script');
         s.defer = true;
-        s.src = chrome.extension.getURL('src/background.js');
+        s.src = chrome.runtime.getURL('src/background.js');
         document.body.appendChild(s);
     }
 });
