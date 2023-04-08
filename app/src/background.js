@@ -182,6 +182,7 @@ function untranslateOtherVideos() {
     untranslateArray(document.querySelectorAll('ytd-compact-video-renderer'));
     untranslateArray(document.querySelectorAll('ytd-grid-video-renderer'));
     untranslateArray(document.querySelectorAll('ytd-playlist-video-renderer'));
+    untranslateArray(document.querySelectorAll('ytd-playlist-panel-video-renderer'));
 
 
     // let compactVideos = document.getElementsByTagName('ytd-compact-video-renderer');    // related videos
