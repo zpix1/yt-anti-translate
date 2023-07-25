@@ -4,6 +4,8 @@ on:
   push:
     tags:
       - v*.*.*
+    branches:
+      - main
 
 jobs:
   build-chrome-extension:
@@ -17,13 +19,13 @@ jobs:
         run: |-
           cp -r app dist
           # we archive the dist folder and include SHA commit as the last step
-          zip -r chrome-extension-${{ github.event.pull_request.head.sha }}.zip dist
+          zip -r chrome-extension.zip dist
 
       - name: Archive chrome-extension artifact
         uses: actions/upload-artifact@v2
         with:
-          name: chrome-extension-${{ github.sha }}
-          path: chrome-extension-${{ github.event.pull_request.head.sha }}.zip
+          name: chrome-extension
+          path: chrome-extension.zip
   upload-extension:
       name: Upload extension
       runs-on: ubuntu-latest
@@ -42,16 +44,17 @@ jobs:
         - name: Download bundle artifact
           uses: actions/download-artifact@v3
           with:
-            name: chrome-extension-${{ github.sha }}
+            name: chrome-extension
 
         - name: Install webstore cli
           run: |-
             npm install -g chrome-webstore-upload-cli
+            ls
 
         - name: Upload step
           run: |-
-            chrome-webstore-upload publish \\
-              --source chrome-extension-${{ github.event.pull_request.head.sha }}.zip \\
+            chrome-webstore-upload upload \\
+              --source chrome-extension.zip \\
               --extension-id ${{ env.EXTENSION_ID }} \\
               --client-id ${{ secrets.CHROME_CLIENT_ID }} \\
               --client-secret ${{ secrets.CHROME_CLIENT_SECRET }} \\
