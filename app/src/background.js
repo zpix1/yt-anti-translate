@@ -55,7 +55,7 @@ function setTitleNode(text, afterNode) {
 }
 
 function untranslateCurrentVideo() {
-    const translatedTitleElement = document.querySelector("h1 > yt-formatted-string");
+    const translatedTitleElement = document.querySelector("h1 > yt-formatted-string:not(.cbCustomTitle)");
 
     // title link approach
     // if (document.querySelector(".ytp-title-link")) {
