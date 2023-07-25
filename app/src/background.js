@@ -55,7 +55,7 @@ function setTitleNode(text, afterNode) {
 }
 
 function untranslateCurrentVideo() {
-    const translatedTitleElement = document.querySelector("h1 > yt-formatted-string");
+    const translatedTitleElement = document.querySelector("h1 > yt-formatted-string:not(.cbCustomTitle)");
 
     // title link approach
     // if (document.querySelector(".ytp-title-link")) {
@@ -165,7 +165,7 @@ function untranslateOtherVideos() {
                     }
 
                     const title = JSON.parse(response.responseText).title;
-                    const titleElement = video.querySelector('#video-title');
+                    const titleElement = video.querySelector('#video-title:not(.cbCustomTitle)');
                     if (title !== titleElement.innerText) {
                         console.log(`[YoutubeAntiTranslate] translated from "${titleElement.innerText}" to "${title}"`);
                         if (titleElement) {
