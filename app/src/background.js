@@ -169,7 +169,7 @@ function untranslateOtherVideos() {
                     if (title !== titleElement.innerText) {
                         console.log(`[YoutubeAntiTranslate] translated from "${titleElement.innerText}" to "${title}"`);
                         if (titleElement) {
-                            video.querySelector('#video-title').innerText = title;
+                            video.querySelector('#video-title:not(.cbCustomTitle)').innerText = title;
                         }
                     }
                 });
