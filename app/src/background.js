@@ -170,6 +170,10 @@ function untranslateOtherVideos() {
                         console.log(`[YoutubeAntiTranslate] translated from "${titleElement.innerText}" to "${title}"`);
                         if (titleElement) {
                             video.querySelector('#video-title:not(.cbCustomTitle)').innerText = title;
+                            video.querySelector('#video-title:not(.cbCustomTitle)').title = title;
+                            if (video.querySelector('a#video-title-link:not(.cbCustomTitle)')) { // home page
+                                video.querySelector('a#video-title-link:not(.cbCustomTitle)').title = title;
+                            }
                         }
                     }
                 });
