@@ -60,24 +60,20 @@ function setTitleNode(text, afterNode) {
 }
 
 function untranslateCurrentVideo() {
-  const translatedTitleElement = document.querySelector(
-    "h1 > yt-formatted-string:not(.cbCustomTitle)"
+  let translatedTitleElement = document.querySelector(
+    "#title > h1 > yt-formatted-string"
   );
 
-  // title link approach
-  // if (document.querySelector(".ytp-title-link")) {
-  //     realTitle = document.querySelector(".ytp-title-link").innerText;
-  // } else
-  // document title approach
-  // title approach (does not work anymore)
-  // if (document.title) {
-  //     realTitle = trimYoutube(document.title);
-  //     // remove notification counter
-  //     realTitle = realTitle.replace(/^\(\d+\)/, '');
-  // } else
-  // if (document.querySelector('meta[name="title"]')) {
-  //     realTitle = document.querySelector('meta[name="title"]').content;
-  // }
+  if (!translatedTitleElement || !translatedTitleElement.textContent) {
+    translatedTitleElement = document.querySelector(
+      "h1 > yt-formatted-string:not(.cbCustomTitle)"
+    );
+  }
+
+  // that means we cannot find youtube title, so there is nothing we can do
+  if (!translatedTitleElement || !translatedTitleElement.textContent) {
+    return;
+  }
 
   get(
     "https://www.youtube.com/oembed?url=" + document.location.href,
@@ -93,12 +89,16 @@ function untranslateCurrentVideo() {
         return;
       }
 
-      if (!document.title.includes(realTitle)) {
-        document.title = document.title.replace(
-          translatedTitleElement.textContent,
-          realTitle
-        );
-      }
+      console.log(
+        "data",
+        document.title,
+        translatedTitleElement.textContent,
+        realTitle
+      );
+      document.title = document.title.replace(
+        translatedTitleElement.textContent,
+        realTitle
+      );
 
       if (realTitle === translatedTitleElement.textContent) {
         // Do not revert already original videos
