@@ -1,112 +1,119 @@
 <!DOCTYPE html>
 <html>
-
-<head>
+  <head>
     <title>YT Anti Translate Options</title>
-</head>
-<style>
+  </head>
+  <style>
     #disable-button {
-        width: 100px;
-        font-size: 20px;
+      width: 100px;
+      font-size: 20px;
     }
 
     body {
-        width: 200px;
-        height: 200px;
-        text-align: center;
-        font-size: 15px;
-        border-radius: 50px;
+      width: 200px;
+      height: 200px;
+      text-align: center;
+      font-size: 15px;
+      border-radius: 50px;
     }
 
     button {
-        background-color: #008CBA;
-        color: white;
-        border: none;
-        text-align: center;
-        text-decoration: none;
-        font-size: 16px;
-        padding: 5px;
-        border-radius: 5px;
+      background-color: #008cba;
+      color: white;
+      border: none;
+      text-align: center;
+      text-decoration: none;
+      font-size: 16px;
+      padding: 5px;
+      border-radius: 5px;
     }
 
     button:focus {
-        outline: none;
-        box-shadow: none;
+      outline: none;
+      box-shadow: none;
     }
 
     button:hover {
-	    box-shadow: inset 0 0 0 3px #3a7999;
+      box-shadow: inset 0 0 0 3px #3a7999;
     }
-    
+
     .status.disabled {
-        background-color: #f44336;
+      background-color: #f44336;
     }
 
     .status.enabled {
-        background-color: #4CAF50;
+      background-color: #4caf50;
     }
 
     .status {
-        display: block;
-        width: 100px;
-        height: 100px;
-        border-radius: 50%;
-        font-size: 20px;
-        color: #fff;
-        line-height: 100px;
-        text-align: center;
-        background: #000;
-        margin: 0 auto;
-        margin-top: 5px;
-        margin-bottom: 5px;
+      display: block;
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      font-size: 20px;
+      color: #fff;
+      line-height: 100px;
+      text-align: center;
+      background: #000;
+      margin: 0 auto;
+      margin-top: 5px;
+      margin-bottom: 5px;
     }
-    
+
     .header {
-        font-size: 16px;
+      font-size: 16px;
     }
 
     .footer {
-        font-size: 13px;
-        margin-top: 13px;
-        margin-bottom: 5px;
-        font-style: italic;
+      font-size: 13px;
+      margin-top: 13px;
+      margin-bottom: 5px;
+      font-style: italic;
     }
 
     .reload-page {
-        display: flex;
-        align-items: center;
-        justify-content: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .changelog {
-        font-size: 12px;
+      font-size: 12px;
     }
-    
-    @media (prefers-color-scheme: dark) {
-        body { 
-            background-color:  black; 
-            color: white; 
-        }
-    }
-</style>
 
-<body>
-    <div class="header">YT Anti Translate 1.5.13</div>
+    @media (prefers-color-scheme: dark) {
+      body {
+        background-color: black;
+        color: white;
+      }
+    }
+  </style>
+
+  <body>
+    <div class="header">YT Anti Translate 1.5.14</div>
 
     Status:
     <div class="status enabled" id="status">Enabled</div>
 
-    <button style="cursor: pointer;" class='enabled' id="disable-button"></button>
+    <button
+      style="cursor: pointer"
+      class="enabled"
+      id="disable-button"
+    ></button>
 
     <script src="/src/options.js"></script>
     <div class="footer reload-page">
-        Reload page automatically
-        <input id="reload-checkbox" type="checkbox" checked />
+      Reload page automatically
+      <input id="reload-checkbox" type="checkbox" checked />
     </div>
 
     <div class="footer">
-        Please <a href="https://chrome.google.com/webstore/detail/yt-anti-translate/ndpmhjnlfkgfalaieeneneenijondgag">rate</a> this extension in Chrome Store if it helped you.
+      Please
+      <a
+        href="https://chrome.google.com/webstore/detail/yt-anti-translate/ndpmhjnlfkgfalaieeneneenijondgag"
+        >rate</a
+      >
+      this extension in Chrome Store if it helped you.
     </div>
-</body>
-
+  </body>
 </html>
