@@ -21,7 +21,7 @@ jobs:
           zip -r chrome-extension.zip dist
 
       - name: Archive chrome-extension artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: chrome-extension
           path: chrome-extension.zip
@@ -41,7 +41,7 @@ jobs:
           node-version: "18"
 
       - name: Download bundle artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: chrome-extension
 
