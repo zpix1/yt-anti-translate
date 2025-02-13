@@ -10,7 +10,7 @@
       "js": ["src/start.js"]
     }
   ],
-  "web_accessible_resources": ["src/background.js"],
+  "web_accessible_resources": ["src/background.js", "src/background_audio.js"],
   "browser_action": {
     "default_popup": "pages/popup.html"
   },
