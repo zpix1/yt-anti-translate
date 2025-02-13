@@ -1,80 +1,99 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>YT Anti Translate Options</title>
-    <style>
-      body {
-        margin: 0;
-        padding: 20px;
-        font-family: Arial, sans-serif;
-        border-radius: 10px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-      }
-      .container {
-        width: 220px;
-        height: fit-content;
-        text-align: center;
-      }
-      .header {
-        font-size: 20px;
-        font-weight: bold;
-        margin-bottom: 15px;
-      }
-      .status {
-        margin: 10px auto;
-        width: 100px;
-        height: 100px;
-        line-height: 100px;
-        border-radius: 50%;
-        font-size: 22px;
-        color: #fff;
-      }
-      .status.enabled {
-        background-color: #4caf50;
-      }
-      .status.disabled {
-        background-color: #f44336;
-      }
-      button {
-        background-color: #008cba;
-        color: #fff;
-        border: none;
-        border-radius: 5px;
-        font-size: 16px;
-        padding: 10px 20px;
-        cursor: pointer;
-        margin-bottom: 15px;
-      }
-      button:hover {
-        background-color: #007bb5;
-      }
-      .options {
-        text-align: left;
-        margin-bottom: 15px;
-      }
-      .option {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 5px 0;
-        font-size: 15px;
-      }
-      .footer {
-        font-size: 13px;
-        font-style: italic;
-      }
-      .footer a {
-        color: #008cba;
-        text-decoration: none;
-      }
-      .footer a:hover {
-        text-decoration: underline;
-      }
-      /* @media (prefers-color-scheme: dark) {
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>YT Anti Translate Options</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: Arial, sans-serif;
+      border-radius: 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .container {
+      width: 220px;
+      height: fit-content;
+      text-align: center;
+    }
+
+    .header {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 15px;
+    }
+
+    .status {
+      margin: 10px auto;
+      width: 100px;
+      height: 100px;
+      line-height: 100px;
+      border-radius: 50%;
+      font-size: 22px;
+      color: #fff;
+    }
+
+    .status.enabled {
+      background-color: #4caf50;
+    }
+
+    .status.disabled {
+      background-color: #f44336;
+    }
+
+    button {
+      background-color: #008cba;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      padding: 10px 20px;
+      cursor: pointer;
+      margin-bottom: 15px;
+    }
+
+    button:hover {
+      background-color: #007bb5;
+    }
+
+    .options {
+      text-align: left;
+      margin-bottom: 15px;
+    }
+
+    .option {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 5px 0;
+      font-size: 15px;
+    }
+
+    .footer {
+      font-size: 13px;
+      font-style: italic;
+    }
+
+    .footer a {
+      color: #008cba;
+      text-decoration: none;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+    
+    small {
+      font-size: 11px;
+      color: #666;
+    }
+
+    @media (prefers-color-scheme: dark) {
         body {
           background-color: #121212;
           color: #f0f0f0;
@@ -82,32 +101,37 @@
         .footer a {
           color: #66d9ef;
         }
-      } */
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <div class="header">YT Anti Translate 1.5.14</div>
-      <div>
-        Status:
-        <div class="status enabled" id="status">Enabled</div>
-      </div>
-      <button id="disable-button">Disable</button>
-      <div class="options">
-        <div class="option">
-          <span>Untranslate audio track <sup title="Currently in testing">β</sup></span>
-          <input id="audio-checkbox" type="checkbox" />
-        </div>
-        <div class="option">
-          <span>Reload page automatically</span>
-          <input id="reload-checkbox" type="checkbox" checked />
-        </div>
-      </div>
-      <div class="footer">
-        Please <a target="_blank" href="https://chrome.google.com/webstore/detail/yt-anti-translate/ndpmhjnlfkgfalaieeneneenijondgag">rate</a> this extension in Chrome Store if it helped you.<br>
-        Report issues at <a target="_blank" href="https://github.com/zpix1/yt-anti-translate">GitHub</a> (don't forget to star it!).
-      </div>
-      <script src="/src/options.js"></script>
+      }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="header">YT Anti Translate 1.5.15</div>
+    <div>
+      Status:
+      <div class="status enabled" id="status">Enabled</div>
     </div>
-  </body>
+    <button id="disable-button">Disable</button>
+    <div class="options">
+      <div class="option">
+        <span>Untranslate audio track <sup title="Currently in testing">β</sup> <small>(requires page reload)</small></span>
+        <input id="audio-checkbox" type="checkbox" />
+      </div>
+      <div class="option">
+        <span>Reload page automatically</span>
+        <input id="reload-checkbox" type="checkbox" checked />
+      </div>
+    </div>
+    <div class="footer">
+      Please <a target="_blank"
+        href="https://chrome.google.com/webstore/detail/yt-anti-translate/ndpmhjnlfkgfalaieeneneenijondgag">rate</a>
+      this extension in Chrome Store if it helped you.<br>
+      Report issues at <a target="_blank" href="https://github.com/zpix1/yt-anti-translate">GitHub</a> (don't forget to
+      star it!).
+    </div>
+    <script src="/src/options.js"></script>
+  </div>
+</body>
+
 </html>

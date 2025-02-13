@@ -7,13 +7,17 @@ chrome.storage.sync.get(
   },
   function (items) {
     if (!items.disabled) {
-      window.ytAntiTranslateConfig = {
-        untranslateAudio: items.untranslateAudio,
-      };
-      var s = document.createElement("script");
-      s.defer = true;
-      s.src = chrome.runtime.getURL("src/background.js");
-      document.body.appendChild(s);
+      var backgroundText = document.createElement("script");
+      backgroundText.defer = true;
+      backgroundText.src = chrome.runtime.getURL("src/background.js");
+      document.body.appendChild(backgroundText);
+
+      if (items.untranslateAudio) {
+        var backgroundAudio = document.createElement("script");
+        backgroundAudio.defer = true;
+        backgroundAudio.src = chrome.runtime.getURL("src/background_audio.js");
+        document.body.appendChild(backgroundAudio);
+      }
     }
   }
 );
