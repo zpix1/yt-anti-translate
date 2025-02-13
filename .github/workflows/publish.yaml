@@ -21,7 +21,7 @@ jobs:
           zip -r chrome-extension.zip dist
 
       - name: Archive chrome-extension artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: chrome-extension
           path: chrome-extension.zip
