@@ -4,6 +4,27 @@ const MUTATION_UPDATE_STEP = 2;
 const FIRST_CHILD_DESC_ID = "ytantitranslate_desc_div";
 const cache = new Map();
 
+const ORIGINAL_TRANSLATIONS = [
+  "original", // English
+  "оригинал", // Russian
+  "オリジナル", // Japanese
+  "原始", // Chinese
+  "원본", // Korean
+  "origineel", // Dutch
+  "original", // Spanish/Portuguese
+  "originale", // Italian/French
+  "original", // German
+  "oryginał", // Polish
+  "původní", // Czech
+  "αρχικό", // Greek
+  "orijinal", // Turkish
+  "原創", // Traditional Chinese
+  "gốc", // Vietnamese
+  "asli", // Indonesian
+  "מקורי", // Hebrew
+  "أصلي", // Arabic
+];
+
 function makeHttpObject() {
   try {
     return new XMLHttpRequest();
@@ -89,12 +110,6 @@ function untranslateCurrentVideo() {
         return;
       }
 
-      console.log(
-        "data",
-        document.title,
-        translatedTitleElement.textContent,
-        realTitle
-      );
       document.title = document.title.replace(
         translatedTitleElement.textContent,
         realTitle
@@ -230,10 +245,79 @@ function untranslateOtherVideos() {
   // untranslateArray(gridVideos);
 }
 
+function getOriginalTrack(tracks) {
+  if (!tracks || !Array.isArray(tracks)) {
+    return null;
+  }
+
+  // First find which field contains the name property
+  let languageFieldName = null;
+  for (const track of tracks) {
+    if (!track || typeof track !== "object") continue;
+
+    for (const [fieldName, field] of Object.entries(track)) {
+      if (field && typeof field === "object" && field.name) {
+        languageFieldName = fieldName;
+        break;
+      }
+    }
+    if (languageFieldName) break;
+  }
+
+  if (!languageFieldName) {
+    return;
+  }
+
+  // Now find track with "original" in any language
+  for (const track of tracks) {
+    if (!track || !track[languageFieldName] || !track[languageFieldName].name)
+      continue;
+
+    const trackName = track[languageFieldName].name.toLowerCase();
+    for (const originalWord of ORIGINAL_TRANSLATIONS) {
+      if (trackName.includes(originalWord.toLowerCase())) {
+        return track;
+      }
+    }
+  }
+}
+
+function untranslateAudioTrack() {
+  // Check if audio translation is enabled in settings
+  if (
+    !window.ytAntiTranslateConfig ||
+    !window.ytAntiTranslateConfig.untranslateAudio
+  ) {
+    return;
+  }
+
+  const player = document.querySelector("#movie_player");
+  if (!player || !player.getAvailableAudioTracks || player.audioUntranslated) {
+    return;
+  }
+
+  const tracks = player.getAvailableAudioTracks();
+
+  const originalTrack = getOriginalTrack(tracks);
+
+  console.log(
+    `[YoutubeAntiTranslate untranslateAudioTrack] tracks`,
+    tracks,
+    "original track",
+    originalTrack
+  );
+
+  if (originalTrack) {
+    player.setAudioTrack(originalTrack);
+    player.audioUntranslated = true;
+  }
+}
+
 function untranslate() {
   if (mutationIdx % MUTATION_UPDATE_STEP == 0) {
     untranslateCurrentVideo();
     untranslateOtherVideos();
+    untranslateAudioTrack();
   }
   mutationIdx++;
 }
@@ -241,9 +325,9 @@ function untranslate() {
 function run() {
   // Change current video title and description
   // Using MutationObserver as we can't exactly know the moment when YT js will load video title
-  let target = document.body;
-  let config = { childList: true, subtree: true };
-  let observer = new MutationObserver(untranslate);
+  const target = document.body;
+  const config = { childList: true, subtree: true };
+  const observer = new MutationObserver(untranslate);
   observer.observe(target, config);
 }
 
