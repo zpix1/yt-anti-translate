@@ -1,20 +1,23 @@
 {
-  "update_url": "https://clients2.google.com/service/update2/crx",
   "name": "YouTube Anti Translate",
-  "version": "1.5.15",
+  "version": "1.16.0",
   "description": "A small extension to disable YT video titles autotranslation.",
-  "manifest_version": 2,
+  "manifest_version": 3,
   "content_scripts": [
     {
       "matches": ["*://*.youtube.com/*"],
       "js": ["src/start.js"]
     }
   ],
-  "web_accessible_resources": ["src/background.js", "src/background_audio.js"],
-  "browser_action": {
+  "web_accessible_resources": [{
+    "resources": ["src/background.js", "src/background_audio.js"],
+    "matches": ["*://*.youtube.com/*"]
+  }],
+  "action": {
     "default_popup": "pages/popup.html"
   },
   "permissions": ["storage"],
+  "host_permissions": ["*://*.youtube.com/*"],
   "icons": {
     "48": "icon48.png"
   }
