@@ -1,5 +1,5 @@
-import { defineConfig, devices } from '@playwright/test';
-import path from 'path';
+import { defineConfig, devices } from "@playwright/test";
+import path from "path";
 
 /**
  * Read environment variables from file.
@@ -12,7 +12,7 @@ import path from 'path';
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
-  testDir: './tests',
+  testDir: "./tests",
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -22,38 +22,40 @@ export default defineConfig({
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: 'html',
+  reporter: "html",
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
     // baseURL: 'http://127.0.0.1:3000',
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    trace: 'on-first-retry',
-    
+    trace: "on-first-retry",
+
     /* Set the default locale to Russian */
-    locale: 'ru-RU',
+    locale: "ru-RU",
   },
 
   /* Configure projects for major browsers */
   projects: [
     {
-      name: 'chromium-extension',
+      name: "chromium-extension",
       testMatch: /.*extension\.spec\.ts/,
       use: {
-        ...devices['Desktop Chrome'],
+        ...devices["Desktop Chrome"],
         contextOptions: {
           // Load the extension from the app directory
-          permissions: ['clipboard-read', 'clipboard-write'],
+          permissions: ["clipboard-read", "clipboard-write"],
         },
         launchOptions: {
+          headless: false,
           args: [
-            `--disable-extensions-except=${path.resolve(__dirname, 'app')}`,
-            `--load-extension=${path.resolve(__dirname, 'app')}`,
+            `--disable-extensions-except=${path.resolve(__dirname, "app")}`,
+            `--load-extension=${path.resolve(__dirname, "app")}`,
+            "--headless=new",
           ],
         },
       },
-    }
+    },
 
     /* Test against mobile viewports. */
     // {
