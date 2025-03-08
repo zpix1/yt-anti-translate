@@ -4,6 +4,7 @@ chrome.storage.sync.get(
   {
     disabled: false,
     untranslateAudio: false,
+    untranslateDescription: true,
   },
   async function (items) {
     if (!items.disabled) {
@@ -19,6 +20,13 @@ chrome.storage.sync.get(
           "src/background_audio.js"
         );
         document.body.appendChild(backgroundAudioScript);
+      }
+
+      if (items.untranslateDescription) {
+        const descriptionScript = document.createElement("script");
+        descriptionScript.type = "module";
+        descriptionScript.src = chrome.runtime.getURL("src/description.js");
+        document.body.appendChild(descriptionScript);
       }
     }
   }

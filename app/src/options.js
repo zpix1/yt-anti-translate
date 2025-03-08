@@ -7,6 +7,7 @@ function saveOptions() {
       disabled: false,
       autoreloadOption: true,
       untranslateAudio: false,
+      untranslateDescription: true,
     },
     function (items) {
       let disabled = !items.disabled;
@@ -38,6 +39,7 @@ function loadOptions() {
       disabled: false,
       autoreloadOption: true,
       untranslateAudio: false,
+      untranslateDescription: true,
     },
     function (items) {
       document.getElementById("disable-button").innerText = items.disabled
@@ -55,6 +57,8 @@ function loadOptions() {
         items.autoreloadOption;
       document.getElementById("audio-checkbox").checked =
         items.untranslateAudio;
+      document.getElementById("description-checkbox").checked =
+        items.untranslateDescription;
     }
   );
 }
@@ -63,6 +67,8 @@ function checkboxUpdate() {
   chrome.storage.sync.set({
     autoreloadOption: document.getElementById("reload-checkbox").checked,
     untranslateAudio: document.getElementById("audio-checkbox").checked,
+    untranslateDescription: document.getElementById("description-checkbox")
+      .checked,
   });
 }
 
@@ -75,6 +81,9 @@ function addListeners() {
     .addEventListener("click", checkboxUpdate);
   document
     .getElementById("audio-checkbox")
+    .addEventListener("click", checkboxUpdate);
+  document
+    .getElementById("description-checkbox")
     .addEventListener("click", checkboxUpdate);
 }
 

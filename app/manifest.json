@@ -10,7 +10,7 @@
     }
   ],
   "web_accessible_resources": [{
-    "resources": ["src/background.js", "src/background_audio.js"],
+    "resources": ["src/background.js", "src/background_audio.js", "src/description.js"],
     "matches": ["*://*.youtube.com/*"]
   }],
   "action": {
