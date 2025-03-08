@@ -9,7 +9,7 @@ test("YouTube Anti-Translate extension prevents auto-translation", async () => {
       `--disable-extensions-except=${extensionPath}`,
       `--load-extension=${extensionPath}`,
       // Additional arguments needed for headless mode with extensions
-      "--headless=new",
+      "--headless=chrome",
     ],
     locale: "ru-RU",
   });
