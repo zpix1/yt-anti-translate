@@ -5,6 +5,7 @@ test("YouTube Anti-Translate extension prevents auto-translation", async () => {
   // Launch browser with the extension
   const extensionPath = path.resolve(__dirname, "../app");
   const context = await chromium.launchPersistentContext("", {
+    headless: false,
     args: [
       `--disable-extensions-except=${extensionPath}`,
       `--load-extension=${extensionPath}`,
