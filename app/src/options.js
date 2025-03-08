@@ -6,7 +6,7 @@ function saveOptions() {
     {
       disabled: false,
       autoreloadOption: true,
-      untranslateAudio: false,
+      untranslateAudio: true,
       untranslateDescription: true,
     },
     function (items) {
@@ -38,7 +38,7 @@ function loadOptions() {
     {
       disabled: false,
       autoreloadOption: true,
-      untranslateAudio: false,
+      untranslateAudio: true,
       untranslateDescription: true,
     },
     function (items) {

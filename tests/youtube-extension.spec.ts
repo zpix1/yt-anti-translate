@@ -5,10 +5,11 @@ test("YouTube Anti-Translate extension prevents auto-translation", async () => {
   // Launch browser with the extension
   const extensionPath = path.resolve(__dirname, "../app");
   const context = await chromium.launchPersistentContext("", {
-    headless: false,
     args: [
       `--disable-extensions-except=${extensionPath}`,
       `--load-extension=${extensionPath}`,
+      // Additional arguments needed for headless mode with extensions
+      "--headless=new",
     ],
     locale: "ru-RU",
   });
@@ -47,7 +48,17 @@ test("YouTube Anti-Translate extension prevents auto-translation", async () => {
   const descriptionText = await page
     .locator("#description-inline-expander")
     .textContent();
-  console.log("Description text:", descriptionText);
+  console.log("Description text:", descriptionText?.trim());
+
+  // Get the video title
+  const videoTitle = await page.locator("h1.ytd-watch-metadata").textContent();
+  console.log("Video title:", videoTitle?.trim());
+
+  // Check that the title is in English and not in Russian
+  expect(videoTitle).toContain("Ages 1 - 100 Decide Who Wins $250,000");
+  expect(videoTitle).not.toContain(
+    "Люди от 1 до 100 Лет Решают, кто Выиграет $250,000"
+  );
 
   // Check that the description contains the original English text and not the Russian translation
   expect(descriptionText).toContain("believe who they picked");
