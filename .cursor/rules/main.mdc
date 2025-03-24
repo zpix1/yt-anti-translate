@@ -1,0 +1,12 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+# How to publish new version:
+1. Get current version in [manifest.json](mdc:app/manifest.json)
+2. Increment version (by default, change patch version)
+3. Update version in [manifest.json](mdc:app/manifest.json) and [popup.html](mdc:app/pages/popup.html).
+4. Update [CHANGELOG.md](mdc:CHANGELOG.md).
+5. Commit. Push git tag (sample: v1.1.1).
