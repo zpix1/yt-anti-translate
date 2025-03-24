@@ -34,3 +34,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - [#26](https://github.com/zpix1/yt-anti-translate/issues/26)
+
+## [1.16.3] - 19.03.2025
+
+### Fixed
+
+- Fixed audio checkbox default value
