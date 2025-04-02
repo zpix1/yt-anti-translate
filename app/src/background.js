@@ -24,20 +24,6 @@ function trimYoutube(title) {
   return title.replace(/ - YouTube$/, "");
 }
 
-function setTitleNode(text, afterNode) {
-  if (document.getElementById("yt-anti-translate-fake-node")) {
-    const node = document.getElementById("yt-anti-translate-fake-node");
-    node.textContent = text;
-    return;
-  }
-
-  const node = document.createElement("span");
-  node.className = "style-scope ytd-video-primary-info-renderer";
-  node.id = "yt-anti-translate-fake-node";
-  node.textContent = text;
-  afterNode.after(node);
-}
-
 async function untranslateCurrentVideo() {
   let translatedTitleElement = document.querySelector(
     "#title > h1 > yt-formatted-string"
