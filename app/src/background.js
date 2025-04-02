@@ -71,16 +71,35 @@ async function untranslateCurrentVideo() {
     realTitle
   );
 
-  if (realTitle === translatedTitleElement.textContent) {
+  const oldTitle = translatedTitleElement.textContent;
+
+  if (realTitle === oldTitle) {
     return;
   }
 
   translatedTitleElement.style.visibility = "hidden";
   translatedTitleElement.style.display = "none";
 
-  console.log(`[YoutubeAntiTranslate] translated title to "${realTitle}"`);
+  const fakeNode = document.getElementById("yt-anti-translate-fake-node");
 
-  setTitleNode(realTitle, translatedTitleElement);
+  if (fakeNode?.textContent === realTitle) {
+    return;
+  }
+
+  console.log(
+    `[YoutubeAntiTranslate] translated title to "${realTitle}" from "${oldTitle}"`
+  );
+
+  if (fakeNode) {
+    fakeNode.textContent = realTitle;
+    return;
+  }
+
+  const newFakeNode = document.createElement("span");
+  newFakeNode.className = "style-scope ytd-video-primary-info-renderer";
+  newFakeNode.id = "yt-anti-translate-fake-node";
+  newFakeNode.textContent = realTitle;
+  translatedTitleElement.after(newFakeNode);
 }
 
 async function untranslateOtherVideos() {
@@ -153,7 +172,7 @@ async function untranslateOtherVideos() {
 let mutationIdx = 0;
 
 async function untranslate() {
-  if (mutationIdx % MUTATION_UPDATE_STEP == 0) {
+  if (mutationIdx % MUTATION_UPDATE_STEP === 0) {
     await untranslateCurrentVideo();
     await untranslateOtherVideos();
   }
