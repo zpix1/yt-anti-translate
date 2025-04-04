@@ -1,7 +1,7 @@
 ---
 name: Bug report
 about: Create a report to help us improve
-title: ''
+title: "[BUG]"
 labels: bug
 assignees: zpix1
 
@@ -24,7 +24,7 @@ A clear and concise description of what you expected to happen.
 If applicable, add screenshots to help explain your problem.
 
 **Environment (please complete the following information):**
- - OS: [e.g. iOS]
+ - OS: [e.g. Windows 11]
  - Browser [e.g. chrome, safari] and browser version
  - YouTube Anti Translate version [e.g. 1.16.4]
 
