@@ -9,6 +9,10 @@ async function get(url) {
   try {
     const response = await fetch(url);
     if (!response.ok) {
+      if (response.status === 404) {
+        cache.set(url, null);
+        return null;
+      }
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const data = await response.json();
@@ -22,6 +26,10 @@ async function get(url) {
 
 function trimYoutube(title) {
   return title.replace(/ - YouTube$/, "");
+}
+
+function normalizeTitle(title) {
+  return title.replace(/\s/g, "");
 }
 
 async function untranslateCurrentShortVideo() {
@@ -67,7 +75,11 @@ async function untranslateCurrentShortVideo() {
     const realTitle = response.title;
     const currentTitle = translatedTitleElement.textContent?.trim();
 
-    if (realTitle && currentTitle && realTitle !== currentTitle) {
+    if (
+      realTitle &&
+      currentTitle &&
+      normalizeTitle(realTitle) !== normalizeTitle(currentTitle)
+    ) {
       console.log(
         `[YoutubeAntiTranslate] Untranslating Short title: "${currentTitle}" -> "${realTitle}"`
       );
@@ -191,66 +203,63 @@ async function untranslateOtherVideos() {
 
       let videoHref = linkElement.href; // Use the link's href for oEmbed and as the key
 
-      if (true) {
-        video.untranslatedByExtension = true;
-        video.untranslatedKey = videoHref;
-
-        try {
-          // console.debug("[YoutubeAntiTranslate] Fetching oEmbed for video:", videoHref);
-          const response = await get(
-            "https://www.youtube.com/oembed?url=" +
-              encodeURIComponent(videoHref)
-          );
-          if (!response || !response.title) {
-            // console.debug("[YoutubeAntiTranslate] No oEmbed data for video:", videoHref);
-            continue; // Skip if no oEmbed data
-          }
-
-          const originalTitle = response.title;
-          // Use innerText for comparison/logging as per original logic for these elements
-          const currentTitle = titleElement.innerText?.trim();
-
-          if (originalTitle && currentTitle && originalTitle !== currentTitle) {
-            console.log(
-              `[YoutubeAntiTranslate] Untranslating Video: "${currentTitle}" -> "${originalTitle}"`
-            );
-            // Update both innerText and title attribute
-            titleElement.innerText = originalTitle;
-            titleElement.title = originalTitle;
-            // Update link title attribute if it's the specific title link
-            if (linkElement.matches("a#video-title-link:not(.cbCustomTitle)")) {
-              linkElement.title = originalTitle;
-            }
-          } else {
-            // console.debug("[YoutubeAntiTranslate] Video title unchanged or element missing:", { href: videoHref, originalTitle, currentTitle });
-          }
-        } catch (error) {
-          console.error(
-            "[YoutubeAntiTranslate] Error processing video:",
-            videoHref,
-            error
-          );
-          // Reset flags to allow retry on next pass
-          video.untranslatedByExtension = false;
-          video.untranslatedKey = null;
+      try {
+        // console.debug("[YoutubeAntiTranslate] Fetching oEmbed for video:", videoHref);
+        const response = await get(
+          "https://www.youtube.com/oembed?url=" + encodeURIComponent(videoHref)
+        );
+        if (!response || !response.title) {
+          // console.debug("[YoutubeAntiTranslate] No oEmbed data for video:", videoHref);
+          continue; // Skip if no oEmbed data
         }
+
+        const originalTitle = response.title;
+        // Use innerText for comparison/logging as per original logic for these elements
+        const currentTitle = titleElement.innerText?.trim();
+
+        if (
+          originalTitle &&
+          currentTitle &&
+          normalizeTitle(originalTitle) !== normalizeTitle(currentTitle)
+        ) {
+          console.log(
+            `[YoutubeAntiTranslate] Untranslating Video: "${currentTitle}" -> "${originalTitle}"`,
+            normalizeTitle(originalTitle),
+            normalizeTitle(currentTitle)
+          );
+          // Update both innerText and title attribute
+          titleElement.innerText = originalTitle;
+          titleElement.title = originalTitle;
+          // Update link title attribute if it's the specific title link
+          if (linkElement.matches("a#video-title-link:not(.cbCustomTitle)")) {
+            linkElement.title = originalTitle;
+          }
+        } else {
+          // console.debug("[YoutubeAntiTranslate] Video title unchanged or element missing:", { href: videoHref, originalTitle, currentTitle });
+        }
+      } catch (error) {
+        console.error(
+          "[YoutubeAntiTranslate] Error processing video:",
+          videoHref,
+          error
+        );
       }
     }
   }
 
   // Selectors for standard video containers
-  // await untranslateArray(document.querySelectorAll("ytd-video-renderer"));
-  await untranslateArray(document.querySelectorAll("ytd-rich-item-renderer"));
-  // await untranslateArray(
-  //   document.querySelectorAll("ytd-compact-video-renderer")
-  // );
-  // await untranslateArray(document.querySelectorAll("ytd-grid-video-renderer"));
-  // await untranslateArray(
-  //   document.querySelectorAll("ytd-playlist-video-renderer")
-  // );
-  // await untranslateArray(
-  //   document.querySelectorAll("ytd-playlist-panel-video-renderer")
-  // );
+  void untranslateArray(document.querySelectorAll("ytd-video-renderer"));
+  void untranslateArray(document.querySelectorAll("ytd-rich-item-renderer"));
+  void untranslateArray(
+    document.querySelectorAll("ytd-compact-video-renderer")
+  );
+  void untranslateArray(document.querySelectorAll("ytd-grid-video-renderer"));
+  void untranslateArray(
+    document.querySelectorAll("ytd-playlist-video-renderer")
+  );
+  void untranslateArray(
+    document.querySelectorAll("ytd-playlist-panel-video-renderer")
+  );
 }
 
 async function untranslateOtherShortsVideos() {
@@ -335,12 +344,12 @@ async function untranslateOtherShortsVideos() {
   }
 
   // Run for standard shorts items
-  await untranslateArray(
+  void untranslateArray(
     document.querySelectorAll("div.style-scope.ytd-rich-item-renderer")
   );
 
   // Run for ytm-shorts-lockup-view-model elements
-  await untranslateArray(
+  void untranslateArray(
     document.querySelectorAll("ytm-shorts-lockup-view-model")
   );
 }
@@ -349,10 +358,18 @@ let mutationIdx = 0;
 
 async function untranslate() {
   if (mutationIdx % MUTATION_UPDATE_STEP === 0) {
-    await untranslateCurrentVideo();
-    await untranslateOtherVideos();
-    await untranslateCurrentShortVideo();
-    await untranslateOtherShortsVideos(); // Call the new function
+    const currentVideoPromise = untranslateCurrentVideo();
+    const otherVideosPromise = untranslateOtherVideos();
+    const currentShortPromise = untranslateCurrentShortVideo();
+    const otherShortsPromise = untranslateOtherShortsVideos(); // Call the new function
+
+    // Wait for all promises to resolve concurrently
+    await Promise.all([
+      currentVideoPromise,
+      otherVideosPromise,
+      currentShortPromise,
+      otherShortsPromise,
+    ]);
   }
   mutationIdx++;
 }
