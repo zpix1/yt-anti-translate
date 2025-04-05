@@ -254,90 +254,95 @@ async function untranslateOtherVideos() {
 }
 
 async function untranslateOtherShortsVideos() {
-  const shortsItems = Array.from(
-    document.querySelectorAll("div.style-scope.ytd-rich-item-renderer")
-  );
-  for (let i = 0; i < shortsItems.length; i++) {
-    const shortElement = shortsItems[i];
+  async function untranslateArray(shortsItems) {
+    shortsItems = Array.from(shortsItems);
+    for (let i = 0; i < shortsItems.length; i++) {
+      const shortElement = shortsItems[i];
 
-    if (!shortElement) {
-      continue;
-    }
+      if (!shortElement) {
+        continue;
+      }
 
-    // Check if already processed to avoid redundant work
-    // if (shortElement.hasAttribute("data-ytat-untranslated-other")) {
-    //   continue;
-    // }
-
-    // Find link element to get URL
-    const linkElement = shortElement.querySelector(
-      "a.shortsLockupViewModelHostEndpoint"
-    );
-    if (!linkElement || !linkElement.href) {
-      // Mark to avoid re-checking non-standard items, might not have a standard link
-      shortElement.setAttribute("data-ytat-untranslated-other", "checked");
-      continue;
-    }
-
-    const videoHref = linkElement.href;
-    // Extract video ID from URLs like /shorts/VIDEO_ID
-    const videoIdMatch = videoHref.match(/shorts\/([a-zA-Z0-9_-]+)/);
-    if (!videoIdMatch || !videoIdMatch[1]) {
-      // Mark if ID can't be extracted (e.g., different URL structure)
-      shortElement.setAttribute("data-ytat-untranslated-other", "checked");
-      continue;
-    }
-    const videoId = videoIdMatch[1];
-
-    // Find title element (Common patterns: #video-title inside the renderer)
-    const titleElement = shortElement.querySelector(
-      ".yt-core-attributed-string.yt-core-attributed-string--white-space-pre-wrap"
-    );
-    if (!titleElement) {
-      // Mark if title element is missing
-      shortElement.setAttribute("data-ytat-untranslated-other", "checked");
-      continue;
-    }
-
-    const oembedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/shorts/${videoId}`;
-
-    try {
-      const response = await get(oembedUrl);
-      if (!response || !response.title) {
-        // Mark as checked even if no oEmbed data is found
+      // Find link element to get URL
+      const linkElement = shortElement.querySelector(
+        "a.shortsLockupViewModelHostEndpoint"
+      );
+      if (!linkElement || !linkElement.href) {
+        // Mark to avoid re-checking non-standard items, might not have a standard link
         shortElement.setAttribute("data-ytat-untranslated-other", "checked");
         continue;
       }
 
-      const realTitle = response.title;
-      const currentTitle = titleElement.textContent?.trim(); // Use textContent for typical title spans
-
-      if (realTitle && currentTitle && realTitle !== currentTitle) {
-        titleElement.textContent = realTitle;
-        // Update title attribute if it exists (for tooltips)
-        if (titleElement.hasAttribute("title")) {
-          titleElement.title = realTitle;
-        }
-        const titleA = shortElement.querySelector(
-          "a.shortsLockupViewModelHostEndpoint.shortsLockupViewModelHostOutsideMetadataEndpoint"
-        );
-        if (titleA) {
-          titleA.title = realTitle;
-        }
-        shortElement.setAttribute("data-ytat-untranslated-other", "true"); // Mark as successfully untranslated
-      } else {
-        // Mark as done even if titles match or one is missing, prevents re-checking
-        shortElement.setAttribute("data-ytat-untranslated-other", "true");
+      const videoHref = linkElement.href;
+      // Extract video ID from URLs like /shorts/VIDEO_ID
+      const videoIdMatch = videoHref.match(/shorts\/([a-zA-Z0-9_-]+)/);
+      if (!videoIdMatch || !videoIdMatch[1]) {
+        // Mark if ID can't be extracted (e.g., different URL structure)
+        shortElement.setAttribute("data-ytat-untranslated-other", "checked");
+        continue;
       }
-    } catch (error) {
-      console.error(
-        "[YoutubeAntiTranslate] Error fetching oEmbed for other Short:",
-        videoId,
-        error
+      const videoId = videoIdMatch[1];
+
+      // Find title element (Common patterns: #video-title inside the renderer)
+      const titleElement = shortElement.querySelector(
+        ".yt-core-attributed-string.yt-core-attributed-string--white-space-pre-wrap"
       );
-      // Do not mark on fetch error, allow retry on the next mutation check
+      if (!titleElement) {
+        // Mark if title element is missing
+        shortElement.setAttribute("data-ytat-untranslated-other", "checked");
+        continue;
+      }
+
+      const oembedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/shorts/${videoId}`;
+
+      try {
+        const response = await get(oembedUrl);
+        if (!response || !response.title) {
+          // Mark as checked even if no oEmbed data is found
+          shortElement.setAttribute("data-ytat-untranslated-other", "checked");
+          continue;
+        }
+
+        const realTitle = response.title;
+        const currentTitle = titleElement.textContent?.trim(); // Use textContent for typical title spans
+
+        if (realTitle && currentTitle && realTitle !== currentTitle) {
+          titleElement.textContent = realTitle;
+          // Update title attribute if it exists (for tooltips)
+          if (titleElement.hasAttribute("title")) {
+            titleElement.title = realTitle;
+          }
+          const titleA = shortElement.querySelector(
+            "a.shortsLockupViewModelHostEndpoint.shortsLockupViewModelHostOutsideMetadataEndpoint"
+          );
+          if (titleA) {
+            titleA.title = realTitle;
+          }
+          shortElement.setAttribute("data-ytat-untranslated-other", "true"); // Mark as successfully untranslated
+        } else {
+          // Mark as done even if titles match or one is missing, prevents re-checking
+          shortElement.setAttribute("data-ytat-untranslated-other", "true");
+        }
+      } catch (error) {
+        console.error(
+          "[YoutubeAntiTranslate] Error fetching oEmbed for other Short:",
+          videoId,
+          error
+        );
+        // Do not mark on fetch error, allow retry on the next mutation check
+      }
     }
   }
+
+  // Run for standard shorts items
+  await untranslateArray(
+    document.querySelectorAll("div.style-scope.ytd-rich-item-renderer")
+  );
+
+  // Run for ytm-shorts-lockup-view-model elements
+  await untranslateArray(
+    document.querySelectorAll("ytm-shorts-lockup-view-model")
+  );
 }
 
 let mutationIdx = 0;
