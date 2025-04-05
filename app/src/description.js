@@ -13,67 +13,51 @@ const MUTATION_UPDATE_FREQUENCY = 2;
  */
 function convertUrlsToLinks(text) {
   const container = document.createElement("span");
-  // Pattern for URLs
-  const urlPattern = /(https?:\/\/[^\s]+)/g;
-  // Pattern for timecodes (matches formats like 00:00, 05:36, 1:23:45)
-  const timecodePattern = /(?:^|\s)((?:\d{1,2}:)?\d{1,2}:\d{2})(?=\s|$)/g;
+  // Group 1: URL (https?:\/\/[^\s]+)
+  // Group 2: Full timecode match including preceding space/start of line `(?:^|\s)((?:\d{1,2}:)?\d{1,2}:\d{2})`
+  // Group 3: The actual timecode `(\d{1,2}:)?\d{1,2}:\d{2}`
+  const combinedPattern =
+    /(https?:\/\/[^\s]+)|((?:^|\s)((?:\d{1,2}:)?\d{1,2}:\d{2}))(?=\s|$)/g;
 
-  // First, split by URLs and process
-  let segments = text.split(urlPattern);
-  let processedText = "";
+  let lastIndex = 0;
+  let match;
 
-  segments.forEach((segment) => {
-    if (segment.match(/^https?:\/\//)) {
-      // Handle URL
-      const linkElement = createLinkElement(segment);
+  while ((match = combinedPattern.exec(text)) !== null) {
+    const urlMatch = match[1];
+    const timecodeFullMatch = match[2]; // e.g., " 1:23:45" or "1:23:45" if at start
+    const timecodeValue = match[3]; // e.g., "1:23:45"
+
+    // Add text segment before the match
+    if (match.index > lastIndex) {
+      container.appendChild(
+        document.createTextNode(text.substring(lastIndex, match.index))
+      );
+    }
+
+    if (urlMatch) {
+      // It's a URL
+      const linkElement = createLinkElement(urlMatch);
       container.appendChild(linkElement);
-    } else if (segment) {
-      // Process segment for timecodes
-      processedText += segment;
-    }
-  });
-
-  // Now process the non-URL text for timecodes
-  if (processedText) {
-    let lastIndex = 0;
-    const timecodeMatches = [...processedText.matchAll(timecodePattern)];
-
-    if (timecodeMatches.length > 0) {
-      timecodeMatches.forEach((match) => {
-        const [fullMatch, timecode] = match;
-        const matchIndex = match.index;
-
-        // Add text before the timecode
-        if (matchIndex > lastIndex) {
-          container.appendChild(
-            document.createTextNode(
-              processedText.substring(lastIndex, matchIndex)
-            )
-          );
-        }
-
-        // Add the whitespace before the timecode if it exists
-        if (fullMatch.startsWith(" ")) {
-          container.appendChild(document.createTextNode(" "));
-        }
-
-        // Add the timecode as a link
-        const timecodeLink = createTimecodeLink(timecode);
-        container.appendChild(timecodeLink);
-
-        lastIndex = matchIndex + fullMatch.length;
-      });
-
-      // Add remaining text after the last timecode
-      if (lastIndex < processedText.length) {
-        container.appendChild(
-          document.createTextNode(processedText.substring(lastIndex))
-        );
+      lastIndex = combinedPattern.lastIndex; // Use regex lastIndex for URLs
+    } else if (timecodeValue) {
+      // It's a timecode
+      // Add the preceding space if it exists in timecodeFullMatch
+      if (timecodeFullMatch.startsWith(" ")) {
+        container.appendChild(document.createTextNode(" "));
       }
-    } else {
-      // No timecodes found, just add the text
-      container.appendChild(document.createTextNode(processedText));
+
+      const timecodeLink = createTimecodeLink(timecodeValue);
+      container.appendChild(timecodeLink);
+      // Update lastIndex based on the full match length (including potential space)
+      lastIndex = match.index + timecodeFullMatch.length;
+      combinedPattern.lastIndex = lastIndex; // Important: update regex lastIndex
     }
+    // No else needed, as the regex ensures either group 1 or group 3 matched
+  }
+
+  // Add remaining text after the last match
+  if (lastIndex < text.length) {
+    container.appendChild(document.createTextNode(text.substring(lastIndex)));
   }
 
   return container;

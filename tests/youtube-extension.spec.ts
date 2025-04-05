@@ -101,7 +101,6 @@ test.describe("YouTube Anti-Translate extension", () => {
     await page.goto("https://www.youtube.com/watch?v=4PBPXbd4DkQ");
 
     // Wait for the page to load and for YouTube to process the locale
-    await page.waitForLoadState("networkidle");
 
     // Sometimes YouTube shows a consent dialog, handle it if it appears
     const consentButton = page.getByRole("button", {
@@ -135,7 +134,7 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Verify description contains expected English text
     expect(descriptionText).toContain(
-      "Model Rockets Battle - Fun Adventure for kids"
+      "Toy Rockets Challenge - Fun Outdoor Activities for kids!"
     );
     expect(descriptionText).toContain("Chris helps Alice find her cars");
     expect(descriptionText).toContain("Please Subscribe!");

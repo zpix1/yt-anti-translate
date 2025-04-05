@@ -9,7 +9,7 @@ async function get(url) {
   try {
     const response = await fetch(url);
     if (!response.ok) {
-      if (response.status === 404) {
+      if (response.status === 404 || response.status === 401) {
         cache.set(url, null);
         return null;
       }
