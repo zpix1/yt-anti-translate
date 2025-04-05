@@ -214,4 +214,93 @@ test.describe("YouTube Anti-Translate extension", () => {
     // Close the browser context
     await context.close();
   });
+
+  test("YouTube channel Videos and Shorts tabs retain original titles", async () => {
+    // Launch browser with the extension
+    const extensionPath = path.resolve(__dirname, "../app");
+    const context = await chromium.launchPersistentContext("", {
+      headless: false,
+      args: [
+        `--disable-extensions-except=${extensionPath}`,
+        `--load-extension=${extensionPath}`,
+      ],
+      locale: "ru-RU", // Use Russian locale to trigger translation
+    });
+
+    // Create a new page
+    const page = await context.newPage();
+
+    // Navigate to the specified YouTube channel videos page
+    await page.goto("https://www.youtube.com/@MrBeast/videos");
+
+    // Wait for the page to load
+    await page.waitForLoadState("networkidle");
+
+    // Sometimes YouTube shows a consent dialog, handle it if it appears
+    const consentButton = page.getByRole("button", {
+      name: /I agree|Принимаю|Я согласен/i,
+    });
+    if (await consentButton.isVisible({ timeout: 5000 })) {
+      await consentButton.click();
+      await page.waitForLoadState("networkidle"); // Wait again after consent
+    }
+
+    // Wait for the video grid to appear
+    await page.waitForSelector("ytd-rich-grid-media");
+
+    // --- Check Videos Tab ---
+    const originalVideoTitle = "I Survived The 5 Deadliest Places On Earth";
+    const translatedVideoTitle = "Я Выжил В 5 Самых Опасных Местах На Земле";
+    const videoSelector = `ytd-rich-item-renderer:has-text("${originalVideoTitle}")`;
+    const translatedVideoSelector = `ytd-rich-item-renderer:has-text("${translatedVideoTitle}")`;
+
+    console.log("Checking Videos tab for original title...");
+    await expect(page.locator(videoSelector)).toBeVisible();
+    await expect(page.locator(translatedVideoSelector)).not.toBeVisible();
+    console.log("Original video title found, translated title not found.");
+
+    // --- Switch to Shorts Tab ---
+    console.log("Clicking Shorts tab...");
+    await page.locator("#tabsContent").getByText("Shorts").click();
+    await page.waitForLoadState("networkidle");
+
+    // --- Check Shorts Tab ---
+    const originalShortTitle = "Baseball Tic Tac Toe vs MLB Pro";
+    const translatedShortTitle = "Бейсбольные Крестики-Нолики"; // Adjust if needed
+    const shortSelector = `ytd-rich-item-renderer:has-text("${originalShortTitle}")`;
+    const translatedShortSelector = `ytd-rich-item-renderer:has-text("${translatedShortTitle}")`;
+
+    console.log("Checking Shorts tab for original title...");
+    // Shorts might load dynamically, scroll down slightly to ensure it's loaded
+    await page.mouse.wheel(0, 500);
+    await page.waitForTimeout(1000); // Give it a moment to load more items if needed
+
+    await expect(page.locator(shortSelector)).toBeVisible({ timeout: 10000 }); // Increased timeout for dynamic loading
+    await expect(page.locator(translatedShortSelector)).not.toBeVisible();
+    console.log(
+      "Original short title found, translated short title not found."
+    );
+
+    // --- Switch back to Videos Tab ---
+    const videosTabSelector = 'tp-yt-paper-tab:has-text("Videos")'; // Adjust if text differs
+    console.log("Clicking Videos tab...");
+    await page.locator("#tabsContent").getByText("Видео").click();
+    await page.waitForLoadState("networkidle");
+    await page.waitForSelector(
+      "ytd-rich-grid-media >> ytd-thumbnail-overlay-time-status-renderer:not([overlay-style='SHORTS'])",
+      { state: "visible" }
+    ); // Wait for videos to load
+
+    // --- Re-check Videos Tab ---
+    console.log("Re-checking Videos tab for original title...");
+    await expect(page.locator(videoSelector)).toBeVisible();
+    await expect(page.locator(translatedVideoSelector)).not.toBeVisible();
+    console.log("Original video title confirmed on Videos tab again.");
+
+    // Take a screenshot for visual verification
+    await page.screenshot({ path: "images/youtube-channel-tabs-test.png" });
+
+    // Close the browser context
+    await context.close();
+  });
 });

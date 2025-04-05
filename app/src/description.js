@@ -180,7 +180,6 @@ function restoreOriginalDescription() {
   const originalDescription = fetchOriginalDescription();
 
   if (!originalDescription) {
-    console.log(`${LOG_PREFIX} No original description found`);
     return;
   }
 

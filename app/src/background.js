@@ -161,6 +161,7 @@ async function untranslateCurrentVideo() {
 
 async function untranslateOtherVideos() {
   async function untranslateArray(otherVideos) {
+    otherVideos = Array.from(otherVideos);
     for (let i = 0; i < otherVideos.length; i++) {
       let video = otherVideos[i];
 
@@ -190,10 +191,7 @@ async function untranslateOtherVideos() {
 
       let videoHref = linkElement.href; // Use the link's href for oEmbed and as the key
 
-      if (
-        !video.untranslatedByExtension ||
-        video.untranslatedKey !== videoHref
-      ) {
+      if (true) {
         video.untranslatedByExtension = true;
         video.untranslatedKey = videoHref;
 
@@ -241,25 +239,24 @@ async function untranslateOtherVideos() {
   }
 
   // Selectors for standard video containers
-  await untranslateArray(document.querySelectorAll("ytd-video-renderer"));
+  // await untranslateArray(document.querySelectorAll("ytd-video-renderer"));
   await untranslateArray(document.querySelectorAll("ytd-rich-item-renderer"));
-  await untranslateArray(
-    document.querySelectorAll("ytd-compact-video-renderer")
-  );
-  await untranslateArray(document.querySelectorAll("ytd-grid-video-renderer"));
-  await untranslateArray(
-    document.querySelectorAll("ytd-playlist-video-renderer")
-  );
-  await untranslateArray(
-    document.querySelectorAll("ytd-playlist-panel-video-renderer")
-  );
+  // await untranslateArray(
+  //   document.querySelectorAll("ytd-compact-video-renderer")
+  // );
+  // await untranslateArray(document.querySelectorAll("ytd-grid-video-renderer"));
+  // await untranslateArray(
+  //   document.querySelectorAll("ytd-playlist-video-renderer")
+  // );
+  // await untranslateArray(
+  //   document.querySelectorAll("ytd-playlist-panel-video-renderer")
+  // );
 }
 
 async function untranslateOtherShortsVideos() {
   const shortsItems = Array.from(
     document.querySelectorAll("div.style-scope.ytd-rich-item-renderer")
   );
-
   for (let i = 0; i < shortsItems.length; i++) {
     const shortElement = shortsItems[i];
 
@@ -268,9 +265,9 @@ async function untranslateOtherShortsVideos() {
     }
 
     // Check if already processed to avoid redundant work
-    if (shortElement.hasAttribute("data-ytat-untranslated-other")) {
-      continue;
-    }
+    // if (shortElement.hasAttribute("data-ytat-untranslated-other")) {
+    //   continue;
+    // }
 
     // Find link element to get URL
     const linkElement = shortElement.querySelector(
