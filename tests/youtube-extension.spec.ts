@@ -19,6 +19,12 @@ test.describe("YouTube Anti-Translate extension", () => {
     // Create a new page
     const page = await context.newPage();
 
+    // Set up console message counting
+    let consoleMessageCount = 0;
+    page.on("console", () => {
+      consoleMessageCount++;
+    });
+
     // Navigate to the specified YouTube video
     await page.goto("https://www.youtube.com/watch?v=l-nMKJ5J3Uc");
 
@@ -76,6 +82,12 @@ test.describe("YouTube Anti-Translate extension", () => {
     // Take a screenshot for visual verification
     await page.screenshot({ path: "images/youtube-extension-test.png" });
 
+    // Check console message count
+    expect(consoleMessageCount).toBeLessThan(
+      2000,
+      "Too many console messages detected"
+    );
+
     // Close the browser context
     await context.close();
   });
@@ -96,6 +108,12 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Create a new page
     const page = await context.newPage();
+
+    // Set up console message counting
+    let consoleMessageCount = 0;
+    page.on("console", () => {
+      consoleMessageCount++;
+    });
 
     // Navigate to the specified YouTube video
     await page.goto("https://www.youtube.com/watch?v=4PBPXbd4DkQ");
@@ -161,6 +179,12 @@ test.describe("YouTube Anti-Translate extension", () => {
     // Take a screenshot for visual verification
     await page.screenshot({ path: "images/youtube-timecode-test.png" });
 
+    // Check console message count
+    expect(consoleMessageCount).toBeLessThan(
+      2000,
+      "Too many console messages detected"
+    );
+
     // Close the browser context
     await context.close();
   });
@@ -179,6 +203,12 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Create a new page
     const page = await context.newPage();
+
+    // Set up console message counting
+    let consoleMessageCount = 0;
+    page.on("console", () => {
+      consoleMessageCount++;
+    });
 
     // Navigate to the specified YouTube Short
     await page.goto("https://www.youtube.com/shorts/PXevNM0awlI");
@@ -210,6 +240,12 @@ test.describe("YouTube Anti-Translate extension", () => {
     // Take a screenshot for visual verification
     await page.screenshot({ path: "images/youtube-shorts-test.png" });
 
+    // Check console message count
+    expect(consoleMessageCount).toBeLessThan(
+      2000,
+      "Too many console messages detected"
+    );
+
     // Close the browser context
     await context.close();
   });
@@ -228,6 +264,12 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Create a new page
     const page = await context.newPage();
+
+    // Set up console message counting
+    let consoleMessageCount = 0;
+    page.on("console", () => {
+      consoleMessageCount++;
+    });
 
     // Navigate to the specified YouTube channel videos page
     await page.goto("https://www.youtube.com/@MrBeast/videos");
@@ -281,7 +323,6 @@ test.describe("YouTube Anti-Translate extension", () => {
     );
 
     // --- Switch back to Videos Tab ---
-    const videosTabSelector = 'tp-yt-paper-tab:has-text("Videos")'; // Adjust if text differs
     console.log("Clicking Videos tab...");
     await page.locator("#tabsContent").getByText("Видео").click();
     await page.waitForLoadState("networkidle");
@@ -298,6 +339,12 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Take a screenshot for visual verification
     await page.screenshot({ path: "images/youtube-channel-tabs-test.png" });
+
+    // Check console message count
+    expect(consoleMessageCount).toBeLessThan(
+      2000,
+      "Too many console messages detected"
+    );
 
     // Close the browser context
     await context.close();
