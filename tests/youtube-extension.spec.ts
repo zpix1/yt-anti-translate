@@ -1,5 +1,10 @@
 import { test, expect, chromium } from "@playwright/test";
 import path from "path";
+import fs from "fs";
+// Console log all files in extension path
+const extensionPath = path.resolve(__dirname, "../app");
+const files = fs.readdirSync(extensionPath);
+console.log("Files in extension path:", files);
 
 test.describe("YouTube Anti-Translate extension", () => {
   test("YouTube Anti-Translate extension prevents auto-translation", async () => {
