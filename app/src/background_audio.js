@@ -58,7 +58,10 @@ function getOriginalTrack(tracks) {
 }
 
 function untranslateAudioTrack() {
-  const player = document.querySelector("#movie_player");
+  const id = window.location.pathname.startsWith("/shorts")
+    ? "#shorts-player"
+    : "#movie_player";
+  const player = document.querySelector(id);
   if (!player || !player.getAvailableAudioTracks || player.audioUntranslated) {
     return;
   }
