@@ -10,6 +10,7 @@ It is much easier to use than its analogs (such as [YoutubeAutotranslateCanceler
 
 - Restores original video titles on YouTube (Title Anti-Translation)
 - Disables automatic audio translation (can be toggled in settings)
+- Untranslates YouTube Shorts audio and titles
 - Works automatically without any configuration
 
 ## How to use
