@@ -38,10 +38,10 @@ export default defineConfig({
   /* Configure projects for major browsers */
   projects: [
     {
-      name: "chromium-extension",
+      name: "firefox-extension",
       testMatch: /.*extension\.spec\.ts/,
       use: {
-        ...devices["Desktop Chrome"],
+        ...devices["Desktop Firefox"],
         contextOptions: {
           // Load the extension from the app directory
           permissions: ["clipboard-read", "clipboard-write"],
