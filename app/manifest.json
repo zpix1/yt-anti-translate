@@ -1,5 +1,6 @@
 {
-  "name": "YouTube Anti Translate",
+  "name": "YouTube Anti Translate - mv3",
+  "author": "zpix1; ported by namakeingo",
   "version": "1.17.0",
   "description": "A small extension to disable YT video titles autotranslation.",
   "manifest_version": 3,
@@ -25,7 +26,7 @@
   "action": {
     "default_popup": "pages/popup.html"
   },
-  "permissions": ["storage"],
+  "permissions": ["storage","tabs"],
   "host_permissions": ["*://*.youtube.com/*"],
   "icons": {
     "48": "icon48.png"
