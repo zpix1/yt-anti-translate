@@ -5,9 +5,9 @@ import fse from "fs-extra";
 import { firefox, BrowserContext } from "playwright";
 
 interface SetupOptions {
-  extensionPath: string;      // Absolute path to your unpacked extension folder
-  profilePath: string;        // Path to generate the Firefox profile
-  extensionId: string;        // Gecko extension ID from manifest.json
+  extensionPath: string;
+  profilePath: string;
+  extensionId: string;
 }
 
 export async function setupFirefoxProfileWithExtension(options: SetupOptions): Promise<BrowserContext> {
@@ -17,14 +17,19 @@ export async function setupFirefoxProfileWithExtension(options: SetupOptions): P
   const userJsPath = path.join(profilePath, "user.js");
   const xpiPath = path.join(extensionsDir, `${extensionId}.xpi`);
 
-  // Clean and recreate profile directory
+  // Clean profile
   fse.removeSync(profilePath);
   fse.ensureDirSync(extensionsDir);
 
-  // Step 1: Package the extension folder into a .xpi (ZIP) file
+  // 1. Zip the extension
   await zipDirectory(extensionPath, xpiPath);
+  if (!fs.existsSync(xpiPath)) {
+    throw new Error(`Failed to create .xpi at: ${xpiPath}`);
+  }
 
-  // Step 2: Write user.js to enable unsigned extensions
+  console.log(`✅ Created XPI: ${xpiPath}`);
+
+  // 2. Write Firefox preferences
   const userPrefs = `
 user_pref("xpinstall.signatures.required", false);
 user_pref("extensions.install.requireBuiltInCerts", false);
@@ -37,22 +42,21 @@ user_pref("devtools.debugger.remote-enabled", true);
 user_pref("browser.shell.checkDefaultBrowser", false);
 user_pref("browser.tabs.warnOnClose", false);
 `.trim();
-
   fs.writeFileSync(userJsPath, userPrefs);
 
-  // Step 3: Launch Firefox with the profile
+  // Log file structure
+  console.log("\n🗂 Firefox profile contents before launch:");
+  logDirectoryContents(profilePath);
+
+  // 3. Launch Firefox
   const context = await firefox.launchPersistentContext(profilePath, {
     headless: false,
+    locale: "ru-RU",
   });
-  
-  // Add at the end of setupFirefoxProfileWithExtension
-  console.log("\n🗂 Firefox profile contents:");
-  logDirectoryContents(profilePath);
 
   return context;
 }
 
-// Helper: Zip the extension folder into a .xpi file
 async function zipDirectory(sourceDir: string, outPath: string): Promise<void> {
   return new Promise((resolve, reject) => {
     const output = fs.createWriteStream(outPath);
@@ -69,7 +73,6 @@ async function zipDirectory(sourceDir: string, outPath: string): Promise<void> {
 
 function logDirectoryContents(dirPath: string, prefix: string = ""): void {
   const items = fs.readdirSync(dirPath);
-
   for (const item of items) {
     const fullPath = path.join(dirPath, item);
     const stats = fs.statSync(fullPath);
@@ -82,4 +85,5 @@ function logDirectoryContents(dirPath: string, prefix: string = ""): void {
     }
   }
 }
+
 
