@@ -1,11 +1,11 @@
-import { test, expect, chromium } from "@playwright/test";
+import { test, expect, firefox } from "@playwright/test";
 import path from "path";
 
 test.describe("YouTube Anti-Translate extension", () => {
   test("YouTube Anti-Translate extension prevents auto-translation", async () => {
     // Launch browser with the extension
     const extensionPath = path.resolve(__dirname, "../app");
-    const context = await chromium.launchPersistentContext("", {
+    const context = await firefox.launchPersistentContext("", {
       headless: false,
       args: [
         `--disable-extensions-except=${extensionPath}`,
@@ -95,7 +95,7 @@ test.describe("YouTube Anti-Translate extension", () => {
   test("YouTube timecode links in description work correctly with Anti-Translate extension", async () => {
     // Launch browser with the extension
     const extensionPath = path.resolve(__dirname, "../app");
-    const context = await chromium.launchPersistentContext("", {
+    const context = await firefox.launchPersistentContext("", {
       headless: false,
       args: [
         `--disable-extensions-except=${extensionPath}`,
@@ -192,7 +192,7 @@ test.describe("YouTube Anti-Translate extension", () => {
   test("YouTube Shorts title is not translated with Anti-Translate extension", async () => {
     // Launch browser with the extension
     const extensionPath = path.resolve(__dirname, "../app");
-    const context = await chromium.launchPersistentContext("", {
+    const context = await firefox.launchPersistentContext("", {
       headless: false,
       args: [
         `--disable-extensions-except=${extensionPath}`,
@@ -253,7 +253,7 @@ test.describe("YouTube Anti-Translate extension", () => {
   test("YouTube channel Videos and Shorts tabs retain original titles", async () => {
     // Launch browser with the extension
     const extensionPath = path.resolve(__dirname, "../app");
-    const context = await chromium.launchPersistentContext("", {
+    const context = await firefox.launchPersistentContext("", {
       headless: false,
       args: [
         `--disable-extensions-except=${extensionPath}`,
