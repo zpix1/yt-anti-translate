@@ -1,6 +1,6 @@
 import { test, expect, firefox } from "@playwright/test";
 import path from "path";
-import { setupFirefoxProfileWithExtension } from "setupFirefoxProfileWithExtension";
+import { setupFirefoxProfileWithExtension } from "./setupFirefoxProfileWithExtension";
 
 test.describe("YouTube Anti-Translate extension", () => {
   test("YouTube Anti-Translate extension prevents auto-translation", async () => {
