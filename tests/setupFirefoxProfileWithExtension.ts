@@ -43,6 +43,59 @@ user_pref("browser.shell.checkDefaultBrowser", false);
 user_pref("browser.tabs.warnOnClose", false);
 `.trim();
   fs.writeFileSync(userJsPath, userPrefs);
+  
+  const extensionsJsonPath = path.join(profilePath, "extensions.json");
+
+  const extensionsJson = {
+    schemaVersion: 36,
+    addons: [
+      {
+        id: extensionId,
+        version: "1.0.0",
+        type: "extension",
+        manifestVersion: 3,
+        defaultLocale: {
+          name: "Dev Extension",
+          description: "Loaded manually for testing",
+          creator: "Dev"
+        },
+        visible: true,
+        active: true,
+        userDisabled: false,
+        appDisabled: false,
+        installDate: Date.now(),
+        updateDate: Date.now(),
+        applyBackgroundUpdates: 1,
+        path: path.join("extensions", `${extensionId}.xpi`),
+        skinnable: false,
+        signedState: 0,
+        seen: true,
+        dependencies: [],
+        incognito: "spanning",
+        icons: {},
+        blocklistState: 0,
+        location: "app-profile",
+        rootURI: `jar:file://${path.join(profilePath, "extensions", `${extensionId}.xpi`)}!/`,
+
+        // 🔐 Permissions
+        userPermissions: {
+          permissions: ["storage", "tabs"],
+          origins: []
+        },
+        optionalPermissions: {
+          permissions: [],
+          origins: ["*://*.youtube.com/*"]
+        },
+        requestedPermissions: {
+          permissions: [],
+          origins: ["*://*.youtube.com/*"]
+        }
+      }
+    ]
+  };
+
+  fs.writeFileSync(extensionsJsonPath, JSON.stringify(extensionsJson, null, 2));
+  console.log(`✅ Created extensions.json at ${extensionsJsonPath}`);
 
   // Log file structure
   console.log("\n🗂 Firefox profile contents before launch:");
@@ -85,5 +138,3 @@ function logDirectoryContents(dirPath: string, prefix: string = ""): void {
     }
   }
 }
-
-
