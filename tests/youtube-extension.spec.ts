@@ -5,10 +5,11 @@ import { setupFirefoxProfileWithExtension } from "./setupFirefoxProfileWithExten
 test.describe("YouTube Anti-Translate extension", () => {
   test("YouTube Anti-Translate extension prevents auto-translation", async () => {
     // Launch browser with the extension
+    process.env.MOZ_DISABLE_EXTENSION_SIGNING = "1";
     const context = await setupFirefoxProfileWithExtension({
-      extensionPath: path.resolve(__dirname, "../app"),  // The extension directory
-      profilePath: "/tmp/firefox-playwright-profile",    // Any temp path
-      extensionId: "youtube-anti-translate@namakeingo.co.uk"            // Must match manifest.json
+      extensionPath: path.resolve(__dirname, "../app"),      // The extension directory
+      profilePath: "./tmp/firefox-playwright-profile",        // Any temp path
+      extensionId: "youtube-anti-translate@namakeingo.co.uk" // Must match manifest.json
     });
 
     // Create a new page
@@ -79,8 +80,7 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Check console message count
     expect(consoleMessageCount).toBeLessThan(
-      2000,
-      "Too many console messages detected"
+      2000
     );
 
     // Close the browser context
@@ -89,10 +89,11 @@ test.describe("YouTube Anti-Translate extension", () => {
 
   test("YouTube timecode links in description work correctly with Anti-Translate extension", async () => {
     // Launch browser with the extension
+    process.env.MOZ_DISABLE_EXTENSION_SIGNING = "1";
     const context = await setupFirefoxProfileWithExtension({
-      extensionPath: path.resolve(__dirname, "../app"),  // The extension directory
-      profilePath: "/tmp/firefox-playwright-profile",    // Any temp path
-      extensionId: "youtube-anti-translate@namakeingo.co.uk"            // Must match manifest.json
+      extensionPath: path.resolve(__dirname, "../app"),       // The extension directory
+      profilePath: "./tmp/firefox-playwright-profile",         // Any temp path
+      extensionId: "youtube-anti-translate@namakeingo.co.uk"  // Must match manifest.json
     });
 
     // Create a new page
@@ -170,8 +171,7 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Check console message count
     expect(consoleMessageCount).toBeLessThan(
-      2000,
-      "Too many console messages detected"
+      2000
     );
 
     // Close the browser context
@@ -180,10 +180,11 @@ test.describe("YouTube Anti-Translate extension", () => {
 
   test("YouTube Shorts title is not translated with Anti-Translate extension", async () => {
     // Launch browser with the extension
+    process.env.MOZ_DISABLE_EXTENSION_SIGNING = "1";
     const context = await setupFirefoxProfileWithExtension({
-      extensionPath: path.resolve(__dirname, "../app"),  // The extension directory
-      profilePath: "/tmp/firefox-playwright-profile",    // Any temp path
-      extensionId: "youtube-anti-translate@namakeingo.co.uk"            // Must match manifest.json
+      extensionPath: path.resolve(__dirname, "../app"),       // The extension directory
+      profilePath: "./tmp/firefox-playwright-profile",        // Any temp path
+      extensionId: "youtube-anti-translate@namakeingo.co.uk"  // Must match manifest.json
     });
 
     // Create a new page
@@ -227,8 +228,7 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Check console message count
     expect(consoleMessageCount).toBeLessThan(
-      2000,
-      "Too many console messages detected"
+      2000
     );
 
     // Close the browser context
@@ -237,10 +237,11 @@ test.describe("YouTube Anti-Translate extension", () => {
 
   test("YouTube channel Videos and Shorts tabs retain original titles", async () => {
     // Launch browser with the extension
+    process.env.MOZ_DISABLE_EXTENSION_SIGNING = "1";
     const context = await setupFirefoxProfileWithExtension({
-      extensionPath: path.resolve(__dirname, "../app"),  // The extension directory
-      profilePath: "/tmp/firefox-playwright-profile",    // Any temp path
-      extensionId: "youtube-anti-translate@namakeingo.co.uk"            // Must match manifest.json
+      extensionPath: path.resolve(__dirname, "../app"),       // The extension directory
+      profilePath: "/tmp/firefox-playwright-profile",         // Any temp path
+      extensionId: "youtube-anti-translate@namakeingo.co.uk"  // Must match manifest.json
     });
 
     // Create a new page
@@ -323,8 +324,7 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Check console message count
     expect(consoleMessageCount).toBeLessThan(
-      2000,
-      "Too many console messages detected"
+      2000
     );
 
     // Close the browser context

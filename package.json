@@ -26,6 +26,8 @@
   },
   "dependencies": {
     "archiver": "^7.0.1",
+    "crypto": "^1.0.1",
+    "execa": "^9.5.2",
     "fs-extra": "^11.3.0"
   }
 }
