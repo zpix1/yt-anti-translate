@@ -33,6 +33,7 @@ export async function setupFirefoxProfileWithExtension(options: SetupOptions): P
       "--channel=unlisted",
       "--source-dir", extensionPath
     ]);
+	
 
     const match = stdout.match(/"signedFile":"([^"]+\.xpi)"/);
     if (!match) {
