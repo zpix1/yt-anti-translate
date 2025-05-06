@@ -3,6 +3,12 @@
   "version": "1.17.0",
   "description": "A small extension to disable YT video titles autotranslation.",
   "manifest_version": 3,
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "youtube-anti-translate@namakeingo.co.uk",
+      "strict_min_version": "109.0"
+    }
+  },
   "content_scripts": [
     {
       "matches": ["*://*.youtube.com/*"],
@@ -10,9 +16,12 @@
     }
   ],
   "web_accessible_resources": [{
-    "resources": ["src/background.js", "src/background_audio.js", "src/description.js"],
+    "resources": ["src/background.js", "src/background_audio.js", "src/background_description.js"],
     "matches": ["*://*.youtube.com/*"]
   }],
+  "background": {
+	  "scripts": ["src/background.js", "src/background_audio.js", "src/background_description.js"]
+  },
   "action": {
     "default_popup": "pages/popup.html"
   },
