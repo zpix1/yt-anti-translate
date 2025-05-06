@@ -1,19 +1,14 @@
 import { test, expect, firefox } from "@playwright/test";
 import path from "path";
+import { setupFirefoxProfileWithExtension } from "setupFirefoxProfileWithExtension";
 
 test.describe("YouTube Anti-Translate extension", () => {
   test("YouTube Anti-Translate extension prevents auto-translation", async () => {
     // Launch browser with the extension
-    const extensionPath = path.resolve(__dirname, "../app");
-    const context = await firefox.launchPersistentContext("", {
-      headless: false,
-      args: [
-        `--disable-extensions-except=${extensionPath}`,
-        `--load-extension=${extensionPath}`,
-        // Additional arguments needed for headless mode with extensions
-        // "--headless=new",
-      ],
-      locale: "ru-RU",
+    const context = await setupFirefoxProfileWithExtension({
+      extensionPath: path.resolve(__dirname, "../app"),  // The extension directory
+      profilePath: "/tmp/firefox-playwright-profile",    // Any temp path
+      extensionId: "youtube-anti-translate@namakeingo.co.uk"            // Must match manifest.json
     });
 
     // Create a new page
@@ -94,16 +89,10 @@ test.describe("YouTube Anti-Translate extension", () => {
 
   test("YouTube timecode links in description work correctly with Anti-Translate extension", async () => {
     // Launch browser with the extension
-    const extensionPath = path.resolve(__dirname, "../app");
-    const context = await firefox.launchPersistentContext("", {
-      headless: false,
-      args: [
-        `--disable-extensions-except=${extensionPath}`,
-        `--load-extension=${extensionPath}`,
-        // Additional arguments needed for headless mode with extensions
-        // "--headless=new",
-      ],
-      locale: "ru-RU", // Use Russian locale to test anti-translation
+    const context = await setupFirefoxProfileWithExtension({
+      extensionPath: path.resolve(__dirname, "../app"),  // The extension directory
+      profilePath: "/tmp/firefox-playwright-profile",    // Any temp path
+      extensionId: "youtube-anti-translate@namakeingo.co.uk"            // Must match manifest.json
     });
 
     // Create a new page
@@ -191,14 +180,10 @@ test.describe("YouTube Anti-Translate extension", () => {
 
   test("YouTube Shorts title is not translated with Anti-Translate extension", async () => {
     // Launch browser with the extension
-    const extensionPath = path.resolve(__dirname, "../app");
-    const context = await firefox.launchPersistentContext("", {
-      headless: false,
-      args: [
-        `--disable-extensions-except=${extensionPath}`,
-        `--load-extension=${extensionPath}`,
-      ],
-      locale: "ru-RU", // Use Russian locale to trigger translation
+    const context = await setupFirefoxProfileWithExtension({
+      extensionPath: path.resolve(__dirname, "../app"),  // The extension directory
+      profilePath: "/tmp/firefox-playwright-profile",    // Any temp path
+      extensionId: "youtube-anti-translate@namakeingo.co.uk"            // Must match manifest.json
     });
 
     // Create a new page
@@ -252,14 +237,10 @@ test.describe("YouTube Anti-Translate extension", () => {
 
   test("YouTube channel Videos and Shorts tabs retain original titles", async () => {
     // Launch browser with the extension
-    const extensionPath = path.resolve(__dirname, "../app");
-    const context = await firefox.launchPersistentContext("", {
-      headless: false,
-      args: [
-        `--disable-extensions-except=${extensionPath}`,
-        `--load-extension=${extensionPath}`,
-      ],
-      locale: "ru-RU", // Use Russian locale to trigger translation
+    const context = await setupFirefoxProfileWithExtension({
+      extensionPath: path.resolve(__dirname, "../app"),  // The extension directory
+      profilePath: "/tmp/firefox-playwright-profile",    // Any temp path
+      extensionId: "youtube-anti-translate@namakeingo.co.uk"            // Must match manifest.json
     });
 
     // Create a new page
