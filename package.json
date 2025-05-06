@@ -23,5 +23,8 @@
   "devDependencies": {
     "@playwright/test": "^1.51.0",
     "@types/node": "^22.13.9"
+  },
+  "dependencies": {
+    "fs-extra": "^11.3.0"
   }
 }
