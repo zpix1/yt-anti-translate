@@ -44,7 +44,7 @@ export default defineConfig({
         ...devices["Desktop Firefox"],
         contextOptions: {
           // Load the extension from the app directory
-          permissions: ["clipboard-read", "clipboard-write"],
+          // permissions: ["clipboard-read", "clipboard-write"],
         },
         launchOptions: {
           headless: false,
