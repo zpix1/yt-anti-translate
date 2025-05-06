@@ -7,6 +7,24 @@ on:
       - cifix*
 
 jobs:
+  build-firefox-extension:
+    name: Build Firefox extension artifact
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build
+        run: |-
+          cp -r app dist
+          # we archive the dist folder and include SHA commit as the last step
+          zip -r firefox-extension.zip dist
+
+      - name: Archive firefox-extension artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: firefox-extension
+          path: firefox-extension.zip
   upload-extension:
     name: Upload extension
     runs-on: ubuntu-latest
