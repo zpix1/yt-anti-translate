@@ -1,16 +1,16 @@
 import { test, expect, firefox } from "@playwright/test";
 import path from "path";
-import { setupFirefoxProfileWithExtension } from "./setupFirefoxProfileWithExtension";
+import { withExtension } from "playwright-webextext";
+
+require('dotenv').config();
 
 test.describe("YouTube Anti-Translate extension", () => {
   test("YouTube Anti-Translate extension prevents auto-translation", async () => {
     // Launch browser with the extension
-    process.env.MOZ_DISABLE_EXTENSION_SIGNING = "1";
-    const context = await setupFirefoxProfileWithExtension({
-      extensionPath: path.resolve(__dirname, "../app"),      // The extension directory
-      profilePath: "./tmp/firefox-playwright-profile",        // Any temp path
-      extensionId: "youtube-anti-translate@namakeingo.co.uk" // Must match manifest.json
-    });
+    const context = await (withExtension(
+      firefox,
+      path.resolve(__dirname, "../app")
+    )).launch()
 
     // Create a new page
     const page = await context.newPage();
@@ -27,12 +27,27 @@ test.describe("YouTube Anti-Translate extension", () => {
     // Wait for the page to load and for YouTube to process the locale
     await page.waitForLoadState("networkidle");
 
+    // Sometimes youtube redirects to consent page so wait 2 seconds before proceeding
+    await page.waitForTimeout(2000);
+    await page.waitForLoadState("networkidle");
+
     // Sometimes YouTube shows a consent dialog, handle it if it appears
     const consentButton = page.getByRole("button", {
       name: /I agree|Принимаю|Я согласен/i,
     });
     if (await consentButton.isVisible()) {
+      await consentButton.scrollIntoViewIfNeeded();
       await consentButton.click();
+    }
+    // Sometimes YouTube shows a cookies dialog, handle it if it appears
+    const possibleLabels = ["Accept all", "Принять все"];
+    for (const label of possibleLabels) {
+      const button = page.locator(`button:has-text("${label}")`).first();
+      if (await button.isVisible()) {
+        await button.scrollIntoViewIfNeeded();
+        await button.click();
+        break;
+      }
     }
 
     // Wait for the video page to fully load
@@ -89,12 +104,10 @@ test.describe("YouTube Anti-Translate extension", () => {
 
   test("YouTube timecode links in description work correctly with Anti-Translate extension", async () => {
     // Launch browser with the extension
-    process.env.MOZ_DISABLE_EXTENSION_SIGNING = "1";
-    const context = await setupFirefoxProfileWithExtension({
-      extensionPath: path.resolve(__dirname, "../app"),       // The extension directory
-      profilePath: "./tmp/firefox-playwright-profile",         // Any temp path
-      extensionId: "youtube-anti-translate@namakeingo.co.uk"  // Must match manifest.json
-    });
+    const context = await (withExtension(
+      firefox,
+      path.resolve(__dirname, "../app")
+    )).launch()
 
     // Create a new page
     const page = await context.newPage();
@@ -109,13 +122,29 @@ test.describe("YouTube Anti-Translate extension", () => {
     await page.goto("https://www.youtube.com/watch?v=4PBPXbd4DkQ");
 
     // Wait for the page to load and for YouTube to process the locale
+    await page.waitForLoadState("networkidle");
+
+    // Sometimes youtube redirects to consent page so wait 2 seconds before proceeding
+    await page.waitForTimeout(2000);
+    await page.waitForLoadState("networkidle");
 
     // Sometimes YouTube shows a consent dialog, handle it if it appears
     const consentButton = page.getByRole("button", {
       name: /I agree|Принимаю|Я согласен/i,
     });
     if (await consentButton.isVisible()) {
+      await consentButton.scrollIntoViewIfNeeded();
       await consentButton.click();
+    }
+    // Sometimes YouTube shows a cookies dialog, handle it if it appears
+    const possibleLabels = ["Accept all", "Принять все"];
+    for (const label of possibleLabels) {
+      const button = page.locator(`button:has-text("${label}")`).first();
+      if (await button.isVisible()) {
+        await button.scrollIntoViewIfNeeded();
+        await button.click();
+        break;
+      }
     }
 
     // Wait for the video page to fully load
@@ -180,12 +209,10 @@ test.describe("YouTube Anti-Translate extension", () => {
 
   test("YouTube Shorts title is not translated with Anti-Translate extension", async () => {
     // Launch browser with the extension
-    process.env.MOZ_DISABLE_EXTENSION_SIGNING = "1";
-    const context = await setupFirefoxProfileWithExtension({
-      extensionPath: path.resolve(__dirname, "../app"),       // The extension directory
-      profilePath: "./tmp/firefox-playwright-profile",        // Any temp path
-      extensionId: "youtube-anti-translate@namakeingo.co.uk"  // Must match manifest.json
-    });
+    const context = await (withExtension(
+      firefox,
+      path.resolve(__dirname, "../app")
+    )).launch()
 
     // Create a new page
     const page = await context.newPage();
@@ -202,13 +229,38 @@ test.describe("YouTube Anti-Translate extension", () => {
     // Wait for the page to load
     await page.waitForLoadState("networkidle");
 
+    // Sometimes youtube redirects to consent page so wait 2 seconds before proceeding
+    await page.waitForTimeout(2000);
+    await page.waitForLoadState("networkidle");
+
     // Sometimes YouTube shows a consent dialog, handle it if it appears
     const consentButton = page.getByRole("button", {
       name: /I agree|Принимаю|Я согласен/i,
     });
     if (await consentButton.isVisible()) {
+      await consentButton.scrollIntoViewIfNeeded();
       await consentButton.click();
     }
+    // Sometimes YouTube shows a cookies dialog, handle it if it appears
+    const possibleLabels = ["Accept all", "Принять все"];
+    for (const label of possibleLabels) {
+      const button = page.locator(`button:has-text("${label}")`).first();
+      if (await button.isVisible()) {
+        await button.scrollIntoViewIfNeeded();
+        await button.click();
+        break;
+      }
+    }
+
+    // On Firefox Shorts require login. Wait for it to load then hide it
+    await page.waitForTimeout(2000);
+    await page.waitForLoadState("networkidle");
+    try {
+      const playerErrorLoginSelector = 'div[id="shorts-inner-container"] div.style-scope.yt-playability-error-supported-renderers[id="container"]'
+      await page.waitForSelector(playerErrorLoginSelector, { timeout: 10000 });
+      const el = page.locator(playerErrorLoginSelector);
+      await el.evaluate((node) => node.remove());
+    } catch (e) {}
 
     // Wait for the shorts title element to be present
     const shortsTitleSelector = "yt-shorts-video-title-view-model > h2 > span";
@@ -237,12 +289,10 @@ test.describe("YouTube Anti-Translate extension", () => {
 
   test("YouTube channel Videos and Shorts tabs retain original titles", async () => {
     // Launch browser with the extension
-    process.env.MOZ_DISABLE_EXTENSION_SIGNING = "1";
-    const context = await setupFirefoxProfileWithExtension({
-      extensionPath: path.resolve(__dirname, "../app"),       // The extension directory
-      profilePath: "/tmp/firefox-playwright-profile",         // Any temp path
-      extensionId: "youtube-anti-translate@namakeingo.co.uk"  // Must match manifest.json
-    });
+    const context = await (withExtension(
+      firefox,
+      path.resolve(__dirname, "../app")
+    )).launch()
 
     // Create a new page
     const page = await context.newPage();
@@ -259,13 +309,27 @@ test.describe("YouTube Anti-Translate extension", () => {
     // Wait for the page to load
     await page.waitForLoadState("networkidle");
 
+    // Sometimes youtube redirects to consent page so wait 2 seconds before proceeding
+    await page.waitForTimeout(2000);
+    await page.waitForLoadState("networkidle");
+
     // Sometimes YouTube shows a consent dialog, handle it if it appears
     const consentButton = page.getByRole("button", {
       name: /I agree|Принимаю|Я согласен/i,
     });
-    if (await consentButton.isVisible({ timeout: 5000 })) {
+    if (await consentButton.isVisible()) {
+      await consentButton.scrollIntoViewIfNeeded();
       await consentButton.click();
-      await page.waitForLoadState("networkidle"); // Wait again after consent
+    }
+    // Sometimes YouTube shows a cookies dialog, handle it if it appears
+    const possibleLabels = ["Accept all", "Принять все"];
+    for (const label of possibleLabels) {
+      const button = page.locator(`button:has-text("${label}")`).first();
+      if (await button.isVisible()) {
+        await button.scrollIntoViewIfNeeded();
+        await button.click();
+        break;
+      }
     }
 
     // Wait for the video grid to appear
@@ -294,8 +358,15 @@ test.describe("YouTube Anti-Translate extension", () => {
     const translatedShortSelector = `ytd-rich-item-renderer:has-text("${translatedShortTitle}")`;
 
     console.log("Checking Shorts tab for original title...");
-    // Shorts might load dynamically, scroll down slightly to ensure it's loaded
-    await page.mouse.wheel(0, 500);
+    // Shorts might load dynamically, scroll into view to ensure it's loaded
+    const original = page.locator(shortSelector).first()
+    if (await original.isVisible()){
+      original.scrollIntoViewIfNeeded();
+    }
+    const translated = page.locator(translatedShortSelector).first()
+    if (await translated.isVisible()){
+      translated.scrollIntoViewIfNeeded();
+    }
     await page.waitForTimeout(1000); // Give it a moment to load more items if needed
 
     await expect(page.locator(shortSelector)).toBeVisible({ timeout: 10000 }); // Increased timeout for dynamic loading

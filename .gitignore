@@ -9,5 +9,8 @@ node_modules
 /blob-report/
 /playwright/.cache/
 /tmp/
+/web-ext-artifacts/
+/.web-ext-cache/
 
 test-user-data-dir/
+/app/.amo-upload-uuid
