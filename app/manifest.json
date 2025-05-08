@@ -26,7 +26,8 @@
       "resources": [
         "src/background.js",
         "src/background_audio.js",
-        "src/background_description.js"
+        "src/background_description.js",
+        "src/background_channelbranding.js"
       ],
       "matches": [
         "*://*.youtube.com/*"
@@ -37,7 +38,8 @@
     "scripts": [
       "src/background.js",
       "src/background_audio.js",
-      "src/background_description.js"
+      "src/background_description.js",
+      "src/background_channelbranding.js"
     ]
   },
   "action": {
