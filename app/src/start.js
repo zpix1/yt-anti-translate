@@ -5,6 +5,7 @@ chrome.storage.sync.get(
     disabled: false,
     untranslateAudio: true,
     untranslateDescription: true,
+    untranslateChannelBranding: true,
   },
   async function (items) {
     if (!items.disabled) {
@@ -27,6 +28,13 @@ chrome.storage.sync.get(
         descriptionScript.type = "module";
         descriptionScript.src = chrome.runtime.getURL("src/background_description.js");
         document.body.appendChild(descriptionScript);
+      }
+      
+      if (items.untranslateChannelBranding) {
+        const channelbrandingScript = document.createElement("script");
+        channelbrandingScript.type = "module";
+        channelbrandingScript.src = chrome.runtime.getURL("src/background_channelbranding.js");
+        document.body.appendChild(channelbrandingScript);
       }
     }
   }
