@@ -1,10 +1,17 @@
 dist
 node_modules
+.env
+*.env
 
 # Playwright
 /test-results/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+/tmp/
+/web-ext-artifacts/
+/.web-ext-cache/
 
 test-user-data-dir/
+/app/.amo-upload-uuid
+app/app.zip
