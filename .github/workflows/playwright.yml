@@ -10,15 +10,19 @@ jobs:
   test:
     timeout-minutes: 60
     runs-on: ubuntu-latest
+    env:
+      AMO_JWT_ISSUER: "${{ secrets.AMO_JWT_ISSUER }}"
+      AMO_JWT_SECRET: "${{ secrets.AMO_JWT_SECRET }}"
+
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: lts/*
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --legacy-peer-deps
       - name: Install Playwright Browsers
-        run: npx playwright install chromium --with-deps
+        run: npx playwright install firefox --with-deps
       - name: Set up virtual display
         run: sudo apt-get update && sudo apt-get install -y xvfb
       - name: Run Playwright tests
