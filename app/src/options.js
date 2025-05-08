@@ -8,6 +8,7 @@ function saveOptions() {
       autoreloadOption: true,
       untranslateAudio: true,
       untranslateDescription: true,
+      untranslateChannelBranding: true,
     },
     function (items) {
       let disabled = !items.disabled;
@@ -40,6 +41,7 @@ function loadOptions() {
       autoreloadOption: true,
       untranslateAudio: true,
       untranslateDescription: true,
+      untranslateChannelBranding: true,
     },
     function (items) {
       document.getElementById("disable-button").innerText = items.disabled
@@ -59,6 +61,8 @@ function loadOptions() {
         items.untranslateAudio;
       document.getElementById("description-checkbox").checked =
         items.untranslateDescription;
+      document.getElementById("channel-branding-checkbox").checked =
+        items.untranslateChannelBranding;
     }
   );
 }
@@ -68,6 +72,8 @@ function checkboxUpdate() {
     autoreloadOption: document.getElementById("reload-checkbox").checked,
     untranslateAudio: document.getElementById("audio-checkbox").checked,
     untranslateDescription: document.getElementById("description-checkbox")
+      .checked,
+    untranslateChannelBranding: document.getElementById("channel-branding-checkbox")
       .checked,
   });
 }
@@ -84,6 +90,9 @@ function addListeners() {
     .addEventListener("click", checkboxUpdate);
   document
     .getElementById("description-checkbox")
+    .addEventListener("click", checkboxUpdate);
+  document
+    .getElementById("channel-branding-checkbox")
     .addEventListener("click", checkboxUpdate);
 }
 
