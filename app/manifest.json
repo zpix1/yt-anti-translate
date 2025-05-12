@@ -18,7 +18,7 @@
       ],
       "js": [
         "src/content_constants.js",
-        "src/start.js",
+        "src/content_start.js",
         "src/content_channelbranding.js"
       ]
     }
