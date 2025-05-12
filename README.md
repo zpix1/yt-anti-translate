@@ -1,5 +1,6 @@
 # Firefox Manifest V3 Port of YouTube Anti Translate
-Source code of [YouTube Anti Translate - mv3](https://addons.mozilla.org/en-US/firefox/addon/youtube-anti-translate-mv3/)
+
+Source code of [YouTube Anti Translate - mv3](https://addons.mozilla.org/firefox/addon/youtube-anti-translate-mv3/)
 
 This is a port I made, mainly for my own use, of the Chrome extension developed by [zpix1](https://github.com/zpix1)
 
@@ -23,9 +24,9 @@ I was even more annoyed by AI Autodub.
 
 ## How to use
 
-Just install it from the [Firefox Extensions Store](https://addons.mozilla.org/en/firefox/addon/youtube-anti-translate-mv3/).
+Just install it from the [Firefox Extensions Store](https://addons.mozilla.org/firefox/addon/youtube-anti-translate-mv3/).
 
-There's also a [Firefox Manifest v2 version](https://addons.mozilla.org/en/firefox/addon/youtube-anti-translate/) (maintained by [artisticfox8](https://github.com/artisticfox8/)). Unfortunately, it was last updated on Aug 2, 2024 and is missing features because of that, hence why I published my MV3 version.
+There's also a [Firefox Manifest v2 version](https://addons.mozilla.org/firefox/addon/youtube-anti-translate/) (maintained by [artisticfox8](https://github.com/artisticfox8/)). Unfortunately, it was last updated on Aug 2, 2024 and is missing features because of that, hence why I published my MV3 version.
 
 ## Contributing
 
@@ -42,4 +43,4 @@ If this extension really helped you, consider supporting the original creator [a
 You can also show your support for me by:
 
 - Starring this repository on GitHub
-- Submitting a positive review for the extension on the [Firefox Extension Store](https://addons.mozilla.org/en/firefox/addon/youtube-anti-translate-mv3/)
+- Submitting a positive review for the extension on the [Firefox Extension Store](https://addons.mozilla.org/firefox/addon/youtube-anti-translate-mv3/)

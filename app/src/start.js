@@ -1,11 +1,11 @@
-// To run in page environment
-
+// Laad scripts that will run in page environment
 chrome.storage.sync.get(
   {
     disabled: false,
     untranslateAudio: true,
     untranslateDescription: true,
-    untranslateChannelBranding: true,
+    untranslateChannelBranding: false,
+    youtubeDataApiKey: null
   },
   async function (items) {
     if (!items.disabled) {
@@ -30,12 +30,12 @@ chrome.storage.sync.get(
         document.body.appendChild(descriptionScript);
       }
       
-      if (items.untranslateChannelBranding) {
+      /*if (items.untranslateChannelBranding && items.youtubeDataApiKey) {
         const channelbrandingScript = document.createElement("script");
         channelbrandingScript.type = "module";
         channelbrandingScript.src = chrome.runtime.getURL("src/background_channelbranding.js");
         document.body.appendChild(channelbrandingScript);
-      }
+      }*/
     }
   }
 );

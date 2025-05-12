@@ -30,22 +30,16 @@ export default defineConfig({
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: "on-first-retry",
-
-    /* Set the default locale to Russian */
-    locale: "ru-RU",
   },
 
   /* Configure projects for major browsers */
   projects: [
     {
-      name: "firefox-extension",
+      name: "firefox-extension-ru-RU",
       testMatch: /.*extension\.spec\.ts/,
       use: {
         ...devices["Desktop Firefox"],
-        contextOptions: {
-          // Load the extension from the app directory
-          // permissions: ["clipboard-read", "clipboard-write"],
-        },
+        contextOptions: {},
         launchOptions: {
           headless: false,
           args: [
@@ -54,6 +48,24 @@ export default defineConfig({
             "--headless=new",
           ],
         },
+        locale: "ru-RU"
+      },
+    },
+    {
+      name: "firefox-extension-th_TH",
+      testMatch: /.*extension\.extra\.spec\.ts/,
+      use: {
+        ...devices["Desktop Firefox"],
+        contextOptions: {},
+        launchOptions: {
+          headless: false,
+          args: [
+            `--disable-extensions-except=${path.resolve(__dirname, "tests/testDist")}`,
+            `--load-extension=${path.resolve(__dirname, "tests/testDist")}`,
+            "--headless=new",
+          ],
+        },
+        locale: "th_TH"
       },
     },
 

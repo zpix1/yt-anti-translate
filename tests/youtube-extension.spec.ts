@@ -1,6 +1,7 @@
 import { test, expect, firefox } from "@playwright/test";
 import path from "path";
 import { withExtension } from "playwright-webextext";
+import { handleYoutubeConsent } from "./handleYoutubeConsent";
 
 require('dotenv').config();
 
@@ -31,24 +32,8 @@ test.describe("YouTube Anti-Translate extension", () => {
     await page.waitForTimeout(2000);
     await page.waitForLoadState("networkidle");
 
-    // Sometimes YouTube shows a consent dialog, handle it if it appears
-    const consentButton = page.getByRole("button", {
-      name: /I agree|Принимаю|Я согласен/i,
-    });
-    if (await consentButton.isVisible()) {
-      await consentButton.scrollIntoViewIfNeeded();
-      await consentButton.click();
-    }
-    // Sometimes YouTube shows a cookies dialog, handle it if it appears
-    const possibleLabels = ["Accept all", "Принять все"];
-    for (const label of possibleLabels) {
-      const button = page.locator(`button:has-text("${label}")`).first();
-      if (await button.isVisible()) {
-        await button.scrollIntoViewIfNeeded();
-        await button.click();
-        break;
-      }
-    }
+    // Sometimes youtube redirects to consent so handle it
+    await handleYoutubeConsent(page);
 
     // Wait for the video page to fully load
     await page.waitForSelector("ytd-watch-metadata");
@@ -128,24 +113,8 @@ test.describe("YouTube Anti-Translate extension", () => {
     await page.waitForTimeout(2000);
     await page.waitForLoadState("networkidle");
 
-    // Sometimes YouTube shows a consent dialog, handle it if it appears
-    const consentButton = page.getByRole("button", {
-      name: /I agree|Принимаю|Я согласен/i,
-    });
-    if (await consentButton.isVisible()) {
-      await consentButton.scrollIntoViewIfNeeded();
-      await consentButton.click();
-    }
-    // Sometimes YouTube shows a cookies dialog, handle it if it appears
-    const possibleLabels = ["Accept all", "Принять все"];
-    for (const label of possibleLabels) {
-      const button = page.locator(`button:has-text("${label}")`).first();
-      if (await button.isVisible()) {
-        await button.scrollIntoViewIfNeeded();
-        await button.click();
-        break;
-      }
-    }
+    // Sometimes youtube redirects to consent so handle it
+    await handleYoutubeConsent(page);
 
     // Wait for the video page to fully load
     await page.waitForSelector("ytd-watch-metadata");
@@ -229,28 +198,8 @@ test.describe("YouTube Anti-Translate extension", () => {
     // Wait for the page to load
     await page.waitForLoadState("networkidle");
 
-    // Sometimes youtube redirects to consent page so wait 2 seconds before proceeding
-    await page.waitForTimeout(2000);
-    await page.waitForLoadState("networkidle");
-
-    // Sometimes YouTube shows a consent dialog, handle it if it appears
-    const consentButton = page.getByRole("button", {
-      name: /I agree|Принимаю|Я согласен/i,
-    });
-    if (await consentButton.isVisible()) {
-      await consentButton.scrollIntoViewIfNeeded();
-      await consentButton.click();
-    }
-    // Sometimes YouTube shows a cookies dialog, handle it if it appears
-    const possibleLabels = ["Accept all", "Принять все"];
-    for (const label of possibleLabels) {
-      const button = page.locator(`button:has-text("${label}")`).first();
-      if (await button.isVisible()) {
-        await button.scrollIntoViewIfNeeded();
-        await button.click();
-        break;
-      }
-    }
+    // Sometimes youtube redirects to consent so handle it
+    await handleYoutubeConsent(page);
 
     // On Firefox Shorts require login. Wait for it to load then hide it
     await page.waitForTimeout(2000);
@@ -260,7 +209,7 @@ test.describe("YouTube Anti-Translate extension", () => {
       await page.waitForSelector(playerErrorLoginSelector, { timeout: 10000 });
       const el = page.locator(playerErrorLoginSelector);
       await el.evaluate((node) => node.remove());
-    } catch (e) {}
+    } catch (e) { }
 
     // Wait for the shorts title element to be present
     const shortsTitleSelector = "yt-shorts-video-title-view-model > h2 > span";
@@ -313,24 +262,8 @@ test.describe("YouTube Anti-Translate extension", () => {
     await page.waitForTimeout(2000);
     await page.waitForLoadState("networkidle");
 
-    // Sometimes YouTube shows a consent dialog, handle it if it appears
-    const consentButton = page.getByRole("button", {
-      name: /I agree|Принимаю|Я согласен/i,
-    });
-    if (await consentButton.isVisible()) {
-      await consentButton.scrollIntoViewIfNeeded();
-      await consentButton.click();
-    }
-    // Sometimes YouTube shows a cookies dialog, handle it if it appears
-    const possibleLabels = ["Accept all", "Принять все"];
-    for (const label of possibleLabels) {
-      const button = page.locator(`button:has-text("${label}")`).first();
-      if (await button.isVisible()) {
-        await button.scrollIntoViewIfNeeded();
-        await button.click();
-        break;
-      }
-    }
+    // Sometimes youtube redirects to consent so handle it
+    await handleYoutubeConsent(page);
 
     // Wait for the video grid to appear
     await page.waitForSelector("ytd-rich-grid-media");
@@ -360,11 +293,11 @@ test.describe("YouTube Anti-Translate extension", () => {
     console.log("Checking Shorts tab for original title...");
     // Shorts might load dynamically, scroll into view to ensure it's loaded
     const original = page.locator(shortSelector).first()
-    if (await original.isVisible()){
+    if (await original.isVisible()) {
       original.scrollIntoViewIfNeeded();
     }
     const translated = page.locator(translatedShortSelector).first()
-    if (await translated.isVisible()){
+    if (await translated.isVisible()) {
       translated.scrollIntoViewIfNeeded();
     }
     await page.waitForTimeout(1000); // Give it a moment to load more items if needed

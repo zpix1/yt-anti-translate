@@ -1,99 +1,129 @@
 <!DOCTYPE html>
 <html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>YT Anti Translate Options</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 20px;
+        font-family: Arial, sans-serif;
+        border-radius: 10px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>YT Anti Translate Options</title>
-  <style>
-    body {
-      margin: 0;
-      padding: 20px;
-      font-family: Arial, sans-serif;
-      border-radius: 10px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
+      .container {
+        width: 325px;
+        height: fit-content;
+        text-align: center;
+      }
 
-    .container {
-      width: 220px;
-      height: fit-content;
-      text-align: center;
-    }
+      .header {
+        font-size: 20px;
+        font-weight: bold;
+        margin-bottom: 15px;
+      }
 
-    .header {
-      font-size: 20px;
-      font-weight: bold;
-      margin-bottom: 15px;
-    }
+      .status {
+        margin: 10px auto;
+        width: 100px;
+        height: 100px;
+        line-height: 100px;
+        border-radius: 50%;
+        font-size: 22px;
+        color: #fff;
+      }
 
-    .status {
-      margin: 10px auto;
-      width: 100px;
-      height: 100px;
-      line-height: 100px;
-      border-radius: 50%;
-      font-size: 22px;
-      color: #fff;
-    }
+      .status.enabled {
+        background-color: #4caf50;
+      }
 
-    .status.enabled {
-      background-color: #4caf50;
-    }
+      .status.disabled {
+        background-color: #f44336;
+      }
 
-    .status.disabled {
-      background-color: #f44336;
-    }
+      button {
+        background-color: #008cba;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        font-size: 16px;
+        padding: 10px 20px;
+        cursor: pointer;
+        margin-bottom: 15px;
+      }
 
-    button {
-      background-color: #008cba;
-      color: #fff;
-      border: none;
-      border-radius: 5px;
-      font-size: 16px;
-      padding: 10px 20px;
-      cursor: pointer;
-      margin-bottom: 15px;
-    }
+      button:hover {
+        background-color: #007bb5;
+      }
 
-    button:hover {
-      background-color: #007bb5;
-    }
+      .options {
+        text-align: left;
+        margin-bottom: 15px;
+      }
 
-    .options {
-      text-align: left;
-      margin-bottom: 15px;
-    }
+      .option {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 5px 0;
+        font-size: 15px;
+      }
 
-    .option {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 5px 0;
-      font-size: 15px;
-    }
+      .footer {
+        font-size: 13px;
+        font-style: italic;
+      }
 
-    .footer {
-      font-size: 13px;
-      font-style: italic;
-    }
+      .footer a {
+        color: #008cba;
+        text-decoration: none;
+      }
 
-    .footer a {
-      color: #008cba;
-      text-decoration: none;
-    }
+      .footer a:hover {
+        text-decoration: underline;
+      }
+      
+      small,
+      .small {
+        font-size: 11px;
+        color: #666;
+      }
 
-    .footer a:hover {
-      text-decoration: underline;
-    }
-    
-    small {
-      font-size: 11px;
-      color: #666;
-    }
+      #api-key-container {
+        display: block;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 5px;
+        margin-top: 10px;
+      }
 
-    @media (prefers-color-scheme: dark) {
+      #api-key-container label {
+        font-size: 14px;
+        margin-bottom: 2px;
+      }
+
+      #api-key-container input,
+      #api-key-container button {
+        width: 100%;
+        padding: 5px;
+        box-sizing: border-box;
+      }
+
+      .bordered-group {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 5px;
+        margin-top: 10px;
+        padding: 10px;
+        border: 1px solid black;
+        border-radius: 5px;
+      }
+
+      @media (prefers-color-scheme: dark) {
         body {
           background-color: #121212;
           color: #f0f0f0;
@@ -102,42 +132,64 @@
           color: #66d9ef;
         }
       }
-  </style>
-</head>
 
-<body>
-  <div class="container">
-    <div class="header">YT Anti Translate 1.17.0 <small>(Manifest V3)</small></div>
-    <div>
-      Status:
-      <div class="status enabled" id="status">Enabled</div>
-    </div>
-    <button id="disable-button">Disable</button>
-    <div class="options">
-      <div class="option">
-        <span>Untranslate audio track</span>
-        <input id="audio-checkbox" type="checkbox" checked />
-      </div>
-      <div class="option">
-        <span>Untranslate description</span>
-        <input id="description-checkbox" type="checkbox" checked />
-      </div>
-      <div class="option">
-        <span>Untranslate channel branding</span>
-        <input id="channel-branding-checkbox" type="checkbox" checked />
-      </div>
-      <div class="option">
-        <span>Reload page automatically</span>
-        <input id="reload-checkbox" type="checkbox" checked />
-      </div>
-    </div>
-    <div class="footer">
-      <a target="_blank" href="https://chrome.google.com/webstore/detail/yt-anti-translate/ndpmhjnlfkgfalaieeneneenijondgag">Rate extension</a> • 
-      <a target="_blank" href="https://github.com/zpix1/yt-anti-translate">Report issues</a> • 
-      <a target="_blank" href="https://zpix1.github.io/donate/">Support development</a>
-    </div>
-    <script src="/src/options.js"></script>
-  </div>
-</body>
+      @keyframes fadeInOut {
+        0% { opacity: 0; }
+        20% { opacity: 1; }
+        80% { opacity: 1; }
+        100% { opacity: 0; }
+      }
+      #save-api-key-text.saving {
+        animation: fadeInOut 1.5s ease;
+      }
+    </style>
+  </head>
 
+  <body id="yt-anti-translate">
+    <div class="container">
+      <div class="header">YT Anti Translate 1.17.0.1 <small>(Manifest V3)</small></div>
+      <div>
+        Status:
+        <div class="status enabled" id="status">Enabled</div>
+      </div>
+      <button id="disable-button">Disable</button>
+      <div class="options">
+        <div class="option">
+          <span>Untranslate audio track</span>
+          <input id="audio-checkbox" type="checkbox" checked />
+        </div>
+        <div class="option">
+          <span>Untranslate description</span>
+          <input id="description-checkbox" type="checkbox" checked />
+        </div>
+        <div class="option">
+          <span>Reload page automatically</span>
+          <input id="reload-checkbox" type="checkbox" checked />
+        </div>
+        <div class="option" id="api-key-container">
+          <div class="small">
+            <p>Additional features require a <b>YouTube Data API Key</b></p>
+            <p><a target="_blank" href="https://github.com/namakeingo/yt-anti-translate-firefox/blob/main/YOUTUBE_DATA_API_KEY.md">How do I obtain an API Key?</a></p>
+          </div>
+          <input id="api-key-input" type="text" placeholder="Enter API key" style="width: 100%; padding: 5px;" />
+          <button id="save-api-key-button"><span id="save-api-key-text">Save API Key</span></button>
+        </div>
+        <div class="option bordered-group" id="additional-features" style="display: none;">
+          <small>Additional Features</small>
+          <div class="option">
+            <span>Untranslate channel branding</span>
+            <input id="channel-branding-checkbox" type="checkbox" />
+          </div>
+        </div>
+
+      </div>
+      <div class="footer">
+        <a target="_blank" href="https://addons.mozilla.org/firefox/addon/youtube-anti-translate-mv3/">Rate extension</a> • 
+        <a target="_blank" href="https://github.com/namakeingo/yt-anti-translate-firefox">Report issues</a> • 
+        <a target="_blank" href="https://zpix1.github.io/donate/">Support Chrome developer</a> • 
+        <a target="_blank" href="https://github.com/sponsors/namakeingo">Support Firefox developer</a>
+      </div>
+      <script src="/src/options.js"></script>
+    </div>
+  </body>
 </html>

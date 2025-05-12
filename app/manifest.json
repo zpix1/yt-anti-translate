@@ -17,10 +17,16 @@
         "*://*.youtube.com/*"
       ],
       "js": [
-        "src/start.js"
+        "src/start.js",
+        "src/content_channelbranding.js"
       ]
     }
   ],
+  "externally_connectable": {
+    "matches": [
+      "*://*.youtube.com/*"
+    ]
+  },
   "web_accessible_resources": [
     {
       "resources": [
@@ -34,14 +40,6 @@
       ]
     }
   ],
-  "background": {
-    "scripts": [
-      "src/background.js",
-      "src/background_audio.js",
-      "src/background_description.js",
-      "src/background_channelbranding.js"
-    ]
-  },
   "action": {
     "default_popup": "pages/popup.html"
   },
