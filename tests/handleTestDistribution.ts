@@ -1,5 +1,7 @@
 import fs from 'fs';
 import path from 'path';
+import https from 'https';
+import unzipper from 'unzipper';
 
 // Define the source and destination directories
 const srcDir = path.join(__dirname, '../app');
@@ -46,9 +48,9 @@ export function handleTestDistribution(configObject) {
 
       // Write the modified content back to the file
       fs.writeFileSync(filePath, modifiedData, 'utf-8');
-      console.log('start.js modified successfully!');
+      console.log('content_start modified successfully!');
     } else {
-      console.log('start.js not found!');
+      console.log('content_start not found!');
     }
   };
 
@@ -64,7 +66,71 @@ export function handleTestDistribution(configObject) {
 
   // Modify the start.js file after copying
   if (configObject) {
-    const startJsPath = path.join(destDir, 'src', 'start.js');
+    const startJsPath = path.join(destDir, 'src', 'content_start.js');
     modifyStartJs(startJsPath, configObject);
+  }
+}
+
+/**
+ * Downloads and extracts the uBlock Origin extension from Mozilla Add-ons,
+ * unless the correct version is already present.
+ */
+export function downloadAndExtractUBlock() {
+  const xpiUrl = 'https://addons.mozilla.org/firefox/downloads/file/4458450/ublock_origin-1.63.2.xpi';
+  const expectedVersion = '1.63.2';
+  const destDir = path.join(__dirname, 'testUBlockOrigin');
+  const manifestPath = path.join(destDir, 'manifest.json');
+
+  // Check if manifest.json exists and has the expected version
+  if (fs.existsSync(manifestPath)) {
+    try {
+      const manifestData = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
+      if (manifestData.version === expectedVersion) {
+        console.log(`uBlock Origin version ${expectedVersion} already extracted.`);
+        return;
+      } else {
+        console.log(`Version mismatch. Expected ${expectedVersion}, found ${manifestData.version}. Re-downloading...`);
+      }
+    } catch (err) {
+      console.warn('Failed to parse existing manifest.json. Re-downloading...', err);
+    }
+  } else {
+    console.log('No manifest.json found. Proceeding with download.');
+  }
+
+  // Ensure destination directory exists
+  if (!fs.existsSync(destDir)) {
+    fs.mkdirSync(destDir, { recursive: true });
+    console.log('Created testUBlockOrigin directory');
+  }
+
+  console.log('Downloading uBlock Origin XPI...');
+
+  https.get(xpiUrl, (response) => {
+    if (response.statusCode !== 200) {
+      console.error(`Download failed with status code: ${response.statusCode}`);
+      return;
+    }
+
+    response
+      .pipe(unzipper.Extract({ path: destDir }))
+      .on('close', () => {
+        console.log('uBlock Origin extracted successfully!');
+      })
+      .on('error', (err) => {
+        console.error('Extraction failed:', err);
+      });
+  }).on('error', (err) => {
+    console.error('Download failed:', err);
+  });
+
+  wait(7000);
+}
+
+function wait(ms) {
+  var start = new Date().getTime();
+  var end = start;
+  while (end < start + ms) {
+    end = new Date().getTime();
   }
 }

@@ -2,12 +2,13 @@ import { test, expect, firefox } from "@playwright/test";
 import path from "path";
 import { withExtension } from "playwright-webextext";
 import { handleYoutubeConsent } from "./handleYoutubeConsent";
-import { handleTestDistribution } from "./handleTestDistribution";
+import { handleTestDistribution, downloadAndExtractUBlock } from "./handleTestDistribution";
 
 require('dotenv').config();
 
 test.describe("YouTube Anti-Translate extension - Extras", () => {
   test("YouTube channel branding header and about retain original content", async () => {
+    downloadAndExtractUBlock();
     // --- Update Extension Settings and distribute a test copy ---
     // The object to be passed and inserted into the start.js file
     const configObject = { youtubeDataApiKey: process.env.YOUTUBE_API_KEY, untranslateChannelBranding: true };
@@ -16,7 +17,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     // Launch browser with the extension
     const context = await (withExtension(
       firefox,
-      path.resolve(__dirname, "testDist")
+      [path.resolve(__dirname, "testDist"), path.resolve(__dirname, "testUBlockOrigin")]
     )).launch()
 
     // Create a new page
@@ -40,8 +41,6 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
 
     // Sometimes youtube redirects to consent so handle it
     await handleYoutubeConsent(page);
-
-    await page.waitForTimeout(1000);
 
     // Wait for the video grid to appear
     const channelHeaderSelector = "#page-header-container #page-header .page-header-view-model-wiz__page-header-headline-info"

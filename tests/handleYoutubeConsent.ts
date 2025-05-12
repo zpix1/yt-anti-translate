@@ -10,6 +10,8 @@ export async function handleYoutubeConsent(page) {
     await consentButton.scrollIntoViewIfNeeded();
     await consentButton.click();
   }
+  await page.waitForLoadState("networkidle");
+
   // Sometimes YouTube shows a cookies dialog, handle it if it appears
   const possibleLabels = ["Accept all", "Принять все", "ยอมรับทั้งหมด"];
   for (const label of possibleLabels) {
@@ -20,4 +22,7 @@ export async function handleYoutubeConsent(page) {
       break;
     }
   }
+
+  await page.waitForTimeout(5000);
+  await page.waitForLoadState("load");
 }

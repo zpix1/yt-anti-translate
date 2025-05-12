@@ -2,15 +2,19 @@ import { test, expect, firefox } from "@playwright/test";
 import path from "path";
 import { withExtension } from "playwright-webextext";
 import { handleYoutubeConsent } from "./handleYoutubeConsent";
+import { handleGoogleLogin } from "./handleGoogleLogin";
+import { downloadAndExtractUBlock } from "./handleTestDistribution";
 
 require('dotenv').config();
+const authFile = path.join(__dirname, '../playwright/.auth/user.json');
 
 test.describe("YouTube Anti-Translate extension", () => {
   test("YouTube Anti-Translate extension prevents auto-translation", async () => {
+    downloadAndExtractUBlock();
     // Launch browser with the extension
     const context = await (withExtension(
       firefox,
-      path.resolve(__dirname, "../app")
+      [path.resolve(__dirname, "../app"), path.resolve(__dirname, "testUBlockOrigin")]
     )).launch()
 
     // Create a new page
@@ -34,6 +38,9 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Sometimes youtube redirects to consent so handle it
     await handleYoutubeConsent(page);
+
+    // Player needs login to work so login
+    await handleGoogleLogin(page);
 
     // Wait for the video page to fully load
     await page.waitForSelector("ytd-watch-metadata");
@@ -88,10 +95,11 @@ test.describe("YouTube Anti-Translate extension", () => {
   });
 
   test("YouTube timecode links in description work correctly with Anti-Translate extension", async () => {
+    downloadAndExtractUBlock();
     // Launch browser with the extension
     const context = await (withExtension(
       firefox,
-      path.resolve(__dirname, "../app")
+      [path.resolve(__dirname, "../app"), path.resolve(__dirname, "testUBlockOrigin")]
     )).launch()
 
     // Create a new page
@@ -115,6 +123,9 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Sometimes youtube redirects to consent so handle it
     await handleYoutubeConsent(page);
+
+    // Player needs login to work so login
+    await handleGoogleLogin(page);
 
     // Wait for the video page to fully load
     await page.waitForSelector("ytd-watch-metadata");
@@ -177,10 +188,11 @@ test.describe("YouTube Anti-Translate extension", () => {
   });
 
   test("YouTube Shorts title is not translated with Anti-Translate extension", async () => {
+    downloadAndExtractUBlock();
     // Launch browser with the extension
     const context = await (withExtension(
       firefox,
-      path.resolve(__dirname, "../app")
+      [path.resolve(__dirname, "../app"), path.resolve(__dirname, "testUBlockOrigin")]
     )).launch()
 
     // Create a new page
@@ -201,15 +213,17 @@ test.describe("YouTube Anti-Translate extension", () => {
     // Sometimes youtube redirects to consent so handle it
     await handleYoutubeConsent(page);
 
-    // On Firefox Shorts require login. Wait for it to load then hide it
-    await page.waitForTimeout(2000);
+    // On Firefox Shorts require login
+    await handleGoogleLogin(page);
+    // Wait for it to load then hide it
+    /*await page.waitForTimeout(2000);
     await page.waitForLoadState("networkidle");
     try {
       const playerErrorLoginSelector = 'div[id="shorts-inner-container"] div.style-scope.yt-playability-error-supported-renderers[id="container"]'
       await page.waitForSelector(playerErrorLoginSelector, { timeout: 10000 });
       const el = page.locator(playerErrorLoginSelector);
       await el.evaluate((node) => node.remove());
-    } catch (e) { }
+    } catch (e) { }*/
 
     // Wait for the shorts title element to be present
     const shortsTitleSelector = "yt-shorts-video-title-view-model > h2 > span";
@@ -237,10 +251,11 @@ test.describe("YouTube Anti-Translate extension", () => {
   });
 
   test("YouTube channel Videos and Shorts tabs retain original titles", async () => {
+    downloadAndExtractUBlock();
     // Launch browser with the extension
     const context = await (withExtension(
       firefox,
-      path.resolve(__dirname, "../app")
+      [path.resolve(__dirname, "../app"), path.resolve(__dirname, "testUBlockOrigin")]
     )).launch()
 
     // Create a new page

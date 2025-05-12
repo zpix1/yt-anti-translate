@@ -43,8 +43,6 @@ export default defineConfig({
         launchOptions: {
           headless: false,
           args: [
-            `--disable-extensions-except=${path.resolve(__dirname, "app")}`,
-            `--load-extension=${path.resolve(__dirname, "app")}`,
             "--headless=new",
           ],
         },
@@ -60,8 +58,6 @@ export default defineConfig({
         launchOptions: {
           headless: false,
           args: [
-            `--disable-extensions-except=${path.resolve(__dirname, "tests/testDist")}`,
-            `--load-extension=${path.resolve(__dirname, "tests/testDist")}`,
             "--headless=new",
           ],
         },
