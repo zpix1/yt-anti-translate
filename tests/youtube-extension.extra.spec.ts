@@ -41,6 +41,8 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     // Sometimes youtube redirects to consent so handle it
     await handleYoutubeConsent(page);
 
+    await page.waitForTimeout(1000);
+
     // Wait for the video grid to appear
     const channelHeaderSelector = "#page-header-container #page-header .page-header-view-model-wiz__page-header-headline-info"
     await page.waitForSelector(channelHeaderSelector);
@@ -49,7 +51,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     const channelTitleSelector = `${channelHeaderSelector} h1 .yt-core-attributed-string`;
 
     console.log("Checking Channel header for original title...");
-    // Get the video title
+    // Get the channel branding header title
     const brandingTitle = await page
       .locator(channelTitleSelector)
       .textContent();
@@ -60,10 +62,10 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     expect(brandingTitle).not.toContain("มิสเตอร์บีสต์");
 
     // --- Check Branding Description
-    const channelDescriptionSelector = `${channelHeaderSelector} yt-description-preview-view-model .truncated-text-wiz__inline-button > .yt-core-attributed-string:nth-child(1)`;
+    const channelDescriptionSelector = `${channelHeaderSelector} yt-description-preview-view-model .truncated-text-wiz__truncated-text-content > .yt-core-attributed-string:nth-child(1)`;
 
     console.log("Checking Channel header for original description...");
-    // Get the video title
+    // Get the channel branding header description
     const brandingDescription = await page
       .locator(channelDescriptionSelector)
       .textContent();
@@ -73,37 +75,39 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     expect(brandingDescription).toContain("SUBSCRIBE FOR A COOKIE");
     expect(brandingDescription).not.toContain("ไปดู Beast Games ได้แล้ว");
 
-    // --- Switch to Shorts Tab ---
-    console.log("Clicking Shorts tab...");
-    await page.locator("#tabsContent").getByText("Shorts").click();
-    await page.waitForLoadState("networkidle");
-
     // Take a screenshot for visual verification
+    await page.waitForTimeout(5000);
     await page.screenshot({ path: "images/youtube-channel-branding-header-test.png" });
 
-    // --- Check Shorts Tab ---
-    const originalShortTitle = "Baseball Tic Tac Toe vs MLB Pro";
-    const translatedShortTitle = "Бейсбольные Крестики-Нолики"; // Adjust if needed
-    const shortSelector = `ytd-rich-item-renderer:has-text("${originalShortTitle}")`;
-    const translatedShortSelector = `ytd-rich-item-renderer:has-text("${translatedShortTitle}")`;
+    // --- Open About Popup ---
+    console.log("Clicking '..more' button on description to open About Popup...");
+    await page.locator(`${channelHeaderSelector} .truncated-text-wiz__absolute-button`).click();
+    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(1000);
 
-    console.log("Checking Shorts tab for original title...");
-    // Shorts might load dynamically, scroll into view to ensure it's loaded
-    const original = page.locator(shortSelector).first()
-    if (await original.isVisible()) {
-      original.scrollIntoViewIfNeeded();
-    }
-    const translated = page.locator(translatedShortSelector).first()
-    if (await translated.isVisible()) {
-      translated.scrollIntoViewIfNeeded();
-    }
-    await page.waitForTimeout(1000); // Give it a moment to load more items if needed
+    // --- Check About Popup ---
+    const aboutContainer = 'ytd-engagement-panel-section-list-renderer'
 
-    await expect(page.locator(shortSelector)).toBeVisible({ timeout: 10000 }); // Increased timeout for dynamic loading
-    await expect(page.locator(translatedShortSelector)).not.toBeVisible();
-    console.log(
-      "Original short title found, translated short title not found."
-    );
+    const aboutTitleSelector = `${aboutContainer} #title-text`; console.log("Checking Channel header for original description...");
+    // Get the about title
+    const aboutTitle = await page
+      .locator(aboutTitleSelector)
+      .textContent();
+    console.log("Channel about title:", aboutTitle?.trim());
+
+    // Check that the branding about title is in English and not in Thai
+    expect(aboutTitle).toContain("MrBeast");
+    expect(aboutTitle).not.toContain("มิสเตอร์บีสต์");
+
+    const aboutDescriptionSelector = `${aboutContainer} #description-container > .yt-core-attributed-string:nth-child(1)`;
+    // Get the about description
+    const aboutDescription = await page
+      .locator(aboutDescriptionSelector)
+      .textContent();
+    console.log("Channel about title:", aboutDescription?.trim());
+    // Check that the branding about description is in English and not in Thai
+    expect(aboutDescription).toContain("SUBSCRIBE FOR A COOKIE");
+    expect(aboutDescription).not.toContain("ไปดู Beast Games ได้แล้ว");
 
     // Take a screenshot for visual verification
     await page.screenshot({ path: "images/youtube-channel-branding-about-test.png" });

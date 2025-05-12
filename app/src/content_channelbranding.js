@@ -1,12 +1,8 @@
 // Constants
-const LOG_PREFIX = "[YoutubeAntiTranslate]";
-const CHANNEL_HEADER_SELECTOR = "#page-header-container #page-header .page-header-view-model-wiz__page-header-headline-info";
-const CHANNEL_ABOUT_SELECTOR = "#about-container";
-const PLAYER_CHANNEL_NAME_SELECTOR = 'ytd-video-owner-renderer ytd-channel-name .ytd-channel-name a.yt-simple-endpoint'
-const ATTRIBUTED_STRING_SELECTOR = ".yt-core-attributed-string";
-const MUTATION_UPDATE_FREQUENCY = 2;
-
-const cache = new Map();
+const CHANNELBRANDING_HEADER_SELECTOR = "#page-header-container #page-header .page-header-view-model-wiz__page-header-headline-info";
+const CHANNELBRANDING_ABOUT_SELECTOR = "ytd-engagement-panel-section-list-renderer";
+const CHANNELBRANDING_PLAYER_CHANNEL_NAME_SELECTOR = 'ytd-video-owner-renderer ytd-channel-name .ytd-channel-name a.yt-simple-endpoint'
+const CHANNELBRANDING_MUTATION_UPDATE_FREQUENCY = 1;
 
 /**
  * Converts URLs and timecodes in text to clickable links
@@ -148,7 +144,7 @@ async function restoreOriginalBrandingHeader() {
         return;
       }
 
-      const brandingHeaderContainer = document.querySelector(CHANNEL_HEADER_SELECTOR);
+      const brandingHeaderContainer = document.querySelector(CHANNELBRANDING_HEADER_SELECTOR);
       if (brandingHeaderContainer) {
         updateBrandingHeaderContent(brandingHeaderContainer, originalBrandingData);
       } else {
@@ -165,28 +161,33 @@ async function restoreOriginalBrandingHeader() {
  */
 function updateBrandingHeaderContent(container, originalBrandingData){
   // Find the title text containers
-  const titleTextContainer = container.querySelector(`h1 ${ATTRIBUTED_STRING_SELECTOR}`);
+  const titleTextContainer = container.querySelector(`h1 ${CORE_ATTRIBUTED_STRING_SELECTOR}`);
 
   if (!titleTextContainer) {
-    console.log(`${LOG_PREFIX} No title text containers found`);
+    console.log(`${LOG_PREFIX} No branding header title text containers found`);
     return;
   }
   if (originalBrandingData.title) {
-    replaceTextOnly(titleTextContainer,originalBrandingData.title)
+    replaceTextOnly(titleTextContainer, originalBrandingData.title)
   }
 
   // Find the description text container
-  const descriptionTextContainer = container.querySelector(`yt-description-preview-view-model .truncated-text-wiz__inline-button > ${ATTRIBUTED_STRING_SELECTOR}:nth-child(1)`);
+  const descriptionTextContainer = container.querySelector(`yt-description-preview-view-model .truncated-text-wiz__truncated-text-content > ${CORE_ATTRIBUTED_STRING_SELECTOR}:nth-child(1)`);
   if(!descriptionTextContainer) {
-    console.log(`${LOG_PREFIX} No description text containers found`);
+    console.log(`${LOG_PREFIX} No branding header description text containers found`);
     return;
   }
 
   if (originalBrandingData.description){
-    // Create formatted content
-    const formattedContent = createFormattedContent(originalBrandingData.description);
-    replaceContainerContent(descriptionTextContainer, formattedContent)
+    const truncatedDescription = originalBrandingData.description.split("\n")[0];
+    replaceTextOnly(descriptionTextContainer, truncatedDescription)
   }
+
+  // if (originalBrandingData.description){
+  //   // Create formatted content
+  //   const formattedContent = createFormattedContent(originalBrandingData.description);
+  //   replaceContainerContent(descriptionTextContainer, formattedContent)
+  // }
 }
 
 /**
@@ -248,7 +249,61 @@ function createFormattedContent(text) {
 /**
  * Processes the about and restores it to its original form
  */
-async function restoreOriginalAbout() { }
+async function restoreOriginalAbout() { 
+  await chrome.storage.sync.get(
+    {
+      youtubeDataApiKey: null
+    }, 
+    async (items) => {
+      const originalBrandingData = await fetchChannelTitleAndDescription(items.youtubeDataApiKey);
+
+      if (!originalBrandingData) {
+        return;
+      }
+      if (!originalBrandingData.title && !originalBrandingData.description){
+        return;
+      }
+
+      const aboutContainer = document.querySelector(CHANNELBRANDING_ABOUT_SELECTOR);
+      if (aboutContainer) {
+        updateAboutContent(aboutContainer, originalBrandingData);
+      } else {
+        console.log(`${LOG_PREFIX} Description container not found`);
+      }
+    }
+  );
+}
+
+/**
+ * Updates the About element with the original content
+ * @param {HTMLElement} container - The about container element
+ * @param {JSON} originalBrandingData - The original branding title and description
+ */
+function updateAboutContent(container, originalBrandingData){
+  // Find the title text containers
+  const titleTextContainer = container.querySelector(`#title-text`);
+
+  if (!titleTextContainer) {
+    console.log(`${LOG_PREFIX} No branding about title text containers found`);
+    return;
+  }
+  if (originalBrandingData.title) {
+    replaceTextOnly(titleTextContainer, originalBrandingData.title)
+  }
+
+  // Find the description text container
+  const descriptionTextContainer = container.querySelector(`#description-container > ${CORE_ATTRIBUTED_STRING_SELECTOR}:nth-child(1)`);
+  if(!descriptionTextContainer) {
+    console.log(`${LOG_PREFIX} No description text containers found`);
+    return;
+  }
+
+  if (originalBrandingData.description){
+    // Create formatted content
+    const formattedContent = createFormattedContent(originalBrandingData.description);
+    replaceContainerContent(descriptionTextContainer, formattedContent)
+  }
+}
 
 /**
  * Processes the player channel name and restores it to its original form
@@ -261,8 +316,8 @@ async function restoreOriginalPlayerChannelName() { }
 let mutationBrandingHeaderCounter = 0;
 
 async function handleBrandingHeaderMutation() {
-  if (mutationBrandingHeaderCounter % MUTATION_UPDATE_FREQUENCY === 0) {
-    const brandingHeaderElement = document.querySelector(CHANNEL_HEADER_SELECTOR);
+  if (mutationBrandingHeaderCounter % CHANNELBRANDING_MUTATION_UPDATE_FREQUENCY === 0) {
+    const brandingHeaderElement = document.querySelector(CHANNELBRANDING_HEADER_SELECTOR);
     if (brandingHeaderElement) {
       await restoreOriginalBrandingHeader();
     }
@@ -276,8 +331,8 @@ async function handleBrandingHeaderMutation() {
 let mutationAboutCounter = 0;
 
 async function handleAboutMutation() {
-  if (mutationAboutCounter % MUTATION_UPDATE_FREQUENCY === 0) {
-    const aboutElement = document.querySelector(CHANNEL_ABOUT_SELECTOR);
+  if (mutationAboutCounter % CHANNELBRANDING_MUTATION_UPDATE_FREQUENCY === 0) {
+    const aboutElement = document.querySelector(CHANNELBRANDING_ABOUT_SELECTOR);
     if (aboutElement) {
       restoreOriginalAbout();
     }
@@ -293,8 +348,8 @@ async function handleAboutMutation() {
 let mutationPlayerChannelNameCounter = 0;
 
 async function handlePlayerChannelNameMutation() {
-  if (mutationPlayerChannelNameCounter % MUTATION_UPDATE_FREQUENCY === 0) {
-    const PlayerChannelNameElement = document.querySelector(PLAYER_CHANNEL_NAME_SELECTOR);
+  if (mutationPlayerChannelNameCounter % CHANNELBRANDING_MUTATION_UPDATE_FREQUENCY === 0) {
+    const PlayerChannelNameElement = document.querySelector(CHANNELBRANDING_PLAYER_CHANNEL_NAME_SELECTOR);
     if (PlayerChannelNameElement) {
       restoreOriginalPlayerChannelName();
     }
