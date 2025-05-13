@@ -48,7 +48,7 @@ export async function newPageWithStorageStateIfItExists(context, locale = "") {
 
     if (ageInHours <= 4) {
       // Reuse existing authentication state if it's fresh (less than 4 hours old).
-      return { page: (await context.newPage({ storageState: file })), localeLoaded: false }
+      return { page: (await context.newPage({ storageState: authFile })), localeLoaded: false }
     }
   }
 
