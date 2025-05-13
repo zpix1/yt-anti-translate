@@ -2,7 +2,7 @@ import { test, expect, firefox } from "@playwright/test";
 import path from "path";
 import { withExtension } from "playwright-webextext";
 import { handleYoutubeConsent } from "./handleYoutubeConsent";
-import { handleGoogleLogin } from "./handleGoogleLogin";
+import { newPageWithStorageStateIfItExists, handleGoogleLogin } from "./handleGoogleLogin";
 import { downloadAndExtractUBlock } from "./handleTestDistribution";
 
 require('dotenv').config();
@@ -18,7 +18,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     )).launch()
 
     // Create a new page
-    const page = await context.newPage();
+    const page = await newPageWithStorageStateIfItExists(context);
 
     // Set up console message counting
     let consoleMessageCount = 0;
@@ -30,17 +30,17 @@ test.describe("YouTube Anti-Translate extension", () => {
     await page.goto("https://www.youtube.com/watch?v=l-nMKJ5J3Uc");
 
     // Wait for the page to load and for YouTube to process the locale
-    await page.waitForLoadState("networkidle");
+    try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
 
     // Sometimes youtube redirects to consent page so wait 2 seconds before proceeding
     await page.waitForTimeout(2000);
-    await page.waitForLoadState("networkidle");
+    try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
 
     // Sometimes youtube redirects to consent so handle it
     await handleYoutubeConsent(page);
 
     // Player needs login to work so login
-    await handleGoogleLogin(page);
+    await handleGoogleLogin(page, "ru-RU");
 
     // Wait for the video page to fully load
     await page.waitForSelector("ytd-watch-metadata");
@@ -103,7 +103,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     )).launch()
 
     // Create a new page
-    const page = await context.newPage();
+    const page = await newPageWithStorageStateIfItExists(context);
 
     // Set up console message counting
     let consoleMessageCount = 0;
@@ -115,17 +115,17 @@ test.describe("YouTube Anti-Translate extension", () => {
     await page.goto("https://www.youtube.com/watch?v=4PBPXbd4DkQ");
 
     // Wait for the page to load and for YouTube to process the locale
-    await page.waitForLoadState("networkidle");
+    try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
 
     // Sometimes youtube redirects to consent page so wait 2 seconds before proceeding
     await page.waitForTimeout(2000);
-    await page.waitForLoadState("networkidle");
+    try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
 
     // Sometimes youtube redirects to consent so handle it
     await handleYoutubeConsent(page);
 
     // Player needs login to work so login
-    await handleGoogleLogin(page);
+    await handleGoogleLogin(page, "ru-RU");
 
     // Wait for the video page to fully load
     await page.waitForSelector("ytd-watch-metadata");
@@ -196,7 +196,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     )).launch()
 
     // Create a new page
-    const page = await context.newPage();
+    const page = await newPageWithStorageStateIfItExists(context);
 
     // Set up console message counting
     let consoleMessageCount = 0;
@@ -208,22 +208,13 @@ test.describe("YouTube Anti-Translate extension", () => {
     await page.goto("https://www.youtube.com/shorts/PXevNM0awlI");
 
     // Wait for the page to load
-    await page.waitForLoadState("networkidle");
+    try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
 
     // Sometimes youtube redirects to consent so handle it
     await handleYoutubeConsent(page);
 
     // On Firefox Shorts require login
-    await handleGoogleLogin(page);
-    // Wait for it to load then hide it
-    /*await page.waitForTimeout(2000);
-    await page.waitForLoadState("networkidle");
-    try {
-      const playerErrorLoginSelector = 'div[id="shorts-inner-container"] div.style-scope.yt-playability-error-supported-renderers[id="container"]'
-      await page.waitForSelector(playerErrorLoginSelector, { timeout: 10000 });
-      const el = page.locator(playerErrorLoginSelector);
-      await el.evaluate((node) => node.remove());
-    } catch (e) { }*/
+    await handleGoogleLogin(page, "ru-RU");
 
     // Wait for the shorts title element to be present
     const shortsTitleSelector = "yt-shorts-video-title-view-model > h2 > span";
@@ -271,11 +262,11 @@ test.describe("YouTube Anti-Translate extension", () => {
     await page.goto("https://www.youtube.com/@MrBeast/videos");
 
     // Wait for the page to load
-    await page.waitForLoadState("networkidle");
+    try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
 
     // Sometimes youtube redirects to consent page so wait 2 seconds before proceeding
     await page.waitForTimeout(2000);
-    await page.waitForLoadState("networkidle");
+    try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
 
     // Sometimes youtube redirects to consent so handle it
     await handleYoutubeConsent(page);
@@ -297,7 +288,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     // --- Switch to Shorts Tab ---
     console.log("Clicking Shorts tab...");
     await page.locator("#tabsContent").getByText("Shorts").click();
-    await page.waitForLoadState("networkidle");
+    try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
 
     // --- Check Shorts Tab ---
     const originalShortTitle = "Baseball Tic Tac Toe vs MLB Pro";
@@ -326,7 +317,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     // --- Switch back to Videos Tab ---
     console.log("Clicking Videos tab...");
     await page.locator("#tabsContent").getByText("Видео").click();
-    await page.waitForLoadState("networkidle");
+    try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
     await page.waitForSelector(
       "ytd-rich-grid-media >> ytd-thumbnail-overlay-time-status-renderer:not([overlay-style='SHORTS'])",
       { state: "visible" }

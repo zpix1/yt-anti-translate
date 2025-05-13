@@ -1,7 +1,9 @@
 // Constants
 const LOG_PREFIX = "[YoutubeAntiTranslate]";
 const DESCRIPTION_SELECTOR = "#description-inline-expander";
+const AUTHOR_SELECTOR = "#upload-info.ytd-video-owner-renderer";
 const ATTRIBUTED_STRING_SELECTOR = "yt-attributed-string";
+const FORMATTED_STRING_SELECTOR = "yt-formatted-string";
 const SNIPPET_TEXT_SELECTOR = "#attributed-snippet-text";
 const PLAYER_ID = "movie_player";
 const MUTATION_UPDATE_FREQUENCY = 2;
@@ -158,21 +160,54 @@ function fetchOriginalDescription() {
 }
 
 /**
+ * Retrieves the original author from YouTube player
+ * @returns {string|null} - Original author or null if not found
+ */
+function fetchOriginalAuthor() {
+  const player = document.getElementById(PLAYER_ID);
+  if (!player) {
+    console.log(`${LOG_PREFIX} Player element not found`);
+    return null;
+  }
+
+  try {
+    const playerResponse = player.getPlayerResponse();
+    return playerResponse?.videoDetails?.author || null;
+  } catch (error) {
+    console.log(`${LOG_PREFIX} Error: ${error.message || error}`);
+    return null;
+  }
+}
+
+/**
  * Processes the description and restores it to its original form
  */
-function restoreOriginalDescription() {
+function restoreOriginalDescriptionAndAuthor() {
   const originalDescription = fetchOriginalDescription();
+  const originalAuthor = fetchOriginalAuthor();
 
-  if (!originalDescription) {
+  if (!originalDescription && !originalAuthor) {
     return;
   }
 
-  const descriptionContainer = document.querySelector(DESCRIPTION_SELECTOR);
+  if (originalDescription) {
+    const descriptionContainer = document.querySelector(DESCRIPTION_SELECTOR);
 
-  if (descriptionContainer) {
-    updateDescriptionContent(descriptionContainer, originalDescription);
-  } else {
-    console.log(`${LOG_PREFIX} Description container not found`);
+    if (descriptionContainer) {
+      updateDescriptionContent(descriptionContainer, originalDescription);
+    } else {
+      console.log(`${LOG_PREFIX} Description container not found`);
+    }
+  }
+
+  if (originalAuthor) {
+    const authorContainer = document.querySelector(AUTHOR_SELECTOR)
+
+    if (authorContainer) {
+      updateAuthorContent(authorContainer, originalAuthor);
+    } else {
+      console.log(`${LOG_PREFIX} Author container not found`);
+    }
   }
 }
 
@@ -207,6 +242,31 @@ function updateDescriptionContent(container, originalText) {
       snippetTextContainer,
       formattedContent.cloneNode(true)
     );
+  }
+}
+
+/**
+ * Updates the author element with the original content
+ * @param {HTMLElement} container - The author container element
+ * @param {string} originalText - The original author text
+ */
+function updateAuthorContent(container, originalText) {
+  // Find the text containers
+  const mainTextContainer = container.querySelector(FORMATTED_STRING_SELECTOR);
+  const snippetTextContainer = container.querySelector(`${FORMATTED_STRING_SELECTOR} a`);
+
+  if (!mainTextContainer && !snippetTextContainer) {
+    console.log(`${LOG_PREFIX} No author text containers found`);
+    return;
+  }
+
+  // Update both containers if they exist
+  if (mainTextContainer) {
+    mainTextContainer.title = originalText
+  }
+
+  if (snippetTextContainer) {
+    snippetTextContainer.innerText = originalText
   }
 }
 
@@ -259,7 +319,7 @@ async function handleDescriptionMutation() {
   if (mutationCounter % MUTATION_UPDATE_FREQUENCY === 0) {
     const descriptionElement = document.querySelector(DESCRIPTION_SELECTOR);
     if (descriptionElement) {
-      restoreOriginalDescription();
+      restoreOriginalDescriptionAndAuthor();
     }
   }
   mutationCounter++;

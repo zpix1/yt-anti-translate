@@ -5,7 +5,7 @@ const CHANNELBRANDING_PLAYER_CHANNEL_NAME_SELECTOR = 'ytd-video-owner-renderer y
 const CHANNELBRANDING_MUTATION_UPDATE_FREQUENCY = 1;
 
 /**
- * Converts URLs and timecodes in text to clickable links
+ * Converts URLs -a̶n̶d̶ t̶i̶m̶e̶c̶o̶d̶e̶s̶  in text to clickable links
  * @param {string} text - Text that may contain URLs and timecodes
  * @returns {HTMLElement} - Span element with clickable links
  */
@@ -36,7 +36,8 @@ function convertUrlsToLinks(text) {
       container.appendChild(linkElement);
       lastIndex = combinedPattern.lastIndex; // Use regex lastIndex for URLs
     }
-    // group 2 and 3 are not needed here as headers descriptions do not have timecodes
+    // This is a stripped down version of the function by the same signature in "background_description.js"
+    // group 2 and 3 are not needed here as branding about descriptions do not have timecodes
   }
 
   // Add remaining text after the last match
@@ -148,7 +149,7 @@ async function restoreOriginalBrandingHeader() {
       if (brandingHeaderContainer) {
         updateBrandingHeaderContent(brandingHeaderContainer, originalBrandingData);
       } else {
-        console.log(`${LOG_PREFIX} Description container not found`);
+        console.log(`${LOG_PREFIX} Channel Branding Header container not found`);
       }
     }
   );
@@ -160,34 +161,29 @@ async function restoreOriginalBrandingHeader() {
  * @param {JSON} originalBrandingData - The original branding title and description
  */
 function updateBrandingHeaderContent(container, originalBrandingData){
-  // Find the title text containers
-  const titleTextContainer = container.querySelector(`h1 ${CORE_ATTRIBUTED_STRING_SELECTOR}`);
-
-  if (!titleTextContainer) {
-    console.log(`${LOG_PREFIX} No branding header title text containers found`);
-    return;
-  }
   if (originalBrandingData.title) {
+    // Find the title text containers
+    const titleTextContainer = container.querySelector(`h1 ${CORE_ATTRIBUTED_STRING_SELECTOR}`);
+
+    if (!titleTextContainer) {
+      console.log(`${LOG_PREFIX} No branding header title text containers found`);
+      return;
+    }
+
     replaceTextOnly(titleTextContainer, originalBrandingData.title)
   }
 
-  // Find the description text container
-  const descriptionTextContainer = container.querySelector(`yt-description-preview-view-model .truncated-text-wiz__truncated-text-content > ${CORE_ATTRIBUTED_STRING_SELECTOR}:nth-child(1)`);
-  if(!descriptionTextContainer) {
-    console.log(`${LOG_PREFIX} No branding header description text containers found`);
-    return;
-  }
-
   if (originalBrandingData.description){
+    // Find the description text container
+    const descriptionTextContainer = container.querySelector(`yt-description-preview-view-model .truncated-text-wiz__truncated-text-content > ${CORE_ATTRIBUTED_STRING_SELECTOR}:nth-child(1)`);
+    if(!descriptionTextContainer) {
+      console.log(`${LOG_PREFIX} No branding header description text containers found`);
+      return;
+    }
+
     const truncatedDescription = originalBrandingData.description.split("\n")[0];
     replaceTextOnly(descriptionTextContainer, truncatedDescription)
   }
-
-  // if (originalBrandingData.description){
-  //   // Create formatted content
-  //   const formattedContent = createFormattedContent(originalBrandingData.description);
-  //   replaceContainerContent(descriptionTextContainer, formattedContent)
-  // }
 }
 
 /**
@@ -268,7 +264,7 @@ async function restoreOriginalAbout() {
       if (aboutContainer) {
         updateAboutContent(aboutContainer, originalBrandingData);
       } else {
-        console.log(`${LOG_PREFIX} Description container not found`);
+        console.log(`${LOG_PREFIX} Channel About container not found`);
       }
     }
   );
@@ -280,25 +276,25 @@ async function restoreOriginalAbout() {
  * @param {JSON} originalBrandingData - The original branding title and description
  */
 function updateAboutContent(container, originalBrandingData){
-  // Find the title text containers
-  const titleTextContainer = container.querySelector(`#title-text`);
-
-  if (!titleTextContainer) {
-    console.log(`${LOG_PREFIX} No branding about title text containers found`);
-    return;
-  }
   if (originalBrandingData.title) {
+    // Find the title text containers
+    const titleTextContainer = container.querySelector(`#title-text`);
+
+    if (!titleTextContainer) {
+      console.log(`${LOG_PREFIX} No branding about title text containers found`);
+      return;
+    }
     replaceTextOnly(titleTextContainer, originalBrandingData.title)
   }
 
-  // Find the description text container
-  const descriptionTextContainer = container.querySelector(`#description-container > ${CORE_ATTRIBUTED_STRING_SELECTOR}:nth-child(1)`);
-  if(!descriptionTextContainer) {
-    console.log(`${LOG_PREFIX} No description text containers found`);
-    return;
-  }
-
   if (originalBrandingData.description){
+    // Find the description text container
+    const descriptionTextContainer = container.querySelector(`#description-container > ${CORE_ATTRIBUTED_STRING_SELECTOR}:nth-child(1)`);
+    if(!descriptionTextContainer) {
+      console.log(`${LOG_PREFIX} No description text containers found`);
+      return;
+    }
+
     // Create formatted content
     const formattedContent = createFormattedContent(originalBrandingData.description);
     replaceContainerContent(descriptionTextContainer, formattedContent)

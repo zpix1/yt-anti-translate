@@ -1,14 +1,41 @@
+import fs from 'fs';
 import * as OTPAuth from "otpauth";
+import path from 'path';
+
+const authFile = path.join(__dirname, '../playwright/.auth/user.json');
 
 require('dotenv').config();
+
 /**
- * @param page
+ * @param {Browser} context
+ * @returns {Page} page
  */
-export async function handleGoogleLogin(page) {
-  await page.waitForLoadState("load");
+export async function newPageWithStorageStateIfItExists(context) {
+  if (fs.existsSync(authFile)) {
+    const stats = fs.statSync(authFile);
+    const modifiedTime = new Date(stats.mtime);
+    const now = new Date();
+    const ageInHours = (now.getTime() - modifiedTime.getTime()) / (1000 * 60 * 60);
+
+    if (ageInHours <= 4) {
+      // Reuse existing authentication state if it's fresh (less than 24 hours old).
+      return await context.newPage({ storageState: authFile });
+    }
+  }
+
+  // Fallback if file doesn't exist or is too old.
+  return await context.newPage();
+}
+
+/**
+ * @param {Page} page
+ * @param {string} locale
+ */
+export async function handleGoogleLogin(page, locale: string) {
+  try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
 
   //Check if we need to login
-  const possibleLabels = ["Sign in", "Войти"];
+  const possibleLabels = ["Sign in", "Войти", "ลงชื่อเข้าใช้"];
   for (const label of possibleLabels) {
     const button = page.locator(`#masthead a:has-text("${label}")`).first();
     if (await button.isVisible()) {
@@ -19,23 +46,63 @@ export async function handleGoogleLogin(page) {
     }
   }
 
+  //Check youtube locale is set correctly
+  const avatarButton = page.locator("#masthead #avatar-btn")
+  if (await avatarButton.isVisible()) {
+    await avatarButton.scrollIntoViewIfNeeded();
+    await avatarButton.click();
+    await page.waitForTimeout(500);
+    try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
+
+    const locationButton = page.locator("yt-multi-page-menu-section-renderer:nth-child(3) > #items > ytd-compact-link-renderer:nth-child(3) > a#endpoint");
+    if (await locationButton.isVisible()) {
+      await locationButton.scrollIntoViewIfNeeded();
+      await locationButton.click();
+      await page.waitForTimeout(500);
+      try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
+
+      switch (locale) {
+        case "ru-RU":
+          const russian = page.locator('yt-multi-page-menu-section-renderer a:has-text("Русский")');
+          await russian.scrollIntoViewIfNeeded();
+          await russian.click();
+          await page.waitForTimeout(500);
+          try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
+          break;
+        case "th_TH":
+          const thai = page.locator('yt-multi-page-menu-section-renderer a:has-text("ภาษาไทย")');
+          await thai.scrollIntoViewIfNeeded();
+          await thai.click();
+          await page.waitForTimeout(500);
+          try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
+          break;
+        default:
+          break;
+      }
+    }
+  }
+
   async function continueLoginSteps(page) {
-    await page.waitForLoadState("networkidle");
+    try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
+
+    const nextText = /Next|Далее|ถัดไป/i
 
     await page.locator('#identifierId').fill(process.env.GOOGLE_USER);
-    await page.getByRole('button', { name: /Next|Далее/i }).click();
-    await page.waitForLoadState("networkidle");
+    await page.getByRole('button', { name: nextText }).click();
+    try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
 
     await page.locator('#password input').fill(process.env.GOOGLE_PWD);
-    await page.getByRole('button', { name: /Next|Далее/i }).click();
-    await page.waitForLoadState("networkidle");
+    await page.getByRole('button', { name: nextText }).click();
+    try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
 
     const twoFACode = generateOTP(process.env.GOOGLE_OTP_SECRET);
     await page.locator('#totpPin').fill(twoFACode);
-    await page.getByRole('button', { name: /Next|Далее/i }).click();
+    await page.getByRole('button', { name: nextText }).click();
 
     await page.waitForTimeout(5000);
-    await page.waitForLoadState("load");
+    try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
+
+    await page.context().storageState({ path: authFile });
   }
 }
 

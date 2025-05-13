@@ -22,6 +22,12 @@ I was even more annoyed by AI Autodub.
 - Untranslates YouTube Shorts audio and titles
 - Works automatically without any configuration
 
+### Extra Features
+
+Extra features need a Youtube Data API Key to be pupulated in the extension settings. [Read more on how to obtain](https://github.com/namakeingo/yt-anti-translate-firefox/blob/main/YOUTUBE_DATA_API_KEY.md)
+
+- Restores original channel branding header and about on Youtube (can be toggled in settings "Untranslate channel branding")
+
 ## How to use
 
 Just install it from the [Firefox Extensions Store](https://addons.mozilla.org/firefox/addon/youtube-anti-translate-mv3/).

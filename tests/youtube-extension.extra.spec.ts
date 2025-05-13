@@ -2,6 +2,7 @@ import { test, expect, firefox } from "@playwright/test";
 import path from "path";
 import { withExtension } from "playwright-webextext";
 import { handleYoutubeConsent } from "./handleYoutubeConsent";
+import { newPageWithStorageStateIfItExists, handleGoogleLogin } from "./handleGoogleLogin";
 import { handleTestDistribution, downloadAndExtractUBlock } from "./handleTestDistribution";
 
 require('dotenv').config();
@@ -29,15 +30,15 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
       consoleMessageCount++;
     });
 
-    // Navigate to the specified YouTube channel videos page
+    // Navigate to the specified YouTube channel page
     await page.goto("https://www.youtube.com/@MrBeast");
 
     // Wait for the page to load
-    await page.waitForLoadState("networkidle");
+    try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
 
     // Sometimes youtube redirects to consent page so wait 2 seconds before proceeding
     await page.waitForTimeout(2000);
-    await page.waitForLoadState("networkidle");
+    try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
 
     // Sometimes youtube redirects to consent so handle it
     await handleYoutubeConsent(page);
@@ -81,7 +82,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     // --- Open About Popup ---
     console.log("Clicking '..more' button on description to open About Popup...");
     await page.locator(`${channelHeaderSelector} .truncated-text-wiz__absolute-button`).click();
-    await page.waitForLoadState("networkidle");
+    try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
     await page.waitForTimeout(1000);
 
     // --- Check About Popup ---
@@ -110,6 +111,72 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
 
     // Take a screenshot for visual verification
     await page.screenshot({ path: "images/youtube-channel-branding-about-test.png" });
+
+    // Check console message count
+    expect(consoleMessageCount).toBeLessThan(
+      2000
+    );
+
+    // Close the browser context
+    await context.close();
+  });
+
+
+  test("YouTube video player retain original author", async () => {
+    downloadAndExtractUBlock();
+
+    // Launch browser with the extension
+    const context = await (withExtension(
+      firefox,
+      [path.resolve(__dirname, "testDist"), path.resolve(__dirname, "testUBlockOrigin")]
+    )).launch()
+
+    // Create a new page
+    const page = await newPageWithStorageStateIfItExists(context);
+
+    // Set up console message counting
+    let consoleMessageCount = 0;
+    page.on("console", () => {
+      consoleMessageCount++;
+    });
+
+    // Navigate to the specified YouTube video page
+    await page.goto("https://www.youtube.com/watch?v=l-nMKJ5J3Uc");
+
+    // Wait for the page to load
+    try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
+
+    // Sometimes youtube redirects to consent page so wait 2 seconds before proceeding
+    await page.waitForTimeout(2000);
+    try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
+
+    // Sometimes youtube redirects to consent so handle it
+    await handleYoutubeConsent(page);
+
+    // Player needs login to work so login
+    await handleGoogleLogin(page, "th_TH");
+
+    // Wait for the video player to appear
+    const videoPlayerSelector = "#movie_player"
+    await page.waitForSelector(videoPlayerSelector);
+
+    // --- Check Branding Title ---
+    const videoAuthorSelector = `#upload-info.ytd-video-owner-renderer yt-formatted-string a`;
+
+    console.log("Checking video author for original author...");
+    // Get the channel branding header title
+    const brandingTitle = await page
+      .locator(videoAuthorSelector)
+      .textContent();
+    console.log("Video author:", brandingTitle?.trim());
+
+    // Check that the branding header title is in English and not in Thai
+    expect(brandingTitle).toContain("MrBeast");
+    expect(brandingTitle).not.toContain("มิสเตอร์บีสต์");
+
+    // Take a screenshot for visual verification
+    await page.waitForTimeout(5000);
+    await page.screenshot({ path: "images/youtube-video-author-test.png" });
 
     // Check console message count
     expect(consoleMessageCount).toBeLessThan(
