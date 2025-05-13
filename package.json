@@ -26,5 +26,9 @@
     "dotenv": "^16.5.0",
     "playwright-webextext": "^0.0.3",
     "tslib": "^2.8.1"
+  },
+  "dependencies": {
+    "otpauth": "^9.4.0",
+    "unzipper": "^0.12.3"
   }
 }

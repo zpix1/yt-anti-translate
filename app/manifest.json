@@ -1,7 +1,7 @@
 {
   "name": "YouTube Anti Translate - mv3",
   "author": "zpix1; ported by namakeingo",
-  "version": "1.17.0.1",
+  "version": "1.18.0",
   "copyright": "Copyright (c) 2021 Ivan Baksheev",
   "description": "A small extension to disable YouTube video titles/audio/descriptions autotranslation.",
   "manifest_version": 3,
@@ -17,29 +17,30 @@
         "*://*.youtube.com/*"
       ],
       "js": [
-        "src/start.js"
+        "src/content_constants.js",
+        "src/content_start.js",
+        "src/content_channelbranding.js"
       ]
     }
   ],
+  "externally_connectable": {
+    "matches": [
+      "*://*.youtube.com/*"
+    ]
+  },
   "web_accessible_resources": [
     {
       "resources": [
         "src/background.js",
         "src/background_audio.js",
-        "src/background_description.js"
+        "src/background_description.js",
+        "src/background_channelbranding.js"
       ],
       "matches": [
         "*://*.youtube.com/*"
       ]
     }
   ],
-  "background": {
-    "scripts": [
-      "src/background.js",
-      "src/background_audio.js",
-      "src/background_description.js"
-    ]
-  },
   "action": {
     "default_popup": "pages/popup.html"
   },

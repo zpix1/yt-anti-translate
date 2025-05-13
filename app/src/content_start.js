@@ -1,5 +1,4 @@
-// To run in page environment
-
+// Laad scripts that will run in page environment
 chrome.storage.sync.get(
   {
     disabled: false,

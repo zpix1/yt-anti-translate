@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.18.0] - xx.05.2025
+
+### New Feature
+
+- YouTube Channel Branding Header and About untranslation
+
+### Fixed
+
+- Fixed video title untranslation when in full screen
+- Fixed channel name untranslation above video player description
+
+## [1.17.0.1] - 08.05.2025
+
+### Support
+
+- Ported to Firefox as Manifest V3 [YouTube Anti Translate - mv3](https://addons.mozilla.org/firefox/addon/youtube-anti-translate-mv3/)
+
 ## [1.17.0] - 05.04.2025
 
 ### New Feature

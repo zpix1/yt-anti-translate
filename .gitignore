@@ -8,10 +8,13 @@ node_modules
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+/playwright/.auth
 /tmp/
 /web-ext-artifacts/
 /.web-ext-cache/
 
 test-user-data-dir/
+tests/testDist/
+tests/testUBlockOrigin/
 /app/.amo-upload-uuid
 app/app.zip
