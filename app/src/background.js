@@ -171,6 +171,133 @@ async function untranslateCurrentVideo() {
   translatedTitleElement.after(newFakeNode);
 }
 
+async function untranslateCurrentVideoFullScreenLink() {  
+  let translatedTitleFullcreenElement = document.querySelector(
+    "#movie_player a.ytp-title-fullerscreen-link"
+  );
+
+  if (!translatedTitleFullcreenElement || !translatedTitleFullcreenElement.textContent) {
+    translatedTitleFullcreenElement = document.querySelector(
+      "#movie_player a.ytp-title-fullerscreen-link:not(.cbCustomTitle)"
+    );
+  }
+
+  if (!translatedTitleFullcreenElement || !translatedTitleFullcreenElement.textContent) {
+    return;
+  }
+
+  const response = await get(
+    "https://www.youtube.com/oembed?url=" + document.location.href
+  );
+  if (!response) {
+    return;
+  }
+
+  const realTitle = response.title;
+
+  if (!realTitle || !translatedTitleFullcreenElement) {
+    return;
+  }
+
+  document.title = document.title.replace(
+    translatedTitleFullcreenElement.textContent,
+    realTitle
+  );
+
+  const oldTitle = translatedTitleFullcreenElement.textContent;
+
+  if (realTitle === oldTitle) {
+    return;
+  }
+
+  translatedTitleFullcreenElement.style.visibility = "hidden";
+  translatedTitleFullcreenElement.style.display = "none";
+
+  const fakeNode = document.getElementById("yt-anti-translate-fake-node-fullscreen-link");
+
+  if (fakeNode?.textContent === realTitle) {
+    return;
+  }
+
+  console.log(
+    `[YoutubeAntiTranslate] translated title to "${realTitle}" from "${oldTitle}"`
+  );
+
+  if (fakeNode) {
+    fakeNode.textContent = realTitle;
+    return;
+  }
+
+  const newFakeNode = translatedTitleFullcreenElement.cloneNode();
+  newFakeNode.id = "yt-anti-translate-fake-node-fullscreen-link";
+  newFakeNode.textContent = realTitle;
+  translatedTitleFullcreenElement.after(newFakeNode);
+}
+
+async function untranslateCurrentVideoFullScreenEdu() {  
+  let translatedTitleFullcreenElement = document.querySelector(
+    "#movie_player div.ytp-fullerscreen-edu-text"
+  );
+
+  if (!translatedTitleFullcreenElement || !translatedTitleFullcreenElement.textContent) {
+    translatedTitleFullcreenElement = document.querySelector(
+      "#movie_player div.ytp-fullerscreen-edu-text:not(.cbCustomTitle)"
+    );
+  }
+
+  if (!translatedTitleFullcreenElement || !translatedTitleFullcreenElement.textContent) {
+    return;
+  }
+
+  const response = await get(
+    "https://www.youtube.com/oembed?url=" + document.location.href
+  );
+  if (!response) {
+    return;
+  }
+
+  const realTitle = response.title;
+
+  if (!realTitle || !translatedTitleFullcreenElement) {
+    return;
+  }
+
+  document.title = document.title.replace(
+    translatedTitleFullcreenElement.textContent,
+    realTitle
+  );
+
+  const oldTitle = translatedTitleFullcreenElement.textContent;
+
+  if (realTitle === oldTitle) {
+    return;
+  }
+
+  translatedTitleFullcreenElement.style.visibility = "hidden";
+  translatedTitleFullcreenElement.style.display = "none";
+
+  const fakeNode = document.getElementById("yt-anti-translate-fake-node-fullscreen-edu");
+
+  if (fakeNode?.textContent === realTitle) {
+    return;
+  }
+
+  console.log(
+    `[YoutubeAntiTranslate] translated title to "${realTitle}" from "${oldTitle}"`
+  );
+
+  if (fakeNode) {
+    fakeNode.textContent = realTitle;
+    return;
+  }
+
+  const newFakeNode = document.createElement("div");
+  newFakeNode.className = "ytp-fullerscreen-edu-text";
+  newFakeNode.id = "yt-anti-translate-fake-node-fullscreen-edu";
+  newFakeNode.textContent = realTitle;
+  translatedTitleFullcreenElement.after(newFakeNode);
+}
+
 async function untranslateOtherVideos() {
   async function untranslateArray(otherVideos) {
     otherVideos = Array.from(otherVideos);
@@ -359,6 +486,8 @@ let mutationIdx = 0;
 async function untranslate() {
   if (mutationIdx % MUTATION_UPDATE_STEP === 0) {
     const currentVideoPromise = untranslateCurrentVideo();
+    const currentVideoFullScreenLinkPromise = untranslateCurrentVideoFullScreenLink();
+    const currentVideoFullScreenEduPromise = untranslateCurrentVideoFullScreenEdu();
     const otherVideosPromise = untranslateOtherVideos();
     const currentShortPromise = untranslateCurrentShortVideo();
     const otherShortsPromise = untranslateOtherShortsVideos(); // Call the new function
@@ -366,6 +495,8 @@ async function untranslate() {
     // Wait for all promises to resolve concurrently
     await Promise.all([
       currentVideoPromise,
+      currentVideoFullScreenLinkPromise,
+      currentVideoFullScreenEduPromise,
       otherVideosPromise,
       currentShortPromise,
       otherShortsPromise,

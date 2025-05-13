@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Fixed translation of video title untranslation when in full screen
+- Fixed video title untranslation when in full screen
 - Fixed channel name untranslation above video player description
 
 ## [1.17.0.1] - 08.05.2025

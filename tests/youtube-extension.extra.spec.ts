@@ -132,7 +132,9 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     )).launch()
 
     // Create a new page
-    const page = await newPageWithStorageStateIfItExists(context);
+    const result = await newPageWithStorageStateIfItExists(context, "th_TH");
+    const page = result.page;
+    const localeLoaded = result.localeLoaded;
 
     // Set up console message counting
     let consoleMessageCount = 0;
@@ -154,7 +156,9 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     await handleYoutubeConsent(page);
 
     // Player needs login to work so login
-    await handleGoogleLogin(page, "th_TH");
+    if (localeLoaded !== true) {
+      await handleGoogleLogin(page, "th_TH");
+    }
 
     // Wait for the video player to appear
     const videoPlayerSelector = "#movie_player"

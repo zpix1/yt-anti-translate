@@ -21,7 +21,7 @@ export async function handleYoutubeConsent(page) {
       await button.scrollIntoViewIfNeeded();
       await button.click();
       // Most of the time we are redirected after the cookies dialog so allow extra time for load
-      try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
+      await page.waitForTimeout(5000);
       break;
     }
   }

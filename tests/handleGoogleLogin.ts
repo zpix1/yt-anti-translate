@@ -2,15 +2,44 @@ import fs from 'fs';
 import * as OTPAuth from "otpauth";
 import path from 'path';
 
+const authFile_thTH = path.join(__dirname, '../playwright/.auth/user_thTH.json');
+const authFile_ruRU = path.join(__dirname, '../playwright/.auth/user_ruRU.json');
 const authFile = path.join(__dirname, '../playwright/.auth/user.json');
 
 require('dotenv').config();
 
 /**
  * @param {Browser} context
- * @returns {Page} page
+ * @returns {JSON} {"page": Page, "localeLoaded": boolean }
  */
-export async function newPageWithStorageStateIfItExists(context) {
+export async function newPageWithStorageStateIfItExists(context, locale = "") {
+  let file = "";
+
+  switch (locale) {
+    case "ru-RU":
+      file = authFile_ruRU;
+      break;
+    case "th_TH":
+      file = authFile_thTH;
+      break;
+    default:
+      break;
+  }
+
+  if (file !== "") {
+    if (fs.existsSync(file)) {
+      const stats = fs.statSync(file);
+      const modifiedTime = new Date(stats.mtime);
+      const now = new Date();
+      const ageInHours = (now.getTime() - modifiedTime.getTime()) / (1000 * 60 * 60);
+
+      if (ageInHours <= 4) {
+        // Reuse existing LOCALE authentication state if it's fresh (less than 4 hours old).
+        return { page: (await context.newPage({ storageState: file })), localeLoaded: true }
+      }
+    }
+  }
+
   if (fs.existsSync(authFile)) {
     const stats = fs.statSync(authFile);
     const modifiedTime = new Date(stats.mtime);
@@ -18,13 +47,13 @@ export async function newPageWithStorageStateIfItExists(context) {
     const ageInHours = (now.getTime() - modifiedTime.getTime()) / (1000 * 60 * 60);
 
     if (ageInHours <= 4) {
-      // Reuse existing authentication state if it's fresh (less than 24 hours old).
-      return await context.newPage({ storageState: authFile });
+      // Reuse existing authentication state if it's fresh (less than 4 hours old).
+      return { page: (await context.newPage({ storageState: file })), localeLoaded: false }
     }
   }
 
   // Fallback if file doesn't exist or is too old.
-  return await context.newPage();
+  return { page: (await context.newPage()), localeLoaded: false }
 }
 
 /**
@@ -67,6 +96,7 @@ export async function handleGoogleLogin(page, locale: string) {
           await russian.scrollIntoViewIfNeeded();
           await russian.click();
           await page.waitForTimeout(500);
+          await page.context().storageState({ path: authFile_ruRU });
           try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
           break;
         case "th_TH":
@@ -74,6 +104,7 @@ export async function handleGoogleLogin(page, locale: string) {
           await thai.scrollIntoViewIfNeeded();
           await thai.click();
           await page.waitForTimeout(500);
+          await page.context().storageState({ path: authFile_thTH });
           try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
           break;
         default:

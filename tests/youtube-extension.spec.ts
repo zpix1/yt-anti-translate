@@ -18,7 +18,9 @@ test.describe("YouTube Anti-Translate extension", () => {
     )).launch()
 
     // Create a new page
-    const page = await newPageWithStorageStateIfItExists(context);
+    const result = await newPageWithStorageStateIfItExists(context, "ru-RU");
+    const page = result.page;
+    const localeLoaded = result.localeLoaded;
 
     // Set up console message counting
     let consoleMessageCount = 0;
@@ -40,7 +42,9 @@ test.describe("YouTube Anti-Translate extension", () => {
     await handleYoutubeConsent(page);
 
     // Player needs login to work so login
-    await handleGoogleLogin(page, "ru-RU");
+    if (localeLoaded !== true) {
+      await handleGoogleLogin(page, "ru-RU");
+    }
 
     // Wait for the video page to fully load
     await page.waitForSelector("ytd-watch-metadata");
@@ -103,7 +107,9 @@ test.describe("YouTube Anti-Translate extension", () => {
     )).launch()
 
     // Create a new page
-    const page = await newPageWithStorageStateIfItExists(context);
+    const result = await newPageWithStorageStateIfItExists(context, "ru-RU");
+    const page = result.page;
+    const localeLoaded = result.localeLoaded;
 
     // Set up console message counting
     let consoleMessageCount = 0;
@@ -125,7 +131,9 @@ test.describe("YouTube Anti-Translate extension", () => {
     await handleYoutubeConsent(page);
 
     // Player needs login to work so login
-    await handleGoogleLogin(page, "ru-RU");
+    if (localeLoaded !== true) {
+      await handleGoogleLogin(page, "ru-RU");
+    }
 
     // Wait for the video page to fully load
     await page.waitForSelector("ytd-watch-metadata");
@@ -196,7 +204,9 @@ test.describe("YouTube Anti-Translate extension", () => {
     )).launch()
 
     // Create a new page
-    const page = await newPageWithStorageStateIfItExists(context);
+    const result = await newPageWithStorageStateIfItExists(context, "ru-RU");
+    const page = result.page;
+    const localeLoaded = result.localeLoaded;
 
     // Set up console message counting
     let consoleMessageCount = 0;
@@ -214,7 +224,9 @@ test.describe("YouTube Anti-Translate extension", () => {
     await handleYoutubeConsent(page);
 
     // On Firefox Shorts require login
-    await handleGoogleLogin(page, "ru-RU");
+    if (localeLoaded !== true) {
+      await handleGoogleLogin(page, "ru-RU");
+    }
 
     // Wait for the shorts title element to be present
     const shortsTitleSelector = "yt-shorts-video-title-view-model > h2 > span";
