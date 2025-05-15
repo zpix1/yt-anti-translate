@@ -61,8 +61,12 @@ jobs:
           cd dist
           web-ext sign --channel=${{ steps.determine-channel.outputs.channel }} --api-key="${{ secrets.AMO_JWT_ISSUER }}" --api-secret="${{ secrets.AMO_JWT_SECRET }}"
 
+      - name: cd web-ext-artifacts
+        run: |- 
+          cd dist
+
       - name: Archive firefox-extension artifact
         uses: actions/upload-artifact@v4
         with:
           name: youtube_anti_translate_mv3-signed.xpi
-          path: web-ext-artifacts/youtube_anti_translate_mv3-*
+          path: youtube_anti_translate_mv3-*
