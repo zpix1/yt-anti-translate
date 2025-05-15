@@ -3,8 +3,8 @@
 const LOG_PREFIX = "[YoutubeAntiTranslate]";
 const CORE_ATTRIBUTED_STRING_SELECTOR = ".yt-core-attributed-string";
 const PLAYER_SELECTOR = window.location.pathname.startsWith("/shorts")
-? "#shorts-player"
-: "ytd-player .html5-video-player";
+  ? "#shorts-player"
+  : "ytd-player .html5-video-player";
 const cache = new Map();
 
 /**
@@ -24,7 +24,7 @@ const YoutubeAntiTranslate_getFirstVisible = function (nodes) {
 
   for (const node of nodes) {
     let style;
-    let /** @type {Element} */ element 
+    let /** @type {Element} */ element
     if (node.nodeType === Node.ELEMENT_NODE) {
       element = /** @type {Element} */ (node);
     }

@@ -68,19 +68,19 @@ function createLinkElement(url) {
  * @returns channel filter
  */
 function getChannelFilter() {
-  if(window.location.pathname.startsWith("/channel/")){
+  if (window.location.pathname.startsWith("/channel/")) {
     var match = window.location.pathname.match(/\/channel\/([\w-]+)/);
     return match ? `id=${match[1]}` : null;
   }
-  if(window.location.pathname.startsWith("/c/")){
+  if (window.location.pathname.startsWith("/c/")) {
     var match = window.location.pathname.match(/\/c\/([\w-]+)/);
     return match ? `forHandle=${match[1]}` : null;
   }
-  else if(window.location.pathname.startsWith("/@")){
+  else if (window.location.pathname.startsWith("/@")) {
     var match = window.location.pathname.match(/\/(@[\w-]+)/);
     return match ? `forHandle=${match[1]}` : null;
   }
-  else if(window.location.pathname.startsWith("/user/")){
+  else if (window.location.pathname.startsWith("/user/")) {
     var match = window.location.pathname.match(/\/user\/(@[\w-]+)/);
     return match ? `forUsername=${match[1]}` : null;
   }
@@ -140,18 +140,18 @@ async function fetchChannelTitleAndDescription(youtubeDataApiKey) {
 /**
  * Processes the branding header and restores it to its original form
  */
-async function restoreOriginalBrandingHeader() { 
+async function restoreOriginalBrandingHeader() {
   if (YoutubeAntiTranslate_getFirstVisible(document.querySelectorAll(CHANNELBRANDING_HEADER_SELECTOR))) {
     await chrome.storage.sync.get(
       {
         youtubeDataApiKey: null
-      }, 
+      },
       async (items) => {
         const originalBrandingData = await fetchChannelTitleAndDescription(items.youtubeDataApiKey);
 
         if (!originalBrandingData) {
         }
-        else if (!originalBrandingData.title && !originalBrandingData.description){
+        else if (!originalBrandingData.title && !originalBrandingData.description) {
         }
         else {
           const brandingHeaderContainer = YoutubeAntiTranslate_getFirstVisible(document.querySelectorAll(CHANNELBRANDING_HEADER_SELECTOR));
@@ -172,7 +172,7 @@ async function restoreOriginalBrandingHeader() {
  * @param {HTMLElement} container - The branding header container element
  * @param {JSON} originalBrandingData - The original branding title and description
  */
-function updateBrandingHeaderTitleContent(container, originalBrandingData){
+function updateBrandingHeaderTitleContent(container, originalBrandingData) {
   if (originalBrandingData.title) {
     // Find the title text containers
     const titleTextContainer = container.querySelector(`h1 ${CORE_ATTRIBUTED_STRING_SELECTOR}`);
@@ -180,7 +180,7 @@ function updateBrandingHeaderTitleContent(container, originalBrandingData){
     if (!titleTextContainer) {
       console.log(`${LOG_PREFIX} No branding header title text containers found`);
     }
-    else if (titleTextContainer.innerText !== originalBrandingData.title){
+    else if (titleTextContainer.innerText !== originalBrandingData.title) {
       replaceTextOnly(titleTextContainer, originalBrandingData.title)
     }
   }
@@ -191,11 +191,11 @@ function updateBrandingHeaderTitleContent(container, originalBrandingData){
  * @param {HTMLElement} container - The branding header container element
  * @param {JSON} originalBrandingData - The original branding title and description
  */
-function updateBrandingHeaderDescriptionContent(container, originalBrandingData){
-  if (originalBrandingData.description){
+function updateBrandingHeaderDescriptionContent(container, originalBrandingData) {
+  if (originalBrandingData.description) {
     // Find the description text container
     const descriptionTextContainer = container.querySelector(`yt-description-preview-view-model .truncated-text-wiz__truncated-text-content > ${CORE_ATTRIBUTED_STRING_SELECTOR}:nth-child(1)`);
-    if(!descriptionTextContainer) {
+    if (!descriptionTextContainer) {
       console.log(`${LOG_PREFIX} No branding header description text containers found`);
     }
     else {
@@ -205,7 +205,7 @@ function updateBrandingHeaderDescriptionContent(container, originalBrandingData)
         replaceTextOnly(descriptionTextContainer, truncatedDescription)
         // Force reflow
         setTimeout(() => { descriptionTextContainer.parentElement.style.display = "block" }, 10);
-      }    
+      }
     }
   }
 }
@@ -269,22 +269,22 @@ function createFormattedContent(text) {
 /**
  * Processes the about and restores it to its original form
  */
-async function restoreOriginalBrandingAbout() { 
+async function restoreOriginalBrandingAbout() {
   if (YoutubeAntiTranslate_getFirstVisible(document.querySelectorAll(CHANNELBRANDING_ABOUT_SELECTOR))) {
     await chrome.storage.sync.get(
       {
         youtubeDataApiKey: null
-      }, 
+      },
       async (items) => {
         const originalBrandingData = await fetchChannelTitleAndDescription(items.youtubeDataApiKey);
 
         if (!originalBrandingData) {
         }
-        else if (!originalBrandingData.title && !originalBrandingData.description){
+        else if (!originalBrandingData.title && !originalBrandingData.description) {
         }
         else {
           const aboutContainer = document.querySelectorAll(CHANNELBRANDING_ABOUT_SELECTOR);
-          if (aboutContainer  || titleTextContainer.length > 0) {
+          if (aboutContainer || titleTextContainer.length > 0) {
             aboutContainer.forEach(element => {
               updateBrandingAboutDescriptionContent(element, originalBrandingData);
               updateBrandingAboutTitleContent(element, originalBrandingData);
@@ -303,7 +303,7 @@ async function restoreOriginalBrandingAbout() {
  * @param {HTMLElement} container - The about container element
  * @param {JSON} originalBrandingData - The original branding title and description
  */
-function updateBrandingAboutTitleContent(container, originalBrandingData){
+function updateBrandingAboutTitleContent(container, originalBrandingData) {
   if (originalBrandingData.title) {
     // Find the title text containers
     const titleTextContainer = container.querySelector(`#title-text`);
@@ -312,7 +312,7 @@ function updateBrandingAboutTitleContent(container, originalBrandingData){
       console.log(`${LOG_PREFIX} No branding about title text containers found`);
     }
     else {
-      if (titleTextContainer.innerText !== originalBrandingData.title){
+      if (titleTextContainer.innerText !== originalBrandingData.title) {
         replaceTextOnly(titleTextContainer, originalBrandingData.title)
       }
     }
@@ -321,20 +321,19 @@ function updateBrandingAboutTitleContent(container, originalBrandingData){
 
 /**
  * Updates the About element with the original content
- * @param {HTMLElement} container - The about container element
  * @param {JSON} originalBrandingData - The original branding title and description
  */
-function updateBrandingAboutDescriptionContent(container, originalBrandingData){
-  if (originalBrandingData.description){
+function updateBrandingAboutDescriptionContent(container, originalBrandingData) {
+  if (originalBrandingData.description) {
     // Find the description text container
     const descriptionTextContainer = container.querySelector(`#description-container > ${CORE_ATTRIBUTED_STRING_SELECTOR}:nth-child(1)`);
-    if(!descriptionTextContainer || descriptionTextContainer.length === 0) {
+    if (!descriptionTextContainer || descriptionTextContainer.length === 0) {
       console.log(`${LOG_PREFIX} No branding about description text containers found`);
     }
     else {
       const truncatedDescription = originalBrandingData.description.split("\n")[0];
-      
-      if (!descriptionTextContainer.innerText.includes(truncatedDescription)){
+
+      if (!descriptionTextContainer.innerText.includes(truncatedDescription)) {
         // Create formatted content
         const formattedContent = createFormattedContent(originalBrandingData.description);
         replaceContainerContent(descriptionTextContainer, formattedContent.cloneNode(true))
@@ -348,7 +347,7 @@ async function untranslateBranding() {
   if (mutationBrandingIdx % CHANNELBRANDING_MUTATION_UPDATE_FREQUENCY === 0) {
     const brandingHeaderPromise = restoreOriginalBrandingHeader();
     const brandingAboutPromise = restoreOriginalBrandingAbout();
-    
+
     // Wait for all promises to resolve concurrently
     await Promise.all([
       brandingHeaderPromise,
@@ -362,9 +361,9 @@ async function untranslateBranding() {
 chrome.storage.sync.get(
   {
     untranslateChannelBranding: false
-  }, 
+  },
   (items) => {
-    if(items.untranslateChannelBranding){
+    if (items.untranslateChannelBranding) {
       const targetNode = document.body;
       const observerConfig = { childList: true, subtree: true };
       const brandingObserver = new MutationObserver(untranslateBranding);

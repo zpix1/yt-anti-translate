@@ -37,7 +37,7 @@ const YoutubeAntiTranslate_getFirstVisible = function (nodes) {
 
   for (const node of nodes) {
     let style;
-    let /** @type {Element} */ element 
+    let /** @type {Element} */ element
     if (node.nodeType === Node.ELEMENT_NODE) {
       element = /** @type {Element} */ (node);
     }
@@ -63,8 +63,8 @@ const YoutubeAntiTranslate_getFirstVisible = function (nodes) {
 }
 
 const PLAYER_SELECTOR = window.location.pathname.startsWith("/shorts")
-? "#shorts-player"
-: "ytd-player .html5-video-player";
+  ? "#shorts-player"
+  : "ytd-player .html5-video-player";
 let mutationIdx = 0;
 const MUTATION_UPDATE_STEP = 2;
 

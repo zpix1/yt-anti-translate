@@ -1,7 +1,7 @@
 const MUTATION_UPDATE_STEP = 2;
 const PLAYER_SELECTOR = window.location.pathname.startsWith("/shorts")
-? "#shorts-player"
-: "ytd-player .html5-video-player";
+  ? "#shorts-player"
+  : "ytd-player .html5-video-player";
 const LOG_PREFIX = "[YoutubeAntiTranslate]";
 const CORE_ATTRIBUTED_STRING_SELECTOR = ".yt-core-attributed-string";
 const cache = new Map();
@@ -23,7 +23,7 @@ const YoutubeAntiTranslate_getFirstVisible = function (nodes) {
 
   for (const node of nodes) {
     let style;
-    let /** @type {Element} */ element 
+    let /** @type {Element} */ element
     if (node.nodeType === Node.ELEMENT_NODE) {
       element = /** @type {Element} */ (node);
     }
@@ -163,14 +163,14 @@ async function untranslateCurrentShortVideoLinks() {
     if (!window.location.pathname.startsWith("/shorts/")) {
       return; // Should not happen if called correctly, but safety first
     }
-    
+
     let translatedShortsVideoLinksElement = YoutubeAntiTranslate_getFirstVisible(document.querySelectorAll(
       `.ytReelMultiFormatLinkViewModelEndpoint span${CORE_ATTRIBUTED_STRING_SELECTOR}>span:not(#${fakeNodeID})`
     ));
 
     if (!translatedShortsVideoLinksElement || !translatedShortsVideoLinksElement.textContent) {
       translatedShortsVideoLinksElement = YoutubeAntiTranslate_getFirstVisible(document.querySelectorAll(
-      `.ytReelMultiFormatLinkViewModelEndpoint span${CORE_ATTRIBUTED_STRING_SELECTOR}>span:not(.cbCustomTitle):not(#${fakeNodeID})`
+        `.ytReelMultiFormatLinkViewModelEndpoint span${CORE_ATTRIBUTED_STRING_SELECTOR}>span:not(.cbCustomTitle):not(#${fakeNodeID})`
       ));
     }
 
@@ -239,7 +239,7 @@ async function untranslateCurrentVideo() {
 
     if (!translatedTitleElement || !translatedTitleElement.textContent) {
       translatedTitleElement = YoutubeAntiTranslate_getFirstVisible(document.querySelectorAll(
-      `#title h1 > yt-formatted-string:not(.cbCustomTitle):not(#${fakeNodeID})`
+        `#title h1 > yt-formatted-string:not(.cbCustomTitle):not(#${fakeNodeID})`
       ));
     }
 
@@ -298,7 +298,7 @@ async function untranslateCurrentVideo() {
   }
 }
 
-async function untranslateCurrentVideoHeadLink() {  
+async function untranslateCurrentVideoHeadLink() {
   let fakeNodeID = "yt-anti-translate-fake-node-video-head-link";
 
   if (YoutubeAntiTranslate_getFirstVisible(document.querySelectorAll(PLAYER_SELECTOR))) {
@@ -363,7 +363,7 @@ async function untranslateCurrentVideoHeadLink() {
   }
 }
 
-async function untranslateCurrentVideoFullScreenEdu() {  
+async function untranslateCurrentVideoFullScreenEdu() {
   let fakeNodeID = "yt-anti-translate-fake-node-fullscreen-edu";
 
   if (YoutubeAntiTranslate_getFirstVisible(document.querySelectorAll(PLAYER_SELECTOR))) {
@@ -427,7 +427,7 @@ async function untranslateCurrentVideoFullScreenEdu() {
   }
 }
 
-async function untranslateCurrentChannelEmbededVideoTitle() { 
+async function untranslateCurrentChannelEmbededVideoTitle() {
   let fakeNodeID = "yt-anti-translate-fake-node-channel-embeded-title";
 
   if (YoutubeAntiTranslate_getFirstVisible(document.querySelectorAll(PLAYER_SELECTOR))) {

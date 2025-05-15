@@ -25,7 +25,7 @@ const YoutubeAntiTranslate_getFirstVisible = function (nodes) {
 
   for (const node of nodes) {
     let style;
-    let /** @type {Element} */ element 
+    let /** @type {Element} */ element
     if (node.nodeType === Node.ELEMENT_NODE) {
       element = /** @type {Element} */ (node);
     }
@@ -195,10 +195,10 @@ function fetchOriginalDescription() {
   try {
     const playerResponse = player.getPlayerResponse();
     let response = playerResponse?.videoDetails?.shortDescription || null;
-    if(response){
+    if (response) {
       return response
     }
-    else{
+    else {
       const embededPlayerResponse = player.getEmbeddedPlayerResponse();
       return embededPlayerResponse?.videoDetails?.shortDescription || null;
     }
@@ -222,10 +222,10 @@ function fetchOriginalAuthor() {
   try {
     const playerResponse = player.getPlayerResponse();
     let response = playerResponse?.videoDetails?.author || null;
-    if(response){
+    if (response) {
       return response
     }
-    else{
+    else {
       const embededPlayerResponse = player.getEmbeddedPlayerResponse();
       return embededPlayerResponse?.videoDetails?.author || null;
     }
