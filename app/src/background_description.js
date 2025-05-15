@@ -1,12 +1,54 @@
 // Constants
 const LOG_PREFIX = "[YoutubeAntiTranslate]";
-const DESCRIPTION_SELECTOR = "#description-inline-expander";
+const DESCRIPTION_SELECTOR = "#description-inline-expander, ytd-expander#description";
 const AUTHOR_SELECTOR = "#upload-info.ytd-video-owner-renderer";
 const ATTRIBUTED_STRING_SELECTOR = "yt-attributed-string";
 const FORMATTED_STRING_SELECTOR = "yt-formatted-string";
 const SNIPPET_TEXT_SELECTOR = "#attributed-snippet-text";
-const PLAYER_ID = "movie_player";
+const PLAYER_SELECTOR = "ytd-player .html5-video-player";
 const MUTATION_UPDATE_FREQUENCY = 2;
+
+/**
+ * Given an Array of HTMLElements it returns visible HTMLElement or null
+ * @param {Node|NodeList} elem 
+ * @returns {Node | null}
+ */
+const YoutubeAntiTranslate_getFirstVisible = function (nodes) {
+  if (!nodes) {
+    return null;
+  }
+  else if (!(nodes instanceof NodeList)) {
+    nodes = [nodes];
+  } else {
+    nodes = Array.from(nodes);
+  }
+
+  for (const node of nodes) {
+    let style;
+    let /** @type {Element} */ element 
+    if (node.nodeType === Node.ELEMENT_NODE) {
+      element = /** @type {Element} */ (node);
+    }
+    else {
+      console.error(
+        `${LOG_PREFIX} elem is not an Element or a Node`,
+        window.location.href
+      );
+      return null;
+    }
+
+    style = getComputedStyle(element);
+
+    if (
+      style.display !== 'none' &&
+      style.visibility !== 'hidden'
+    ) {
+      return node;
+    }
+  }
+
+  return null;
+}
 
 /**
  * Converts URLs and timecodes in text to clickable links
@@ -144,7 +186,7 @@ function createLinkElement(url) {
  * @returns {string|null} - Original description or null if not found
  */
 function fetchOriginalDescription() {
-  const player = document.getElementById(PLAYER_ID);
+  const player = YoutubeAntiTranslate_getFirstVisible(document.querySelectorAll(PLAYER_SELECTOR));
   if (!player) {
     console.log(`${LOG_PREFIX} Player element not found`);
     return null;
@@ -152,7 +194,14 @@ function fetchOriginalDescription() {
 
   try {
     const playerResponse = player.getPlayerResponse();
-    return playerResponse?.videoDetails?.shortDescription || null;
+    let response = playerResponse?.videoDetails?.shortDescription || null;
+    if(response){
+      return response
+    }
+    else{
+      const embededPlayerResponse = player.getEmbeddedPlayerResponse();
+      return embededPlayerResponse?.videoDetails?.shortDescription || null;
+    }
   } catch (error) {
     console.log(`${LOG_PREFIX} Error: ${error.message || error}`);
     return null;
@@ -164,7 +213,7 @@ function fetchOriginalDescription() {
  * @returns {string|null} - Original author or null if not found
  */
 function fetchOriginalAuthor() {
-  const player = document.getElementById(PLAYER_ID);
+  const player = YoutubeAntiTranslate_getFirstVisible(document.querySelectorAll(PLAYER_SELECTOR));
   if (!player) {
     console.log(`${LOG_PREFIX} Player element not found`);
     return null;
@@ -172,7 +221,14 @@ function fetchOriginalAuthor() {
 
   try {
     const playerResponse = player.getPlayerResponse();
-    return playerResponse?.videoDetails?.author || null;
+    let response = playerResponse?.videoDetails?.author || null;
+    if(response){
+      return response
+    }
+    else{
+      const embededPlayerResponse = player.getEmbeddedPlayerResponse();
+      return embededPlayerResponse?.videoDetails?.author || null;
+    }
   } catch (error) {
     console.log(`${LOG_PREFIX} Error: ${error.message || error}`);
     return null;
@@ -191,22 +247,22 @@ function restoreOriginalDescriptionAndAuthor() {
   }
 
   if (originalDescription) {
-    const descriptionContainer = document.querySelector(DESCRIPTION_SELECTOR);
+    const descriptionContainer = YoutubeAntiTranslate_getFirstVisible(document.querySelectorAll(DESCRIPTION_SELECTOR));
 
     if (descriptionContainer) {
       updateDescriptionContent(descriptionContainer, originalDescription);
     } else {
-      console.log(`${LOG_PREFIX} Description container not found`);
+      console.log(`${LOG_PREFIX} Video Description container not found`);
     }
   }
 
   if (originalAuthor) {
-    const authorContainer = document.querySelector(AUTHOR_SELECTOR)
+    const authorContainer = YoutubeAntiTranslate_getFirstVisible(document.querySelectorAll(AUTHOR_SELECTOR));
 
     if (authorContainer) {
       updateAuthorContent(authorContainer, originalAuthor);
     } else {
-      console.log(`${LOG_PREFIX} Author container not found`);
+      console.log(`${LOG_PREFIX} Video Author container not found`);
     }
   }
 }
@@ -218,11 +274,11 @@ function restoreOriginalDescriptionAndAuthor() {
  */
 function updateDescriptionContent(container, originalText) {
   // Find the text containers
-  const mainTextContainer = container.querySelector(ATTRIBUTED_STRING_SELECTOR);
-  const snippetTextContainer = container.querySelector(SNIPPET_TEXT_SELECTOR);
+  const mainTextContainer = YoutubeAntiTranslate_getFirstVisible(container.querySelectorAll(`${ATTRIBUTED_STRING_SELECTOR}, ${FORMATTED_STRING_SELECTOR}`));
+  const snippetTextContainer = YoutubeAntiTranslate_getFirstVisible(container.querySelectorAll(SNIPPET_TEXT_SELECTOR));
 
   if (!mainTextContainer && !snippetTextContainer) {
-    console.log(`${LOG_PREFIX} No description text containers found`);
+    console.log(`${LOG_PREFIX} No video description text containers found`);
     return;
   }
 
@@ -252,11 +308,11 @@ function updateDescriptionContent(container, originalText) {
  */
 function updateAuthorContent(container, originalText) {
   // Find the text containers
-  const mainTextContainer = container.querySelector(FORMATTED_STRING_SELECTOR);
-  const snippetTextContainer = container.querySelector(`${FORMATTED_STRING_SELECTOR} a`);
+  const mainTextContainer = YoutubeAntiTranslate_getFirstVisible(container.querySelectorAll(FORMATTED_STRING_SELECTOR));
+  const snippetTextContainer = YoutubeAntiTranslate_getFirstVisible(container.querySelectorAll(`${FORMATTED_STRING_SELECTOR} a`));
 
   if (!mainTextContainer && !snippetTextContainer) {
-    console.log(`${LOG_PREFIX} No author text containers found`);
+    console.log(`${LOG_PREFIX} No video author text containers found`);
     return;
   }
 
@@ -317,8 +373,9 @@ let mutationCounter = 0;
 
 async function handleDescriptionMutation() {
   if (mutationCounter % MUTATION_UPDATE_FREQUENCY === 0) {
-    const descriptionElement = document.querySelector(DESCRIPTION_SELECTOR);
-    if (descriptionElement) {
+    const descriptionElement = YoutubeAntiTranslate_getFirstVisible(document.querySelectorAll(DESCRIPTION_SELECTOR));
+    const player = YoutubeAntiTranslate_getFirstVisible(document.querySelectorAll(PLAYER_SELECTOR));
+    if (descriptionElement && player) {
       restoreOriginalDescriptionAndAuthor();
     }
   }
@@ -341,7 +398,7 @@ document.addEventListener("click", (event) => {
   if (isNaN(seconds)) return;
 
   // Use YouTube's API to seek to the timestamp
-  const player = document.getElementById(PLAYER_ID);
+  const player = YoutubeAntiTranslate_getFirstVisible(document.querySelectorAll(PLAYER_SELECTOR));
   if (player && typeof player.seekTo === "function") {
     try {
       player.seekTo(seconds, true);

@@ -5,7 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.18.0] - xx.05.2025
+## [1.18.1] - 13.05.2025
+
+### Fixed
+
+- Fixed channel branding about not untranslation when opened via "more links" then "..more" (or opposite order) - a new popup is created the second time so the duplicate element was not handled
+- Fixed flex position of branding header "..more" link not updating
+- Fixed untranslation of embeded video title and description - like in highlighted video of a channel
+- Fixed untranslation of short video link to video
+
+### Improvements
+
+- Optimize start-up logic for better performance
+- Avoid triggering functionalities if not needed in the current page
+
+## [1.18.0] - 13.05.2025
 
 ### New Feature
 

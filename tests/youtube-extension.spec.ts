@@ -241,6 +241,19 @@ test.describe("YouTube Anti-Translate extension", () => {
     expect(shortsTitle?.trim()).toBe("Highest Away From Me Wins $10,000");
     expect(shortsTitle?.trim()).not.toBe("Достигни Вершины И Выиграй $10,000");
 
+    // Wait for the shorts video link element to be present
+    const shortsVideoLinkSelector = ".ytReelMultiFormatLinkViewModelEndpoint span.yt-core-attributed-string>span:visible";
+    await page.waitForSelector(shortsVideoLinkSelector);
+
+    // Get the title text
+    const titleLinkElement = page.locator(shortsVideoLinkSelector);
+    const shortsLinkTitle = await titleLinkElement.textContent();
+    console.log("Shorts Link title:", shortsLinkTitle?.trim());
+
+    // Verify the title is the original English one and not the Russian translation
+    expect(shortsLinkTitle?.trim()).toBe("I Explored 2000 Year Old Ancient Temples");
+    expect(shortsLinkTitle?.trim()).not.toBe("Я Исследовал Древние Храмы Возрастом 2000 Лет");
+
     // Take a screenshot for visual verification
     await page.screenshot({ path: "images/youtube-shorts-test.png" });
 

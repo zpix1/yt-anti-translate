@@ -22,7 +22,9 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     )).launch()
 
     // Create a new page
-    const page = await context.newPage();
+    const result = await newPageWithStorageStateIfItExists(context, "th_TH");
+    const page = result.page;
+    const localeLoaded = result.localeLoaded;
 
     // Set up console message counting
     let consoleMessageCount = 0;
@@ -128,7 +130,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     // Launch browser with the extension
     const context = await (withExtension(
       firefox,
-      [path.resolve(__dirname, "testDist"), path.resolve(__dirname, "testUBlockOrigin")]
+      [path.resolve(__dirname, "../app"), path.resolve(__dirname, "testUBlockOrigin")]
     )).launch()
 
     // Create a new page

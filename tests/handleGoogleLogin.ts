@@ -95,7 +95,7 @@ export async function handleGoogleLogin(page, locale: string) {
           const russian = page.locator('yt-multi-page-menu-section-renderer a:has-text("Русский")');
           await russian.scrollIntoViewIfNeeded();
           await russian.click();
-          await page.waitForTimeout(500);
+          await page.waitForTimeout(2000);
           await page.context().storageState({ path: authFile_ruRU });
           try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
           break;
@@ -103,7 +103,7 @@ export async function handleGoogleLogin(page, locale: string) {
           const thai = page.locator('yt-multi-page-menu-section-renderer a:has-text("ภาษาไทย")');
           await thai.scrollIntoViewIfNeeded();
           await thai.click();
-          await page.waitForTimeout(500);
+          await page.waitForTimeout(2000);
           await page.context().storageState({ path: authFile_thTH });
           try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
           break;
