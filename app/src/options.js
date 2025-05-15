@@ -63,7 +63,7 @@ function loadOptions() {
         items.untranslateAudio;
       document.getElementById("description-checkbox").checked =
         items.untranslateDescription;
-      
+
       const untranslateChannelBrandingCheckbox = document.getElementById("channel-branding-checkbox");
       const apiKeyInput = document.getElementById("api-key-input");
       const additionalFeaturesContainer = document.getElementById("additional-features");
@@ -72,7 +72,7 @@ function loadOptions() {
         untranslateChannelBrandingCheckbox.checked = items.untranslateChannelBranding;
         apiKeyInput.value = items.youtubeDataApiKey;
         additionalFeaturesContainer.style.display = "flex";
-      } 
+      }
       else {
         additionalFeaturesContainer.style.display = "none";
         untranslateChannelBrandingCheckbox.checked = false;
@@ -104,13 +104,13 @@ function apiKeyUpdate() {
       untranslateChannelBranding: false,
       youtubeDataApiKey: null
     },
-    function(items) {
+    function (items) {
       if (items.youtubeDataApiKey === newApiKey) return; // No change, no update needed
 
       chrome.storage.sync.set(
-        { 
-          youtubeDataApiKey: newApiKey 
-        }, 
+        {
+          youtubeDataApiKey: newApiKey
+        },
         () => {
           console.log("API key saved:", newApiKey);
 
@@ -118,14 +118,14 @@ function apiKeyUpdate() {
           if (newApiKey) {
             additionalFeaturesContainer.style.display = "block";
             untranslateChannelBrandingCheckbox.checked = items.untranslateChannelBranding;
-          } 
+          }
           else {
             additionalFeaturesContainer.style.display = "none";
             untranslateChannelBrandingCheckbox.checked = false;
           }
-      }
-    );
-  });
+        }
+      );
+    });
 
   // Show feedback in the button
   const originalText = saveButtonText.textContent;
@@ -155,7 +155,7 @@ function addListeners() {
   document
     .getElementById("channel-branding-checkbox")
     .addEventListener("click", checkboxUpdate);
-    document
+  document
     .getElementById("save-api-key-button")
     .addEventListener("click", apiKeyUpdate);
 }
