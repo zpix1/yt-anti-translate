@@ -182,6 +182,11 @@ function updateBrandingHeaderTitleContent(container, originalBrandingData) {
     }
     else if (titleTextContainer.innerText !== originalBrandingData.title) {
       replaceTextOnly(titleTextContainer, originalBrandingData.title)
+
+      document.title = document.title.replace(
+        titleTextContainer.innerText,
+        originalBrandingData.title
+      );
     }
   }
 }
