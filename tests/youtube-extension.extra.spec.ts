@@ -45,6 +45,12 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     // Sometimes youtube redirects to consent so handle it
     await handleYoutubeConsent(page);
 
+    // If we did not load a locale storage state, login to test account and set locale
+    // This will also create a new storage state with the locale already set
+    if (localeLoaded !== true) {
+      await handleGoogleLogin(page, "th_TH");
+    }
+
     // Wait for the video grid to appear
     const channelHeaderSelector = "#page-header-container #page-header .page-header-view-model-wiz__page-header-headline-info"
     await page.waitForSelector(channelHeaderSelector);
@@ -90,7 +96,8 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     // --- Check About Popup ---
     const aboutContainer = 'ytd-engagement-panel-section-list-renderer'
 
-    const aboutTitleSelector = `${aboutContainer} #title-text`; console.log("Checking Channel header for original description...");
+    const aboutTitleSelector = `${aboutContainer} #title-text:visible`;
+    console.log("Checking Channel header for original description...");
     // Get the about title
     const aboutTitle = await page
       .locator(aboutTitleSelector)
@@ -101,7 +108,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     expect(aboutTitle).toContain("MrBeast");
     expect(aboutTitle).not.toContain("มิสเตอร์บีสต์");
 
-    const aboutDescriptionSelector = `${aboutContainer} #description-container > .yt-core-attributed-string:nth-child(1)`;
+    const aboutDescriptionSelector = `${aboutContainer} #description-container > .yt-core-attributed-string:nth-child(1):visible`;
     // Get the about description
     const aboutDescription = await page
       .locator(aboutDescriptionSelector)
@@ -110,6 +117,38 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     // Check that the branding about description is in English and not in Thai
     expect(aboutDescription).toContain("SUBSCRIBE FOR A COOKIE");
     expect(aboutDescription).not.toContain("ไปดู Beast Games ได้แล้ว");
+
+    // --- Close Popup
+    console.log("Clicking 'X' button to close Popup...");
+    await page.locator(`${aboutContainer} #visibility-button button.yt-spec-button-shape-next`).click();
+    try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
+    await page.waitForTimeout(1000);
+
+    // --- Open About Popup via more links ---
+    console.log("Clicking '..more links' button on description to open About Popup...");
+    await page.locator(`${channelHeaderSelector} span.yt-core-attributed-string>span>a.yt-core-attributed-string__link[role="button"]`).click();
+    try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
+    await page.waitForTimeout(1000);
+
+    // --- Check About A second time via the moreLinks Popup ---
+    // Get the about title
+    const aboutTitle2 = await page
+      .locator(aboutTitleSelector)
+      .textContent();
+    console.log("Channel about title:", aboutTitle?.trim());
+
+    // Check that the branding about title is in English and not in Thai
+    expect(aboutTitle2).toContain("MrBeast");
+    expect(aboutTitle2).not.toContain("มิสเตอร์บีสต์");
+
+    // Get the about description
+    const aboutDescription2 = await page
+      .locator(aboutDescriptionSelector)
+      .textContent();
+    console.log("Channel about title:", aboutDescription?.trim());
+    // Check that the branding about description is in English and not in Thai
+    expect(aboutDescription2).toContain("SUBSCRIBE FOR A COOKIE");
+    expect(aboutDescription2).not.toContain("ไปดู Beast Games ได้แล้ว");
 
     // Take a screenshot for visual verification
     await page.screenshot({ path: "images/youtube-channel-branding-about-test.png" });
@@ -157,7 +196,8 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     // Sometimes youtube redirects to consent so handle it
     await handleYoutubeConsent(page);
 
-    // Player needs login to work so login
+    // If we did not load a locale storage state, login to test account and set locale
+    // This will also create a new storage state with the locale already set
     if (localeLoaded !== true) {
       await handleGoogleLogin(page, "th_TH");
     }

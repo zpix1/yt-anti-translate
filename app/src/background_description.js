@@ -282,8 +282,34 @@ function updateDescriptionContent(container, originalText) {
     return;
   }
 
-  // Create formatted content
-  const formattedContent = createFormattedContent(originalText);
+  let formattedContent;
+  const originalTextFirstLine = originalText.split("\n")[0];
+  // Compare text first span>span against first line first to avaoid waisting resources on formatting content
+  if (
+    mainTextContainer.hasChildNodes()
+    && mainTextContainer.firstChild.hasChildNodes()
+    && mainTextContainer.firstChild.firstChild.textContent === originalTextFirstLine
+    /* as we are always doing both the comparision on mainTextContainer is sufficient*/
+  ) {
+    // If identical create formatted content and compare with firstchild text content to determine if any change is needed
+    formattedContent = createFormattedContent(originalText);
+    if (
+      mainTextContainer.hasChildNodes()
+      && mainTextContainer.firstChild.textContent === formattedContent.textContent
+      /* as we are always doing both the comparision on mainTextContainer is sufficient*/
+    ) {
+      // No changes are needed
+      return;
+    }
+  }
+  else {
+    // First line was different so we can continue with untraslation
+    // Create formatted content
+    formattedContent = createFormattedContent(originalText);
+  }
+
+  // It is safe to assume both untralations are needed as we are always doing both
+  // so no point in wasting resorces on another text comparison
 
   // Update both containers if they exist
   if (mainTextContainer) {
@@ -318,11 +344,19 @@ function updateAuthorContent(container, originalText) {
 
   // Update both containers if they exist
   if (mainTextContainer) {
-    mainTextContainer.title = originalText
+    if (mainTextContainer.title !== originalText) {
+      mainTextContainer.title = originalText
+    }
   }
 
   if (snippetTextContainer) {
-    snippetTextContainer.innerText = originalText
+    if (snippetTextContainer.innerText !== originalText) {
+      const storeStyleDisplay = snippetTextContainer.parentElement.style.display = "none"
+      snippetTextContainer.parentElement.style.display = "none"
+      snippetTextContainer.innerText = originalText
+      // Force reflow
+      setTimeout(() => { snippetTextContainer.parentElement.style.display = storeStyleDisplay }, 50);
+    }
   }
 }
 

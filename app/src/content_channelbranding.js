@@ -182,6 +182,11 @@ function updateBrandingHeaderTitleContent(container, originalBrandingData) {
     }
     else if (titleTextContainer.innerText !== originalBrandingData.title) {
       replaceTextOnly(titleTextContainer, originalBrandingData.title)
+
+      document.title = document.title.replace(
+        titleTextContainer.innerText,
+        originalBrandingData.title
+      );
     }
   }
 }
@@ -201,10 +206,11 @@ function updateBrandingHeaderDescriptionContent(container, originalBrandingData)
     else {
       const truncatedDescription = originalBrandingData.description.split("\n")[0];
       if (descriptionTextContainer.innerText !== truncatedDescription) {
+        const storeStyleDisplay = descriptionTextContainer.parentElement.style.display
         descriptionTextContainer.parentElement.style.display = "none"
         replaceTextOnly(descriptionTextContainer, truncatedDescription)
         // Force reflow
-        setTimeout(() => { descriptionTextContainer.parentElement.style.display = "block" }, 10);
+        setTimeout(() => { descriptionTextContainer.parentElement.style.display = storeStyleDisplay }, 50);
       }
     }
   }
@@ -283,7 +289,7 @@ async function restoreOriginalBrandingAbout() {
         else if (!originalBrandingData.title && !originalBrandingData.description) {
         }
         else {
-          const aboutContainer = document.querySelectorAll(CHANNELBRANDING_ABOUT_SELECTOR);
+          const aboutContainer = YoutubeAntiTranslate_getAllVisibleNodes(document.querySelectorAll(CHANNELBRANDING_ABOUT_SELECTOR));
           if (aboutContainer || titleTextContainer.length > 0) {
             aboutContainer.forEach(element => {
               updateBrandingAboutDescriptionContent(element, originalBrandingData);
@@ -308,7 +314,7 @@ function updateBrandingAboutTitleContent(container, originalBrandingData) {
     // Find the title text containers
     const titleTextContainer = container.querySelector(`#title-text`);
 
-    if (!titleTextContainer || titleTextContainer.length === 0) {
+    if (!titleTextContainer) {
       console.log(`${LOG_PREFIX} No branding about title text containers found`);
     }
     else {
@@ -321,21 +327,40 @@ function updateBrandingAboutTitleContent(container, originalBrandingData) {
 
 /**
  * Updates the About element with the original content
+ * @param {HTMLElement} container - The about container element
  * @param {JSON} originalBrandingData - The original branding title and description
  */
 function updateBrandingAboutDescriptionContent(container, originalBrandingData) {
   if (originalBrandingData.description) {
     // Find the description text container
     const descriptionTextContainer = container.querySelector(`#description-container > ${CORE_ATTRIBUTED_STRING_SELECTOR}:nth-child(1)`);
-    if (!descriptionTextContainer || descriptionTextContainer.length === 0) {
+
+    if (!descriptionTextContainer) {
       console.log(`${LOG_PREFIX} No branding about description text containers found`);
     }
     else {
-      const truncatedDescription = originalBrandingData.description.split("\n")[0];
-
-      if (!descriptionTextContainer.innerText.includes(truncatedDescription)) {
+      let formattedContent;
+      const originalTextFirstLine = originalBrandingData.description.split("\n")[0];
+      // Compare text first span>span against first line first to avaoid waisting resources on formatting content
+      if (
+        descriptionTextContainer.hasChildNodes()
+        && descriptionTextContainer.firstChild.hasChildNodes()
+        && descriptionTextContainer.firstChild.firstChild.textContent === originalTextFirstLine
+      ) {
+        // If identical create formatted content and compare with firstchild text content to determine if any change is needed
+        formattedContent = createFormattedContent(originalBrandingData.description);
+        if (
+          descriptionTextContainer.hasChildNodes()
+          && descriptionTextContainer.firstChild.textContent !== formattedContent.textContent
+        ) {
+          // No changes are needed
+          replaceContainerContent(descriptionTextContainer, formattedContent.cloneNode(true))
+        }
+      }
+      else {
+        // First line was different so we can continue with untraslation
         // Create formatted content
-        const formattedContent = createFormattedContent(originalBrandingData.description);
+        formattedContent = createFormattedContent(originalBrandingData.description);
         replaceContainerContent(descriptionTextContainer, formattedContent.cloneNode(true))
       }
     }
