@@ -63,7 +63,7 @@ jobs:
 
       - name: cd web-ext-artifacts
         run: |- 
-          cd dist
+          cd web-ext-artifacts
 
       - name: Archive firefox-extension artifact
         uses: actions/upload-artifact@v4
