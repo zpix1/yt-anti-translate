@@ -351,10 +351,11 @@ function updateAuthorContent(container, originalText) {
 
   if (snippetTextContainer) {
     if (snippetTextContainer.innerText !== originalText) {
-      snippetTextContainer.style.display = "none"
+      const storeStyleDisplay = snippetTextContainer.parentElement.style.display = "none"
+      snippetTextContainer.parentElement.style.display = "none"
       snippetTextContainer.innerText = originalText
       // Force reflow
-      setTimeout(() => { snippetTextContainer.style.display = "block" }, 50);
+      setTimeout(() => { snippetTextContainer.parentElement.style.display = storeStyleDisplay }, 50);
     }
   }
 }

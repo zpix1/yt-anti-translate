@@ -206,10 +206,11 @@ function updateBrandingHeaderDescriptionContent(container, originalBrandingData)
     else {
       const truncatedDescription = originalBrandingData.description.split("\n")[0];
       if (descriptionTextContainer.innerText !== truncatedDescription) {
+        const storeStyleDisplay = descriptionTextContainer.parentElement.style.display
         descriptionTextContainer.parentElement.style.display = "none"
         replaceTextOnly(descriptionTextContainer, truncatedDescription)
         // Force reflow
-        setTimeout(() => { descriptionTextContainer.parentElement.style.display = "block" }, 50);
+        setTimeout(() => { descriptionTextContainer.parentElement.style.display = storeStyleDisplay }, 50);
       }
     }
   }
