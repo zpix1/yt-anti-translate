@@ -41,7 +41,8 @@ test.describe("YouTube Anti-Translate extension", () => {
     // Sometimes youtube redirects to consent so handle it
     await handleYoutubeConsent(page);
 
-    // Player needs login to work so login
+    // If we did not load a locale storage state, login to test account and set locale
+    // This will also create a new storage state with the locale already set
     if (localeLoaded !== true) {
       await handleGoogleLogin(page, "ru-RU");
     }
@@ -130,7 +131,8 @@ test.describe("YouTube Anti-Translate extension", () => {
     // Sometimes youtube redirects to consent so handle it
     await handleYoutubeConsent(page);
 
-    // Player needs login to work so login
+    // If we did not load a locale storage state, login to test account and set locale
+    // This will also create a new storage state with the locale already set
     if (localeLoaded !== true) {
       await handleGoogleLogin(page, "ru-RU");
     }
@@ -223,7 +225,8 @@ test.describe("YouTube Anti-Translate extension", () => {
     // Sometimes youtube redirects to consent so handle it
     await handleYoutubeConsent(page);
 
-    // On Firefox Shorts require login
+    // If we did not load a locale storage state, login to test account and set locale
+    // This will also create a new storage state with the locale already set
     if (localeLoaded !== true) {
       await handleGoogleLogin(page, "ru-RU");
     }
@@ -275,7 +278,9 @@ test.describe("YouTube Anti-Translate extension", () => {
     )).launch()
 
     // Create a new page
-    const page = await context.newPage();
+    const result = await newPageWithStorageStateIfItExists(context, "ru-RU");
+    const page = result.page;
+    const localeLoaded = result.localeLoaded;
 
     // Set up console message counting
     let consoleMessageCount = 0;
@@ -295,6 +300,12 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Sometimes youtube redirects to consent so handle it
     await handleYoutubeConsent(page);
+
+    // If we did not load a locale storage state, login to test account and set locale
+    // This will also create a new storage state with the locale already set
+    if (localeLoaded !== true) {
+      await handleGoogleLogin(page, "ru-RU");
+    }
 
     // Wait for the video grid to appear
     await page.waitForSelector("ytd-rich-grid-media");

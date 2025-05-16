@@ -103,9 +103,9 @@ function getOriginalTrack(tracks) {
   }
 }
 
-function untranslateAudioTrack() {
+async function untranslateAudioTrack() {
   const player = YoutubeAntiTranslate_getFirstVisible(document.querySelectorAll(PLAYER_SELECTOR));
-  if (!player || !player.getAvailableAudioTracks || player.audioUntranslated) {
+  if (!player || !player.getAvailableAudioTracks() || player.audioUntranslated) {
     return;
   }
 
@@ -114,14 +114,16 @@ function untranslateAudioTrack() {
   const originalTrack = getOriginalTrack(tracks);
 
   if (originalTrack) {
-    player.setAudioTrack(originalTrack);
-    player.audioUntranslated = true;
+    let temp = await player.setAudioTrack(originalTrack);
+    if (temp) {
+      player.audioUntranslated = true;
+    }
   }
 }
 
-function untranslate() {
+async function untranslate() {
   if (mutationIdx % MUTATION_UPDATE_STEP == 0) {
-    untranslateAudioTrack();
+    await untranslateAudioTrack();
   }
   mutationIdx++;
 }

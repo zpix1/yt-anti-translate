@@ -5,7 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.18.1] - 13.05.2025
+## [1.18.1.1] - 15.05.2025
+
+### Fixed
+
+- Fix bug with title untranslate introduced with an error when doing "Avoid triggering functionalities if not needed in the current page"
+- Fix layout bug when changing the Author above description
+- Fix player.setAudioTrack(originalTrack) not being awaited and checked for boolean response causing player.audioUntraslated to be set true prematurely
+
+## [1.18.1] - 15.05.2025
 
 ### Fixed
 
