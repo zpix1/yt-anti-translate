@@ -17,7 +17,7 @@
         "*://*.youtube.com/*"
       ],
       "js": [
-        "src/content_constants.js",
+        "src/global.js",
         "src/content_start.js"
       ]
     }, 
@@ -41,7 +41,7 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "src/content_constants.js",
+        "src/global.js",
         "src/background.js",
         "src/background_audio.js",
         "src/background_description.js"
