@@ -1,5 +1,6 @@
-// Reusablee global properties for scripts should be declared here to avoid redeclaration of alredy existing constants
-// This properties are added to the Window DOM and injected in the page to make it available to all scripts
+//Reusable global properties for scripts should be declared here to avoid redeclaration of already existing constants
+//These properties are added to the Window DOM and injected into the page to make it available to all scripts
+//We are using Object.freeze() to make window.YoutubeAntiTranslate immutable
 window.YoutubeAntiTranslate = {
   /** @type {string} */ LOG_PREFIX: "[YoutubeAntiTranslate]",
 
