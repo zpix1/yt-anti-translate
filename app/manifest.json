@@ -41,6 +41,7 @@
   "web_accessible_resources": [
     {
       "resources": [
+        "src/content_constants.js",
         "src/background.js",
         "src/background_audio.js",
         "src/background_description.js"

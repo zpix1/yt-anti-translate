@@ -68,7 +68,7 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Get the video title
     const videoTitle = await page
-      .locator("h1.ytd-watch-metadata")
+      .locator("h1.ytd-watch-metadata:visible")
       .textContent();
     console.log("Video title:", videoTitle?.trim());
 
