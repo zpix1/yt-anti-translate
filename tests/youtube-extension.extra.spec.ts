@@ -56,7 +56,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     await page.waitForSelector(channelHeaderSelector);
 
     // --- Check Branding Title ---
-    const channelTitleSelector = `${channelHeaderSelector} h1 .yt-core-attributed-string`;
+    const channelTitleSelector = `${channelHeaderSelector} h1 .yt-core-attributed-string:visible`;
 
     console.log("Checking Channel header for original title...");
     // Get the channel branding header title
@@ -68,6 +68,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     // Check that the branding header title is in English and not in Thai
     expect(brandingTitle).toContain("MrBeast");
     expect(brandingTitle).not.toContain("มิสเตอร์บีสต์");
+    await expect(page.locator(channelTitleSelector)).toBeVisible()
 
     // --- Check Branding Description
     const channelDescriptionSelector = `${channelHeaderSelector} yt-description-preview-view-model .truncated-text-wiz__truncated-text-content > .yt-core-attributed-string:nth-child(1)`;
@@ -82,6 +83,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     // Check that the branding header title is in English and not in Thai
     expect(brandingDescription).toContain("SUBSCRIBE FOR A COOKIE");
     expect(brandingDescription).not.toContain("ไปดู Beast Games ได้แล้ว");
+    await expect(page.locator(channelDescriptionSelector)).toBeVisible()
 
     // Take a screenshot for visual verification
     await page.waitForTimeout(5000);
@@ -107,6 +109,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     // Check that the branding about title is in English and not in Thai
     expect(aboutTitle).toContain("MrBeast");
     expect(aboutTitle).not.toContain("มิสเตอร์บีสต์");
+    await expect(page.locator(aboutTitleSelector)).toBeVisible()
 
     const aboutDescriptionSelector = `${aboutContainer} #description-container > .yt-core-attributed-string:nth-child(1):visible`;
     // Get the about description
@@ -117,6 +120,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     // Check that the branding about description is in English and not in Thai
     expect(aboutDescription).toContain("SUBSCRIBE FOR A COOKIE");
     expect(aboutDescription).not.toContain("ไปดู Beast Games ได้แล้ว");
+    await expect(page.locator(aboutDescriptionSelector)).toBeVisible()
 
     // --- Close Popup
     console.log("Clicking 'X' button to close Popup...");
@@ -140,6 +144,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     // Check that the branding about title is in English and not in Thai
     expect(aboutTitle2).toContain("MrBeast");
     expect(aboutTitle2).not.toContain("มิสเตอร์บีสต์");
+    await expect(page.locator(aboutTitleSelector)).toBeVisible()
 
     // Get the about description
     const aboutDescription2 = await page
@@ -149,6 +154,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     // Check that the branding about description is in English and not in Thai
     expect(aboutDescription2).toContain("SUBSCRIBE FOR A COOKIE");
     expect(aboutDescription2).not.toContain("ไปดู Beast Games ได้แล้ว");
+    await expect(page.locator(aboutDescriptionSelector)).toBeVisible()
 
     // Take a screenshot for visual verification
     await page.screenshot({ path: "images/youtube-channel-branding-about-test.png" });
@@ -219,6 +225,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     // Check that the branding header title is in English and not in Thai
     expect(brandingTitle).toContain("MrBeast");
     expect(brandingTitle).not.toContain("มิสเตอร์บีสต์");
+    await expect(page.locator(videoAuthorSelector)).toBeVisible()
 
     // Take a screenshot for visual verification
     await page.waitForTimeout(5000);

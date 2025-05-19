@@ -33,8 +33,8 @@ export async function newPageWithStorageStateIfItExists(context, locale = "") {
       const now = new Date();
       const ageInHours = (now.getTime() - modifiedTime.getTime()) / (1000 * 60 * 60);
 
-      if (ageInHours <= 4) {
-        // Reuse existing LOCALE authentication state if it's fresh (less than 4 hours old).
+      if (ageInHours <= 12) {
+        // Reuse existing LOCALE authentication state if it's fresh (less than 12 hours old).
         return { page: (await context.newPage({ storageState: file })), localeLoaded: true }
       }
     }
@@ -95,7 +95,7 @@ export async function handleGoogleLogin(page, locale: string) {
           const russian = page.locator('yt-multi-page-menu-section-renderer a:has-text("Русский")');
           await russian.scrollIntoViewIfNeeded();
           await russian.click();
-          await page.waitForTimeout(2000);
+          await page.waitForTimeout(5000);
           await page.context().storageState({ path: authFile_ruRU });
           try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
           break;
@@ -103,7 +103,7 @@ export async function handleGoogleLogin(page, locale: string) {
           const thai = page.locator('yt-multi-page-menu-section-renderer a:has-text("ภาษาไทย")');
           await thai.scrollIntoViewIfNeeded();
           await thai.click();
-          await page.waitForTimeout(2000);
+          await page.waitForTimeout(5000);
           await page.context().storageState({ path: authFile_thTH });
           try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
           break;

@@ -62,7 +62,7 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Get the description text
     const descriptionText = await page
-      .locator("#description-inline-expander")
+      .locator("#description-inline-expander:visible")
       .textContent();
     console.log("Description text:", descriptionText?.trim());
 
@@ -155,7 +155,7 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Get the description text to verify it's in English (not translated)
     const descriptionText = await page
-      .locator("#description-inline-expander")
+      .locator("#description-inline-expander:visible")
       .textContent();
     console.log("Description text:", descriptionText?.trim());
 
@@ -243,6 +243,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     // Verify the title is the original English one and not the Russian translation
     expect(shortsTitle?.trim()).toBe("Highest Away From Me Wins $10,000");
     expect(shortsTitle?.trim()).not.toBe("Достигни Вершины И Выиграй $10,000");
+    await expect(page.locator(shortsTitleSelector)).toBeVisible()
 
     // Wait for the shorts video link element to be present
     const shortsVideoLinkSelector = ".ytReelMultiFormatLinkViewModelEndpoint span.yt-core-attributed-string>span:visible";

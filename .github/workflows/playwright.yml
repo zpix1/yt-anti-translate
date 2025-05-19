@@ -24,7 +24,7 @@ jobs:
         with:
           node-version: lts/*
       - name: Install dependencies
-        run: npm ci --legacy-peer-deps
+        run: npm ci
       - name: Install Playwright Browsers
         run: npx playwright install firefox --with-deps
       - name: Set up virtual display

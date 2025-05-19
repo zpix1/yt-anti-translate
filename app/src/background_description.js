@@ -176,7 +176,7 @@ function updateAuthorContent(container, originalText) {
 
   if (snippetTextContainer) {
     if (snippetTextContainer.innerText !== originalText) {
-      const storeStyleDisplay = snippetTextContainer.parentElement.style.display = "none"
+      const storeStyleDisplay = snippetTextContainer.parentElement.style.display
       snippetTextContainer.parentElement.style.display = "none"
       snippetTextContainer.innerText = originalText
       // Force reflow
