@@ -109,7 +109,6 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Take a screenshot for visual verification
     await page.screenshot({ path: `images/${browserNameWithExtensions}-youtube-extension-test.png` });
-    await page.screenshot({ path: `playwright-report/${browserNameWithExtensions}-youtube-extension-test.png` });
 
     // Check console message count
     expect(consoleMessageCount).toBeLessThan(
@@ -231,7 +230,6 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Take a screenshot for visual verification
     await page.screenshot({ path: `images/${browserNameWithExtensions}-youtube-timecode-test.png` });
-    await page.screenshot({ path: `playwright-report/${browserNameWithExtensions}-youtube-timecode-test.png` });
 
     // Check console message count
     expect(consoleMessageCount).toBeLessThan(
@@ -322,7 +320,6 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Take a screenshot for visual verification
     await page.screenshot({ path: `images/${browserNameWithExtensions}-youtube-shorts-test.png` });
-    await page.screenshot({ path: `playwright-report/${browserNameWithExtensions}-youtube-shorts-test.png` });
 
     // Check console message count
     expect(consoleMessageCount).toBeLessThan(
@@ -448,7 +445,6 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Take a screenshot for visual verification
     await page.screenshot({ path: `images/${browserNameWithExtensions}-youtube-channel-tabs-test.png` });
-    await page.screenshot({ path: `playwright-report/${browserNameWithExtensions}-youtube-channel-tabs-test.png` });
 
     // Check console message count
     expect(consoleMessageCount).toBeLessThan(
