@@ -108,7 +108,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     );
 
     // Take a screenshot for visual verification
-    await page.screenshot({ path: `images/${browserNameWithExtensions}-youtube-extension-test.png` });
+    await page.screenshot({ path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-extension-test.png` });
 
     // Check console message count
     expect(consoleMessageCount).toBeLessThan(
@@ -229,7 +229,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     expect(newTime).toBeLessThan(350); // And a small buffer above
 
     // Take a screenshot for visual verification
-    await page.screenshot({ path: `images/${browserNameWithExtensions}-youtube-timecode-test.png` });
+    await page.screenshot({ path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-timecode-test.png` });
 
     // Check console message count
     expect(consoleMessageCount).toBeLessThan(
@@ -319,7 +319,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     expect(shortsLinkTitle?.trim()).not.toBe("Я Исследовал Древние Храмы Возрастом 2000 Лет");
 
     // Take a screenshot for visual verification
-    await page.screenshot({ path: `images/${browserNameWithExtensions}-youtube-shorts-test.png` });
+    await page.screenshot({ path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-shorts-test.png` });
 
     // Check console message count
     expect(consoleMessageCount).toBeLessThan(
@@ -444,7 +444,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     console.log("Original video title confirmed on Videos tab again.");
 
     // Take a screenshot for visual verification
-    await page.screenshot({ path: `images/${browserNameWithExtensions}-youtube-channel-tabs-test.png` });
+    await page.screenshot({ path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-channel-tabs-test.png` });
 
     // Check console message count
     expect(consoleMessageCount).toBeLessThan(

@@ -9,6 +9,7 @@ import { handleTestDistribution, downloadAndExtractUBlock } from "./handleTestDi
 require('dotenv').config();
 
 // This are tests for additional features using Youtube Data API and a APIKey provided by the user
+// We are using locale th-TH for this tests as MrBeast channel name is not translated in ru-RU, but it is th-TH
 
 test.describe("YouTube Anti-Translate extension - Extras", () => {
   test("YouTube channel branding header and about retain original content", async ({ browserNameWithExtensions, localeString }) => {
@@ -107,7 +108,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
 
     // Take a screenshot for visual verification
     await page.waitForTimeout(5000);
-    await page.screenshot({ path: `images/${browserNameWithExtensions}-youtube-channel-branding-header-test.png` });
+    await page.screenshot({ path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-channel-branding-header-test.png` });
 
     // --- Open About Popup ---
     console.log("Clicking '..more' button on description to open About Popup...");
@@ -177,7 +178,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     await expect(page.locator(aboutDescriptionSelector)).toBeVisible()
 
     // Take a screenshot for visual verification
-    await page.screenshot({ path: `images/${browserNameWithExtensions}-youtube-channel-branding-about-test.png` });
+    await page.screenshot({ path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-channel-branding-about-test.png` });
 
     // Check console message count
     expect(consoleMessageCount).toBeLessThan(
@@ -265,7 +266,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
 
     // Take a screenshot for visual verification
     await page.waitForTimeout(5000);
-    await page.screenshot({ path: `images/${browserNameWithExtensions}-youtube-video-author-test.png` });
+    await page.screenshot({ path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-video-author-test.png` });
 
     // Check console message count
     expect(consoleMessageCount).toBeLessThan(

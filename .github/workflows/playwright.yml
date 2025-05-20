@@ -38,6 +38,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
-          name: images
-          path: images/
+          name: tests-screenshots
+          path: images/tests/
           retention-days: 30
