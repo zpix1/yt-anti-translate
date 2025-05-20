@@ -136,12 +136,18 @@ async function untranslateCurrentVideo() {
 
 async function untranslateCurrentVideoHeadLink() {
   const fakeNodeID = "yt-anti-translate-fake-node-video-head-link";
-  const originalNodeSelector = `${window.YoutubeAntiTranslate.getPlayerSelector()} a.ytp-title-fullerscreen-link, ${window.YoutubeAntiTranslate.getPlayerSelector()} a.ytp-title-link:not(#${fakeNodeID})`;
+  const originalNodeSelector = `${window.YoutubeAntiTranslate.getPlayerSelector()} a.ytp-title-link:not(#${fakeNodeID})`;
 
   await createOrUpdateUntranslatedFakeNode(
     fakeNodeID,
     originalNodeSelector,
-    el => el.href,
+    (el) => {
+      const videoLinkHead = el.href;
+      if (!videoLinkHead || videoLinkHead.trim() === "") {
+        return document.location.href;
+      }
+      return videoLinkHead;
+    },
     "a",
     false
   );
@@ -183,29 +189,24 @@ async function untranslateCurrentChannelEmbededVideoTitle() {
  * @returns 
  */
 async function createOrUpdateUntranslatedFakeNode(fakeNodeID, originalNodeSelector, getUrl, createElementTag, shouldSetDocumentTitle = false) {
-  if (window.YoutubeAntiTranslate.getFirstVisible(document.querySelectorAll(window.YoutubeAntiTranslate.getPlayerSelector()))) {
-    let translatedElement = window.YoutubeAntiTranslate.getFirstVisible(document.querySelectorAll(
+  if (window.YoutubeAntiTranslate.getFirstVisible(await document.querySelectorAll(window.YoutubeAntiTranslate.getPlayerSelector()))) {
+    let translatedElement = window.YoutubeAntiTranslate.getFirstVisible(await document.querySelectorAll(
       originalNodeSelector
     ));
 
     if (!translatedElement || !translatedElement.textContent) {
-      translatedElement = window.YoutubeAntiTranslate.getFirstVisible(document.querySelectorAll(
+      translatedElement = window.YoutubeAntiTranslate.getFirstVisible(await document.querySelectorAll(
         `${originalNodeSelector}:not(.cbCustomTitle)`
       ));
     }
 
-    let fakeNode;
-    if (!translatedElement || !translatedElement.textContent) {
-      fakeNode = window.YoutubeAntiTranslate.getFirstVisible(document.querySelectorAll(
-        `#${fakeNodeID}`
-      ));
-    }
+    const fakeNode = await document.querySelector(`#${fakeNodeID}`);
 
     if ((!fakeNode || !fakeNode.textContent) && (!translatedElement || !translatedElement.textContent)) {
       return;
     }
 
-    const response = await get("https://www.youtube.com/oembed?url=" + getUrl(translatedElement));
+    const response = await get("https://www.youtube.com/oembed?url=" + getUrl(translatedElement ?? fakeNode));
     if (!response) {
       return;
     }
@@ -233,23 +234,32 @@ async function createOrUpdateUntranslatedFakeNode(fakeNodeID, originalNodeSelect
       `${window.YoutubeAntiTranslate.LOG_PREFIX} translated title to "${realTitle}" from "${oldTitle}"`
     );
 
-    if (fakeNode) {
+    if (!fakeNode && translatedElement) {
+      // Not sure why, but even tho we checked already 'fakeNode', 'existingFakeNode' still return a value of initialization
+      const existingFakeNode = translatedElement.parentElement.querySelector(`#${fakeNodeID}`);
+      let newFakeNode = document.createElement(createElementTag);
+      if (translatedElement.href) {
+        newFakeNode.href = translatedElement.href;
+      }
+      newFakeNode.className = translatedElement.className;
+      newFakeNode.id = fakeNodeID;
+      newFakeNode.textContent = realTitle;
+      if (!existingFakeNode) {
+        newFakeNode.style.visibility = translatedElement.style?.visibility ?? "visible";
+        newFakeNode.style.display = translatedElement.style?.display ?? "block";
+        translatedElement.after(newFakeNode);
+      }
+      else {
+        newFakeNode.style.visibility = existingFakeNode.style?.visibility ?? "visible";
+        newFakeNode.style.display = existingFakeNode.style?.display ?? "block";
+        existingFakeNode.replaceWith(newFakeNode);
+      }
+      translatedElement.style.visibility = "hidden";
+      translatedElement.style.display = "none";
+    }
+    else if (fakeNode) {
       fakeNode.textContent = realTitle;
-      return;
     }
-
-    let newFakeNode = document.createElement(createElementTag);
-    if (translatedElement.href) {
-      newFakeNode.href = translatedElement.href;
-    }
-    newFakeNode.className = translatedElement.className;
-    newFakeNode.style.visibility = translatedElement.style?.visibility ?? "";
-    newFakeNode.style.display = translatedElement.style?.display ?? "block";
-    translatedElement.style.visibility = "hidden";
-    translatedElement.style.display = "none";
-    newFakeNode.id = fakeNodeID;
-    newFakeNode.textContent = realTitle;
-    translatedElement.after(newFakeNode);
   }
 }
 
@@ -459,9 +469,10 @@ async function untranslate() {
       currentShortPromise,
       currentShortVideoLinksPromise,
       otherShortsPromise,
-    ]);
+    ]).then(() => true);
   }
   mutationIdx++;
+  return false;
 }
 
 // Initialize the extension

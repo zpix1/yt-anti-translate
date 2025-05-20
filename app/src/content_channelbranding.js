@@ -270,7 +270,7 @@ chrome.storage.sync.get(
   {
     untranslateChannelBranding: false
   },
-  (items) => {
+  async (items) => {
     if (items.untranslateChannelBranding) {
       const targetNode = document.body;
       const observerConfig = { childList: true, subtree: true };

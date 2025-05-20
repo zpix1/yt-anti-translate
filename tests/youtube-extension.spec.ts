@@ -67,6 +67,12 @@ test.describe("YouTube Anti-Translate extension", () => {
       await handleGoogleLogin(page, browserNameWithExtensions, localeString);
     }
 
+    // When chromium we need to wait some extra time to allow adds to be removed by uBlock Origin Lite
+    // Ads are allowed to load and removed after so it takes time
+    if (browserNameWithExtensions === "chromium") {
+      await page.waitForTimeout(5000);
+    }
+
     // Wait for the video page to fully load
     await page.waitForSelector("ytd-watch-metadata");
 
@@ -95,6 +101,38 @@ test.describe("YouTube Anti-Translate extension", () => {
     // Check that the title is in English and not in Russian
     expect(videoTitle).toContain("Ages 1 - 100 Decide Who Wins $250,000");
     expect(videoTitle).not.toContain(
+      "Люди от 1 до 100 Лет Решают, кто Выиграет $250,000"
+    );
+
+    // Open full screen
+    await page.keyboard.press('F');
+    await page.waitForTimeout(500);
+
+    // Get the head link video title
+    const headLinkVideoTitle = await page
+      .locator("ytd-player .html5-video-player a.ytp-title-link#yt-anti-translate-fake-node-video-head-link")
+      .textContent();
+    console.log("Head Link Video title:", headLinkVideoTitle?.trim());
+
+    // Check that the title is in English and not in Russian
+    expect(headLinkVideoTitle).toContain("Ages 1 - 100 Decide Who Wins $250,000");
+    expect(headLinkVideoTitle).not.toContain(
+      "Люди от 1 до 100 Лет Решают, кто Выиграет $250,000"
+    );
+
+    // Get the full screen footer video title
+    const fullStreenVideoTitleFooter = await page
+      .locator("ytd-player .html5-video-player div.ytp-fullerscreen-edu-text#yt-anti-translate-fake-node-fullscreen-edu")
+      .textContent();
+    console.log("Head Link Video title:", fullStreenVideoTitleFooter?.trim());
+
+    // Exit full screen
+    await page.keyboard.press('End');
+    await page.waitForTimeout(500);
+
+    // Check that the title is in English and not in Russian
+    expect(fullStreenVideoTitleFooter).toContain("Ages 1 - 100 Decide Who Wins $250,000");
+    expect(fullStreenVideoTitleFooter).not.toContain(
       "Люди от 1 до 100 Лет Решают, кто Выиграет $250,000"
     );
 
