@@ -7,6 +7,11 @@ chrome.storage.sync.get(
   },
   async function (items) {
     if (!items.disabled) {
+      const globalPropertiesScript = document.createElement("script");
+      globalPropertiesScript.type = "module";
+      globalPropertiesScript.src = chrome.runtime.getURL("src/global.js");
+      document.body.appendChild(globalPropertiesScript);
+
       const backgroundScript = document.createElement("script");
       backgroundScript.type = "module";
       backgroundScript.src = chrome.runtime.getURL("src/background.js");

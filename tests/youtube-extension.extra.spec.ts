@@ -1,4 +1,5 @@
-import { test, expect, firefox } from "@playwright/test";
+import { expect, firefox, chromium } from "@playwright/test";
+import { test } from "../playwright.config"
 import path from "path";
 import { withExtension } from "playwright-webextext";
 import { handleYoutubeConsent } from "./handleYoutubeConsent";
@@ -7,22 +8,42 @@ import { handleTestDistribution, downloadAndExtractUBlock } from "./handleTestDi
 
 require('dotenv').config();
 
+// This are tests for additional features using Youtube Data API and a APIKey provided by the user
+// We are using locale th-TH for this tests as MrBeast channel name is not translated in ru-RU, but it is th-TH
+
 test.describe("YouTube Anti-Translate extension - Extras", () => {
-  test("YouTube channel branding header and about retain original content", async () => {
-    downloadAndExtractUBlock();
+  test("YouTube channel branding header and about retain original content", async ({ browserNameWithExtensions, localeString }) => {
+    await downloadAndExtractUBlock(browserNameWithExtensions);
     // --- Update Extension Settings and distribute a test copy ---
     // The object to be passed and inserted into the start.js file
     const configObject = { youtubeDataApiKey: process.env.YOUTUBE_API_KEY, untranslateChannelBranding: true };
     handleTestDistribution(configObject);
 
     // Launch browser with the extension
-    const context = await (withExtension(
-      firefox,
-      [path.resolve(__dirname, "testDist"), path.resolve(__dirname, "testUBlockOrigin")]
-    )).launch()
+    let context;
+
+    switch (browserNameWithExtensions) {
+      case "chromium":
+        const browserTypeWithExtension = withExtension(
+          chromium,
+          [path.resolve(__dirname, "testDist"), path.resolve(__dirname, "testUBlockOriginLite")]
+        );
+        context = await browserTypeWithExtension.launchPersistentContext("", {
+          headless: false
+        });
+        break;
+      case "firefox":
+        context = await (withExtension(
+          firefox,
+          [path.resolve(__dirname, "testDist"), path.resolve(__dirname, "testUBlockOrigin")]
+        )).launch()
+        break;
+      default:
+        throw "Unsupported browserNameWithExtensions"
+    }
 
     // Create a new page
-    const result = await newPageWithStorageStateIfItExists(context, "th_TH");
+    const result = await newPageWithStorageStateIfItExists(context, browserNameWithExtensions, localeString);
     const page = result.page;
     const localeLoaded = result.localeLoaded;
 
@@ -48,7 +69,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     // If we did not load a locale storage state, login to test account and set locale
     // This will also create a new storage state with the locale already set
     if (localeLoaded !== true) {
-      await handleGoogleLogin(page, "th_TH");
+      await handleGoogleLogin(page, browserNameWithExtensions, localeString);
     }
 
     // Wait for the video grid to appear
@@ -56,7 +77,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     await page.waitForSelector(channelHeaderSelector);
 
     // --- Check Branding Title ---
-    const channelTitleSelector = `${channelHeaderSelector} h1 .yt-core-attributed-string`;
+    const channelTitleSelector = `${channelHeaderSelector} h1 .yt-core-attributed-string:visible`;
 
     console.log("Checking Channel header for original title...");
     // Get the channel branding header title
@@ -68,6 +89,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     // Check that the branding header title is in English and not in Thai
     expect(brandingTitle).toContain("MrBeast");
     expect(brandingTitle).not.toContain("มิสเตอร์บีสต์");
+    await expect(page.locator(channelTitleSelector)).toBeVisible()
 
     // --- Check Branding Description
     const channelDescriptionSelector = `${channelHeaderSelector} yt-description-preview-view-model .truncated-text-wiz__truncated-text-content > .yt-core-attributed-string:nth-child(1)`;
@@ -82,10 +104,11 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     // Check that the branding header title is in English and not in Thai
     expect(brandingDescription).toContain("SUBSCRIBE FOR A COOKIE");
     expect(brandingDescription).not.toContain("ไปดู Beast Games ได้แล้ว");
+    await expect(page.locator(channelDescriptionSelector)).toBeVisible()
 
     // Take a screenshot for visual verification
     await page.waitForTimeout(5000);
-    await page.screenshot({ path: "images/youtube-channel-branding-header-test.png" });
+    await page.screenshot({ path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-channel-branding-header-test.png` });
 
     // --- Open About Popup ---
     console.log("Clicking '..more' button on description to open About Popup...");
@@ -107,6 +130,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     // Check that the branding about title is in English and not in Thai
     expect(aboutTitle).toContain("MrBeast");
     expect(aboutTitle).not.toContain("มิสเตอร์บีสต์");
+    await expect(page.locator(aboutTitleSelector)).toBeVisible()
 
     const aboutDescriptionSelector = `${aboutContainer} #description-container > .yt-core-attributed-string:nth-child(1):visible`;
     // Get the about description
@@ -117,6 +141,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     // Check that the branding about description is in English and not in Thai
     expect(aboutDescription).toContain("SUBSCRIBE FOR A COOKIE");
     expect(aboutDescription).not.toContain("ไปดู Beast Games ได้แล้ว");
+    await expect(page.locator(aboutDescriptionSelector)).toBeVisible()
 
     // --- Close Popup
     console.log("Clicking 'X' button to close Popup...");
@@ -140,6 +165,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     // Check that the branding about title is in English and not in Thai
     expect(aboutTitle2).toContain("MrBeast");
     expect(aboutTitle2).not.toContain("มิสเตอร์บีสต์");
+    await expect(page.locator(aboutTitleSelector)).toBeVisible()
 
     // Get the about description
     const aboutDescription2 = await page
@@ -149,9 +175,10 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     // Check that the branding about description is in English and not in Thai
     expect(aboutDescription2).toContain("SUBSCRIBE FOR A COOKIE");
     expect(aboutDescription2).not.toContain("ไปดู Beast Games ได้แล้ว");
+    await expect(page.locator(aboutDescriptionSelector)).toBeVisible()
 
     // Take a screenshot for visual verification
-    await page.screenshot({ path: "images/youtube-channel-branding-about-test.png" });
+    await page.screenshot({ path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-channel-branding-about-test.png` });
 
     // Check console message count
     expect(consoleMessageCount).toBeLessThan(
@@ -162,18 +189,34 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     await context.close();
   });
 
-
-  test("YouTube video player retain original author", async () => {
-    downloadAndExtractUBlock();
+  test("YouTube video player retain original author", async ({ browserNameWithExtensions, localeString }) => {
+    await downloadAndExtractUBlock(browserNameWithExtensions);
 
     // Launch browser with the extension
-    const context = await (withExtension(
-      firefox,
-      [path.resolve(__dirname, "../app"), path.resolve(__dirname, "testUBlockOrigin")]
-    )).launch()
+    let context;
+
+    switch (browserNameWithExtensions) {
+      case "chromium":
+        const browserTypeWithExtension = withExtension(
+          chromium,
+          [path.resolve(__dirname, "../app"), path.resolve(__dirname, "testUBlockOriginLite")]
+        );
+        context = await browserTypeWithExtension.launchPersistentContext("", {
+          headless: false
+        });
+        break;
+      case "firefox":
+        context = await (withExtension(
+          firefox,
+          [path.resolve(__dirname, "../app"), path.resolve(__dirname, "testUBlockOrigin")]
+        )).launch()
+        break;
+      default:
+        throw "Unsupported browserNameWithExtensions"
+    }
 
     // Create a new page
-    const result = await newPageWithStorageStateIfItExists(context, "th_TH");
+    const result = await newPageWithStorageStateIfItExists(context, browserNameWithExtensions, localeString);
     const page = result.page;
     const localeLoaded = result.localeLoaded;
 
@@ -199,7 +242,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     // If we did not load a locale storage state, login to test account and set locale
     // This will also create a new storage state with the locale already set
     if (localeLoaded !== true) {
-      await handleGoogleLogin(page, "th_TH");
+      await handleGoogleLogin(page, browserNameWithExtensions, localeString);
     }
 
     // Wait for the video player to appear
@@ -219,10 +262,11 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     // Check that the branding header title is in English and not in Thai
     expect(brandingTitle).toContain("MrBeast");
     expect(brandingTitle).not.toContain("มิสเตอร์บีสต์");
+    await expect(page.locator(videoAuthorSelector)).toBeVisible()
 
     // Take a screenshot for visual verification
     await page.waitForTimeout(5000);
-    await page.screenshot({ path: "images/youtube-video-author-test.png" });
+    await page.screenshot({ path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-video-author-test.png` });
 
     // Check console message count
     expect(consoleMessageCount).toBeLessThan(
