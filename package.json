@@ -1,7 +1,7 @@
 {
   "name": "yt-anti-translate",
   "version": "1.0.0",
-  "description": "Source code of [YouTube Anti Translate]().",
+  "description": "Source code of YouTube Anti Translate.",
   "main": "index.js",
   "scripts": {
     "test": "playwright test",
