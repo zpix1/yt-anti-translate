@@ -129,19 +129,20 @@ test.describe("YouTube Anti-Translate extension", () => {
       .textContent();
     console.log("Head Link Video title:", fullStreenVideoTitleFooter?.trim());
 
-    // Take a screenshot for visual verification
-    await page.screenshot({ path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-extension-test-fullscreen.png` });
-
-    // Exit full screen
-    await page.keyboard.press('Escape');
-    await page.waitForTimeout(500);
-
     // Check that the title is in English and not in Russian
     expect(fullStreenVideoTitleFooter).toContain("Ages 1 - 100 Decide Who Wins $250,000");
     expect(fullStreenVideoTitleFooter).not.toContain(
       "Люди от 1 до 100 Лет Решают, кто Выиграет $250,000"
     );
 
+    // Take a screenshot for visual verification
+    await page.screenshot({ path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-extension-test-fullscreen.png` });
+
+    // Exit full screen
+    await page.keyboard.press('F');
+    await page.waitForTimeout(500);
+
+    await page.locator("#description-inline-expander:visible").scrollIntoViewIfNeeded();
     // Check that the description contains the original English text and not the Russian translation
     expect(descriptionText).toContain("believe who they picked");
     expect(descriptionText).toContain(
