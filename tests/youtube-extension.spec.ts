@@ -104,6 +104,9 @@ test.describe("YouTube Anti-Translate extension", () => {
       "Люди от 1 до 100 Лет Решают, кто Выиграет $250,000"
     );
 
+    // Take a screenshot for visual verification
+    await page.screenshot({ path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-extension-test-title.png` });
+
     // Open full screen
     await page.keyboard.press('F');
     await page.waitForTimeout(500);
@@ -126,8 +129,11 @@ test.describe("YouTube Anti-Translate extension", () => {
       .textContent();
     console.log("Head Link Video title:", fullStreenVideoTitleFooter?.trim());
 
+    // Take a screenshot for visual verification
+    await page.screenshot({ path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-extension-test-fullscreen.png` });
+
     // Exit full screen
-    await page.keyboard.press('End');
+    await page.keyboard.press('Escape');
     await page.waitForTimeout(500);
 
     // Check that the title is in English and not in Russian
@@ -146,7 +152,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     );
 
     // Take a screenshot for visual verification
-    await page.screenshot({ path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-extension-test.png` });
+    await page.screenshot({ path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-extension-test-description.png` });
 
     // Check console message count
     expect(consoleMessageCount).toBeLessThan(
