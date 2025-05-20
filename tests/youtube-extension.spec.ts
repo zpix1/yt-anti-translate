@@ -1,4 +1,5 @@
-import { test, expect, firefox } from "@playwright/test";
+import { expect, firefox, chromium } from "@playwright/test";
+import { test } from "../playwright.config"
 import path from "path";
 import { withExtension } from "playwright-webextext";
 import { handleYoutubeConsent } from "./handleYoutubeConsent";
@@ -8,17 +9,36 @@ import { downloadAndExtractUBlock } from "./handleTestDistribution";
 require('dotenv').config();
 const authFile = path.join(__dirname, '../playwright/.auth/user.json');
 
+// This are tests for the core functionalities
+
 test.describe("YouTube Anti-Translate extension", () => {
-  test("YouTube Anti-Translate extension prevents auto-translation", async () => {
-    downloadAndExtractUBlock();
+  test("Prevents current video title and description auto-translation", async ({ browserNameWithExtensions, localeString }) => {
+    await downloadAndExtractUBlock(browserNameWithExtensions);
     // Launch browser with the extension
-    const context = await (withExtension(
-      firefox,
-      [path.resolve(__dirname, "../app"), path.resolve(__dirname, "testUBlockOrigin")]
-    )).launch()
+    let context;
+
+    switch (browserNameWithExtensions) {
+      case "chromium":
+        const browserTypeWithExtension = withExtension(
+          chromium,
+          [path.resolve(__dirname, "../app"), path.resolve(__dirname, "testUBlockOriginLite")]
+        );
+        context = await browserTypeWithExtension.launchPersistentContext("", {
+          headless: false
+        });
+        break;
+      case "firefox":
+        context = await (withExtension(
+          firefox,
+          [path.resolve(__dirname, "../app"), path.resolve(__dirname, "testUBlockOrigin")]
+        )).launch()
+        break;
+      default:
+        throw "Unsupported browserNameWithExtensions"
+    }
 
     // Create a new page
-    const result = await newPageWithStorageStateIfItExists(context, "ru-RU");
+    const result = await newPageWithStorageStateIfItExists(context, browserNameWithExtensions, localeString);
     const page = result.page;
     const localeLoaded = result.localeLoaded;
 
@@ -44,7 +64,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     // If we did not load a locale storage state, login to test account and set locale
     // This will also create a new storage state with the locale already set
     if (localeLoaded !== true) {
-      await handleGoogleLogin(page, "ru-RU");
+      await handleGoogleLogin(page, browserNameWithExtensions, localeString);
     }
 
     // Wait for the video page to fully load
@@ -88,7 +108,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     );
 
     // Take a screenshot for visual verification
-    await page.screenshot({ path: "images/youtube-extension-test.png" });
+    await page.screenshot({ path: `images/${browserNameWithExtensions}-youtube-extension-test.png` });
 
     // Check console message count
     expect(consoleMessageCount).toBeLessThan(
@@ -99,16 +119,33 @@ test.describe("YouTube Anti-Translate extension", () => {
     await context.close();
   });
 
-  test("YouTube timecode links in description work correctly with Anti-Translate extension", async () => {
-    downloadAndExtractUBlock();
+  test("YouTube timecode links in description work correctly with Anti-Translate extension", async ({ browserNameWithExtensions, localeString }) => {
+    await downloadAndExtractUBlock(browserNameWithExtensions);
     // Launch browser with the extension
-    const context = await (withExtension(
-      firefox,
-      [path.resolve(__dirname, "../app"), path.resolve(__dirname, "testUBlockOrigin")]
-    )).launch()
+    let context;
+
+    switch (browserNameWithExtensions) {
+      case "chromium":
+        const browserTypeWithExtension = withExtension(
+          chromium,
+          [path.resolve(__dirname, "../app"), path.resolve(__dirname, "testUBlockOriginLite")]
+        );
+        context = await browserTypeWithExtension.launchPersistentContext("", {
+          headless: false
+        });
+        break;
+      case "firefox":
+        context = await (withExtension(
+          firefox,
+          [path.resolve(__dirname, "../app"), path.resolve(__dirname, "testUBlockOrigin")]
+        )).launch()
+        break;
+      default:
+        throw "Unsupported browserNameWithExtensions"
+    }
 
     // Create a new page
-    const result = await newPageWithStorageStateIfItExists(context, "ru-RU");
+    const result = await newPageWithStorageStateIfItExists(context, browserNameWithExtensions, localeString);
     const page = result.page;
     const localeLoaded = result.localeLoaded;
 
@@ -134,7 +171,13 @@ test.describe("YouTube Anti-Translate extension", () => {
     // If we did not load a locale storage state, login to test account and set locale
     // This will also create a new storage state with the locale already set
     if (localeLoaded !== true) {
-      await handleGoogleLogin(page, "ru-RU");
+      await handleGoogleLogin(page, browserNameWithExtensions, localeString);
+    }
+
+    // When chromium we need to wait some extra time to allow adds to be removed by uBlock Origin Lite
+    // Ads are allowed to load and removed after so it takes time
+    if (browserNameWithExtensions === "chromium") {
+      await page.waitForTimeout(5000);
     }
 
     // Wait for the video page to fully load
@@ -186,7 +229,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     expect(newTime).toBeLessThan(350); // And a small buffer above
 
     // Take a screenshot for visual verification
-    await page.screenshot({ path: "images/youtube-timecode-test.png" });
+    await page.screenshot({ path: `images/${browserNameWithExtensions}-youtube-timecode-test.png` });
 
     // Check console message count
     expect(consoleMessageCount).toBeLessThan(
@@ -197,16 +240,33 @@ test.describe("YouTube Anti-Translate extension", () => {
     await context.close();
   });
 
-  test("YouTube Shorts title is not translated with Anti-Translate extension", async () => {
-    downloadAndExtractUBlock();
+  test("YouTube Shorts title is not translated with Anti-Translate extension", async ({ browserNameWithExtensions, localeString }) => {
+    await downloadAndExtractUBlock(browserNameWithExtensions);
     // Launch browser with the extension
-    const context = await (withExtension(
-      firefox,
-      [path.resolve(__dirname, "../app"), path.resolve(__dirname, "testUBlockOrigin")]
-    )).launch()
+    let context;
+
+    switch (browserNameWithExtensions) {
+      case "chromium":
+        const browserTypeWithExtension = withExtension(
+          chromium,
+          [path.resolve(__dirname, "../app"), path.resolve(__dirname, "testUBlockOriginLite")]
+        );
+        context = await browserTypeWithExtension.launchPersistentContext("", {
+          headless: false
+        });
+        break;
+      case "firefox":
+        context = await (withExtension(
+          firefox,
+          [path.resolve(__dirname, "../app"), path.resolve(__dirname, "testUBlockOrigin")]
+        )).launch()
+        break;
+      default:
+        throw "Unsupported browserNameWithExtensions"
+    }
 
     // Create a new page
-    const result = await newPageWithStorageStateIfItExists(context, "ru-RU");
+    const result = await newPageWithStorageStateIfItExists(context, browserNameWithExtensions, localeString);
     const page = result.page;
     const localeLoaded = result.localeLoaded;
 
@@ -228,7 +288,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     // If we did not load a locale storage state, login to test account and set locale
     // This will also create a new storage state with the locale already set
     if (localeLoaded !== true) {
-      await handleGoogleLogin(page, "ru-RU");
+      await handleGoogleLogin(page, browserNameWithExtensions, localeString);
     }
 
     // Wait for the shorts title element to be present
@@ -259,7 +319,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     expect(shortsLinkTitle?.trim()).not.toBe("Я Исследовал Древние Храмы Возрастом 2000 Лет");
 
     // Take a screenshot for visual verification
-    await page.screenshot({ path: "images/youtube-shorts-test.png" });
+    await page.screenshot({ path: `images/${browserNameWithExtensions}-youtube-shorts-test.png` });
 
     // Check console message count
     expect(consoleMessageCount).toBeLessThan(
@@ -270,16 +330,33 @@ test.describe("YouTube Anti-Translate extension", () => {
     await context.close();
   });
 
-  test("YouTube channel Videos and Shorts tabs retain original titles", async () => {
-    downloadAndExtractUBlock();
+  test("YouTube channel Videos and Shorts tabs retain original titles", async ({ browserNameWithExtensions, localeString }) => {
+    await downloadAndExtractUBlock(browserNameWithExtensions);
     // Launch browser with the extension
-    const context = await (withExtension(
-      firefox,
-      [path.resolve(__dirname, "../app"), path.resolve(__dirname, "testUBlockOrigin")]
-    )).launch()
+    let context;
+
+    switch (browserNameWithExtensions) {
+      case "chromium":
+        const browserTypeWithExtension = withExtension(
+          chromium,
+          [path.resolve(__dirname, "../app"), path.resolve(__dirname, "testUBlockOriginLite")]
+        );
+        context = await browserTypeWithExtension.launchPersistentContext("", {
+          headless: false
+        });
+        break;
+      case "firefox":
+        context = await (withExtension(
+          firefox,
+          [path.resolve(__dirname, "../app"), path.resolve(__dirname, "testUBlockOrigin")]
+        )).launch()
+        break;
+      default:
+        throw "Unsupported browserNameWithExtensions"
+    }
 
     // Create a new page
-    const result = await newPageWithStorageStateIfItExists(context, "ru-RU");
+    const result = await newPageWithStorageStateIfItExists(context, browserNameWithExtensions, localeString);
     const page = result.page;
     const localeLoaded = result.localeLoaded;
 
@@ -305,7 +382,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     // If we did not load a locale storage state, login to test account and set locale
     // This will also create a new storage state with the locale already set
     if (localeLoaded !== true) {
-      await handleGoogleLogin(page, "ru-RU");
+      await handleGoogleLogin(page, browserNameWithExtensions, localeString);
     }
 
     // Wait for the video grid to appear
@@ -367,7 +444,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     console.log("Original video title confirmed on Videos tab again.");
 
     // Take a screenshot for visual verification
-    await page.screenshot({ path: "images/youtube-channel-tabs-test.png" });
+    await page.screenshot({ path: `images/${browserNameWithExtensions}-youtube-channel-tabs-test.png` });
 
     // Check console message count
     expect(consoleMessageCount).toBeLessThan(

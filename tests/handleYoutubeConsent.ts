@@ -9,7 +9,7 @@ export async function handleYoutubeConsent(page) {
   if (await consentButton.isVisible()) {
     await consentButton.scrollIntoViewIfNeeded();
     await consentButton.click();
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(1500);
   }
   try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
 
@@ -26,5 +26,6 @@ export async function handleYoutubeConsent(page) {
     }
   }
 
+  await page.waitForTimeout(1000);
   try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
 }

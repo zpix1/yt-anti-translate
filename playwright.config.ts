@@ -1,5 +1,15 @@
-import { defineConfig, devices } from "@playwright/test";
-import path from "path";
+import { defineConfig, devices, test as base } from "@playwright/test";
+
+export type TestOptions = {
+  browserNameWithExtensions: string;
+  localeString: string;
+};
+
+export const test = base.extend<TestOptions>({
+  // Define an option and provide a default value.
+  browserNameWithExtensions: ['John', { option: true }],
+  localeString: ['John', { option: true }],
+});
 
 /**
  * Read environment variables from file.
@@ -11,7 +21,7 @@ import path from "path";
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
-export default defineConfig({
+export default defineConfig<TestOptions>({
   timeout: 960_000,
   testDir: "./tests",
   /* Run tests in files in parallel */
@@ -36,13 +46,33 @@ export default defineConfig({
   /* Configure projects for major browsers */
   projects: [
     {
+      name: "chromium-extension-ru-RU",
+      testMatch: /.*extension\.spec\.ts/,
+      use: {
+        browserNameWithExtensions: "chromium",
+        localeString: "ru-RU",
+        ...devices["Desktop Chrome"],
+        contextOptions: {
+          // Load the extension from the app directory
+          permissions: ["clipboard-read", "clipboard-write"],
+        },
+        launchOptions: {
+          args: [
+            "--headless=new",
+          ],
+        },
+        locale: "ru-RU",
+      },
+    },
+    {
       name: "firefox-extension-ru-RU",
       testMatch: /.*extension\.spec\.ts/,
       use: {
+        browserNameWithExtensions: "firefox",
+        localeString: "ru-RU",
         ...devices["Desktop Firefox"],
         contextOptions: {},
         launchOptions: {
-          headless: false,
           args: [
             "--headless=new",
           ],
@@ -51,18 +81,38 @@ export default defineConfig({
       },
     },
     {
-      name: "firefox-extension-th_TH",
+      name: "chromium-extension-extra-th-TH",
       testMatch: /.*extension\.extra\.spec\.ts/,
       use: {
+        browserNameWithExtensions: "chromium",
+        localeString: "th-TH",
+        ...devices["Desktop Chrome"],
+        contextOptions: {
+          // Load the extension from the app directory
+          permissions: ["clipboard-read", "clipboard-write"],
+        },
+        launchOptions: {
+          args: [
+            "--headless=new"
+          ],
+        },
+        locale: "th-TH",
+      },
+    },
+    {
+      name: "firefox-extension-extra-th-TH",
+      testMatch: /.*extension\.extra\.spec\.ts/,
+      use: {
+        browserNameWithExtensions: "firefox",
+        localeString: "th-TH",
         ...devices["Desktop Firefox"],
         contextOptions: {},
         launchOptions: {
-          headless: false,
           args: [
             "--headless=new",
           ],
         },
-        locale: "th_TH"
+        locale: "th-TH"
       },
     },
 

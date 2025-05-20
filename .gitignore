@@ -16,5 +16,6 @@ node_modules
 test-user-data-dir/
 tests/testDist/
 tests/testUBlockOrigin/
+tests/testUBlockOriginLite/
 /app/.amo-upload-uuid
 app/app.zip
