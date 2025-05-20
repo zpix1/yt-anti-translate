@@ -108,6 +108,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     // Take a screenshot for visual verification
     await page.waitForTimeout(5000);
     await page.screenshot({ path: `images/${browserNameWithExtensions}-youtube-channel-branding-header-test.png` });
+    await page.screenshot({ path: `playwright-report/${browserNameWithExtensions}-youtube-channel-branding-header-test.png` });
 
     // --- Open About Popup ---
     console.log("Clicking '..more' button on description to open About Popup...");
@@ -178,6 +179,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
 
     // Take a screenshot for visual verification
     await page.screenshot({ path: `images/${browserNameWithExtensions}-youtube-channel-branding-about-test.png` });
+    await page.screenshot({ path: `playwright-report/${browserNameWithExtensions}-youtube-channel-branding-about-test.png` });
 
     // Check console message count
     expect(consoleMessageCount).toBeLessThan(
@@ -266,6 +268,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     // Take a screenshot for visual verification
     await page.waitForTimeout(5000);
     await page.screenshot({ path: `images/${browserNameWithExtensions}-youtube-video-author-test.png` });
+    await page.screenshot({ path: `playwright-report/${browserNameWithExtensions}-youtube-video-author-test.png` });
 
     // Check console message count
     expect(consoleMessageCount).toBeLessThan(
