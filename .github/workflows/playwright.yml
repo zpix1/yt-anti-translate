@@ -3,7 +3,7 @@ on:
   pull_request:
     branches: [main, master, release*]
   schedule:
-    - cron: "0 0 * * 0,3" # Run at midnight UTC every Sunday and Wednesday
+    - cron: "0 0 * * 0,2,4" # Run at midnight UTC every Sunday and Tuesday and Thursday
 
 concurrency:
   group: pr-${{ github.event.pull_request.number }}
