@@ -3,7 +3,11 @@ on:
   pull_request:
     branches: [main, master, release*]
   schedule:
-    - cron: "0 0 * * 0" # Run at midnight UTC every Sunday
+    - cron: "0 0 * * 0,3" # Run at midnight UTC every Sunday and Wednesday
+
+concurrency:
+  group: pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 jobs:
   playwright:
@@ -28,7 +32,7 @@ jobs:
           GOOGLE_USER: "${{ secrets.GOOGLE_USER }}"
           GOOGLE_PWD: "${{ secrets.GOOGLE_PWD }}"
           GOOGLE_OTP_SECRET: "${{ secrets.GOOGLE_OTP_SECRET }}"
-        run: xvfb-run npx playwright test --headed -j 4
+        run: xvfb-run npx playwright test --headed
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
