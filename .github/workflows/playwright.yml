@@ -1,4 +1,4 @@
-name: Playwright / Tests (pull_request)
+name: Playwright
 on:
   pull_request:
     branches: [main, master, release*]
@@ -7,7 +7,7 @@ on:
 
 jobs:
   playwright:
-    name: Playwright / Tests (pull_request)
+    name: Playwright / Tests (pull_request) # For some reason we need to use this for the action to be matched correctly in branch ruleset
     timeout-minutes: 60
     runs-on: ubuntu-latest
 
