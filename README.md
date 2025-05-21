@@ -1,18 +1,12 @@
-# Firefox Manifest V3 Port of YouTube Anti Translate
-
-Source code of [YouTube Anti Translate - mv3](https://addons.mozilla.org/firefox/addon/youtube-anti-translate-mv3/)
-
-This is a port I made, mainly for my own use, of the Chrome extension developed by [zpix1](https://github.com/zpix1)
-
-For this port, I used Manifest V3 (same as the Chrome version) and only very minor changes were needed at this stage to get everything to work as the original.
-
 # YouTube Anti Translate
 
-The Original Chrome Extension [YouTube Anti Translate](https://chrome.google.com/webstore/detail/yt-anti-translate/ndpmhjnlfkgfalaieeneneenijondgag) with source code at [https://github.com/zpix1/yt-anti-translate](https://github.com/zpix1/yt-anti-translate)
+Source code of [YouTube Anti Translate](https://chrome.google.com/webstore/detail/yt-anti-translate/ndpmhjnlfkgfalaieeneneenijondgag) Chromium Extension created by [zpix1](https://github.com/zpix1),
+And [YouTube Anti Translate - mv3](https://addons.mozilla.org/firefox/addon/youtube-anti-translate-mv3/) Firefox Extension mantained by [namakeingo](https://github.com/namakeingo).
 
-The creator was annoyed by YouTube changing video titles to poorly user-translated versions, so they made this Chrome extension to retrieve original titles and change them back.
+All the people involved were annoyed by YouTube changing video titles to poorly user-translated versions, so we made this extension to retrieve original titles and change them back.
+As YouTube later got even worse with translated description, audio (dubbing) and channel branding, the extension was expanded to untranslate that too.
 
-**I was even more annoyed by Dubbing.**
+It is much easier to use than its analogs (such as [YoutubeAutotranslateCanceler](https://github.com/pcouy/YoutubeAutotranslateCanceler)), because it does not require any YouTube API keys (for core features) or additional userscript extensions.
 
 ## Features
 
@@ -30,9 +24,34 @@ Extra features need a Youtube Data API Key to be pupulated in the extension sett
 
 ## How to use
 
-Just install it from the [Firefox Extensions Store](https://addons.mozilla.org/firefox/addon/youtube-anti-translate-mv3/).
+If using Chrome/Edge or other Chromium browses install it from [Chrome Web Store](https://chrome.google.com/webstore/detail/yt-anti-translate/ndpmhjnlfkgfalaieeneneenijondgag).
+If using a Firefox browser install it from [Firefox Extensions Store](https://addons.mozilla.org/firefox/addon/youtube-anti-translate-mv3/).
 
-There's also a [Firefox Manifest v2 version](https://addons.mozilla.org/firefox/addon/youtube-anti-translate/) (maintained by [artisticfox8](https://github.com/artisticfox8/)). Unfortunately, it was last updated on Aug 2, 2024 and is missing features because of that, hence why I published my MV3 version.
+There's also a [Firefox Manifest v2 version](https://addons.mozilla.org/firefox/addon/youtube-anti-translate/) (maintained by [artisticfox8](https://github.com/artisticfox8/)) compatible with Firefox versions order than `v109.0`.
+However it is currenlty out of date, as it was last updated on Aug 2, 2024 and is missing features because of that.
+
+### Development Setup
+
+1. Clone this repository
+2. Navigate to cloned folder and run the following command in terminal window
+   `npm ci`
+3. Open with IDE editor of choice
+4. You can verify functionality by running Playwright Test (make sure you install extensions for your IDE is needed)
+   - Please create or update tests if adding new capabilities
+
+#### Testing in Browser
+
+- Chrome
+
+  1. Open Chrome and navigate to `chrome://extensions/`
+  2. Enable "Developer mode"
+  3. Click "Load unpacked" and select the `app` directory from this repository
+
+- Firefox
+
+  1. Create a `.zip` of `app` directory (Note that `manifest.json` must be at the root of the atchive)
+  2. Open Firefox and navigate to `about:addons`
+  3. Click gear icon, click on "Install Add-on from File", select the zip file you created on step 1
 
 ## Contributing
 
@@ -46,7 +65,20 @@ Contributions are welcome! Here's how you can help:
 
 If this extension really helped you, consider supporting the original creator [at their donation page](https://zpix1.github.io/donate/).
 
-You can also show your support for me by:
+You can also show your support by:
 
 - Starring this repository on GitHub
+- Submitting a positive review for the extension on the [Chrome Web Store](https://chrome.google.com/webstore/detail/yt-anti-translate/ndpmhjnlfkgfalaieeneneenijondgag)
 - Submitting a positive review for the extension on the [Firefox Extension Store](https://addons.mozilla.org/firefox/addon/youtube-anti-translate-mv3/)
+
+### Contributors
+
+- [namakeingo](https://github.com/namakeingo) - Firefox MV3 Developer
+  - [Donate to namakeingo](https://github.com/sponsors/namakeingo)
+  - Star the fork [namakeingo/yt-anti-translate-firefox](https://github.com/namakeingo/yt-anti-translate-firefox)
+- [artisticfox8](https://github.com/artisticfox8/yt-anti-translate) - Firefox MV2 Developer
+  - Star the fork [artisticfox8/yt-anti-translate](https://github.com/artisticfox8/yt-anti-translate)
+- [ajayyy](https://github.com/ayayyy) - DeArrow compatibility [#18](https://github.com/zpix1/yt-anti-translate/pull/18) & [#19](https://github.com/zpix1/yt-anti-translate/pull/19)
+- [YuriiMaiboroda](https://github.com/YuriiMaiboroda) - Fix translating for playlist panel [#14](https://github.com/zpix1/yt-anti-translate/pull/14)
+- [BlackLanzer](https://github.com/BlackLanzer) - Translate title attribute [#24](https://github.com/zpix1/yt-anti-translate/pull/24)
+- [NRngnl](https://github.com/NRngnl) - Replace 'chrome.extension.getURL' with 'chrome.runtime.getURL' [#12](https://github.com/zpix1/yt-anti-translate/pull/12)
