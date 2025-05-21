@@ -7,7 +7,7 @@ on:
 
 jobs:
   playwright:
-    name: Tests YT Extension Headed
+    name: Tests YT Anti Translate Extension with xvfb-run Headed
     timeout-minutes: 60
     runs-on: ubuntu-latest
 
