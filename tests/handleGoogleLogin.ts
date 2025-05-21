@@ -38,7 +38,7 @@ export async function newPageWithStorageStateIfItExists(context, browserName, lo
   }
 
   // Helper to load cookies from file and add them to context
-  const loadCookies = async (filePath) => {
+  const loadCookies = async (context, filePath) => {
     const content = fs.readFileSync(filePath, 'utf-8');
     const storageState = JSON.parse(content);
     if (storageState.cookies && storageState.cookies.length > 0) {
@@ -55,7 +55,7 @@ export async function newPageWithStorageStateIfItExists(context, browserName, lo
 
       if (ageInHours <= 12) {
         if (browserName === "chromium") {
-          await loadCookies(file);
+          await loadCookies(context, file);
           return { page: (await context.newPage()), localeLoaded: true };
         }
         // Reuse existing LOCALE authentication state if it's fresh (less than 12 hours old).
@@ -72,7 +72,7 @@ export async function newPageWithStorageStateIfItExists(context, browserName, lo
 
     if (ageInHours <= 12) {
       if (browserName === "chromium") {
-        await loadCookies(authFile);
+        await loadCookies(context, authFile);
         return { page: (await context.newPage()), localeLoaded: false };
       }
       // Reuse existing authentication state if it's fresh (less than 12 hours old).
