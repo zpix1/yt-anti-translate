@@ -18,11 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix untranslation of video player head link
 - Fix duplication of untranslated fake node
 
-### Improvements
+### Changed
 
 - Improve code using windowDOM to avoid repetition
 
-### Extras
+### Added
 
 - Test extension in both firefox and chromium
 
@@ -43,7 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed untranslation of embedded video title and description - like in highlighted video of a channel
 - Fixed untranslation of short video link to video
 
-### Improvements
+### Changed
 
 - Optimise start-up logic for better performance
 - Avoid triggering functionalities if not needed in the current page
