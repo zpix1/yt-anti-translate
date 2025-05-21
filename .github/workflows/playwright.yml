@@ -7,7 +7,7 @@ on:
 
 jobs:
   playwright:
-    name: Playwright / Tests (pull_request) # For some reason we need to use this for the action to be matched correctly in branch ruleset
+    name: Tests YT Extension Headed
     timeout-minutes: 60
     runs-on: ubuntu-latest
 
