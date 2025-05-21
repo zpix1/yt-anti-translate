@@ -38,7 +38,7 @@ jobs:
         id: changelog
         run: |
           VERSION="${{ env.VERSION }}"
-          START_LINE=$(grep -n "^## \[$VERSION\]" CHANGELOG.md | cut -d: -f1)
+          START_LINE=$(grep -En "^## \[$VERSION\]" CHANGELOG.md | cut -d: -f1)
 
           if [ -z "$START_LINE" ]; then
             echo "Could not find changelog for version $VERSION"
@@ -48,7 +48,7 @@ jobs:
           TOTAL_LINES=$(wc -l < CHANGELOG.md)
           END_LINE=$((TOTAL_LINES + 1)) # default to end of file if nothing else found
 
-          tail -n +$((START_LINE + 1)) CHANGELOG.md | grep -n "^## \[[0-9]\+\." | head -n1 | while IFS=: read -r rel_line _; do
+          tail -n +$((START_LINE + 1)) CHANGELOG.md | grep -En "^## \[[0-9]+\." | head -n1 | while IFS=: read -r rel_line _; do
             END_LINE=$((START_LINE + rel_line - 1))
           done
 
