@@ -1,0 +1,74 @@
+name: Create Release with tag
+
+# This will create a new relase tagged with the version specified in the 'app/manifest.json'
+# if the souce branch name is prepended with 'fix-' the release title will be with 'Fix v$VERSION'
+# Else the release title will be with 'Release v$VERSION'
+# CHANGELOG.md is used to populate the body of the release before any auto generated notes
+
+on:
+  pull_request:
+    types:
+      - closed
+    branches:
+      - main
+      - master
+
+jobs:
+  release:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Get version from manifest.json
+        id: get_version
+        run: |
+          VERSION=$(jq -r .version app/manifest.json)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "tag=v$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Extract release notes from CHANGELOG.md
+        id: changelog
+        run: |
+          VERSION="${{ env.VERSION }}"
+          START_LINE=$(grep -n "^## \[$VERSION\]" CHANGELOG.md | cut -d: -f1)
+
+          if [ -z "$START_LINE" ]; then
+            echo "Could not find changelog for version $VERSION"
+            exit 1
+          fi
+
+          TOTAL_LINES=$(wc -l < CHANGELOG.md)
+          END_LINE=$((TOTAL_LINES + 1)) # default to end of file if nothing else found
+
+          tail -n +$((START_LINE + 1)) CHANGELOG.md | grep -n "^## \[[0-9]\+\." | head -n1 | while IFS=: read -r rel_line _; do
+            END_LINE=$((START_LINE + rel_line - 1))
+          done
+
+          sed -n "${START_LINE},$((END_LINE - 1))p" CHANGELOG.md > release_notes.txt
+          echo "RELEASE_BODY<<EOF" >> $GITHUB_ENV
+          cat release_notes.txt >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Set release name prefix
+        id: prefix
+        run: |
+          BRANCH_NAME="${{ github.event.pull_request.head.ref }}"
+          if echo "$BRANCH_NAME" | grep -iq '^fix-'; then
+            echo "prefix=Fix" >> $GITHUB_OUTPUT
+          else
+            echo "prefix=Release" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ steps.get_version.outputs.tag }}
+          name: ${{ steps.prefix.outputs.prefix }} ${{ steps.get_version.outputs.tag }}
+          body: ${{ env.RELEASE_BODY }}
