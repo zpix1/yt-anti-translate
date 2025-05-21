@@ -1,4 +1,4 @@
-name: Playwright Tests
+name: Playwright
 on:
   pull_request:
     branches: [main, master, release*]
@@ -7,7 +7,7 @@ on:
 
 jobs:
   playwright:
-    name: Playwright Tests
+    name: Tests
     timeout-minutes: 60
     runs-on: ubuntu-latest
 
