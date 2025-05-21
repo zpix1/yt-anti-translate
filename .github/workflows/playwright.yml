@@ -3,13 +3,16 @@ on:
   pull_request:
     branches: [main, master, release*]
   schedule:
-    - cron: "0 0 * * *" # Run at midnight UTC every day
+    - cron: "0 0 * * 0" # Run at midnight UTC every Sunday
 
 jobs:
   playwright:
     name: Tests YT Anti Translate Extension with xvfb-run Headed
     timeout-minutes: 60
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        worker: [1, 2, 3, 4] # 4 parallel jobs
 
     steps:
       - uses: actions/checkout@v4
@@ -28,7 +31,7 @@ jobs:
           GOOGLE_USER: "${{ secrets.GOOGLE_USER }}"
           GOOGLE_PWD: "${{ secrets.GOOGLE_PWD }}"
           GOOGLE_OTP_SECRET: "${{ secrets.GOOGLE_OTP_SECRET }}"
-        run: xvfb-run npx playwright test --headed
+        run: xvfb-run npx playwright test --headed --shard=${{ matrix.worker }}/4
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
