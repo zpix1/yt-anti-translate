@@ -1,8 +1,8 @@
 name: Create Release with tag
 
 # This will create a new relase tagged with the version specified in the 'app/manifest.json'
-# if the souce branch name is prepended with 'fix-' the release title will be with 'Fix v$VERSION'
-# Else the release title will be with 'Release v$VERSION'
+# if the souce branch name is prepended with 'fix-' the release title will be with 'v$VERSION - Fix'
+# Else the release title will be with 'v$VERSION'
 # CHANGELOG.md is used to populate the body of the release before any auto generated notes
 
 on:
@@ -57,18 +57,18 @@ jobs:
           cat release_notes.txt >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
-      - name: Set release name prefix
-        id: prefix
+      - name: Set release name suffix
+        id: suffix
         run: |
           BRANCH_NAME="${{ github.event.pull_request.head.ref }}"
           if echo "$BRANCH_NAME" | grep -iq '^fix-'; then
-            echo "prefix=Fix" >> $GITHUB_OUTPUT
+            echo "suffix= Fix" >> $GITHUB_OUTPUT
           else
-            echo "prefix=Release" >> $GITHUB_OUTPUT
+            echo "suffix=" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ steps.get_version.outputs.tag }}
-          name: ${{ steps.prefix.outputs.prefix }} ${{ steps.get_version.outputs.tag }}
+          name: ${{ steps.get_version.outputs.tag }}${{ steps.suffix.outputs.suffix }}
           body: ${{ env.RELEASE_BODY }}
