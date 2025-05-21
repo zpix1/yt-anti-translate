@@ -1,4 +1,4 @@
-//Reusable global properties for scripts should be declared here to avoid redeclaration of already existing constants
+//Reusable global properties for scripts should be declared here to avoid redeclaration of already existing code or values
 //These properties are added to the Window DOM and injected into the page to make it available to all scripts
 //We are using Object.freeze() to make window.YoutubeAntiTranslate immutable
 window.YoutubeAntiTranslate = {
