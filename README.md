@@ -3,8 +3,9 @@
 Source code of [YouTube Anti Translate](https://chrome.google.com/webstore/detail/yt-anti-translate/ndpmhjnlfkgfalaieeneneenijondgag) Chromium Extension created by [zpix1](https://github.com/zpix1),
 And [YouTube Anti Translate - mv3](https://addons.mozilla.org/firefox/addon/youtube-anti-translate-mv3/) Firefox Extension mantained by [namakeingo](https://github.com/namakeingo).
 
-All the people involved were annoyed by YouTube changing video titles to poorly user-translated versions, so we made this extension to retrieve original titles and change them back.
-As YouTube later got even worse with translated description, audio (dubbing) and channel branding, the extension was expanded to untranslate that too.
+All the people involved were annoyed by YouTube changing video titles to poorly user-translated versions. While it might be useful if you do not know the language, it quickly becomes annoying once you do.
+As there is no option provided by youtube to disable it, we made this extension to retrieve original titles and change them back.
+As YouTube later got even more annoying with translated description, audio (dubbing) and channel branding, the extension was expanded to untranslate that too.
 
 It is much easier to use than its analogs (such as [YoutubeAutotranslateCanceler](https://github.com/pcouy/YoutubeAutotranslateCanceler)), because it does not require any YouTube API keys (for core features) or additional userscript extensions.
 
