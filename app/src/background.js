@@ -27,10 +27,6 @@ function trimYoutube(title) {
   return title.replace(/ - YouTube$/, "");
 }
 
-function normalizeTitle(title) {
-  return title.replace(/\s/g, "");
-}
-
 async function untranslateCurrentShortVideo() {
   if (window.YoutubeAntiTranslate.getFirstVisible(document.querySelectorAll(window.YoutubeAntiTranslate.getPlayerSelector()))) {
     if (!window.location.pathname.startsWith("/shorts/")) {
@@ -78,7 +74,7 @@ async function untranslateCurrentShortVideo() {
       if (
         realTitle &&
         currentTitle &&
-        normalizeTitle(realTitle) !== normalizeTitle(currentTitle)
+        window.YoutubeAntiTranslate.normalizeSpaces(realTitle) !== window.YoutubeAntiTranslate.normalizeSpaces(currentTitle)
       ) {
         console.log(
           `${window.YoutubeAntiTranslate.LOG_PREFIX}  Untranslating Short title: "${currentTitle}" -> "${realTitle}"`
@@ -130,7 +126,7 @@ async function untranslateCurrentVideo() {
     originalNodeSelector,
     () => document.location.href,
     "div",
-    false
+    true
   );
 }
 
@@ -206,7 +202,8 @@ async function createOrUpdateUntranslatedFakeNode(fakeNodeID, originalNodeSelect
       return;
     }
 
-    const response = await get("https://www.youtube.com/oembed?url=" + getUrl(translatedElement ?? fakeNode));
+    const getUrlForElement = getUrl(translatedElement ?? fakeNode);
+    const response = await get("https://www.youtube.com/oembed?url=" + getUrlForElement);
     if (!response) {
       return;
     }
@@ -219,15 +216,26 @@ async function createOrUpdateUntranslatedFakeNode(fakeNodeID, originalNodeSelect
 
     const oldTitle = translatedElement?.textContent ?? fakeNode?.textContent;
 
+    if (shouldSetDocumentTitle) {
+      // This is sometimes skipped on first update as youtube translate the document title late; so we use a cached oldTitle
+      const cachedOldTitle = window.YoutubeAntiTranslate.cache.get(`${fakeNodeID}_${getUrlForElement}`) ?? oldTitle
+
+      // document tile is sometimes not a perfect match to the oldTile due to spacing, so normalize all
+      const normalizedDocumentTitle = window.YoutubeAntiTranslate.normalizeSpaces(document.title);
+      const normalizedOldTitle = window.YoutubeAntiTranslate.normalizeSpaces(cachedOldTitle);
+      const normalizeRealTitle = window.YoutubeAntiTranslate.normalizeSpaces(realTitle);
+      const realDocumentTitle = normalizedDocumentTitle.replace(normalizedOldTitle, normalizeRealTitle);
+      if (normalizedDocumentTitle !== realDocumentTitle) {
+        document.title = realDocumentTitle;
+      }
+    }
+
     if (realTitle === oldTitle || fakeNode?.textContent === realTitle) {
       return;
     }
-
-    if (shouldSetDocumentTitle) {
-      document.title = document.title.replace(
-        translatedTitleElement?.textContent ?? fakeNode?.textContent,
-        realTitle
-      );
+    else {
+      // cache old title for future reference
+      window.YoutubeAntiTranslate.cache.set(`${fakeNodeID}_${getUrlForElement}`, oldTitle)
     }
 
     console.log(
@@ -312,12 +320,10 @@ async function untranslateOtherVideos() {
         if (
           originalTitle &&
           currentTitle &&
-          normalizeTitle(originalTitle) !== normalizeTitle(currentTitle)
+          window.YoutubeAntiTranslate.normalizeSpaces(originalTitle) !== window.YoutubeAntiTranslate.normalizeSpaces(currentTitle)
         ) {
           console.log(
-            `${window.YoutubeAntiTranslate.LOG_PREFIX} Untranslating Video: "${currentTitle}" -> "${originalTitle}"`,
-            normalizeTitle(originalTitle),
-            normalizeTitle(currentTitle)
+            `${window.YoutubeAntiTranslate.LOG_PREFIX} Untranslating Video: "${currentTitle}" -> "${originalTitle}"`
           );
           // Update both innerText and title attribute
           titleElement.innerText = originalTitle;

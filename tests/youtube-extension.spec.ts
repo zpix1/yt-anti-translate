@@ -94,13 +94,22 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Get the video title
     const videoTitle = await page
-      .locator("h1.ytd-watch-metadata:visible")
+      .locator("h1.ytd-watch-metadata #yt-anti-translate-fake-node-current-video:visible")
       .textContent();
     console.log("Video title:", videoTitle?.trim());
 
     // Check that the title is in English and not in Russian
     expect(videoTitle).toContain("Ages 1 - 100 Decide Who Wins $250,000");
     expect(videoTitle).not.toContain(
+      "Люди от 1 до 100 Лет Решают, кто Выиграет $250,000"
+    );
+
+    // Check page title
+    const pageTitle = await page.title()
+    console.log("Document title for the Video is:", pageTitle?.trim());
+    // Check that the document title is in English and not in Russian
+    expect(pageTitle).toContain("Ages 1 - 100 Decide Who Wins $250,000");
+    expect(pageTitle).not.toContain(
       "Люди от 1 до 100 Лет Решают, кто Выиграет $250,000"
     );
 
@@ -349,6 +358,15 @@ test.describe("YouTube Anti-Translate extension", () => {
     expect(shortsTitle?.trim()).toBe("Highest Away From Me Wins $10,000");
     expect(shortsTitle?.trim()).not.toBe("Достигни Вершины И Выиграй $10,000");
     await expect(page.locator(shortsTitleSelector)).toBeVisible()
+
+    // Check page title
+    const pageTitle = await page.title()
+    console.log("Document title for the Short is:", pageTitle?.trim());
+    // Check that the document title is in English and not in Russian
+    expect(pageTitle).toContain("Highest Away From Me Wins $10,000");
+    expect(pageTitle).not.toContain(
+      "Достигни Вершины И Выиграй $10,000"
+    );
 
     // Wait for the shorts video link element to be present
     const shortsVideoLinkSelector = ".ytReelMultiFormatLinkViewModelEndpoint span.yt-core-attributed-string>span:visible";
