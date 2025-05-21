@@ -12,7 +12,7 @@ The Original Chrome Extension [YouTube Anti Translate](https://chrome.google.com
 
 The creator was annoyed by YouTube changing video titles to poorly user-translated versions, so they made this Chrome extension to retrieve original titles and change them back.
 
-I was even more annoyed by AI Autodub.
+**I was even more annoyed by Dubbing.**
 
 ## Features
 
