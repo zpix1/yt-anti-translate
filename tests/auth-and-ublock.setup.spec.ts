@@ -2,9 +2,9 @@ import { expect, chromium, firefox } from "@playwright/test";
 import { test } from "../playwright.config"
 import path from "path";
 import { withExtension } from "playwright-webextext";
-import { handleYoutubeConsent } from "./handleYoutubeConsent";
-import { newPageWithStorageStateIfItExists, handleGoogleLogin, findLoginButton } from "./handleGoogleLogin";
-import { downloadAndExtractUBlock } from "./handleTestDistribution";
+import { handleYoutubeConsent } from "./helpers/handleYoutubeConsent";
+import { newPageWithStorageStateIfItExists, handleGoogleLogin, findLoginButton } from "./helpers/AuthStorageHelper";
+import { downloadAndExtractUBlock } from "./helpers/ExtensionsFilesHelper";
 
 require('dotenv').config();
 

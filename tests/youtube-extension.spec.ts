@@ -2,7 +2,7 @@ import { expect, firefox, chromium } from "@playwright/test";
 import { test } from "../playwright.config"
 import path from "path";
 import { withExtension } from "playwright-webextext";
-import { newPageWithStorageStateIfItExists, findLoginButton } from "./handleGoogleLogin";
+import { newPageWithStorageStateIfItExists, findLoginButton } from "./helpers/AuthStorageHelper";
 
 require('dotenv').config();
 const authFile = path.join(__dirname, '../playwright/.auth/user.json');

@@ -2,8 +2,8 @@ import { expect, firefox, chromium } from "@playwright/test";
 import { test } from "../playwright.config"
 import path from "path";
 import { withExtension } from "playwright-webextext";
-import { newPageWithStorageStateIfItExists, findLoginButton } from "./handleGoogleLogin";
-import { handleTestDistribution } from "./handleTestDistribution";
+import { newPageWithStorageStateIfItExists, findLoginButton } from "./helpers/AuthStorageHelper";
+import { handleTestDistribution } from "./helpers/ExtensionsFilesHelper";
 
 require('dotenv').config();
 
