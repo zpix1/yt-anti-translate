@@ -47,7 +47,7 @@ jobs:
 
       - name: Extract release notes
         run: |
-          set -euo pipefail
+          set -euxo pipefail
 
           CHANGELOG_FILE="CHANGELOG.md"
 
