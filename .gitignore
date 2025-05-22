@@ -2,7 +2,6 @@ dist
 node_modules
 .env
 *.env
-release_notes.txt
 
 # Playwright
 /test-results/
