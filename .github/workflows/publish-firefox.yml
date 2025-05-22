@@ -17,8 +17,17 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build
+        env:
+          FIREFOX_name: "YouTube Anti Translate - mv3"
+          FIREFOX_author: "zpix1; ported by namakeingo"
+          FIREFOX_gecko_id: "youtube-anti-translate-mv3@namakeingo.co.uk"
+          FIREFOX_gecko_strict_min_version: "109.0"
         run: |-
           cp -r app dist
+          # Modify manifest.json using jq
+          jq --arg name "$FIREFOX_name" --arg author "$FIREFOX_author" \
+            '.name = $name | .author = $author' \
+            dist/manifest.json > dist/manifest.tmp.json && mv dist/manifest.tmp.json dist/manifest.json
           # we archive the dist folder and include SHA commit as the last step
           zip -r firefox-extension.zip dist
 

@@ -1,4 +1,4 @@
-//Reusable global properties for scripts should be declared here to avoid redeclaration of already existing constants
+//Reusable global properties for scripts should be declared here to avoid redeclaration of already existing code or values
 //These properties are added to the Window DOM and injected into the page to make it available to all scripts
 //We are using Object.freeze() to make window.YoutubeAntiTranslate immutable
 window.YoutubeAntiTranslate = {
@@ -19,34 +19,59 @@ window.YoutubeAntiTranslate = {
   },
 
   /**
+   * normalize spaces in a string so that there are no more than 1 space between words
+   * @type {Fuction} 
+   * @param {string} str 
+   * @returns 
+   */
+  normalizeSpaces: function (str) {
+    return str.replace(/\s+/g, ' ').trim();
+  },
+
+  /**
    * Given a Node it uses computed style to determine if it is visible
    * @type {Function}
    * @param {Node} node - A Node of type ELEMENT_NODE
    * @return {boolean} - true if the node is computed as visible
    */
   isVisible: function (node) {
-    let style;
-    let /** @type {Element} */ element
-    if (node.nodeType === Node.ELEMENT_NODE) {
-      element = /** @type {Element} */ (node);
-    }
-    else {
+    if (!node || node.nodeType !== Node.ELEMENT_NODE) {
       console.error(
-        `${this.LOG_PREFIX} elem is not an Element or a Node`,
+        `${this.LOG_PREFIX} Provided node is not a valid Element.`,
         window.location.href
       );
       return false;
     }
 
-    style = getComputedStyle(element);
+    const element = /** @type {Element} */ (node);
+    const style = getComputedStyle(element);
 
+    // If computed style of element is invisible return false
     if (
-      style.display !== 'none' &&
-      style.visibility !== 'hidden'
+      style.display === 'none' ||
+      style.visibility === 'hidden' ||
+      style.visibility === 'collapse' ||
+      parseFloat(style.opacity) === 0 ||
+      element.offsetWidth === 0 ||
+      element.offsetHeight === 0
     ) {
-      return true;
+      return false;
     }
-    return false;
+
+    // Get element position relative to the viewport
+    const rect = element.getBoundingClientRect();
+    // Get viewport extended by 25% to allow some 'preload'
+    const extendedHeight = window.innerHeight * 0.25;
+    const extendedWidth = window.innerWidth * 0.25;
+
+    // Check element is in a visible position of the extended viewport
+    const inExtendedViewport =
+      rect.top < window.innerHeight + extendedHeight &&
+      rect.bottom > -extendedHeight &&
+      rect.left < window.innerWidth + extendedWidth &&
+      rect.right > -extendedWidth;
+
+    return inExtendedViewport;
   },
 
   /**

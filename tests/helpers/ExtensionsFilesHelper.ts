@@ -9,8 +9,8 @@ const crx = require("crx-util");
 const streamPipeline = promisify(pipeline);
 
 // Define the source and destination directories
-const srcDirExtension = path.join(__dirname, '../app');
-const destDirExtension = path.join(__dirname, 'testDist');
+const srcDirExtension = path.join(__dirname, '../../app');
+const destDirExtension = path.join(__dirname, '../testDist');
 
 /** Function to copy files and directories recursively
  * @param {JSON} configObject - The object to be passed and inserted into the start.js file to set the chome.storage settings
@@ -88,12 +88,12 @@ export async function downloadAndExtractUBlock(browserName) {
       //and copy the redirect URL to the file
       uBlockUri = `https://clients2.googleusercontent.com/crx/blobs/AR5vvToUznjd4HPtq2Qf2ofykf5cygX6Wm7Q7cmg2zGc61WE49beD-vBuuew0okjXIj8lJ8TJMfGenI2Dg8DAJT_dNWWaFrSeW5UApwk5Nxh05G5vVNqQYKOcrQeYkJ2fxBgAMZSmuWEL6hqLeWkBX6RZY0yRQi9IjkaXg/DDKJIAHEJLHFCAFBDDMGIAHCPHECMPFH_2025_512_1008_0.crx`
       expectedVersion = '2025.512.1008'
-      destDirUBlock = path.join(__dirname, 'testUBlockOriginLite');
+      destDirUBlock = path.join(__dirname, '../testUBlockOriginLite');
       break
     case "firefox":
       uBlockUri = 'https://addons.mozilla.org/firefox/downloads/file/4458450/ublock_origin-1.63.2.xpi';
       expectedVersion = '1.63.2';
-      destDirUBlock = path.join(__dirname, 'testUBlockOrigin');
+      destDirUBlock = path.join(__dirname, '../testUBlockOrigin');
       break;
     default:
       throw "Unsupported browserName"

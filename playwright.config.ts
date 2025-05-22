@@ -2,13 +2,17 @@ import { defineConfig, devices, test as base } from "@playwright/test";
 
 export type TestOptions = {
   browserNameWithExtensions: string;
+  allBrowserNameWithExtensions: string[];
   localeString: string;
+  allLocaleStrings: string[];
 };
 
 export const test = base.extend<TestOptions>({
   // Define an option and provide a default value.
   browserNameWithExtensions: ['John', { option: true }],
+  allBrowserNameWithExtensions: [['John'], { option: true }],
   localeString: ['John', { option: true }],
+  allLocaleStrings: [['John'], { option: true }],
 });
 
 /**
@@ -28,10 +32,10 @@ export default defineConfig<TestOptions>({
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
-  /* Retry on CI only */
-  retries: process.env.CI ? 2 : 0,
-  /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 1 : undefined,
+  /* Retry 2 times on CI, or once locally */
+  retries: process.env.CI ? 2 : 1,
+  /* Limit parallel workers on CI as they cause random failures some of the times */
+  workers: process.env.CI ? 3 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: "html",
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
@@ -45,6 +49,14 @@ export default defineConfig<TestOptions>({
 
   /* Configure projects for major browsers */
   projects: [
+    {
+      name: "setup-auth-and-ublock",
+      testMatch: /.*setup\.spec\.ts/,
+      use: {
+        allBrowserNameWithExtensions: ["chromium", "firefox"],
+        allLocaleStrings: ["ru-RU", "th-TH"]
+      }
+    },
     {
       name: "chromium-extension-ru-RU",
       testMatch: /.*extension\.spec\.ts/,
@@ -63,6 +75,7 @@ export default defineConfig<TestOptions>({
         },
         locale: "ru-RU",
       },
+      dependencies: ["setup-auth-and-ublock"]
     },
     {
       name: "firefox-extension-ru-RU",
@@ -79,6 +92,7 @@ export default defineConfig<TestOptions>({
         },
         locale: "ru-RU"
       },
+      dependencies: ["setup-auth-and-ublock"]
     },
     {
       name: "chromium-extension-extra-th-TH",
@@ -98,6 +112,7 @@ export default defineConfig<TestOptions>({
         },
         locale: "th-TH",
       },
+      dependencies: ["setup-auth-and-ublock"]
     },
     {
       name: "firefox-extension-extra-th-TH",
@@ -114,6 +129,7 @@ export default defineConfig<TestOptions>({
         },
         locale: "th-TH"
       },
+      dependencies: ["setup-auth-and-ublock"]
     },
 
     /* Test against mobile viewports. */

@@ -1,13 +1,17 @@
-name: Playwright Tests
+name: Playwright
 on:
-  push:
-    branches: [main, master]
   pull_request:
-    branches: [main, master]
+    branches: [main, master, release*]
   schedule:
-    - cron: "0 0 * * *" # Run at midnight UTC every day
+    - cron: "0 0 * * 0,2,4" # Run at midnight UTC every Sunday and Tuesday and Thursday
+
+concurrency:
+  group: pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
-  test:
+  playwright:
+    name: Tests YT Anti Translate Extension with xvfb-run Headed
     timeout-minutes: 60
     runs-on: ubuntu-latest
 

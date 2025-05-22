@@ -2,9 +2,8 @@ import { expect, firefox, chromium } from "@playwright/test";
 import { test } from "../playwright.config"
 import path from "path";
 import { withExtension } from "playwright-webextext";
-import { handleYoutubeConsent } from "./handleYoutubeConsent";
-import { newPageWithStorageStateIfItExists, handleGoogleLogin } from "./handleGoogleLogin";
-import { handleTestDistribution, downloadAndExtractUBlock } from "./handleTestDistribution";
+import { newPageWithStorageStateIfItExists, findLoginButton } from "./helpers/AuthStorageHelper";
+import { handleTestDistribution } from "./helpers/ExtensionsFilesHelper";
 
 require('dotenv').config();
 
@@ -13,7 +12,6 @@ require('dotenv').config();
 
 test.describe("YouTube Anti-Translate extension - Extras", () => {
   test("YouTube channel branding header and about retain original content", async ({ browserNameWithExtensions, localeString }) => {
-    await downloadAndExtractUBlock(browserNameWithExtensions);
     // --- Update Extension Settings and distribute a test copy ---
     // The object to be passed and inserted into the start.js file
     const configObject = { youtubeDataApiKey: process.env.YOUTUBE_API_KEY, untranslateChannelBranding: true };
@@ -46,6 +44,10 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     const result = await newPageWithStorageStateIfItExists(context, browserNameWithExtensions, localeString);
     const page = result.page;
     const localeLoaded = result.localeLoaded;
+    if (!localeLoaded) {
+      // Setup failed to create a matching locale so test wil fail.
+      expect(localeLoaded).toBe(true)
+    }
 
     // Set up console message counting
     let consoleMessageCount = 0;
@@ -58,19 +60,11 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
 
     // Wait for the page to load
     try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
+    // .waitForLoadState("networkidle" is not always right so wait 5 extra seconds
+    await page.waitForTimeout(5000);
 
-    // Sometimes youtube redirects to consent page so wait 2 seconds before proceeding
-    await page.waitForTimeout(2000);
-    try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
-
-    // Sometimes youtube redirects to consent so handle it
-    await handleYoutubeConsent(page);
-
-    // If we did not load a locale storage state, login to test account and set locale
-    // This will also create a new storage state with the locale already set
-    if (localeLoaded !== true) {
-      await handleGoogleLogin(page, browserNameWithExtensions, localeString);
-    }
+    // If for whatever reason we are not logged in, then fail the test
+    expect(await findLoginButton(page)).toBe(null);
 
     // Wait for the video grid to appear
     const channelHeaderSelector = "#page-header-container #page-header .page-header-view-model-wiz__page-header-headline-info"
@@ -106,15 +100,11 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     expect(brandingDescription).not.toContain("ไปดู Beast Games ได้แล้ว");
     await expect(page.locator(channelDescriptionSelector)).toBeVisible()
 
-    // Take a screenshot for visual verification
-    await page.waitForTimeout(5000);
-    await page.screenshot({ path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-channel-branding-header-test.png` });
-
     // --- Open About Popup ---
     console.log("Clicking '..more' button on description to open About Popup...");
     await page.locator(`${channelHeaderSelector} .truncated-text-wiz__absolute-button`).click();
     try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(500);
 
     // --- Check About Popup ---
     const aboutContainer = 'ytd-engagement-panel-section-list-renderer'
@@ -145,15 +135,15 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
 
     // --- Close Popup
     console.log("Clicking 'X' button to close Popup...");
-    await page.locator(`${aboutContainer} #visibility-button button.yt-spec-button-shape-next`).click();
+    await page.locator(`${aboutContainer} #visibility-button button.yt-spec-button-shape-next:visible`).click();
     try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(500);
 
     // --- Open About Popup via more links ---
     console.log("Clicking '..more links' button on description to open About Popup...");
     await page.locator(`${channelHeaderSelector} span.yt-core-attributed-string>span>a.yt-core-attributed-string__link[role="button"]`).click();
     try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(500);
 
     // --- Check About A second time via the moreLinks Popup ---
     // Get the about title
@@ -180,6 +170,15 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     // Take a screenshot for visual verification
     await page.screenshot({ path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-channel-branding-about-test.png` });
 
+    // --- Close Popup
+    console.log("Clicking 'X' button to close Popup...");
+    await page.locator(`${aboutContainer} #visibility-button button.yt-spec-button-shape-next:visible`).click();
+    try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
+    await page.waitForTimeout(500);
+
+    // Take a screenshot for visual verification
+    await page.screenshot({ path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-channel-branding-header-test.png` });
+
     // Check console message count
     expect(consoleMessageCount).toBeLessThan(
       2000
@@ -190,8 +189,6 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
   });
 
   test("YouTube video player retain original author", async ({ browserNameWithExtensions, localeString }) => {
-    await downloadAndExtractUBlock(browserNameWithExtensions);
-
     // Launch browser with the extension
     let context;
 
@@ -219,6 +216,10 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     const result = await newPageWithStorageStateIfItExists(context, browserNameWithExtensions, localeString);
     const page = result.page;
     const localeLoaded = result.localeLoaded;
+    if (!localeLoaded) {
+      // Setup failed to create a matching locale so test wil fail.
+      expect(localeLoaded).toBe(true)
+    }
 
     // Set up console message counting
     let consoleMessageCount = 0;
@@ -231,19 +232,11 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
 
     // Wait for the page to load
     try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
+    // .waitForLoadState("networkidle" is not always right so wait 5 extra seconds
+    await page.waitForTimeout(5000);
 
-    // Sometimes youtube redirects to consent page so wait 2 seconds before proceeding
-    await page.waitForTimeout(2000);
-    try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
-
-    // Sometimes youtube redirects to consent so handle it
-    await handleYoutubeConsent(page);
-
-    // If we did not load a locale storage state, login to test account and set locale
-    // This will also create a new storage state with the locale already set
-    if (localeLoaded !== true) {
-      await handleGoogleLogin(page, browserNameWithExtensions, localeString);
-    }
+    // If for whatever reason we are not logged in, then fail the test
+    expect(await findLoginButton(page)).toBe(null);
 
     // Wait for the video player to appear
     const videoPlayerSelector = "#movie_player"
@@ -259,13 +252,13 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
       .textContent();
     console.log("Video author:", brandingTitle?.trim());
 
-    // Check that the branding header title is in English and not in Thai
+    // Check that the channel name is in English and not in Thai
     expect(brandingTitle).toContain("MrBeast");
     expect(brandingTitle).not.toContain("มิสเตอร์บีสต์");
     await expect(page.locator(videoAuthorSelector)).toBeVisible()
 
     // Take a screenshot for visual verification
-    await page.waitForTimeout(5000);
+    await page.waitForTimeout(4000);
     await page.screenshot({ path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-video-author-test.png` });
 
     // Check console message count

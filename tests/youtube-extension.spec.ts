@@ -2,9 +2,7 @@ import { expect, firefox, chromium } from "@playwright/test";
 import { test } from "../playwright.config"
 import path from "path";
 import { withExtension } from "playwright-webextext";
-import { handleYoutubeConsent } from "./handleYoutubeConsent";
-import { newPageWithStorageStateIfItExists, handleGoogleLogin } from "./handleGoogleLogin";
-import { downloadAndExtractUBlock } from "./handleTestDistribution";
+import { newPageWithStorageStateIfItExists, findLoginButton } from "./helpers/AuthStorageHelper";
 
 require('dotenv').config();
 const authFile = path.join(__dirname, '../playwright/.auth/user.json');
@@ -13,7 +11,6 @@ const authFile = path.join(__dirname, '../playwright/.auth/user.json');
 
 test.describe("YouTube Anti-Translate extension", () => {
   test("Prevents current video title and description auto-translation", async ({ browserNameWithExtensions, localeString }) => {
-    await downloadAndExtractUBlock(browserNameWithExtensions);
     // Launch browser with the extension
     let context;
 
@@ -41,6 +38,10 @@ test.describe("YouTube Anti-Translate extension", () => {
     const result = await newPageWithStorageStateIfItExists(context, browserNameWithExtensions, localeString);
     const page = result.page;
     const localeLoaded = result.localeLoaded;
+    if (!localeLoaded) {
+      // Setup failed to create a matching locale so test wil fail.
+      expect(localeLoaded).toBe(true)
+    }
 
     // Set up console message counting
     let consoleMessageCount = 0;
@@ -51,21 +52,13 @@ test.describe("YouTube Anti-Translate extension", () => {
     // Navigate to the specified YouTube video
     await page.goto("https://www.youtube.com/watch?v=l-nMKJ5J3Uc");
 
-    // Wait for the page to load and for YouTube to process the locale
+    // Wait for the page to load
     try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
+    // .waitForLoadState("networkidle" is not always right so wait 5 extra seconds
+    await page.waitForTimeout(5000);
 
-    // Sometimes youtube redirects to consent page so wait 2 seconds before proceeding
-    await page.waitForTimeout(2000);
-    try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
-
-    // Sometimes youtube redirects to consent so handle it
-    await handleYoutubeConsent(page);
-
-    // If we did not load a locale storage state, login to test account and set locale
-    // This will also create a new storage state with the locale already set
-    if (localeLoaded !== true) {
-      await handleGoogleLogin(page, browserNameWithExtensions, localeString);
-    }
+    // If for whatever reason we are not logged in, then fail the test
+    expect(await findLoginButton(page)).toBe(null);
 
     // When chromium we need to wait some extra time to allow adds to be removed by uBlock Origin Lite
     // Ads are allowed to load and removed after so it takes time
@@ -94,13 +87,22 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Get the video title
     const videoTitle = await page
-      .locator("h1.ytd-watch-metadata:visible")
+      .locator("h1.ytd-watch-metadata #yt-anti-translate-fake-node-current-video:visible")
       .textContent();
     console.log("Video title:", videoTitle?.trim());
 
     // Check that the title is in English and not in Russian
     expect(videoTitle).toContain("Ages 1 - 100 Decide Who Wins $250,000");
     expect(videoTitle).not.toContain(
+      "Люди от 1 до 100 Лет Решают, кто Выиграет $250,000"
+    );
+
+    // Check page title
+    const pageTitle = await page.title()
+    console.log("Document title for the Video is:", pageTitle?.trim());
+    // Check that the document title is in English and not in Russian
+    expect(pageTitle).toContain("Ages 1 - 100 Decide Who Wins $250,000");
+    expect(pageTitle).not.toContain(
       "Люди от 1 до 100 Лет Решают, кто Выиграет $250,000"
     );
 
@@ -165,7 +167,6 @@ test.describe("YouTube Anti-Translate extension", () => {
   });
 
   test("YouTube timecode links in description work correctly with Anti-Translate extension", async ({ browserNameWithExtensions, localeString }) => {
-    await downloadAndExtractUBlock(browserNameWithExtensions);
     // Launch browser with the extension
     let context;
 
@@ -192,7 +193,11 @@ test.describe("YouTube Anti-Translate extension", () => {
     // Create a new page
     const result = await newPageWithStorageStateIfItExists(context, browserNameWithExtensions, localeString);
     const page = result.page;
-    const localeLoaded = result.localeLoaded;
+    const localeLoaded = result.localeLoaded
+    if (!localeLoaded) {
+      // Setup failed to create a matching locale so test wil fail.
+      expect(localeLoaded).toBe(true)
+    }
 
     // Set up console message counting
     let consoleMessageCount = 0;
@@ -203,21 +208,13 @@ test.describe("YouTube Anti-Translate extension", () => {
     // Navigate to the specified YouTube video
     await page.goto("https://www.youtube.com/watch?v=4PBPXbd4DkQ");
 
-    // Wait for the page to load and for YouTube to process the locale
+    // Wait for the page to load
     try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
+    // .waitForLoadState("networkidle" is not always right so wait 5 extra seconds
+    await page.waitForTimeout(5000);
 
-    // Sometimes youtube redirects to consent page so wait 2 seconds before proceeding
-    await page.waitForTimeout(2000);
-    try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
-
-    // Sometimes youtube redirects to consent so handle it
-    await handleYoutubeConsent(page);
-
-    // If we did not load a locale storage state, login to test account and set locale
-    // This will also create a new storage state with the locale already set
-    if (localeLoaded !== true) {
-      await handleGoogleLogin(page, browserNameWithExtensions, localeString);
-    }
+    // If for whatever reason we are not logged in, then fail the test
+    expect(await findLoginButton(page)).toBe(null);
 
     // When chromium we need to wait some extra time to allow adds to be removed by uBlock Origin Lite
     // Ads are allowed to load and removed after so it takes time
@@ -286,7 +283,6 @@ test.describe("YouTube Anti-Translate extension", () => {
   });
 
   test("YouTube Shorts title is not translated with Anti-Translate extension", async ({ browserNameWithExtensions, localeString }) => {
-    await downloadAndExtractUBlock(browserNameWithExtensions);
     // Launch browser with the extension
     let context;
 
@@ -314,6 +310,10 @@ test.describe("YouTube Anti-Translate extension", () => {
     const result = await newPageWithStorageStateIfItExists(context, browserNameWithExtensions, localeString);
     const page = result.page;
     const localeLoaded = result.localeLoaded;
+    if (!localeLoaded) {
+      // Setup failed to create a matching locale so test wil fail.
+      expect(localeLoaded).toBe(true)
+    }
 
     // Set up console message counting
     let consoleMessageCount = 0;
@@ -326,15 +326,11 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Wait for the page to load
     try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
+    // .waitForLoadState("networkidle" is not always right so wait 5 extra seconds
+    await page.waitForTimeout(5000);
 
-    // Sometimes youtube redirects to consent so handle it
-    await handleYoutubeConsent(page);
-
-    // If we did not load a locale storage state, login to test account and set locale
-    // This will also create a new storage state with the locale already set
-    if (localeLoaded !== true) {
-      await handleGoogleLogin(page, browserNameWithExtensions, localeString);
-    }
+    // If for whatever reason we are not logged in, then fail the test
+    expect(await findLoginButton(page)).toBe(null);
 
     // Wait for the shorts title element to be present
     const shortsTitleSelector = "yt-shorts-video-title-view-model > h2 > span";
@@ -349,6 +345,15 @@ test.describe("YouTube Anti-Translate extension", () => {
     expect(shortsTitle?.trim()).toBe("Highest Away From Me Wins $10,000");
     expect(shortsTitle?.trim()).not.toBe("Достигни Вершины И Выиграй $10,000");
     await expect(page.locator(shortsTitleSelector)).toBeVisible()
+
+    // Check page title
+    const pageTitle = await page.title()
+    console.log("Document title for the Short is:", pageTitle?.trim());
+    // Check that the document title is in English and not in Russian
+    expect(pageTitle).toContain("Highest Away From Me Wins $10,000");
+    expect(pageTitle).not.toContain(
+      "Достигни Вершины И Выиграй $10,000"
+    );
 
     // Wait for the shorts video link element to be present
     const shortsVideoLinkSelector = ".ytReelMultiFormatLinkViewModelEndpoint span.yt-core-attributed-string>span:visible";
@@ -376,7 +381,6 @@ test.describe("YouTube Anti-Translate extension", () => {
   });
 
   test("YouTube channel Videos and Shorts tabs retain original titles", async ({ browserNameWithExtensions, localeString }) => {
-    await downloadAndExtractUBlock(browserNameWithExtensions);
     // Launch browser with the extension
     let context;
 
@@ -404,6 +408,10 @@ test.describe("YouTube Anti-Translate extension", () => {
     const result = await newPageWithStorageStateIfItExists(context, browserNameWithExtensions, localeString);
     const page = result.page;
     const localeLoaded = result.localeLoaded;
+    if (!localeLoaded) {
+      // Setup failed to create a matching locale so test wil fail.
+      expect(localeLoaded).toBe(true)
+    }
 
     // Set up console message counting
     let consoleMessageCount = 0;
@@ -416,19 +424,11 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Wait for the page to load
     try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
+    // .waitForLoadState("networkidle" is not always right so wait 5 extra seconds
+    await page.waitForTimeout(5000);
 
-    // Sometimes youtube redirects to consent page so wait 2 seconds before proceeding
-    await page.waitForTimeout(2000);
-    try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
-
-    // Sometimes youtube redirects to consent so handle it
-    await handleYoutubeConsent(page);
-
-    // If we did not load a locale storage state, login to test account and set locale
-    // This will also create a new storage state with the locale already set
-    if (localeLoaded !== true) {
-      await handleGoogleLogin(page, browserNameWithExtensions, localeString);
-    }
+    // If for whatever reason we are not logged in, then fail the test
+    expect(await findLoginButton(page)).toBe(null);
 
     // Wait for the video grid to appear
     await page.waitForSelector("ytd-rich-grid-media");
