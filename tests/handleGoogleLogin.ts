@@ -3,17 +3,17 @@ import * as OTPAuth from "otpauth";
 import path from 'path';
 
 const authFileLocationBase = path.join(__dirname, '../playwright/.auth/');
-const authFileName_thTH = 'user_thTH.json';
-const authFileName_ruRU = 'user_ruRU.json';
 const authFileName = 'user.json';
 
 require('dotenv').config();
 
 /**
  * @param {Browser} context
- * @returns {JSON} {"page": Page, "localeLoaded": boolean }
+ * @param {string} browserName
+ * @param {string} locale
+ * @returns {page: Page; localeLoaded: boolean;} {"page": Page, "localeLoaded": boolean }
  */
-export async function newPageWithStorageStateIfItExists(context, browserName, locale = "") {
+export async function newPageWithStorageStateIfItExists(context, browserName: string, locale: string) {
   let authFile;
   switch (browserName) {
     case "chromium":
@@ -21,20 +21,18 @@ export async function newPageWithStorageStateIfItExists(context, browserName, lo
       authFile = path.join(authFileLocationBase, browserName, authFileName)
       break;
     default:
-      throw "Unsupported browserName"
+      throw "newPageWithStorageStateIfItExists: Unsupported browserName"
   }
 
   let file = "";
 
   switch (locale) {
     case "ru-RU":
-      file = path.join(authFileLocationBase, browserName, authFileName_ruRU);
-      break;
     case "th-TH":
-      file = path.join(authFileLocationBase, browserName, authFileName_thTH);
+      file = path.join(authFileLocationBase, browserName, `user_${locale}.json`);
       break;
     default:
-      break;
+      throw "newPageWithStorageStateIfItExists: Unsupported locale"
   }
 
   // Helper to load cookies from file and add them to context
@@ -46,37 +44,40 @@ export async function newPageWithStorageStateIfItExists(context, browserName, lo
     }
   };
 
+  // Healper to load auth storage if fresh
+  const loadStorage = async (context, storageFile, isLocaleLoadedTrue, maxHours) => {
+    const stats = fs.statSync(storageFile);
+    const modifiedTime = new Date(stats.mtime);
+    const now = new Date();
+    const ageInHours = (now.getTime() - modifiedTime.getTime()) / (1000 * 60 * 60);
+
+    if (ageInHours <= maxHours) {
+      // Reuse existing LOCALE authentication state if it's fresh (less than 12 hours old).
+
+      if (browserName === "chromium") {
+        // Chromium must be launched as persistentContext to load 
+        // So we can only load the cookies as the newPage does not accept a storage state
+        await loadCookies(context, storageFile);
+        return { page: (await context.newPage()), localeLoaded: isLocaleLoadedTrue };
+      }
+      return { page: (await context.newPage({ storageState: storageFile })), localeLoaded: isLocaleLoadedTrue }
+    }
+    return null;
+  };
+
   if (file !== "") {
     if (fs.existsSync(file)) {
-      const stats = fs.statSync(file);
-      const modifiedTime = new Date(stats.mtime);
-      const now = new Date();
-      const ageInHours = (now.getTime() - modifiedTime.getTime()) / (1000 * 60 * 60);
-
-      if (ageInHours <= 12) {
-        if (browserName === "chromium") {
-          await loadCookies(context, file);
-          return { page: (await context.newPage()), localeLoaded: true };
-        }
-        // Reuse existing LOCALE authentication state if it's fresh (less than 12 hours old).
-        return { page: (await context.newPage({ storageState: file })), localeLoaded: true }
+      const result = await loadStorage(context, file, true, 12);
+      if (result) {
+        return result
       }
     }
   }
 
   if (fs.existsSync(authFile)) {
-    const stats = fs.statSync(authFile);
-    const modifiedTime = new Date(stats.mtime);
-    const now = new Date();
-    const ageInHours = (now.getTime() - modifiedTime.getTime()) / (1000 * 60 * 60);
-
-    if (ageInHours <= 12) {
-      if (browserName === "chromium") {
-        await loadCookies(context, authFile);
-        return { page: (await context.newPage()), localeLoaded: false };
-      }
-      // Reuse existing authentication state if it's fresh (less than 12 hours old).
-      return { page: (await context.newPage({ storageState: authFile })), localeLoaded: false }
+    const result = await loadStorage(context, authFile, false, 12);
+    if (result) {
+      return result
     }
   }
 
@@ -85,10 +86,29 @@ export async function newPageWithStorageStateIfItExists(context, browserName, lo
 }
 
 /**
+ * 
+ * @param {Page} page 
+ * @returns {Locator|null} 
+ */
+export async function findLoginButton(page) {
+  //Check if we need to login
+  const possibleLabels = ["Sign in", "Войти", "ลงชื่อเข้าใช้"];
+  for (const label of possibleLabels) {
+    const button = page.locator(`#masthead a:has-text("${label}")`).first();
+    if (await button.isVisible()) {
+      return button;
+    }
+  }
+  return null;
+}
+
+/**
+ * @param {Browser} context
  * @param {Page} page
+ * @param {string} browserName
  * @param {string} locale
  */
-export async function handleGoogleLogin(page, browserName, locale: string) {
+export async function handleGoogleLogin(context, page, browserName: string, locale: string) {
   try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
 
   //Check if we need to login
@@ -118,26 +138,30 @@ export async function handleGoogleLogin(page, browserName, locale: string) {
       await page.waitForTimeout(500);
       try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
 
+      let languageOption;
+
       switch (locale) {
         case "ru-RU":
-          const russian = page.locator('yt-multi-page-menu-section-renderer a:has-text("Русский")');
-          await russian.scrollIntoViewIfNeeded();
-          await russian.click();
-          await page.waitForTimeout(5000);
-          await page.context().storageState({ path: path.join(authFileLocationBase, browserName, authFileName_ruRU) });
-          try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
+          languageOption = page.locator('yt-multi-page-menu-section-renderer a:has-text("Русский")');
           break;
         case "th-TH":
-          const thai = page.locator('yt-multi-page-menu-section-renderer a:has-text("ภาษาไทย")');
-          await thai.scrollIntoViewIfNeeded();
-          await thai.click();
-          await page.waitForTimeout(5000);
-          await page.context().storageState({ path: path.join(authFileLocationBase, browserName, authFileName_thTH) });
-          try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
+          languageOption = page.locator('yt-multi-page-menu-section-renderer a:has-text("ภาษาไทย")');
           break;
         default:
-          break;
+          throw "handleGoogleLogin: Unsupported locale"
       }
+
+      await languageOption.scrollIntoViewIfNeeded();
+      await languageOption.click()
+      await page.waitForTimeout(5000);
+      if (browserName == "chromium") {
+        // for chromium we must use persistent context so save the storageState from the browserContext intead of pageContext
+        await context.storageState({ path: path.join(authFileLocationBase, browserName, `user_${locale}.json`) });
+      }
+      else {
+        await page.context().storageState({ path: path.join(authFileLocationBase, browserName, `user_${locale}.json`) });
+      }
+      try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
     }
   }
 
@@ -161,8 +185,16 @@ export async function handleGoogleLogin(page, browserName, locale: string) {
     await page.waitForTimeout(5000);
     try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
 
-    await page.context().storageState({ path: path.join(authFileLocationBase, browserName, authFileName) });
+    if (browserName == "chromium") {
+      // for chromium we must use persistent context so save the storageState from the browserContext intead of pageContext
+      await context.storageState({ path: path.join(authFileLocationBase, browserName, authFileName) });
+    }
+    else {
+      await page.context().storageState({ path: path.join(authFileLocationBase, browserName, authFileName) });
+    }
   }
+
+  await page.waitForTimeout(1000);
 }
 
 function generateOTP(secret) {

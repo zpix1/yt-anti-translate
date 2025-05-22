@@ -38,6 +38,8 @@ However it is currenlty out of date, as it was last updated on Aug 2, 2024 and i
    `npm ci`
 3. Open with IDE editor of choice
 4. You can verify functionality by running Playwright Test (make sure you install extensions for your IDE is needed)
+   - Before running test you will need to intall playwright browsers and dependencies
+     `npx playwright install --with-deps`
    - Please create or update tests if adding new capabilities
 
 #### Testing in Browser
