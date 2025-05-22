@@ -1,7 +1,8 @@
 name: Create Release with tag
 
 # This will create a new relase tagged with the version specified in the 'app/manifest.json'
-# if the souce branch name is prepended with 'fix-' the release title will be with 'v$VERSION - Fix'
+# This is skipped for PR titles that start with [CI-FIX] (case insensitive)
+# if the souce branch name is prepended with 'fix-' the release title will be 'v$VERSION - Fix'
 # Else the release title will be with 'v$VERSION'
 # CHANGELOG.md is used to populate the body of the release before any auto generated notes
 
@@ -14,8 +15,27 @@ on:
       - master
 
 jobs:
-  release:
+  check:
     if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    outputs:
+      skip: ${{ steps.check_ci_fix.outputs.skip }}
+
+    steps:
+      - name: Check PR title for [CI-FIX]
+        id: check_ci_fix
+        run: |
+          TITLE="${{ github.event.pull_request.title }}"
+          if echo "$TITLE" | grep -iq '^\[ci-fix\]'; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
+  release:
+    needs: check
+    if: github.event.pull_request.merged == true && needs.check.outputs.skip == 'false'
     runs-on: ubuntu-latest
 
     steps:
