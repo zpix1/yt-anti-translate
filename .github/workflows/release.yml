@@ -22,6 +22,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # Ensures full git history
+          fetch-tags: true # Ensures tags are fetched
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -51,15 +54,9 @@ jobs:
 
           CHANGELOG_FILE="CHANGELOG.md"
 
-          # Get the latest tag that matches semver
-          TAG=$(git tag --sort=-creatordate | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+' | head -n1)
+          VERSION="${{ env.VERSION }}"
+          TAG="v$VERSION"
 
-          if [ -z "$TAG" ]; then
-            echo "❌ No valid semver tag found (vX.Y.Z)"
-            exit 1
-          fi
-
-          VERSION="${TAG#v}"
           echo "📦 Extracting release notes for version: $VERSION"
 
           # Find the start line of the current version section
@@ -83,7 +80,7 @@ jobs:
           sed -n "$((START_LINE + 1)),$((END_LINE - 1))p" "$CHANGELOG_FILE" > release_notes.txt
 
           # Find previous version tag
-          PREV_TAG=$(git tag --sort=-creatordate | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+' | grep -v "^$TAG\$" | head -n1)
+          PREV_TAG=$(git tag --sort=-creatordate | grep -E '^v[0-9]+\.[0-9]+\.[0-9\.]+' | grep -v "^$TAG\$" | head -n1)
 
           # Get repo info
           REPO_URL=$(git config --get remote.origin.url | sed -E 's/\.git$//' | sed -E 's#git@github.com:#https://github.com/#')
