@@ -1,0 +1,6 @@
+
+### Fixed
+
+- Fix bug with page title not being untranslated
+
+**Full Changelog**: https://github.com/namakeingo/yt-anti-translate-firefox/compare/v1.18.1.2...v1.18.1.3
