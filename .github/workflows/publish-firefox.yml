@@ -6,6 +6,9 @@ on:
       - v*.*.*
       - cifix*
       - unlisted_v*.*.*
+  release:
+    types:
+      - published
 
 jobs:
   build-firefox-extension:

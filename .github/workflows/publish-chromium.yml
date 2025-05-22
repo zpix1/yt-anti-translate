@@ -5,6 +5,9 @@ on:
     tags:
       - v*.*.*
       - cifix*
+  release:
+    types:
+      - published
 
 jobs:
   build-chrome-extension:
