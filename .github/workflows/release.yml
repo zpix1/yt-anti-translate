@@ -15,27 +15,8 @@ on:
       - master
 
 jobs:
-  check:
-    if: github.event.pull_request.merged == true
-    runs-on: ubuntu-latest
-
-    outputs:
-      skip: ${{ steps.check_ci_fix.outputs.skip }}
-
-    steps:
-      - name: Check PR title for [CI-FIX]
-        id: check_ci_fix
-        run: |
-          TITLE="${{ github.event.pull_request.title }}"
-          if echo "$TITLE" | grep -iq '^\[ci-fix\]'; then
-            echo "skip=true" >> $GITHUB_OUTPUT
-          else
-            echo "skip=false" >> $GITHUB_OUTPUT
-          fi
-
   release:
-    needs: check
-    if: github.event.pull_request.merged == true && needs.check.outputs.skip == 'false'
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
 
     steps:
@@ -46,6 +27,16 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
+
+      - name: Check PR title for [CI-FIX]
+        id: check_ci_fix
+        run: |
+          TITLE="${{ github.event.pull_request.title }}"
+          if echo "$TITLE" | grep -iq '^\[ci-fix\]'; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Get version from manifest.json
         id: get_version
@@ -85,10 +76,28 @@ jobs:
             echo "suffix= Fix" >> $GITHUB_OUTPUT
           else
             echo "suffix=" >> $GITHUB_OUTPUT
+          fi
 
       - name: Create GitHub Release
+        if: steps.check_ci_fix.outputs.skip == 'false'
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ steps.get_version.outputs.tag }}
           name: ${{ steps.get_version.outputs.tag }}${{ steps.suffix.outputs.suffix }}
           body: ${{ env.RELEASE_BODY }}
+
+      - name: Save release info instead (CI-FIX skip)
+        if: steps.check_ci_fix.outputs.skip == 'true'
+        run: |
+          echo "Release would have been skipped due to [CI-FIX] PR title." > skipped_release_info.txt
+          echo "Tag: ${{ steps.get_version.outputs.tag }}" >> skipped_release_info.txt
+          echo "Name: ${{ steps.get_version.outputs.tag }}${{ steps.suffix.outputs.suffix }}" >> skipped_release_info.txt
+          echo "Body:" >> skipped_release_info.txt
+          echo "${{ env.RELEASE_BODY }}" >> skipped_release_info.txt
+
+      - name: Upload skipped release info
+        if: steps.check_ci_fix.outputs.skip == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: skipped-release-info
+          path: skipped_release_info.txt
