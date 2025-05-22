@@ -112,7 +112,7 @@ jobs:
         with:
           tag: ${{ steps.get_version.outputs.tag }}
           name: ${{ env.VERSION }}${{ steps.suffix.outputs.suffix }}
-          body: release_notes.txt
+          bodyFile: release_notes.txt
 
       - name: Save release info instead (CI-FIX skip)
         if: steps.check_ci_fix.outputs.skip == 'true'
