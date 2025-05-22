@@ -85,3 +85,19 @@ jobs:
           tag: ${{ steps.get_version.outputs.tag }}
           name: ${{ steps.get_version.outputs.tag }}${{ steps.suffix.outputs.suffix }}
           body: ${{ env.RELEASE_BODY }}
+
+      - name: Save release info instead (CI-FIX skip)
+        if: steps.check_ci_fix.outputs.skip == 'true'
+        run: |
+          echo "Release would have been skipped due to [CI-FIX] PR title." > skipped_release_info.txt
+          echo "Tag: ${{ steps.get_version.outputs.tag }}" >> skipped_release_info.txt
+          echo "Name: ${{ steps.get_version.outputs.tag }}${{ steps.suffix.outputs.suffix }}" >> skipped_release_info.txt
+          echo "Body:" >> skipped_release_info.txt
+          echo "${{ env.RELEASE_BODY }}" >> skipped_release_info.txt
+
+      - name: Upload skipped release info
+        if: steps.check_ci_fix.outputs.skip == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: skipped-release-info
+          path: skipped_release_info.txt
