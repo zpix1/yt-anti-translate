@@ -21,7 +21,6 @@ export const test = base.extend<TestOptions>({
  */
 // import dotenv from 'dotenv';
 // dotenv.config({ path: path.resolve(__dirname, '.env') });
-
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
@@ -131,7 +130,6 @@ export default defineConfig<TestOptions>({
       },
       dependencies: ["setup-auth-and-ublock"]
     },
-
     /* Test against mobile viewports. */
     // {
     //   name: 'Mobile Chrome',
