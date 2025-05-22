@@ -57,13 +57,22 @@ jobs:
           fi
 
           TOTAL_LINES=$(wc -l < CHANGELOG.md)
-          END_LINE=$((TOTAL_LINES + 1)) # default
+          END_LINE=$((TOTAL_LINES + 1))
 
           tail -n +$((START_LINE + 1)) CHANGELOG.md | grep -En "^## \[[0-9]+\." | head -n1 | while IFS=: read -r rel_line _; do
             END_LINE=$((START_LINE + rel_line - 1))
           done
 
           sed -n "${START_LINE},$((END_LINE - 1))p" CHANGELOG.md > release_notes.txt
+
+          # Determine previous version from changelog
+          PREVIOUS=$(grep -E "^## \[[0-9]+\." CHANGELOG.md | grep -v "\[$VERSION\]" | head -n1 | sed -E 's/^## \[([0-9.]+)\].*/\1/')
+
+          REPO_URL="https://github.com/${{ github.repository }}"
+
+          echo "" >> release_notes.txt
+          echo "**Full Changelog**: $REPO_URL/compare/v$PREVIOUS...v$VERSION" >> release_notes.txt
+
           echo "body<<EOF" >> $GITHUB_OUTPUT
           cat release_notes.txt >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
