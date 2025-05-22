@@ -3,6 +3,7 @@ import { test } from "../playwright.config"
 import path from "path";
 import { withExtension } from "playwright-webextext";
 import { newPageWithStorageStateIfItExists, findLoginButton } from "./helpers/AuthStorageHelper";
+import { setupUBlockAndAuth } from "./helpers/setupUBlockAndAuth";
 
 require('dotenv').config();
 const authFile = path.join(__dirname, '../playwright/.auth/user.json');
@@ -10,7 +11,11 @@ const authFile = path.join(__dirname, '../playwright/.auth/user.json');
 // This are tests for the core functionalities
 
 test.describe("YouTube Anti-Translate extension", () => {
-  test("Prevents current video title and description auto-translation", async ({ browserNameWithExtensions, localeString }) => {
+  test("Prevents current video title and description auto-translation", async ({ browserNameWithExtensions, localeString }, testInfo) => {
+    if (testInfo.retry > 0) {
+      // If this test is retring then check uBlock and Auth again
+      await setupUBlockAndAuth([browserNameWithExtensions], [localeString]);
+    }
     // Launch browser with the extension
     let context;
 
@@ -166,7 +171,11 @@ test.describe("YouTube Anti-Translate extension", () => {
     await context.close();
   });
 
-  test("YouTube timecode links in description work correctly with Anti-Translate extension", async ({ browserNameWithExtensions, localeString }) => {
+  test("YouTube timecode links in description work correctly with Anti-Translate extension", async ({ browserNameWithExtensions, localeString }, testInfo) => {
+    if (testInfo.retry > 0) {
+      // If this test is retring then check uBlock and Auth again
+      await setupUBlockAndAuth([browserNameWithExtensions], [localeString]);
+    }
     // Launch browser with the extension
     let context;
 
@@ -282,7 +291,11 @@ test.describe("YouTube Anti-Translate extension", () => {
     await context.close();
   });
 
-  test("YouTube Shorts title is not translated with Anti-Translate extension", async ({ browserNameWithExtensions, localeString }) => {
+  test("YouTube Shorts title is not translated with Anti-Translate extension", async ({ browserNameWithExtensions, localeString }, testInfo) => {
+    if (testInfo.retry > 0) {
+      // If this test is retring then check uBlock and Auth again
+      await setupUBlockAndAuth([browserNameWithExtensions], [localeString]);
+    }
     // Launch browser with the extension
     let context;
 
@@ -380,7 +393,11 @@ test.describe("YouTube Anti-Translate extension", () => {
     await context.close();
   });
 
-  test("YouTube channel Videos and Shorts tabs retain original titles", async ({ browserNameWithExtensions, localeString }) => {
+  test("YouTube channel Videos and Shorts tabs retain original titles", async ({ browserNameWithExtensions, localeString }, testInfo) => {
+    if (testInfo.retry > 0) {
+      // If this test is retring then check uBlock and Auth again
+      await setupUBlockAndAuth([browserNameWithExtensions], [localeString]);
+    }
     // Launch browser with the extension
     let context;
 

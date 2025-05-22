@@ -4,6 +4,7 @@ import path from "path";
 import { withExtension } from "playwright-webextext";
 import { newPageWithStorageStateIfItExists, findLoginButton } from "./helpers/AuthStorageHelper";
 import { handleTestDistribution } from "./helpers/ExtensionsFilesHelper";
+import { setupUBlockAndAuth } from "./helpers/setupUBlockAndAuth";
 
 require('dotenv').config();
 
@@ -11,7 +12,12 @@ require('dotenv').config();
 // We are using locale th-TH for this tests as MrBeast channel name is not translated in ru-RU, but it is th-TH
 
 test.describe("YouTube Anti-Translate extension - Extras", () => {
-  test("YouTube channel branding header and about retain original content", async ({ browserNameWithExtensions, localeString }) => {
+  test("YouTube channel branding header and about retain original content", async ({ browserNameWithExtensions, localeString }, testInfo) => {
+    if (testInfo.retry > 0) {
+      // If this test is retring then check uBlock and Auth again
+      await setupUBlockAndAuth([browserNameWithExtensions], [localeString]);
+    }
+
     // --- Update Extension Settings and distribute a test copy ---
     // The object to be passed and inserted into the start.js file
     const configObject = { youtubeDataApiKey: process.env.YOUTUBE_API_KEY, untranslateChannelBranding: true };
@@ -188,7 +194,11 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     await context.close();
   });
 
-  test("YouTube video player retain original author", async ({ browserNameWithExtensions, localeString }) => {
+  test("YouTube video player retain original author", async ({ browserNameWithExtensions, localeString }, testInfo) => {
+    if (testInfo.retry > 0) {
+      // If this test is retring then check uBlock and Auth again
+      await setupUBlockAndAuth([browserNameWithExtensions], [localeString]);
+    }
     // Launch browser with the extension
     let context;
 

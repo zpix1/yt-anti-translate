@@ -194,7 +194,7 @@ export async function handleGoogleLogin(context, page, browserName: string, loca
     }
   }
 
-  await page.waitForTimeout(1000);
+  await page.waitForTimeout(1500);
 }
 
 function generateOTP(secret) {

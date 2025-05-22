@@ -46,7 +46,9 @@ jobs:
           echo "tag=v$VERSION" >> $GITHUB_OUTPUT
 
       - name: Extract release notes
-        run: .github/scripts/extract_release_notes.sh
+        run: |
+          chmod +x .github/scripts/extract_release_notes.sh
+          .github/scripts/extract_release_notes.sh
 
       - name: Set release name suffix
         id: suffix
