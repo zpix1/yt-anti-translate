@@ -3,6 +3,7 @@ node_modules
 .env
 *.env
 
+
 # Playwright
 /test-results/
 /playwright-report/
@@ -12,6 +13,7 @@ node_modules
 /tmp/
 /web-ext-artifacts/
 /.web-ext-cache/
+
 
 test-user-data-dir/
 tests/testDist/
