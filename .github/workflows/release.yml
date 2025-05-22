@@ -2,7 +2,7 @@ name: Create Release with tag
 
 # This will create a new relase tagged with the version specified in the 'app/manifest.json'
 # This is skipped for PR titles that start with [CI-FIX] (case insensitive)
-# if the souce branch name is prepended with 'fix-' the release title will be 'v$VERSION - Fix'
+# if the source branch name is prepended with 'fix-' the release title will be 'v$VERSION - Fix'
 # Else the release title will be with 'v$VERSION'
 # CHANGELOG.md is used to populate the body of the release before any auto generated notes
 
