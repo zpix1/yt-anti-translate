@@ -34,9 +34,8 @@ export default defineConfig<TestOptions>({
   forbidOnly: !!process.env.CI,
   /* Retry 2 times on CI, or once locally */
   retries: process.env.CI ? 2 : 1,
-  /* Use 2 parallel workers on CI. 4 parallel worker on local
-     We are using only 2 (or 4) workes cause multiple workers cause random failures so of the times */
-  workers: process.env.CI ? 2 : 4,
+  /* Limit parallel workers on CI as they cause random failures some of the times */
+  workers: process.env.CI ? 3 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: "html",
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */

@@ -2,7 +2,7 @@ import fs from 'fs';
 import * as OTPAuth from "otpauth";
 import path from 'path';
 
-const authFileLocationBase = path.join(__dirname, '../playwright/.auth/');
+const authFileLocationBase = path.join(__dirname, '../../playwright/.auth/');
 const authFileName = 'user.json';
 
 require('dotenv').config();

@@ -54,8 +54,8 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Wait for the page to load
     try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
-    // .waitForLoadState("networkidle" is not always right so wait 4 extra seconds
-    await page.waitForTimeout(4000);
+    // .waitForLoadState("networkidle" is not always right so wait 5 extra seconds
+    await page.waitForTimeout(5000);
 
     // If for whatever reason we are not logged in, then fail the test
     expect(await findLoginButton(page)).toBe(null);
@@ -210,8 +210,8 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Wait for the page to load
     try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
-    // .waitForLoadState("networkidle" is not always right so wait 4 extra seconds
-    await page.waitForTimeout(4000);
+    // .waitForLoadState("networkidle" is not always right so wait 5 extra seconds
+    await page.waitForTimeout(5000);
 
     // If for whatever reason we are not logged in, then fail the test
     expect(await findLoginButton(page)).toBe(null);
@@ -326,8 +326,8 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Wait for the page to load
     try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
-    // .waitForLoadState("networkidle" is not always right so wait 4 extra seconds
-    await page.waitForTimeout(4000);
+    // .waitForLoadState("networkidle" is not always right so wait 5 extra seconds
+    await page.waitForTimeout(5000);
 
     // If for whatever reason we are not logged in, then fail the test
     expect(await findLoginButton(page)).toBe(null);
@@ -424,8 +424,8 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Wait for the page to load
     try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
-    // .waitForLoadState("networkidle" is not always right so wait 4 extra seconds
-    await page.waitForTimeout(4000);
+    // .waitForLoadState("networkidle" is not always right so wait 5 extra seconds
+    await page.waitForTimeout(5000);
 
     // If for whatever reason we are not logged in, then fail the test
     expect(await findLoginButton(page)).toBe(null);
