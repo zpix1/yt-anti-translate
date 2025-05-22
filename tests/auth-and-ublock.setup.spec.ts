@@ -2,7 +2,7 @@ import { expect, chromium, firefox } from "@playwright/test";
 import { test } from "../playwright.config"
 import path from "path";
 import { withExtension } from "playwright-webextext";
-import { handleYoutubeConsent } from "./helpers/handleYoutubeConsent";
+import { handleYoutubeConsent } from "./helpers/YoutubeConsentHelper";
 import { newPageWithStorageStateIfItExists, handleGoogleLogin, findLoginButton } from "./helpers/AuthStorageHelper";
 import { downloadAndExtractUBlock } from "./helpers/ExtensionsFilesHelper";
 
