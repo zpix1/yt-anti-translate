@@ -45,6 +45,9 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "tag=v$VERSION" >> $GITHUB_OUTPUT
 
+      - name: Make sure that script is executable
+        run: chmod +x .github/scripts/extract_release_notes.sh
+
       - name: Extract release notes
         run: .github/scripts/extract_release_notes.sh
 
