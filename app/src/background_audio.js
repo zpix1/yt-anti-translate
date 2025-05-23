@@ -28,7 +28,7 @@ const ORIGINAL_TRANSLATIONS = [
 ];
 
 let mutationIdx = 0;
-const MUTATION_UPDATE_STEP = 10;
+const MUTATION_UPDATE_STEP = 5;
 
 function getOriginalTrack(tracks) {
   if (!tracks || !Array.isArray(tracks)) {
