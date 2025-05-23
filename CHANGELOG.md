@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Fix bug with page/tag title not being untranslated
+- Fix bug with page/tab title not being untranslated
 
 ## [1.18.1.2] - 2025-05-20
 

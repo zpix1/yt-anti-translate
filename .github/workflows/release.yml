@@ -106,10 +106,12 @@ jobs:
             echo "suffix=" >> $GITHUB_OUTPUT
           fi
 
-      - name: Create GitHub Release
+      - name: Create Draft GitHub Release
         if: steps.check_ci_fix.outputs.skip == 'false'
         uses: ncipollo/release-action@v1
         with:
+          allowUpdates: true
+          updateOnlyUnreleased: true
           tag: ${{ steps.get_version.outputs.tag }}
           name: ${{ env.VERSION }}${{ steps.suffix.outputs.suffix }}
           bodyFile: release_notes.txt
