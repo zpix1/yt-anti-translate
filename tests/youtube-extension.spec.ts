@@ -575,7 +575,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     await page.waitForSelector("ytd-rich-item-renderer");
 
     // Find the first short and click to open
-    const firstShort = page.locator("ytd-rich-item-renderer)").first()
+    const firstShort = page.locator("ytd-rich-item-renderer").first()
     if (await firstShort.isVisible()) {
       firstShort.scrollIntoViewIfNeeded();
       firstShort.click;
