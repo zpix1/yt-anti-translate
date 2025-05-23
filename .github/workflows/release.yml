@@ -2,7 +2,7 @@ name: Create Release with tag
 
 # This will create a new relase tagged with the version specified in the 'app/manifest.json'
 # This is skipped for PR titles that start with [CI-FIX] (case insensitive)
-# if the souce branch name is prepended with 'fix-' the release title will be 'v$VERSION - Fix'
+# if the source branch name is prepended with 'fix-' the release title will be 'v$VERSION - Fix'
 # Else the release title will be with 'v$VERSION'
 # CHANGELOG.md is used to populate the body of the release before any auto generated notes
 
@@ -23,7 +23,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0   # Ensures full git history
+          fetch-depth: 0 # Ensures full git history
           fetch-tags: true # Ensures tags are fetched
 
       - name: Setup Node.js
@@ -106,13 +106,23 @@ jobs:
             echo "suffix=" >> $GITHUB_OUTPUT
           fi
 
+      - name: Create and push git tag
+        if: steps.check_ci_fix.outputs.skip == 'false'
+        run: |
+          TAG="${{ steps.get_version.outputs.tag }}"
+          echo "🏷 Creating tag: $TAG"
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git tag "$TAG"
+          git push origin "$TAG"
+
       - name: Create GitHub Release
         if: steps.check_ci_fix.outputs.skip == 'false'
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ steps.get_version.outputs.tag }}
           name: ${{ env.VERSION }}${{ steps.suffix.outputs.suffix }}
-          body: release_notes.txt
+          bodyFile: release_notes.txt
 
       - name: Save release info instead (CI-FIX skip)
         if: steps.check_ci_fix.outputs.skip == 'true'
