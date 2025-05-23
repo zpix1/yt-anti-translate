@@ -583,7 +583,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     }
 
      const currentTrack = await page.evaluate(async () => {
-       const video = document.querySelector("#shorts-player:visible");
+       const video = document.querySelector("#shorts-player");
        return await video?.getAudioTrack?.();
      });
 
