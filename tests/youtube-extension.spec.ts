@@ -516,4 +516,85 @@ test.describe("YouTube Anti-Translate extension", () => {
     // Close the browser context
     await context.close();
   });
+
+  test("YouTube Shorts audio dubbing is untranslated with Anti-Translate extension", async ({ browserNameWithExtensions, localeString }, testInfo) => {
+    if (testInfo.retry > 0) {
+      // If this test is retring then check uBlock and Auth again
+      await setupUBlockAndAuth([browserNameWithExtensions], [localeString]);
+    }
+    // Launch browser with the extension
+    let context;
+
+    switch (browserNameWithExtensions) {
+      case "chromium":
+        const browserTypeWithExtension = withExtension(
+          chromium,
+          [path.resolve(__dirname, "../app"), path.resolve(__dirname, "testUBlockOriginLite")]
+        );
+        context = await browserTypeWithExtension.launchPersistentContext("", {
+          headless: false
+        });
+        break;
+      case "firefox":
+        context = await (withExtension(
+          firefox,
+          [path.resolve(__dirname, "../app"), path.resolve(__dirname, "testUBlockOrigin")]
+        )).launch()
+        break;
+      default:
+        throw "Unsupported browserNameWithExtensions"
+    }
+
+    // Create a new page
+    const result = await newPageWithStorageStateIfItExists(context, browserNameWithExtensions, localeString);
+    const page = result.page;
+    const localeLoaded = result.localeLoaded
+    if (!localeLoaded) {
+      // Setup failed to create a matching locale so test wil fail.
+      expect(localeLoaded).toBe(true)
+    }
+
+    // Set up console message counting
+    let consoleMessageCount = 0;
+    page.on("console", () => {
+      consoleMessageCount++;
+    });
+
+    // Navigate to the specified YouTube video
+    await page.goto("https://www.youtube.com/@MrBeast/shorts");
+
+    // Wait for the page to load
+    try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
+    // .waitForLoadState("networkidle" is not always right so wait 5 extra seconds
+    await page.waitForTimeout(5000);
+
+    // If for whatever reason we are not logged in, then fail the test
+    expect(await findLoginButton(page)).toBe(null);
+
+    // Wait for the video page to fully load
+    await page.waitForSelector("ytd-rich-item-renderer");
+
+    // Find the first short and click to open
+    const firstShort = page.locator("ytd-rich-item-renderer)").first()
+    if (await firstShort.isVisible()) {
+      firstShort.scrollIntoViewIfNeeded();
+      firstShort.click;
+      try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
+    }
+
+    const currentTrack = await page.evaluate(async () => {
+      const video = document.querySelector("#shorts-player:visible");
+      return await video?.getAudioTrack();
+    });
+
+
+
+    // Check console message count
+    expect(consoleMessageCount).toBeLessThan(
+      2000
+    );
+
+    // Close the browser context
+    await context.close();
+  });
 });

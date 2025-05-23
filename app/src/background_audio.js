@@ -80,15 +80,15 @@ function getOriginalTrack(tracks) {
 }
 
 async function untranslateAudioTrack() {
-  let player = window.YoutubeAntiTranslate.getFirstVisible(document.querySelectorAll(window.YoutubeAntiTranslate.getPlayerSelector()));
+  const player = window.YoutubeAntiTranslate.getFirstVisible(document.querySelectorAll(window.YoutubeAntiTranslate.getPlayerSelector()));
 
   if (!player) {
     return;
   }
-  let playerResponse = await player.getPlayerResponse();
-  let tracks = await player.getAvailableAudioTracks();
-  let currentVideoId = playerResponse.videoDetails.videoId;
-  let currentTrack = await player.getAudioTrack();
+  const playerResponse = await player.getPlayerResponse();
+  const tracks = await player.getAvailableAudioTracks();
+  const currentVideoId = playerResponse.videoDetails.videoId;
+  const currentTrack = await player.getAudioTrack();
 
   if (
     !playerResponse
@@ -100,14 +100,18 @@ async function untranslateAudioTrack() {
     return;
   }
 
-  let originalTrack = getOriginalTrack(tracks);
+  const originalTrack = getOriginalTrack(tracks);
 
   if (originalTrack) {
     // skip set if we alerady have the right track
     if (`${originalTrack}` === `${currentTrack}`) {
+      if (player.lastUntranslated !== `${currentVideoId}+${currentTrack}`) {
+        // video id changed so still update the value
+        player.lastUntranslated = `${currentVideoId}+${originalTrack}`;
+      }
       return;
     }
-    let isAudioTrackSet = await player.setAudioTrack(originalTrack);
+    const isAudioTrackSet = await player.setAudioTrack(originalTrack);
     if (isAudioTrackSet) {
       player.lastUntranslated = `${currentVideoId}+${originalTrack}`;
     }
