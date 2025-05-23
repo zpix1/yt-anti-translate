@@ -5,6 +5,8 @@ on:
     tags:
       - v*.*.*
       - cifix*
+  repository_dispatch:
+    types: [trigger-chromium-extension-publish]
 
 jobs:
   build-chrome-extension:
@@ -26,6 +28,7 @@ jobs:
         with:
           name: chrome-extension
           path: chrome-extension.zip
+
   upload-extension:
     name: Upload extension
     runs-on: ubuntu-latest

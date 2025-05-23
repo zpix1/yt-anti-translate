@@ -106,16 +106,6 @@ jobs:
             echo "suffix=" >> $GITHUB_OUTPUT
           fi
 
-      - name: Create and push git tag
-        if: steps.check_ci_fix.outputs.skip == 'false'
-        run: |
-          TAG="${{ steps.get_version.outputs.tag }}"
-          echo "🏷 Creating tag: $TAG"
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git tag "$TAG"
-          git push origin "$TAG"
-
       - name: Create GitHub Release
         if: steps.check_ci_fix.outputs.skip == 'false'
         uses: ncipollo/release-action@v1
@@ -123,6 +113,19 @@ jobs:
           tag: ${{ steps.get_version.outputs.tag }}
           name: ${{ env.VERSION }}${{ steps.suffix.outputs.suffix }}
           bodyFile: release_notes.txt
+          draft: true
+
+      - name: Manually trigger Firefox extension workflow
+        if: steps.check_ci_fix.outputs.skip == 'false'
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          event-type: trigger-firefox-extension-publish
+
+      - name: Manually trigger Chrome extension workflow
+        if: steps.check_ci_fix.outputs.skip == 'false'
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          event-type: trigger-chromium-extension-publish
 
       - name: Save release info instead (CI-FIX skip)
         if: steps.check_ci_fix.outputs.skip == 'true'
