@@ -23,7 +23,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0   # Ensures full git history
+          fetch-depth: 0 # Ensures full git history
           fetch-tags: true # Ensures tags are fetched
 
       - name: Setup Node.js
@@ -105,6 +105,16 @@ jobs:
           else
             echo "suffix=" >> $GITHUB_OUTPUT
           fi
+
+      - name: Create and push git tag
+        if: steps.check_ci_fix.outputs.skip == 'false'
+        run: |
+          TAG="${{ steps.get_version.outputs.tag }}"
+          echo "🏷 Creating tag: $TAG"
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git tag "$TAG"
+          git push origin "$TAG"
 
       - name: Create GitHub Release
         if: steps.check_ci_fix.outputs.skip == 'false'
