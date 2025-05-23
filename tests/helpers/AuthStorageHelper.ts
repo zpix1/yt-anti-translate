@@ -67,7 +67,7 @@ export async function newPageWithStorageStateIfItExists(context, browserName: st
 
   if (file !== "") {
     if (fs.existsSync(file)) {
-      const result = await loadStorage(context, file, true, 12);
+      const result = await loadStorage(context, file, true, 24);
       if (result) {
         return result
       }
@@ -75,7 +75,7 @@ export async function newPageWithStorageStateIfItExists(context, browserName: st
   }
 
   if (fs.existsSync(authFile)) {
-    const result = await loadStorage(context, authFile, false, 12);
+    const result = await loadStorage(context, authFile, false, 24);
     if (result) {
       return result
     }

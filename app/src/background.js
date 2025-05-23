@@ -185,18 +185,18 @@ async function untranslateCurrentChannelEmbededVideoTitle() {
  * @returns 
  */
 async function createOrUpdateUntranslatedFakeNode(fakeNodeID, originalNodeSelector, getUrl, createElementTag, shouldSetDocumentTitle = false) {
-  if (window.YoutubeAntiTranslate.getFirstVisible(await document.querySelectorAll(window.YoutubeAntiTranslate.getPlayerSelector()))) {
-    let translatedElement = window.YoutubeAntiTranslate.getFirstVisible(await document.querySelectorAll(
+  if (window.YoutubeAntiTranslate.getFirstVisible(document.querySelectorAll(window.YoutubeAntiTranslate.getPlayerSelector()))) {
+    let translatedElement = window.YoutubeAntiTranslate.getFirstVisible(document.querySelectorAll(
       originalNodeSelector
     ));
 
     if (!translatedElement || !translatedElement.textContent) {
-      translatedElement = window.YoutubeAntiTranslate.getFirstVisible(await document.querySelectorAll(
+      translatedElement = window.YoutubeAntiTranslate.getFirstVisible(document.querySelectorAll(
         `${originalNodeSelector}:not(.cbCustomTitle)`
       ));
     }
 
-    const fakeNode = await document.querySelector(`#${fakeNodeID}`);
+    const fakeNode = document.querySelector(`#${fakeNodeID}`);
 
     if ((!fakeNode || !fakeNode.textContent) && (!translatedElement || !translatedElement.textContent)) {
       return;
@@ -273,6 +273,9 @@ async function createOrUpdateUntranslatedFakeNode(fakeNodeID, originalNodeSelect
 
 async function untranslateOtherVideos() {
   async function untranslateArray(otherVideos) {
+    if (!otherVideos) {
+      return;
+    }
     otherVideos = Array.from(otherVideos);
     for (let i = 0; i < otherVideos.length; i++) {
       let video = otherVideos[i];
@@ -346,22 +349,31 @@ async function untranslateOtherVideos() {
   }
 
   // Selectors for standard video containers
-  void untranslateArray(document.querySelectorAll("ytd-video-renderer"));
-  void untranslateArray(document.querySelectorAll("ytd-rich-item-renderer"));
   void untranslateArray(
-    document.querySelectorAll("ytd-compact-video-renderer")
-  );
-  void untranslateArray(document.querySelectorAll("ytd-grid-video-renderer"));
-  void untranslateArray(
-    document.querySelectorAll("ytd-playlist-video-renderer")
+    window.YoutubeAntiTranslate.getAllVisibleNodes(document.querySelectorAll("ytd-video-renderer"), false)
   );
   void untranslateArray(
-    document.querySelectorAll("ytd-playlist-panel-video-renderer")
+    window.YoutubeAntiTranslate.getAllVisibleNodes(document.querySelectorAll("ytd-rich-item-renderer"), false)
+  );
+  void untranslateArray(
+    window.YoutubeAntiTranslate.getAllVisibleNodes(document.querySelectorAll("ytd-compact-video-renderer"), false)
+  );
+  void untranslateArray(
+    window.YoutubeAntiTranslate.getAllVisibleNodes(document.querySelectorAll("ytd-grid-video-renderer"), false)
+  );
+  void untranslateArray(
+    window.YoutubeAntiTranslate.getAllVisibleNodes(document.querySelectorAll("ytd-playlist-video-renderer"), false)
+  );
+  void untranslateArray(
+    window.YoutubeAntiTranslate.getAllVisibleNodes(document.querySelectorAll("ytd-playlist-panel-video-renderer"), false)
   );
 }
 
 async function untranslateOtherShortsVideos() {
   async function untranslateArray(shortsItems) {
+    if (!shortsItems) {
+      return;
+    }
     shortsItems = Array.from(shortsItems);
     for (let i = 0; i < shortsItems.length; i++) {
       const shortElement = shortsItems[i];
@@ -443,12 +455,12 @@ async function untranslateOtherShortsVideos() {
 
   // Run for standard shorts items
   void untranslateArray(
-    document.querySelectorAll("div.style-scope.ytd-rich-item-renderer")
+    window.YoutubeAntiTranslate.getAllVisibleNodes(document.querySelectorAll("div.style-scope.ytd-rich-item-renderer"), false)
   );
 
   // Run for ytm-shorts-lockup-view-model elements
   void untranslateArray(
-    document.querySelectorAll("ytm-shorts-lockup-view-model")
+    window.YoutubeAntiTranslate.getAllVisibleNodes(document.querySelectorAll("ytm-shorts-lockup-view-model"), false)
   );
 }
 
