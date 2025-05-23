@@ -6,6 +6,8 @@ on:
       - v*.*.*
       - cifix*
       - unlisted_v*.*.*
+  repository_dispatch:
+    types: [trigger-firefox-extension-publish]
 
 jobs:
   build-firefox-extension:

@@ -5,6 +5,8 @@ on:
     tags:
       - v*.*.*
       - cifix*
+  repository_dispatch:
+    types: [trigger-chromium-extension-publish]
 
 jobs:
   build-chrome-extension:
