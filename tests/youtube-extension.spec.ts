@@ -582,12 +582,10 @@ test.describe("YouTube Anti-Translate extension", () => {
       try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
     }
 
-    const currentTrack = await page.evaluate(async () => {
-      const video = document.querySelector("#shorts-player:visible");
-      return await video?.getAudioTrack();
-    });
-
-
+    // const currentTrack = await page.evaluate(async () => {
+    //   const video = document.querySelector("#shorts-player:visible");
+    //   return await video?.getAudioTrack();
+    // });
 
     // Check console message count
     expect(consoleMessageCount).toBeLessThan(
