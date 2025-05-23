@@ -113,6 +113,7 @@ jobs:
           tag: ${{ steps.get_version.outputs.tag }}
           name: ${{ env.VERSION }}${{ steps.suffix.outputs.suffix }}
           bodyFile: release_notes.txt
+          draft: true
 
       - name: Manually trigger Firefox extension workflow
         if: steps.check_ci_fix.outputs.skip == 'false'

@@ -28,6 +28,7 @@ jobs:
         with:
           name: chrome-extension
           path: chrome-extension.zip
+
   upload-extension:
     name: Upload extension
     runs-on: ubuntu-latest

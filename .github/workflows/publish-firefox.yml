@@ -14,9 +14,16 @@ jobs:
     name: Build Firefox extension artifact
     runs-on: ubuntu-latest
     if: github.repository_owner == 'namakeingo'
+    outputs:
+      tag: ${{ steps.retrive-tag.outputs.tag }}
+      version: ${{ steps.retrive-tag.outputs.version }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Ensures full git history
+          fetch-tags: true # Ensures tags are fetched
 
       - name: Build
         env:
@@ -33,11 +40,20 @@ jobs:
           # we archive the dist folder and include SHA commit as the last step
           zip -r firefox-extension.zip dist
 
+      - name: Retrieve last tag
+        id: retrive-tag
+        run: |
+          TAG=$(git tag --sort=-creatordate | grep -E '^v[0-9]+\.[0-9]+\.[0-9\.]+' | head -n1)
+          VERSION=${TAG#v}
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
       - name: Archive firefox-extension artifact
         uses: actions/upload-artifact@v4
         with:
           name: firefox-extension
           path: firefox-extension.zip
+
   upload-extension:
     name: Upload extension
     runs-on: ubuntu-latest
@@ -79,3 +95,14 @@ jobs:
         with:
           name: youtube_anti_translate_mv3-signed.xpi
           path: dist/web-ext-artifacts/youtube_anti_translate_mv3-*.xpi
+
+      - name: Create GitHub Release
+        uses: ncipollo/release-action@v1
+        with:
+          allowUpdates: true
+          updateOnlyUnreleased: true
+          tag: ${{ needs.build-firefox-extension.outputs.tag }}
+          name: ${{ needs.build-firefox-extension.outputs.version }}
+          omitBodyDuringUpdate: true
+          draft: false
+          artifacts: dist/web-ext-artifacts/youtube_anti_translate_mv3-*.xpi
