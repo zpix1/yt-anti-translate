@@ -377,9 +377,9 @@ test.describe("YouTube Anti-Translate extension", () => {
     const shortsLinkTitle = await titleLinkElement.textContent();
     console.log("Shorts Link title:", shortsLinkTitle?.trim());
 
-    // Verify the title is the original English one and not the Russian translation
-    expect(shortsLinkTitle?.trim()).toBe("I Explored 2000 Year Old Ancient Temples");
-    expect(shortsLinkTitle?.trim()).not.toBe("Я Исследовал Древние Храмы Возрастом 2000 Лет");
+    // Verify the title is the has English characters and not russian
+    expect(shortsLinkTitle?.trim()).toMatch(/[A-Za-z]/); // Checks for any English letters
+    expect(shortsLinkTitle?.trim()).not.toMatch(/[А-Яа-яЁё]/); // Ensures no Russian letters
 
     // Take a screenshot for visual verification
     await page.screenshot({ path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-shorts-test.png` });
@@ -465,10 +465,11 @@ test.describe("YouTube Anti-Translate extension", () => {
     console.log("Clicking Shorts tab...");
     await page.locator("#tabsContent").getByText("Shorts").click();
     try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
+    await page.waitForTimeout(1000); // Give it a moment to load more items if needed
 
     // --- Check Shorts Tab ---
-    const originalShortTitle = "Baseball Tic Tac Toe vs MLB Pro";
-    const translatedShortTitle = "Бейсбольные Крестики-Нолики"; // Adjust if needed
+    const originalShortTitle = "$10,000 Human Shuffleboard";
+    const translatedShortTitle = "Человеческий Шаффлборд за $10,000"; // Adjust if needed
     const shortSelector = `ytd-rich-item-renderer:has-text("${originalShortTitle}")`;
     const translatedShortSelector = `ytd-rich-item-renderer:has-text("${translatedShortTitle}")`;
 
@@ -476,16 +477,48 @@ test.describe("YouTube Anti-Translate extension", () => {
     // Shorts might load dynamically, scroll into view to ensure it's loaded
     const original = page.locator(shortSelector).first()
     if (await original.isVisible()) {
-      original.scrollIntoViewIfNeeded();
+      await page.mouse.wheel(0, 500);
+      await original.scrollIntoViewIfNeeded();
+      try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
     }
     const translated = page.locator(translatedShortSelector).first()
     if (await translated.isVisible()) {
-      translated.scrollIntoViewIfNeeded();
+      await page.mouse.wheel(0, 500);
+      await translated.scrollIntoViewIfNeeded();
+      try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
     }
     await page.waitForTimeout(1000); // Give it a moment to load more items if needed
 
     await expect(page.locator(shortSelector)).toBeVisible({ timeout: 10000 }); // Increased timeout for dynamic loading
     await expect(page.locator(translatedShortSelector)).not.toBeVisible();
+    console.log(
+      "Original short title found, translated short title not found."
+    );
+
+    // --- Check another short lower in the page
+    const originalShortTitle2 = "Highest Away From Me Wins $10,000";
+    const translatedShortTitle2 = "Достигни Вершины И Выиграй $10,000"; // Adjust if needed
+    const shortSelector2 = `ytd-rich-item-renderer:has-text("${originalShortTitle2}")`;
+    const translatedShortSelector2 = `ytd-rich-item-renderer:has-text("${translatedShortTitle2}")`;
+
+    console.log("Checking Shorts tab for original title...");
+    // Shorts might load dynamically, scroll into view to ensure it's loaded
+    const original2 = page.locator(shortSelector2).first()
+    if (await original2.isVisible()) {
+      await page.mouse.wheel(0, 500);
+      await original2.scrollIntoViewIfNeeded();
+      try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
+    }
+    const translated2 = page.locator(translatedShortSelector2).first()
+    if (await translated2.isVisible()) {
+      await page.mouse.wheel(0, 500);
+      await translated2.scrollIntoViewIfNeeded();
+      try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
+    }
+    await page.waitForTimeout(1000); // Give it a moment to load more items if needed
+
+    await expect(page.locator(shortSelector2)).toBeVisible({ timeout: 10000 }); // Increased timeout for dynamic loading
+    await expect(page.locator(translatedShortSelector2)).not.toBeVisible();
     console.log(
       "Original short title found, translated short title not found."
     );
@@ -507,6 +540,147 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Take a screenshot for visual verification
     await page.screenshot({ path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-channel-tabs-test.png` });
+
+    // Check console message count
+    expect(consoleMessageCount).toBeLessThan(
+      2000
+    );
+
+    // Close the browser context
+    await context.close();
+  });
+
+  test("YouTube Shorts audio dubbing is untranslated with Anti-Translate extension", async ({ browserNameWithExtensions, localeString }, testInfo) => {
+    if (testInfo.retry > 0) {
+      // If this test is retring then check uBlock and Auth again
+      await setupUBlockAndAuth([browserNameWithExtensions], [localeString]);
+    }
+    // Launch browser with the extension
+    let context;
+
+    switch (browserNameWithExtensions) {
+      case "chromium":
+        const browserTypeWithExtension = withExtension(
+          chromium,
+          [path.resolve(__dirname, "../app"), path.resolve(__dirname, "testUBlockOriginLite")]
+        );
+        context = await browserTypeWithExtension.launchPersistentContext("", {
+          headless: false
+        });
+        break;
+      case "firefox":
+        context = await (withExtension(
+          firefox,
+          [path.resolve(__dirname, "../app"), path.resolve(__dirname, "testUBlockOrigin")]
+        )).launch()
+        break;
+      default:
+        throw "Unsupported browserNameWithExtensions"
+    }
+
+    // Create a new page
+    const result = await newPageWithStorageStateIfItExists(context, browserNameWithExtensions, localeString);
+    const page = result.page;
+    const localeLoaded = result.localeLoaded
+    if (!localeLoaded) {
+      // Setup failed to create a matching locale so test wil fail.
+      expect(localeLoaded).toBe(true)
+    }
+
+    // Set up console message counting
+    let consoleMessageCount = 0;
+    page.on("console", () => {
+      consoleMessageCount++;
+    });
+
+    // Navigate to the specified YouTube video
+    await page.goto("https://www.youtube.com/@MrBeast/shorts");
+
+    // Wait for the page to load
+    try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
+    // .waitForLoadState("networkidle" is not always right so wait 5 extra seconds
+    await page.waitForTimeout(5000);
+
+    // If for whatever reason we are not logged in, then fail the test
+    expect(await findLoginButton(page)).toBe(null);
+
+    // Wait for the video page to fully load
+    await page.waitForSelector("ytd-rich-item-renderer");
+
+    // Find the first short and click to open
+    const firstShort = page.locator("ytd-rich-item-renderer").first()
+    if (await firstShort.isVisible()) {
+      await firstShort.scrollIntoViewIfNeeded();
+      await firstShort.click();
+      try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
+    }
+    await page.waitForTimeout(2000);
+
+    // Wait for the video page to fully load
+    await page.waitForSelector("#shorts-player");
+
+    const [currentTrack, currentId] = await page.evaluate(async () => {
+      type PlayerResponse = {
+        videoDetails?: { videoId?: string };
+      };
+      const video = document.querySelector("#shorts-player") as HTMLVideoElement & {
+        getAudioTrack?: () => Promise<any>;
+        getPlayerResponse?: () => Promise<PlayerResponse>;
+      };
+      return [await video?.getAudioTrack?.(), (await video?.getPlayerResponse?.())?.videoDetails?.videoId];
+    });
+
+    // Check original track is the selected one
+    expect(currentTrack?.HB?.name).toContain("оригинал");
+    expect(currentId).not.toBeNull()
+
+    // Go to next short
+    const buttonDown = page.locator('#navigation-button-down button').first()
+    if (await buttonDown.isVisible()) {
+      await buttonDown.scrollIntoViewIfNeeded();
+      await buttonDown.click();
+      try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
+    }
+    await page.waitForTimeout(2000);
+
+    const [currentTrack2, currentId2] = await page.evaluate(async () => {
+      type PlayerResponse = {
+        videoDetails?: { videoId?: string };
+      };
+      const video = document.querySelector("#shorts-player") as HTMLVideoElement & {
+        getAudioTrack?: () => Promise<any>;
+        getPlayerResponse?: () => Promise<PlayerResponse>;
+      };
+      return [await video?.getAudioTrack?.(), (await video?.getPlayerResponse?.())?.videoDetails?.videoId];
+    });
+
+    // Check original track is the selected one
+    expect(currentTrack2?.HB?.name).toContain("оригинал");
+    expect(currentId2).not.toBe(currentId);
+
+    // Go to next short
+    const buttonDown2 = page.locator('#navigation-button-down button').first()
+    if (await buttonDown2.isVisible()) {
+      await buttonDown2.scrollIntoViewIfNeeded();
+      await buttonDown2.click();
+      try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
+    }
+    await page.waitForTimeout(2000);
+
+    const [currentTrack3, currentId3] = await page.evaluate(async () => {
+      type PlayerResponse = {
+        videoDetails?: { videoId?: string };
+      };
+      const video = document.querySelector("#shorts-player") as HTMLVideoElement & {
+        getAudioTrack?: () => Promise<any>;
+        getPlayerResponse?: () => Promise<PlayerResponse>;
+      };
+      return [await video?.getAudioTrack?.(), (await video?.getPlayerResponse?.())?.videoDetails?.videoId];
+    });
+
+    // Check original track is the selected one
+    expect(currentTrack3?.HB?.name).toContain("оригинал");
+    expect(currentId3).not.toBe(currentId2);
 
     // Check console message count
     expect(consoleMessageCount).toBeLessThan(

@@ -1,4 +1,4 @@
-// Laad scripts that will run in page environment
+// Load scripts that will run in page environment
 chrome.storage.sync.get(
   {
     disabled: false,
@@ -7,11 +7,6 @@ chrome.storage.sync.get(
   },
   async function (items) {
     if (!items.disabled) {
-      const globalPropertiesScript = document.createElement("script");
-      globalPropertiesScript.type = "module";
-      globalPropertiesScript.src = chrome.runtime.getURL("src/global.js");
-      document.body.appendChild(globalPropertiesScript);
-
       const backgroundScript = document.createElement("script");
       backgroundScript.type = "module";
       backgroundScript.src = chrome.runtime.getURL("src/background.js");
