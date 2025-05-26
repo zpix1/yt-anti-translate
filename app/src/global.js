@@ -2,6 +2,8 @@
 //These properties are added to the Window DOM and injected into the page to make it available to all scripts
 //We are using Object.freeze() to make window.YoutubeAntiTranslate immutable
 window.YoutubeAntiTranslate = {
+  /** @type {float} */ VIEWPORT_EXTENSION_PERCENTAGE_FRACTION: 0.5,
+
   /** @type {string} */ LOG_PREFIX: "[YoutubeAntiTranslate]",
 
   /** @type {string} */ CORE_ATTRIBUTED_STRING_SELECTOR: ".yt-core-attributed-string",
@@ -32,10 +34,11 @@ window.YoutubeAntiTranslate = {
    * Given a Node it uses computed style to determine if it is visible
    * @type {Function}
    * @param {Node} node - A Node of type ELEMENT_NODE
-   * @param {bolean} shouldCheckBoundingBox - If true the element should also be inside the bounding box to be considered visible
+   * @param {bolean} shouldCheckViewport - If true the element position is checked to be inside or outside the viewport
+   * @param {boolen} onlyOutsideViewport - only relevant when `shouldCheckViewport` is true. When this is also true the element is returned only if outside the viewport. By default the element is returned only if inside the viewport
    * @return {boolean} - true if the node is computed as visible
    */
-  isVisible: function (node, shouldCheckBoundingBox = true) {
+  isVisible: function (node, shouldCheckViewport = true, onlyOutsideViewport = false) {
     if (!node || node.nodeType !== Node.ELEMENT_NODE) {
       console.error(
         `${this.LOG_PREFIX} Provided node is not a valid Element.`,
@@ -59,21 +62,38 @@ window.YoutubeAntiTranslate = {
       return false;
     }
 
-    if (shouldCheckBoundingBox) {
+    if (shouldCheckViewport) {
       // Get element position relative to the viewport
       const rect = element.getBoundingClientRect();
-      // Get viewport extended by 50% to allow some 'preload'
-      const extendedHeight = window.innerHeight * 0.5;
-      const extendedWidth = window.innerWidth * 0.5;
+      // Get viewport extended by VIEWPORT_EXTENSION_PERCENTAGE_FRACTION to allow some 'preload'
+      const extendedHeight = window.innerHeight * this.VIEWPORT_EXTENSION_PERCENTAGE_FRACTION;
+      const extendedWidth = window.innerWidth * this.VIEWPORT_EXTENSION_PERCENTAGE_FRACTION;
 
-      // Check element is in a visible position of the extended viewport
-      const inExtendedViewport =
-        rect.top < window.innerHeight + extendedHeight &&
-        rect.bottom > -extendedHeight &&
-        rect.left < window.innerWidth + extendedWidth &&
-        rect.right > -extendedWidth;
+      const topBoundary = -extendedHeight;
+      const bottomBoundary = window.innerHeight + extendedHeight;
+      const leftBoundary = -extendedWidth;
+      const rightBoundary = window.innerWidth + extendedWidth;
 
-      return inExtendedViewport;
+      if (onlyOutsideViewport) {
+        // Return true if ANY part of the element is OUTSIDE the extended viewport
+        const fullyContained =
+          rect.top >= topBoundary &&
+          rect.bottom <= bottomBoundary &&
+          rect.left >= leftBoundary &&
+          rect.right <= rightBoundary;
+
+        return !fullyContained;
+      }
+      else {
+        // Return true if ANY part of the element is INSIDE the extended viewport
+        const inExtendedViewport =
+          rect.top < bottomBoundary &&
+          rect.bottom > topBoundary &&
+          rect.left < rightBoundary &&
+          rect.right > leftBoundary;
+
+        return inExtendedViewport;
+      }
     }
     return true;
   },
@@ -82,21 +102,19 @@ window.YoutubeAntiTranslate = {
    * Given an Array of HTMLElements it returns visible HTMLElement or null
    * @type {Function}
    * @param {Node|NodeList} nodes - A NodeList or single Node of type ELEMENT_NODE
-   * @param {bolean} shouldCheckBoundingBox - If true the element should also be inside the bounding box to be considered visible
+   * @param {bolean} shouldBeInsideViewport - If true the element should also be inside the viewport to be considered visible
    * @returns {Node|null} - The first visible Node or null
    */
-  getFirstVisible: function (nodes, shouldCheckBoundingBox = true) {
+  getFirstVisible: function (nodes, shouldBeInsideViewport = true) {
     if (!nodes) {
       return null;
     }
-    else if (!(nodes instanceof NodeList)) {
-      nodes = [nodes];
-    } else {
+    else {
       nodes = Array.from(nodes);
     }
 
     for (const node of nodes) {
-      if (this.isVisible(node, shouldCheckBoundingBox)) {
+      if (this.isVisible(node, shouldBeInsideViewport)) {
         return node;
       }
     }
@@ -108,23 +126,51 @@ window.YoutubeAntiTranslate = {
    * Given an Array of HTMLElements it returns visible HTMLElement or null
    * @type {Function}
    * @param {Node|NodeList} nodes - A NodeList or single Node of type ELEMENT_NODE
-   * @param {bolean} shouldCheckBoundingBox - If true the element should also be inside the bounding box to be considered visible
+   * @param {bolean} shouldBeInsideViewport - If true the element should also be inside the viewport to be considered visible
    * @returns {Array<Node>|null} - A array of all the visible nodes or null
    */
-  getAllVisibleNodes: function (nodes, shouldCheckBoundingBox = true) {
+  getAllVisibleNodes: function (nodes, shouldBeInsideViewport = true) {
     if (!nodes) {
       return null;
     }
-    else if (!(nodes instanceof NodeList)) {
-      nodes = [nodes];
-    } else {
+    else {
       nodes = Array.from(nodes);
     }
 
     let /** @type {Array<Node>} */ visibleNodes = null;
 
     for (const node of nodes) {
-      if (this.isVisible(node, shouldCheckBoundingBox)) {
+      if (this.isVisible(node, shouldBeInsideViewport)) {
+        if (visibleNodes) {
+          visibleNodes.push(node);
+        }
+        else {
+          visibleNodes = [node];
+        }
+      }
+    }
+
+    return visibleNodes;
+  },
+
+  /**
+   * Given an Array of HTMLElements it returns visible HTMLElement or null only if they are loaded outside the viewport
+   * @type {Function}
+   * @param {Node|NodeList} nodes - A NodeList or single Node of type ELEMENT_NODE
+   * @returns {Array<Node>|null} - A array of all the visible nodes or null that are outside the viewport
+   */
+  getAllVisibleNodesOutsideViewport: function (nodes) {
+    if (!nodes) {
+      return null;
+    }
+    else {
+      nodes = Array.from(nodes);
+    }
+
+    let /** @type {Array<Node>} */ visibleNodes = null;
+
+    for (const node of nodes) {
+      if (this.isVisible(node, true, true)) {
         if (visibleNodes) {
           visibleNodes.push(node);
         }

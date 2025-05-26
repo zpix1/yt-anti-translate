@@ -9,11 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Fix bug with audio (dubbing) not always untranlating on the first load
+- Fix bug with audio (dubbing) not always untranlating on the first load (due to persistency of player.unstranslatedAudio)
 
 ### Changes
 
-- Do not process elements outside the BoundingBox or not visible to avoid slowing the page
+- Do not process elements outside the viewport or not visible to avoid slowing the page
+- Use IntersectObserver to dynamically work on element entering the viewport
 
 ## [1.18.1.3] - 2025-05-23
 

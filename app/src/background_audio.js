@@ -87,14 +87,18 @@ async function untranslateAudioTrack() {
   }
   const playerResponse = await player.getPlayerResponse();
   const tracks = await player.getAvailableAudioTracks();
-  const currentVideoId = playerResponse.videoDetails.videoId;
   const currentTrack = await player.getAudioTrack();
 
   if (
     !playerResponse
     || !tracks
-    || !currentVideoId
     || !currentTrack
+  ) {
+    return;
+  }
+  const currentVideoId = playerResponse.videoDetails.videoId;
+  if (
+    !currentVideoId
     || player.lastUntranslated === `${currentVideoId}+${currentTrack}`
   ) {
     return;

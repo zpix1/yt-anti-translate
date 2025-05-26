@@ -18,6 +18,15 @@
       ],
       "js": [
         "src/global.js",
+        "src/content_injectglobal.js"
+      ],
+      "run_at": "document_end"
+    },
+    {
+      "matches": [
+        "*://*.youtube.com/*"
+      ],
+      "js": [
         "src/content_start.js"
       ]
     }, 
