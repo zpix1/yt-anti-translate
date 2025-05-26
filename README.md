@@ -4,10 +4,10 @@ Source code of [YouTube Anti Translate](https://chrome.google.com/webstore/detai
 And [YouTube Anti Translate - mv3](https://addons.mozilla.org/firefox/addon/youtube-anti-translate-mv3/) Firefox Extension mantained by [namakeingo](https://github.com/namakeingo).
 
 All the people involved were annoyed by YouTube changing video titles to poorly user-translated versions. While it might be useful if you do not know the language, it quickly becomes annoying once you do.
-As there is no option provided by youtube to disable it, we made this extension to retrieve original titles and change them back.
-As YouTube later got even more annoying with translated description, audio (dubbing) and channel branding, the extension was expanded to untranslate that too.
+As there is no option provided by YouTube to disable it, we made this extension to retrieve original titles and change them back.
+As YouTube later got even more annoying with translated descriptions, audio (dubbing) and channel branding, the extension was expanded to untranslate that too.
 
-It is much easier to use than its analogs (such as [YoutubeAutotranslateCanceler](https://github.com/pcouy/YoutubeAutotranslateCanceler)), because it does not require any YouTube API keys (for core features) or additional userscript extensions.
+It is much easier to use than its analogues (such as [YoutubeAutotranslateCanceler](https://github.com/pcouy/YoutubeAutotranslateCanceler)), because it does not require any YouTube API keys (for core features) or additional userscript extensions.
 
 ## Features
 
@@ -19,26 +19,26 @@ It is much easier to use than its analogs (such as [YoutubeAutotranslateCanceler
 
 ### Extra Features
 
-Extra features need a Youtube Data API Key to be pupulated in the extension settings. [Read more on how to obtain](https://github.com/namakeingo/yt-anti-translate-firefox/blob/main/YOUTUBE_DATA_API_KEY.md)
+Extra features need a YouTube Data API Key to be populated in the extension settings. [Read more on how to obtain](https://github.com/namakeingo/yt-anti-translate-firefox/blob/main/YOUTUBE_DATA_API_KEY.md)
 
-- Restores original channel branding header and about on Youtube (can be toggled in settings "Untranslate channel branding")
+- Restores original channel branding header and about on YouTube (can be toggled in settings "Untranslate channel branding")
 
 ## How to use
 
-If using Chrome/Edge or other Chromium browses install it from [Chrome Web Store](https://chrome.google.com/webstore/detail/yt-anti-translate/ndpmhjnlfkgfalaieeneneenijondgag).
-If using a Firefox browser install it from [Firefox Extensions Store](https://addons.mozilla.org/firefox/addon/youtube-anti-translate-mv3/).
+If using Chrome/Edge or other Chromium browsers, install it from [Chrome Web Store](https://chrome.google.com/webstore/detail/yt-anti-translate/ndpmhjnlfkgfalaieeneneenijondgag).
+If using a Firefox browser, install it from [Firefox Extensions Store](https://addons.mozilla.org/firefox/addon/youtube-anti-translate-mv3/).
 
 There's also a [Firefox Manifest v2 version](https://addons.mozilla.org/firefox/addon/youtube-anti-translate/) (maintained by [artisticfox8](https://github.com/artisticfox8/)) compatible with Firefox versions order than `v109.0`.
-However it is currenlty out of date, as it was last updated on Aug 2, 2024 and is missing features because of that.
+However, it is currently outdated, as it was last updated on Aug 2, 2024 and is missing features because of that.
 
 ### Development Setup
 
 1. Clone this repository
-2. Navigate to cloned folder and run the following command in terminal window
+2. Navigate to the cloned folder and run the following command in a terminal window
    `npm ci`
-3. Open with IDE editor of choice
+3. Open with the IDE editor of choice
 4. You can verify functionality by running Playwright Test (make sure you install extensions for your IDE is needed)
-   - Before running test you will need to intall playwright browsers and dependencies
+   - Before running the tests, you will need to install playwright browsers and dependencies
      `npx playwright install --with-deps`
    - Please create or update tests if adding new capabilities
 
@@ -52,9 +52,9 @@ However it is currenlty out of date, as it was last updated on Aug 2, 2024 and i
 
 - Firefox
 
-  1. Create a `.zip` of `app` directory (Note that `manifest.json` must be at the root of the atchive)
+  1. Create a `.zip` of `app` directory (Note that `manifest.json` must be at the root of the archive)
   2. Open Firefox and navigate to `about:addons`
-  3. Click gear icon, click on "Install Add-on from File", select the zip file you created on step 1
+  3. Click the gear icon, click on "Install Add-on from File", select the zip file you created in step 1
 
 ## Contributing
 
