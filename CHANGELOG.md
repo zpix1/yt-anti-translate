@@ -9,12 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Fix bug with audio (dubbing) not always untranlating on the first load (due to persistency of player.unstranslatedAudio)
+- Fix bug with audio (dubbing) not always untranslating on the first load (due to the persistence of player.unstranslatedAudio)
 
 ### Changes
 
 - Do not process elements outside the viewport or not visible to avoid slowing the page
-- Use IntersectObserver to dynamically work on element entering the viewport
+- Use IntersectionObserver to dynamically work on the elements entering the viewport
 
 ## [1.18.1.3] - 2025-05-23
 
@@ -35,7 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Test extension in both firefox and chromium
+- Test extension in both Firefox and Chromium
 
 ## [1.18.1.1] - 2025-05-16
 
@@ -49,7 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Fixed channel branding about not untranslation when opened via "more links" then "..more" (or opposite order) - a new popup is created the second time so the duplicate element was not handled
+- Fixed channel branding about not untranslation when opened via "more links" then "..more" (or opposite order) - a new popup is created the second time, so the duplicate element was not handled
 - Fixed flex position of branding header "..more" link not updating
 - Fixed untranslation of embedded video title and description - like in highlighted video of a channel
 - Fixed untranslation of short video link to video
