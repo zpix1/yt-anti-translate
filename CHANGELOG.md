@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fixed broken link to YouTube Data API guide
+
+## [1.18.1.4] - 2025-05-26
+
+### Fixed
+
 - Fix bug with audio (dubbing) not always untranslating on the first load (due to the persistence of player.unstranslatedAudio)
 
 ### Changes
