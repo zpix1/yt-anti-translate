@@ -6,7 +6,7 @@ ytd-compact-video-renderer,
 ytd-grid-video-renderer,
 ytd-playlist-video-renderer,
 ytd-playlist-panel-video-renderer`;
-const INTERSECTION_UPDATE_STEP_VIDEOS = 4;
+const INTERSECTION_UPDATE_STEP_VIDEOS = 2;
 let allIntersectVideoElements = null;
 const intersectionObserverOtherVideos = new IntersectionObserver(untranslateOtherVideosOnIntersect, {
   root: null,  // viewport
