@@ -37,6 +37,35 @@ function requestPermissions() {
   window.close();
 }
 
+// --- Render footer ---
+function isFirefoxBasedBrowser() {
+  return typeof browser !== "undefined" && typeof browser.runtime !== "undefined";
+}
+
+function renderFooterLinks() {
+  const footer = document.getElementById("footer-links");
+
+  if (!footer) return;
+
+  const commonLinks = `
+    <a target="_blank" href="https://github.com/zpix1/yt-anti-translate">Report issues</a>
+  `;
+
+  if (isFirefoxBasedBrowser()) {
+    footer.innerHTML = `
+      <a target="_blank" href="https://addons.mozilla.org/firefox/addon/youtube-anti-translate-mv3/">Rate Firefox extension</a> • 
+      ${commonLinks} • 
+      <a target="_blank" href="https://github.com/sponsors/namakeingo">Support Firefox developer</a>
+    `;
+  } else {
+    footer.innerHTML = `
+      <a target="_blank" href="https://chrome.google.com/webstore/detail/yt-anti-translate/ndpmhjnlfkgfalaieeneneenijondgag">Rate Chrome extension</a> • 
+      ${commonLinks} • 
+      <a target="_blank" href="https://zpix1.github.io/donate/">Support Chrome developer</a>
+    `;
+  }
+}
+
 // --- Handle options ---
 function saveOptions() {
   if (document.getElementById("reload-checkbox").checked) {
@@ -152,7 +181,7 @@ function apiKeyUpdate() {
           youtubeDataApiKey: newApiKey
         },
         () => {
-          console.log("API key saved:", newApiKey);
+          console.log("API key saved");
 
           // Only show features if key is non-empty
           if (newApiKey) {
@@ -204,6 +233,7 @@ function addListeners() {
 }
 
 // --- Init ---
+document.addEventListener("DOMContentLoaded", renderFooterLinks);
 document.addEventListener("DOMContentLoaded", checkPermissions);
 document.addEventListener("DOMContentLoaded", loadOptions);
 document.addEventListener("DOMContentLoaded", addListeners);

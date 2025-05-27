@@ -16,7 +16,7 @@
       }
 
       .container {
-        width: 340px;
+        width: 315px;
         height: fit-content;
         text-align: center;
         overflow: hidden;
@@ -88,8 +88,7 @@
         text-decoration: underline;
       }
       
-      small,
-      .small {
+      small {
         font-size: 11px;
         color: #666;
       }
@@ -133,6 +132,9 @@
         .footer a {
           color: #66d9ef;
         }
+        details#api-key-section a {
+          color: #66d9ef;
+        }
       }
 
       @keyframes fadeInOut {
@@ -144,12 +146,70 @@
       #save-api-key-text.saving {
         animation: fadeInOut 1.5s ease;
       }
+
+      details#api-key-section {
+        display: block !important;
+        flex-direction: column;
+        background-color: #f5f5f5;
+        border-radius: 5px;
+        padding: 5px;
+        margin-bottom: 10px;
+        overflow: hidden;
+      }
+
+      details#api-key-section a {        
+        font-size: 12px;
+        font-style: italic;
+        color: #008cba;
+        text-decoration: none;
+      }
+
+      .details#api-key-section a:hover {
+        text-decoration: underline !important;
+      }
+
+      details#api-key-section summary {
+        display: block !important;
+        width: auto;
+        background-color: #008cba;
+        color: #fff;
+        padding: 6px 10px;
+        border-radius: 5px;
+        cursor: pointer;
+        user-select: none;
+        font-size: 15px;
+        margin-bottom: 8px;
+      }
+
+      details#api-key-section[open] summary {
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0; 
+        margin-bottom: 0;
+      }
+
+      details#api-key-section summary:hover {
+        background-color: #007bb5;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        details#api-key-section {
+          background-color: #1e1e1e;
+        }
+      }
+
+      details#api-key-section > #api-key-container,
+      details#api-key-section > #additional-features {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 6px;
+      }
     </style>
   </head>
 
   <body id="yt-anti-translate">
     <div class="container">
-      <div class="header">YT Anti Translate 1.18.1.7<small> (Manifest V3)</small></div>
+      <div class="header">YT Anti Translate 1.18.2<br><small> (Manifest V3)</small></div>
       <div id="permission-warning" style="display: none; margin-top: 15px;">
         <div class="small" style="color: red;">
           <p><strong>Permission to access YouTube is not granted.</strong></p>
@@ -175,29 +235,25 @@
           <span>Reload page automatically</span>
           <input id="reload-checkbox" type="checkbox" checked />
         </div>
-        <div class="option" id="api-key-container">
-          <div class="small">
-            <p>Additional features require a <b>YouTube Data API Key</b></p>
-            <p><a target="_blank" href="https://github.com/zpix1/yt-anti-translate/blob/main/YOUTUBE_DATA_API_KEY.md">How do I obtain an API Key?</a></p>
-          </div>    
-          <input id="api-key-input" type="password" placeholder="Enter API key" />
-          <button id="save-api-key-button"><span id="save-api-key-text">Save API Key</span></button>
-        </div>
-        <div class="option bordered-group" id="additional-features" style="display: none;">
-          <small>Additional Features</small>
-          <div class="option">
-            <span>Untranslate channel branding</span>
-            <input id="channel-branding-checkbox" type="checkbox" />
+        <details id="api-key-section" class="option" style="margin-bottom: 10px;">
+          <summary><strong>API Key Features</strong></summary>
+          <div id="api-key-container">
+            <div>
+              <p><a target="_blank" href="https://github.com/zpix1/yt-anti-translate/blob/main/YOUTUBE_DATA_API_KEY.md">Additional features require a YouTube Data API Key</a></p>
+            </div>
+            <input id="api-key-input" type="password" placeholder="Enter API key" />
+            <button id="save-api-key-button"><span id="save-api-key-text">Save API Key</span></button>
           </div>
-        </div>
+          <div class="option bordered-group" id="additional-features" style="display: none;">
+            <small>Additional Features</small>
+            <div class="option">
+              <span>Untranslate channel branding</span>
+              <input id="channel-branding-checkbox" type="checkbox" />
+            </div>
+          </div>
+        </details>
       </div>
-      <div class="footer">
-        <a target="_blank" href="https://chrome.google.com/webstore/detail/yt-anti-translate/ndpmhjnlfkgfalaieeneneenijondgag">Rate Chrome extension</a> • 
-        <a target="_blank" href="https://addons.mozilla.org/firefox/addon/youtube-anti-translate-mv3/">Rate Firefox extension</a> • 
-        <a target="_blank" href="https://github.com/zpix1/yt-anti-translate">Report issues</a> • 
-        <a target="_blank" href="https://zpix1.github.io/donate/">Support Chrome developer</a> • 
-        <a target="_blank" href="https://github.com/sponsors/namakeingo">Support Firefox developer</a>
-      </div>
+      <div class="footer" id="footer-links"></div>
       <script src="/src/options.js"></script>
     </div>
   </body>

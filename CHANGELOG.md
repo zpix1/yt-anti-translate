@@ -5,17 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.18.1.7] - 2025-05-27
-
-### Fixed
-
-- Fixed INTERSECTION_UPDATE_STEP_VIDEOS configuration not vorking for video list format (was only working with grids)
-
-### Added
-
-- Check host_permissions and request user to approve access if lacking
-
-## [1.18.1.6] - 2025-05-27
+## [1.18.2] - 2025-05-27
 
 ### New Feature
 
@@ -42,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Check host_permissions and request user to approve access if lacking
 - Automatic testing of the extension in both Firefox and Chromium for ease of mantainance and quick response to broken features.
 
 ## [1.17.0] - 2025-04-05

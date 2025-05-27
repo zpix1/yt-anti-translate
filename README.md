@@ -19,7 +19,7 @@ It is much easier to use than its analogues (such as [YoutubeAutotranslateCancel
 
 ### Extra Features
 
-Extra features need a YouTube Data API Key to be populated in the extension settings. [Read more on how to obtain](https://github.com/namakeingo/yt-anti-translate-firefox/blob/main/YOUTUBE_DATA_API_KEY.md)
+Extra features need a YouTube Data API Key to be populated in the extension settings. [Read more on how to obtain](https://github.com/zpix1/yt-anti-translate/blob/main/YOUTUBE_DATA_API_KEY.md)
 
 - Restores original channel branding header and about on YouTube (can be toggled in settings "Untranslate channel branding")
 
