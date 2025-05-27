@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fixed INTERSECTION_UPDATE_STEP_VIDEOS configuration not vorking for video list format (was only working with grids)
 
+### Added
+
+- Check host_permissions and request user to approve access if lacking
+
 ## [1.18.1.6] - 2025-05-27
 
 ### Changed
