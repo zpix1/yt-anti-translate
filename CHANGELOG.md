@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.18.1.6] - 2025-05-27
+
+### Changed
+
+- Further optimize IntersectionObserver logic
+
 ## [1.18.1.5] - 2025-05-26
 
 ### New Feature
@@ -22,7 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix untranslation of link to last video on a short
 - Fix [Titles stay from previous videos #22](https://github.com/zpix1/yt-anti-translate/issues/22)
 
-### Changes
+### Changed
 
 - Optimise start-up logic for better performance
 - Avoid triggering functionalities if not needed in the current page
