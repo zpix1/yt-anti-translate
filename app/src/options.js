@@ -1,3 +1,43 @@
+// --- Check Permissions ---
+const permissionsAPI = typeof browser !== 'undefined' && browser.permissions
+  ? browser.permissions
+  : chrome.permissions;
+
+async function hasPermanentHostPermission(origin) {
+  return new Promise((resolve, reject) => {
+    permissionsAPI.getAll((allPermissions) => {
+      if (chrome.runtime.lastError) {
+        reject(chrome.runtime.lastError);
+      } else {
+        resolve(allPermissions.origins?.includes(origin));
+      }
+    });
+  });
+}
+
+async function checkPermissions() {
+  const permissionWarning = document.getElementById("permission-warning");
+
+  if (!permissionWarning) {
+    console.warn("Permission elements not found in DOM");
+    return;
+  }
+
+  const hasPermanent = await hasPermanentHostPermission("*://*.youtube.com/*");
+
+  if (!hasPermanent) {
+    permissionWarning.style.display = "block";
+  }
+}
+
+function requestPermissions() {
+  chrome.tabs.create({
+    url: chrome.runtime.getURL("pages/permission.html")
+  });
+  window.close();
+}
+
+// --- Handle options ---
 function saveOptions() {
   if (document.getElementById("reload-checkbox").checked) {
     chrome.tabs.reload();
@@ -141,6 +181,9 @@ function apiKeyUpdate() {
 
 function addListeners() {
   document
+    .getElementById("request-permission-button")
+    .addEventListener("click", requestPermissions);
+  document
     .getElementById("disable-button")
     .addEventListener("click", saveOptions);
   document
@@ -160,5 +203,7 @@ function addListeners() {
     .addEventListener("click", apiKeyUpdate);
 }
 
+// --- Init ---
+document.addEventListener("DOMContentLoaded", checkPermissions);
 document.addEventListener("DOMContentLoaded", loadOptions);
 document.addEventListener("DOMContentLoaded", addListeners);
