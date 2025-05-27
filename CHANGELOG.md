@@ -24,7 +24,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Optimise start-up logic for better performance
 - Avoid triggering functionalities if not needed in the current page
 - Do not process elements outside the viewport or not visible to avoid slowing the page
 - Use IntersectionObserver to dynamically work on the elements entering the viewport
