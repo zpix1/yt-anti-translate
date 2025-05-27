@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix untranslation of video player head link
 - Fix duplication of untranslated fake node
 - Fix untranslation of link to last video on a short
+- Fix [Titles stay from previous videos #22](https://github.com/zpix1/yt-anti-translate/issues/22)
 
 ### Changes
 
