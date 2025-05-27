@@ -3,6 +3,7 @@
 //We are using Object.freeze() to make window.YoutubeAntiTranslate immutable
 window.YoutubeAntiTranslate = {
   /** @type {float} */ VIEWPORT_EXTENSION_PERCENTAGE_FRACTION: 0.5,
+  /** @type {float} */ VIEWPORT_OUTSIDE_LIMIT_FRACTION: 0.5,
 
   /** @type {string} */ LOG_PREFIX: "[YoutubeAntiTranslate]",
 
@@ -34,11 +35,12 @@ window.YoutubeAntiTranslate = {
    * Given a Node it uses computed style to determine if it is visible
    * @type {Function}
    * @param {Node} node - A Node of type ELEMENT_NODE
-   * @param {bolean} shouldCheckViewport - If true the element position is checked to be inside or outside the viewport
-   * @param {boolen} onlyOutsideViewport - only relevant when `shouldCheckViewport` is true. When this is also true the element is returned only if outside the viewport. By default the element is returned only if inside the viewport
+   * @param {boolean} shouldCheckViewport - If true the element position is checked to be inside or outside the viewport. Viewport is extended based on VIEWPORT_EXTENSION_PERCENTAGE_FRACTION
+   * @param {boolean} onlyOutsideViewport - only relevant when `shouldCheckViewport` is true. When this is also true the element is returned only if outside the viewport. By default the element is returned only if inside the viewport
+   * @param {boolean} useOutsideLimit - when true, outside elements are limited to those contained inside the frame between the extended viewport and the limit based on VIEWPORT_OUTSIDE_LIMIT_FRACTION.
    * @return {boolean} - true if the node is computed as visible
    */
-  isVisible: function (node, shouldCheckViewport = true, onlyOutsideViewport = false) {
+  isVisible: function (node, shouldCheckViewport = true, onlyOutsideViewport = false, useOutsideLimit = false) {
     if (!node || node.nodeType !== Node.ELEMENT_NODE) {
       console.error(
         `${this.LOG_PREFIX} Provided node is not a valid Element.`,
@@ -82,17 +84,37 @@ window.YoutubeAntiTranslate = {
           rect.left >= leftBoundary &&
           rect.right <= rightBoundary;
 
-        return !fullyContained;
+        if (!useOutsideLimit) {
+          return !fullyContained;
+        }
+
+        // Further extend the extended viewport by VIEWPORT_OUTSIDE_LIMIT_FRACTION to set the maximum outside limit
+        const extraHeight = window.innerHeight * this.VIEWPORT_OUTSIDE_LIMIT_FRACTION;
+        const extraWidth = window.innerWidth * this.VIEWPORT_OUTSIDE_LIMIT_FRACTION;
+
+        const outerTopBoundary = topBoundary - extraHeight;
+        const outerBottomBoundary = bottomBoundary + extraHeight;
+        const outerLeftBoundary = leftBoundary - extraWidth;
+        const outerRightBoundary = rightBoundary + extraWidth;
+
+        // Check if ANY part of the element is within the outer limit extended viewport
+        const intersectsOuterLimitViewport =
+          rect.bottom > outerTopBoundary &&
+          rect.top < outerBottomBoundary &&
+          rect.right > outerLeftBoundary &&
+          rect.left < outerRightBoundary;
+
+        return !fullyContained && intersectsOuterLimitViewport;
       }
       else {
         // Return true if ANY part of the element is INSIDE the extended viewport
-        const inExtendedViewport =
+        const intersectsExtendedViewport =
           rect.top < bottomBoundary &&
           rect.bottom > topBoundary &&
           rect.left < rightBoundary &&
           rect.right > leftBoundary;
 
-        return inExtendedViewport;
+        return intersectsExtendedViewport;
       }
     }
     return true;
@@ -102,7 +124,7 @@ window.YoutubeAntiTranslate = {
    * Given an Array of HTMLElements it returns visible HTMLElement or null
    * @type {Function}
    * @param {Node|NodeList} nodes - A NodeList or single Node of type ELEMENT_NODE
-   * @param {bolean} shouldBeInsideViewport - If true the element should also be inside the viewport to be considered visible
+   * @param {boolean} shouldBeInsideViewport - If true the element should also be inside the viewport to be considered visible
    * @returns {Node|null} - The first visible Node or null
    */
   getFirstVisible: function (nodes, shouldBeInsideViewport = true) {
@@ -114,7 +136,7 @@ window.YoutubeAntiTranslate = {
     }
 
     for (const node of nodes) {
-      if (this.isVisible(node, shouldBeInsideViewport)) {
+      if (this.isVisible(node, shouldBeInsideViewport, false, false)) {
         return node;
       }
     }
@@ -126,7 +148,7 @@ window.YoutubeAntiTranslate = {
    * Given an Array of HTMLElements it returns visible HTMLElement or null
    * @type {Function}
    * @param {Node|NodeList} nodes - A NodeList or single Node of type ELEMENT_NODE
-   * @param {bolean} shouldBeInsideViewport - If true the element should also be inside the viewport to be considered visible
+   * @param {boolean} shouldBeInsideViewport - If true the element should also be inside the viewport to be considered visible
    * @returns {Array<Node>|null} - A array of all the visible nodes or null
    */
   getAllVisibleNodes: function (nodes, shouldBeInsideViewport = true) {
@@ -140,7 +162,7 @@ window.YoutubeAntiTranslate = {
     let /** @type {Array<Node>} */ visibleNodes = null;
 
     for (const node of nodes) {
-      if (this.isVisible(node, shouldBeInsideViewport)) {
+      if (this.isVisible(node, shouldBeInsideViewport, false, false)) {
         if (visibleNodes) {
           visibleNodes.push(node);
         }
@@ -157,9 +179,10 @@ window.YoutubeAntiTranslate = {
    * Given an Array of HTMLElements it returns visible HTMLElement or null only if they are loaded outside the viewport
    * @type {Function}
    * @param {Node|NodeList} nodes - A NodeList or single Node of type ELEMENT_NODE
+   * @param {boolean} useOutsideLimit - when true, outside elements are limited to those contained inside the frame between the extended viewport and the limit based on VIEWPORT_OUTSIDE_LIMIT_FRACTION.
    * @returns {Array<Node>|null} - A array of all the visible nodes or null that are outside the viewport
    */
-  getAllVisibleNodesOutsideViewport: function (nodes) {
+  getAllVisibleNodesOutsideViewport: function (nodes, useOutsideLimit = false) {
     if (!nodes) {
       return null;
     }
@@ -170,7 +193,7 @@ window.YoutubeAntiTranslate = {
     let /** @type {Array<Node>} */ visibleNodes = null;
 
     for (const node of nodes) {
-      if (this.isVisible(node, true, true)) {
+      if (this.isVisible(node, true, true, useOutsideLimit)) {
         if (visibleNodes) {
           visibleNodes.push(node);
         }
