@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.18.1.6] - 2025-05-27
+
+### Changed
+
+- Further optimize IntersectionObserver logic
+
 ## [1.18.1.5] - 2025-05-26
 
 ### Fixed
@@ -17,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fix bug with audio (dubbing) not always untranslating on the first load (due to the persistence of player.unstranslatedAudio)
 
-### Changes
+### Changed
 
 - Do not process elements outside the viewport or not visible to avoid slowing the page
 - Use IntersectionObserver to dynamically work on the elements entering the viewport

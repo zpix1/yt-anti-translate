@@ -16,7 +16,7 @@ const intersectionObserverOtherVideos = new IntersectionObserver(untranslateOthe
 
 const ALL_ARRAYS_SHORTS_SELECTOR = `div.style-scope.ytd-rich-item-renderer,
 ytm-shorts-lockup-view-model`;
-const INTERSECTION_UPDATE_STEP_SHORTS = 4;
+const INTERSECTION_UPDATE_STEP_SHORTS = 2;
 let allIntersectShortElements = null;
 const intersectionObserverOtherShorts = new IntersectionObserver(untranslateOtherShortsOnIntersect, {
   root: null,  // viewport
@@ -296,7 +296,7 @@ async function createOrUpdateUntranslatedFakeNode(fakeNodeID, originalNodeSelect
 }
 
 async function untranslateOtherVideos(intersectElements = null) {
-  async function untranslateArray(otherVideos) {
+  async function untranslateOtherVideosArray(otherVideos) {
     if (!otherVideos) {
       return;
     }
@@ -374,17 +374,17 @@ async function untranslateOtherVideos(intersectElements = null) {
 
   if (intersectElements) {
     // If this was called from the intersect obesrver only check the newly intersecting items
-    void untranslateArray(intersectElements);
+    await untranslateOtherVideosArray(intersectElements);
     return;
   }
   // Selectors for all video containers
-  void untranslateArray(
+  await untranslateOtherVideosArray(
     window.YoutubeAntiTranslate.getAllVisibleNodes(document.querySelectorAll(ALL_ARRAYS_VIDEOS_SELECTOR))
   );
 }
 
 async function untranslateOtherShortsVideos(intersectElements = null) {
-  async function untranslateArray(shortsItems) {
+  async function untranslateOtherShortsArray(shortsItems) {
     if (!shortsItems) {
       return;
     }
@@ -469,11 +469,11 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
 
   if (intersectElements) {
     // If this was called from the intersect obesrver only check the newly intersecting items
-    void untranslateArray(intersectElements);
+    await untranslateOtherShortsArray(intersectElements);
     return;
   }
   // Run for all shorts items
-  void untranslateArray(
+  await untranslateOtherShortsArray(
     window.YoutubeAntiTranslate.getAllVisibleNodes(document.querySelectorAll(ALL_ARRAYS_SHORTS_SELECTOR))
   );
 }
@@ -541,9 +541,13 @@ async function untranslateOtherVideosOnIntersect(entries) {
 
 updateObserverOtherVideosOnIntersect();
 function updateObserverOtherVideosOnIntersect() {
-  allIntersectVideoElements?.forEach(el => intersectionObserverOtherVideos.unobserve(el));
-  allIntersectVideoElements = window.YoutubeAntiTranslate.getAllVisibleNodesOutsideViewport(document.querySelectorAll(ALL_ARRAYS_VIDEOS_SELECTOR));
-  allIntersectVideoElements?.forEach(el => intersectionObserverOtherVideos.observe(el));
+  for (const el of allIntersectVideoElements ?? []) {
+    intersectionObserverOtherVideos.unobserve(el)
+  }
+  allIntersectVideoElements = window.YoutubeAntiTranslate.getAllVisibleNodesOutsideViewport(document.querySelectorAll(ALL_ARRAYS_VIDEOS_SELECTOR), true);
+  for (const el of allIntersectVideoElements ?? []) {
+    intersectionObserverOtherVideos.observe(el)
+  }
 }
 
 // --- Observe all Other Shorts outside viewport for intersect ---
@@ -571,7 +575,11 @@ async function untranslateOtherShortsOnIntersect(entries) {
 
 updateObserverOtherShortsOnIntersect();
 function updateObserverOtherShortsOnIntersect() {
-  allIntersectShortElements?.forEach(el => intersectionObserverOtherShorts.unobserve(el));
-  allIntersectShortElements = window.YoutubeAntiTranslate.getAllVisibleNodesOutsideViewport(document.querySelectorAll(ALL_ARRAYS_SHORTS_SELECTOR));
-  allIntersectShortElements?.forEach(el => intersectionObserverOtherShorts.observe(el));
+  for (const el of allIntersectShortElements ?? []) {
+    intersectionObserverOtherShorts.unobserve(el)
+  }
+  allIntersectShortElements = window.YoutubeAntiTranslate.getAllVisibleNodesOutsideViewport(document.querySelectorAll(ALL_ARRAYS_SHORTS_SELECTOR), true);
+  for (const el of allIntersectShortElements ?? []) {
+    intersectionObserverOtherShorts.observe(el)
+  }
 }
