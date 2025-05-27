@@ -7,12 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.18.1.6] - 2025-05-27
 
-### Changed
-
-- Further optimize IntersectionObserver logic
-
-## [1.18.1.5] - 2025-05-26
-
 ### New Feature
 
 - Ported to Firefox as Manifest V3 [YouTube Anti Translate - mv3](https://addons.mozilla.org/firefox/addon/youtube-anti-translate-mv3/)
