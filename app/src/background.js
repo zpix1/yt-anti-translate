@@ -319,7 +319,10 @@ async function untranslateOtherVideos(intersectElements = null) {
 
       if (!linkElement || !titleElement) {
         // Try another common pattern before giving up
-        if (!linkElement) linkElement = video.querySelector("ytd-thumbnail a");
+        if (!linkElement) {
+          linkElement = video.querySelector("ytd-thumbnail a") ||
+            video.querySelector(`a[href*="/watch?v="]`);
+        }
         if (!titleElement)
           titleElement = video.querySelector("yt-formatted-string#video-title");
         if (!linkElement || !titleElement) {
@@ -397,9 +400,8 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
       }
 
       // Find link element to get URL
-      const linkElement = shortElement.querySelector(
-        "a.shortsLockupViewModelHostEndpoint"
-      );
+      const linkElement = shortElement.querySelector("a.shortsLockupViewModelHostEndpoint") ||
+        shortElement.querySelector(`a[href*="/shorts/"]`);
       if (!linkElement || !linkElement.href) {
         // Mark to avoid re-checking non-standard items, might not have a standard link
         shortElement.setAttribute("data-ytat-untranslated-other", "checked");
