@@ -451,14 +451,27 @@ test.describe("YouTube Anti-Translate extension", () => {
     await page.waitForSelector("ytd-rich-grid-media");
 
     // --- Check Videos Tab ---
-    const originalVideoTitle = "I Survived The 5 Deadliest Places On Earth";
+    const originalVideoTitle = "Surviving The 5 Deadliest Places On Earth";
     const translatedVideoTitle = "Я Выжил В 5 Самых Опасных Местах На Земле";
     const videoSelector = `ytd-rich-item-renderer:has-text("${originalVideoTitle}")`;
     const translatedVideoSelector = `ytd-rich-item-renderer:has-text("${translatedVideoTitle}")`;
 
+    const originalVideo = page.locator(videoSelector).first()
+    if (await originalVideo.isVisible()) {
+      await page.mouse.wheel(0, 500);
+      await originalVideo.scrollIntoViewIfNeeded();
+      try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
+    }
+    const translatedVideo = page.locator(translatedVideoSelector).first()
+    if (await translatedVideo.isVisible()) {
+      await page.mouse.wheel(0, 500);
+      await translatedVideo.scrollIntoViewIfNeeded();
+      try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
+    }
+
     console.log("Checking Videos tab for original title...");
-    await expect(page.locator(videoSelector)).toBeVisible();
-    await expect(page.locator(translatedVideoSelector)).not.toBeVisible();
+    await expect(originalVideo).toBeVisible();
+    await expect(translatedVideo).not.toBeVisible();
     console.log("Original video title found, translated title not found.");
 
     // --- Switch to Shorts Tab ---
@@ -475,16 +488,16 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     console.log("Checking Shorts tab for original title...");
     // Shorts might load dynamically, scroll into view to ensure it's loaded
-    const original = page.locator(shortSelector).first()
-    if (await original.isVisible()) {
+    const originalShort = page.locator(shortSelector).first()
+    if (await originalShort.isVisible()) {
       await page.mouse.wheel(0, 500);
-      await original.scrollIntoViewIfNeeded();
+      await originalShort.scrollIntoViewIfNeeded();
       try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
     }
-    const translated = page.locator(translatedShortSelector).first()
-    if (await translated.isVisible()) {
+    const translatedShort = page.locator(translatedShortSelector).first()
+    if (await translatedShort.isVisible()) {
       await page.mouse.wheel(0, 500);
-      await translated.scrollIntoViewIfNeeded();
+      await translatedShort.scrollIntoViewIfNeeded();
       try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
     }
     await page.waitForTimeout(1000); // Give it a moment to load more items if needed
@@ -503,16 +516,16 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     console.log("Checking Shorts tab for original title...");
     // Shorts might load dynamically, scroll into view to ensure it's loaded
-    const original2 = page.locator(shortSelector2).first()
-    if (await original2.isVisible()) {
+    const originalShort2 = page.locator(shortSelector2).first()
+    if (await originalShort2.isVisible()) {
       await page.mouse.wheel(0, 500);
-      await original2.scrollIntoViewIfNeeded();
+      await originalShort2.scrollIntoViewIfNeeded();
       try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
     }
-    const translated2 = page.locator(translatedShortSelector2).first()
-    if (await translated2.isVisible()) {
+    const translatedShort2 = page.locator(translatedShortSelector2).first()
+    if (await translatedShort2.isVisible()) {
       await page.mouse.wheel(0, 500);
-      await translated2.scrollIntoViewIfNeeded();
+      await translatedShort2.scrollIntoViewIfNeeded();
       try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
     }
     await page.waitForTimeout(1000); // Give it a moment to load more items if needed
