@@ -221,6 +221,13 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     // Take a screenshot for visual verification
     await page.screenshot({ path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-channel-branding-header${addToScreenshotName}-test.png` });
 
+    // Check page title
+    const pageTitle = await page.title()
+    console.log("Document title for the Video is:", pageTitle?.trim());
+    // Check that the document title is in English and not in Thai
+    expect(pageTitle).toContain("MrBeast");
+    expect(pageTitle).not.toContain("มิสเตอร์บีสต์");
+
     // Check console message count
     expect(consoleMessageCount).toBeLessThan(
       2000
