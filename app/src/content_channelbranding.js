@@ -11,7 +11,7 @@ async function detectChannelOriginalLanguage() {
   const videoElements = window.YoutubeAntiTranslate.getAllVisibleNodes(
     document.querySelectorAll(`${window.YoutubeAntiTranslate.ALL_ARRAYS_SHORTS_SELECTOR},
       ${window.YoutubeAntiTranslate.ALL_ARRAYS_VIDEOS_SELECTOR}`),
-    false,
+    true,
     5
   );
 
@@ -78,7 +78,7 @@ async function detectChannelOriginalLanguage() {
   }
 
   try {
-    const detection = await window.YoutubeAntiTranslate.getBrowserOrChrome().detectLanguage(combinedTitle);
+    const detection = await window.YoutubeAntiTranslate.getBrowserOrChrome().i18n.detectLanguage(combinedTitle);
     if (!detection.isReliable) {
       console.warn(`${window.YoutubeAntiTranslate.LOG_PREFIX} language detection may be unreliable`);
     }
@@ -176,7 +176,7 @@ async function getChannelUCID() {
  * @param {string} locale Optional BCP-47 tag, e.g. "it-IT" or "fr". Defaults to the user’s browser language.
  * @returns {object}      The title and description branding.
  */
-async function getChannelBranding(ucid = null, locale = null) {
+async function getChannelBrandingWithYoutubeI(ucid = null, locale = null) {
   if (!ucid) {
     ucid = await getChannelUCID();
   }
@@ -243,11 +243,9 @@ async function getChannelBranding(ucid = null, locale = null) {
 
   const result = {
     title: metadata?.title, // channel name
-    truncatedDerscription: hdr?.content?.pageHeaderViewModel?.description?.descriptionPreviewViewModel?.description?.content,
+    truncatedDescription: hdr?.content?.pageHeaderViewModel?.description?.descriptionPreviewViewModel?.description?.content,
     description: metadata?.description // full description
   };
-
-  console.log(window.YoutubeAntiTranslate.LOG_PREFIX, result);
 
   if (!metadata || !hdr) {
     return;
@@ -287,7 +285,7 @@ function getChannelFilter() {
  * @param {string} youtubeDataApiKey - the Youtube Data API key as set from storage/sync
  * @returns title and descripton brandingSettings from googleapis or cache
  */
-async function fetchChannelTitleAndDescription(youtubeDataApiKey) {
+async function getChannelBrandingWithYoutubeDataAPI(youtubeDataApiKey) {
   const channelFilter = await getChannelFilter();
   if (!channelFilter) {
     console.error('Channel ID not found');
@@ -303,7 +301,7 @@ async function fetchChannelTitleAndDescription(youtubeDataApiKey) {
   }
 
   const apiKey = youtubeDataApiKey
-  if (!apiKey) {
+  if (!apiKey || apiKey.trim() === "") {
     console.error('Missing YOUTUBE_API_KEY is not set');
     return null;
   }
@@ -344,7 +342,13 @@ async function restoreOriginalBrandingHeader() {
         youtubeDataApiKey: null
       },
       async (items) => {
-        const originalBrandingData = await fetchChannelTitleAndDescription(items.youtubeDataApiKey);
+        const originalBrandingData = items.youtubeDataApiKey ? await getChannelBrandingWithYoutubeDataAPI(items.youtubeDataApiKey) : await getChannelBrandingWithYoutubeI()
+          || await getChannelBrandingWithYoutubeI(); // Fallback to YouTubeI again if something went wrong with YoutubeDataAPI
+
+        if (!originalBrandingData) {
+          // fallback to YoutubeI and i18n.detectedLanguage() solution
+          originalBrandingData = await getChannelBrandingWithYoutubeI();
+        }
 
         if (!originalBrandingData) {
         }
@@ -377,13 +381,13 @@ function updateBrandingHeaderTitleContent(container, originalBrandingData) {
     if (!titleTextContainer) {
       console.log(`${window.YoutubeAntiTranslate.LOG_PREFIX} No branding header title text containers found`);
     }
-    else if (titleTextContainer.innerText !== originalBrandingData.title) {
-      window.YoutubeAntiTranslate.replaceTextOnly(titleTextContainer, originalBrandingData.title)
-
+    else if (titleTextContainer.textContent !== originalBrandingData.title) {
       document.title = document.title.replace(
-        titleTextContainer.innerText,
-        originalBrandingData.title
+        window.YoutubeAntiTranslate.normalizeSpaces(titleTextContainer.textContent),
+        window.YoutubeAntiTranslate.normalizeSpaces(originalBrandingData.title)
       );
+
+      window.YoutubeAntiTranslate.replaceTextOnly(titleTextContainer, originalBrandingData.title)
     }
   }
 }
@@ -401,8 +405,8 @@ function updateBrandingHeaderDescriptionContent(container, originalBrandingData)
       console.log(`${window.YoutubeAntiTranslate.LOG_PREFIX} No branding header description text containers found`);
     }
     else {
-      const truncatedDescription = originalBrandingData.description.split("\n")[0];
-      if (descriptionTextContainer.innerText !== truncatedDescription) {
+      const truncatedDescription = originalBrandingData.truncatedDescription || originalBrandingData.description.split("\n")[0];
+      if (descriptionTextContainer.innerText?.trim() !== truncatedDescription?.trim()) {
         const storeStyleDisplay = descriptionTextContainer.parentElement.style.display
         descriptionTextContainer.parentElement.style.display = "none"
         window.YoutubeAntiTranslate.replaceTextOnly(descriptionTextContainer, truncatedDescription)
@@ -423,7 +427,8 @@ async function restoreOriginalBrandingAbout() {
         youtubeDataApiKey: null
       },
       async (items) => {
-        const originalBrandingData = await fetchChannelTitleAndDescription(items.youtubeDataApiKey);
+        const originalBrandingData = items.youtubeDataApiKey ? await getChannelBrandingWithYoutubeDataAPI(items.youtubeDataApiKey) : await getChannelBrandingWithYoutubeI()
+          || await getChannelBrandingWithYoutubeI(); // Fallback to YouTubeI again if something went wrong with YoutubeDataAPI
 
         if (!originalBrandingData) {
         }
@@ -481,12 +486,12 @@ function updateBrandingAboutDescriptionContent(container, originalBrandingData) 
     }
     else {
       let formattedContent;
-      const originalTextFirstLine = originalBrandingData.description.split("\n")[0];
+      const originalTextFirstLine = originalBrandingData.truncatedDescription || originalBrandingData.description.split("\n")[0];
       // Compare text first span>span against first line first to avaoid waisting resources on formatting content
       if (
         descriptionTextContainer.hasChildNodes()
         && descriptionTextContainer.firstChild.hasChildNodes()
-        && descriptionTextContainer.firstChild.firstChild.textContent === originalTextFirstLine
+        && descriptionTextContainer.firstChild.firstChild.textContent?.trim() === originalTextFirstLine?.trim()
       ) {
         // If identical create formatted content and compare with firstchild text content to determine if any change is needed
         formattedContent = window.YoutubeAntiTranslate.createFormattedContent(originalBrandingData.description);
@@ -529,7 +534,7 @@ async function untranslateBranding() {
 // Initialize the mutation observer for branding
 chrome.storage.sync.get(
   {
-    untranslateChannelBranding: false
+    untranslateChannelBranding: true
   },
   async (items) => {
     if (items.untranslateChannelBranding) {

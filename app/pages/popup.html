@@ -74,16 +74,19 @@
         font-size: 15px;
       }
 
+      details#api-key-section a,
       .footer {
         font-size: 13px;
         font-style: italic;
       }
 
+      details#api-key-section a,
       .footer a {
         color: #008cba;
         text-decoration: none;
       }
 
+      details#api-key-section a:hover,
       .footer a:hover {
         text-decoration: underline;
       }
@@ -129,10 +132,8 @@
           background-color: #121212;
           color: #f0f0f0;
         }
+        details#api-key-section a:hover,
         .footer a {
-          color: #66d9ef;
-        }
-        details#api-key-section a {
           color: #66d9ef;
         }
       }
@@ -155,17 +156,6 @@
         padding: 5px;
         margin-bottom: 10px;
         overflow: hidden;
-      }
-
-      details#api-key-section a {        
-        font-size: 12px;
-        font-style: italic;
-        color: #008cba;
-        text-decoration: none;
-      }
-
-      .details#api-key-section a:hover {
-        text-decoration: underline !important;
       }
 
       details#api-key-section summary {
@@ -232,24 +222,21 @@
           <input id="description-checkbox" type="checkbox" checked />
         </div>
         <div class="option">
+          <span>Untranslate channel branding</span>
+          <input id="channel-branding-checkbox" type="checkbox" />
+        </div>
+        <div class="option">
           <span>Reload page automatically</span>
           <input id="reload-checkbox" type="checkbox" checked />
         </div>
         <details id="api-key-section" class="option" style="margin-bottom: 10px;">
-          <summary><strong>API Key Features</strong></summary>
+          <summary><strong>YouTube Data API Key</strong></summary>
           <div id="api-key-container">
             <div>
-              <p><a target="_blank" href="https://github.com/zpix1/yt-anti-translate/blob/main/YOUTUBE_DATA_API_KEY.md">Additional features require a YouTube Data API Key</a></p>
+              <p><a target="_blank" href="https://github.com/zpix1/yt-anti-translate/blob/main/YOUTUBE_DATA_API_KEY.md">Some features <b>work better</b> with a YouTube Data API Key</a></p>
             </div>
             <input id="api-key-input" type="password" placeholder="Enter API key" />
             <button id="save-api-key-button"><span id="save-api-key-text">Save API Key</span></button>
-          </div>
-          <div class="option bordered-group" id="additional-features" style="display: none;">
-            <small>Additional Features</small>
-            <div class="option">
-              <span>Untranslate channel branding</span>
-              <input id="channel-branding-checkbox" type="checkbox" />
-            </div>
           </div>
         </details>
       </div>

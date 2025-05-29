@@ -13,15 +13,16 @@ It is much easier to use than its analogues (such as [YoutubeAutotranslateCancel
 
 - Restores original video titles on YouTube (Title Anti-Translation)
 - Restores original video descriptions on YouTube (can be toggled in settings "Untranslate description")
-- Disables automatic audio translation (can be toggled in settings "Untranslate audio track")
+- Disables automatic audio (dubbing) translation (can be toggled in settings "Untranslate audio track")
+- Restores original channel branding header and about on YouTube (can be toggled in settings "Untranslate channel branding")
 - Untranslates YouTube Shorts audio and titles
 - Works automatically without any configuration
 
-### Extra Features
+### Improved Features Reliability
 
-Extra features need a YouTube Data API Key to be populated in the extension settings. [Read more on how to obtain](https://github.com/zpix1/yt-anti-translate/blob/main/YOUTUBE_DATA_API_KEY.md)
-
-- Restores original channel branding header and about on YouTube (can be toggled in settings "Untranslate channel branding")
+In the extension settings, you can optionally provide a YouTube Data API Key.
+When that is populated, some features work more reliably.
+[Read more on how to obtain](https://github.com/zpix1/yt-anti-translate/blob/main/YOUTUBE_DATA_API_KEY.md)
 
 ## How to use
 

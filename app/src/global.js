@@ -84,7 +84,7 @@ ytm-shorts-lockup-view-model`,
    * @returns {bool}
   */
   isFirefoxBasedBrowser: function () {
-    return typeof browser !== "undefined" && typeof browser.runtime !== "undefined" && browser.runtime.getBrowserInfo() === 'function';
+    return typeof browser !== "undefined" && typeof browser.runtime !== "undefined" && typeof browser.runtime.getBrowserInfo === 'function';
   },
 
   /**
@@ -238,7 +238,7 @@ ytm-shorts-lockup-view-model`,
         }
 
         if (visibleNodes.length === lengthLimit) {
-          continue;
+          break;
         }
       }
     }
