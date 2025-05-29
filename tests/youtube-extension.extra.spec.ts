@@ -13,9 +13,11 @@ require('dotenv').config();
 
 test.describe("YouTube Anti-Translate extension - Extras", () => {
   test("YouTube channel branding header and about retain original content", async ({ browserNameWithExtensions, localeString }, testInfo) => {
+    expect(process.env.YOUTUBE_API_KEY?.trim() || "").not.toBe("");
+
     if (testInfo.retry > 0) {
       // If this test is retring then check uBlock and Auth again
-      await setupUBlockAndAuth([browserNameWithExtensions], [localeString]);
+      expect(await setupUBlockAndAuth([browserNameWithExtensions], [localeString])).toBe(true);
     }
 
     // --- Update Extension Settings and distribute a test copy ---
@@ -196,7 +198,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
   test("YouTube video player retain original author", async ({ browserNameWithExtensions, localeString }, testInfo) => {
     if (testInfo.retry > 0) {
       // If this test is retring then check uBlock and Auth again
-      await setupUBlockAndAuth([browserNameWithExtensions], [localeString]);
+      expect(await setupUBlockAndAuth([browserNameWithExtensions], [localeString])).toBe(true);
     }
 
     // Launch browser with the extension

@@ -1,4 +1,4 @@
-import { BrowserContext } from '@playwright/test';
+import { expect } from '@playwright/test';
 import fs from 'fs';
 import * as OTPAuth from "otpauth";
 import path from 'path';
@@ -15,6 +15,14 @@ require('dotenv').config();
  * @returns
  */
 export async function newPageWithStorageStateIfItExists(context, browserName: string, locale: string) {
+  if (
+    !process.env.GOOGLE_USER || process.env.GOOGLE_USER.trim() === ""
+    || !process.env.GOOGLE_PWD || process.env.GOOGLE_PWD.trim() === ""
+    || !process.env.GOOGLE_OTP_SECRET || process.env.GOOGLE_OTP_SECRET.trim() === ""
+  ) {
+    throw "Google auth env must be set."
+  }
+
   let authFile;
   switch (browserName) {
     case "chromium":
