@@ -18,7 +18,7 @@ It is much easier to use than its analogues (such as [YoutubeAutotranslateCancel
 - Untranslates YouTube Shorts audio and titles
 - Works automatically without any configuration
 
-### Improved Features Reliability
+### Enhanced Features Reliability Option
 
 In the extension settings, you can optionally provide a YouTube Data API Key.
 When that is populated, some features work more reliably.
