@@ -1,11 +1,6 @@
-// --- Check Permissions ---
-const permissionsAPI = typeof browser !== 'undefined' && browser.permissions
-  ? browser.permissions
-  : chrome.permissions;
-
 async function hasPermanentHostPermission(origin) {
   return new Promise((resolve, reject) => {
-    permissionsAPI.getAll((allPermissions) => {
+    window.YoutubeAntiTranslate.getBrowserOrChrome().permissions.getAll((allPermissions) => {
       if (chrome.runtime.lastError) {
         reject(chrome.runtime.lastError);
       } else {
@@ -38,10 +33,6 @@ function requestPermissions() {
 }
 
 // --- Render footer ---
-function isFirefoxBasedBrowser() {
-  return typeof browser !== "undefined" && typeof browser.runtime !== "undefined";
-}
-
 function renderFooterLinks() {
   const footer = document.getElementById("footer-links");
 
@@ -51,7 +42,7 @@ function renderFooterLinks() {
     <a target="_blank" href="https://github.com/zpix1/yt-anti-translate">Report issues</a>
   `;
 
-  if (isFirefoxBasedBrowser()) {
+  if (window.YoutubeAntiTranslate.isFirefoxBasedBrowser()) {
     footer.innerHTML = `
       <a target="_blank" href="https://addons.mozilla.org/firefox/addon/youtube-anti-translate-mv3/">Rate Firefox extension</a> • 
       ${commonLinks} • 

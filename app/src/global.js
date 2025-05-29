@@ -21,6 +21,24 @@ window.YoutubeAntiTranslate = {
       : "ytd-player .html5-video-player";
   },
 
+  /** 
+   * @type {Fuction} 
+   * @returns {string}
+  */
+  getBrowserOrChrome: function () {
+    return typeof browser !== 'undefined'
+      ? browser
+      : chrome;
+  },
+
+  /** 
+   * @type {Fuction} 
+   * @returns {bool}
+  */
+  isFirefoxBasedBrowser: function () {
+    return typeof browser !== "undefined" && typeof browser.runtime !== "undefined" && browser.runtime.getBrowserInfo() === 'function';
+  },
+
   /**
    * normalize spaces in a string so that there are no more than 1 space between words
    * @type {Fuction} 

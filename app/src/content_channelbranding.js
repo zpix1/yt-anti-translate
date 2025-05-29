@@ -78,13 +78,9 @@ async function detectChannelOriginalLanguage() {
   // Store in cache
   window.YoutubeAntiTranslate.cache.set(oembedUrl, json);
 
-  const i18nAPI = typeof browser !== 'undefined' && browser.i18n
-    ? browser.i18n
-    : chrome.i18n;
-
   let languageDetected;
   try {
-    languageDetected = await i18nAPI.detectLanguage(embededTitle);
+    languageDetected = await window.YoutubeAntiTranslate.getBrowserOrChrome().i18n.detectLanguage(embededTitle);
   } catch (err) {
     console.warn("detectLanguage() failed, using navigator.language");
     return navigator.language;
