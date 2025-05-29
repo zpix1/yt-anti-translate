@@ -12,7 +12,7 @@ async function detectChannelOriginalLanguage() {
     document.querySelectorAll(`${window.YoutubeAntiTranslate.ALL_ARRAYS_SHORTS_SELECTOR},
       ${window.YoutubeAntiTranslate.ALL_ARRAYS_VIDEOS_SELECTOR}`),
     true,
-    5
+    20
   );
 
   if (!videoElements || videoElements.length === 0) {
@@ -79,14 +79,15 @@ async function detectChannelOriginalLanguage() {
 
   try {
     const detection = await window.YoutubeAntiTranslate.getBrowserOrChrome().i18n.detectLanguage(combinedTitle);
-    if (!detection.isReliable) {
-      console.warn(`${window.YoutubeAntiTranslate.LOG_PREFIX} language detection unreliable`);
+    if (
+      !detection.languages
+      || detection.languages.length === 0
+    ) {
       return null;
     }
     return detection.languages[0].language;
   }
   catch (err) {
-    console.warn(`${window.YoutubeAntiTranslate.LOG_PREFIX} detectLanguage() failed`);
     return null;
   }
 }
