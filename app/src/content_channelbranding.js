@@ -3,93 +3,91 @@ const CHANNELBRANDING_HEADER_SELECTOR = "#page-header-container #page-header .pa
 const CHANNELBRANDING_ABOUT_SELECTOR = "ytd-engagement-panel-section-list-renderer";
 const CHANNELBRANDING_MUTATION_UPDATE_FREQUENCY = 1;
 
-const ALL_ARRAYS_VIDEOS_SELECTOR = `ytd-video-renderer,
-ytd-rich-item-renderer,
-ytd-compact-video-renderer,
-ytd-grid-video-renderer,
-ytd-playlist-video-renderer,
-ytd-playlist-panel-video-renderer`;
-const ALL_ARRAYS_SHORTS_SELECTOR = `div.style-scope.ytd-rich-item-renderer,
-ytm-shorts-lockup-view-model`;
-
+/**
+ * Use channel videos or shorts original titles to determine the original locale with i18n.detectLanguage()
+ * @returns {string|null} detected locale ISO string or null
+ */
 async function detectChannelOriginalLanguage() {
-  const fistVideoElement = window.YoutubeAntiTranslate.getFirstVisible(document.querySelectorAll(`${ALL_ARRAYS_SHORTS_SELECTOR},
-    ${ALL_ARRAYS_VIDEOS_SELECTOR}`), false);
-  if (!fistVideoElement) {
+  const videoElements = window.YoutubeAntiTranslate.getAllVisibleNodes(
+    document.querySelectorAll(`${window.YoutubeAntiTranslate.ALL_ARRAYS_SHORTS_SELECTOR},
+      ${window.YoutubeAntiTranslate.ALL_ARRAYS_VIDEOS_SELECTOR}`),
+    false,
+    5
+  );
+
+  if (!videoElements || videoElements.length === 0) {
     return;
   }
 
-  let fistVideoElementHref = null;
+  let combinedTitle = "";
 
-  // try finding href as a video
-  let linkElement =
-    fistVideoElement.querySelector("a#video-title-link") ||
-    fistVideoElement.querySelector("a#thumbnail") ||
-    fistVideoElement.querySelector("ytd-thumbnail a") ||
-    fistVideoElement.querySelector(`a[href*="/watch?v="]`);
+  for (const el of videoElements) {
+    let linkElement =
+      el.querySelector("a#video-title-link") ||
+      el.querySelector("a#thumbnail") ||
+      el.querySelector("ytd-thumbnail a") ||
+      el.querySelector(`a[href*="/watch?v="]`) ||
+      el.querySelector("a.shortsLockupViewModelHostEndpoint") ||
+      el.querySelector(`a[href*="/shorts/"]`);
 
-  if (linkElement) {
-    fistVideoElementHref = linkElement.href; // Use the link's href for oEmbed and as the key
-  }
+    if (!linkElement) continue;
 
-  // try again as a short
-  if (!linkElement) {
-    linkElement = fistVideoElement.querySelector("a.shortsLockupViewModelHostEndpoint") ||
-      fistVideoElement.querySelector(`a[href*="/shorts/"]`);
+    let href = linkElement.href;
+    if (!href) continue;
 
-    const videoHref = linkElement.href;
-    // Extract short video ID from URLs like /shorts/VIDEO_ID
-    const videoIdMatch = videoHref.match(/shorts\/([a-zA-Z0-9_-]+)/);
-    if (!videoIdMatch || !videoIdMatch[1]) {
-      return;
+    // Handle shorts specifically
+    if (href.includes("/shorts/")) {
+      const match = href.match(/shorts\/([a-zA-Z0-9_-]+)/);
+      if (!match || !match[1]) continue;
+      href = `https://www.youtube.com/shorts/${match[1]}`;
     }
-    const videoId = videoIdMatch[1];
 
-    fistVideoElementHref = `https://www.youtube.com/shorts/${videoId}`
+    const oembedUrl = `https://www.youtube.com/oembed?url=${href}`;
+
+    let titleFromEmbed;
+
+    // Check cache first
+    const storedResponse = window.YoutubeAntiTranslate.getSessionCache(oembedUrl);
+    if (storedResponse) {
+      titleFromEmbed = `${storedResponse.title} ${storedResponse.author_name}`;
+    }
+    else {
+      try {
+        const res = await fetch(oembedUrl);
+        if (!res.ok) {
+          console.warn(`Failed to fetch ${oembedUrl}:`, res.statusText);
+          continue;
+        }
+
+        const json = await res.json();
+        titleFromEmbed = `${json.title} ${json.author_name}`;
+        window.YoutubeAntiTranslate.setSessionCache(oembedUrl, json);
+      } catch (e) {
+        console.error("Fetch failed:", e);
+        continue;
+      }
+    }
+
+    if (titleFromEmbed) {
+      combinedTitle += `${titleFromEmbed}. `;
+    }
   }
 
-  if (!fistVideoElementHref) {
+  if (!combinedTitle.trim()) {
     return;
   }
 
-  const oembedUrl = `https://www.youtube.com/oembed?url=${fistVideoElementHref}`
-
-  let embededTitle = null
-  // Check cache
-  if (window.YoutubeAntiTranslate.cache.has(oembedUrl)) {
-    const embeded = window.YoutubeAntiTranslate.cache.get(oembedUrl);
-    embededTitle = `${embeded.title} ${embeded.author_name}`
-  }
-
-  let res = await fetch(oembedUrl);
-
-  if (!res.ok) {
-    console.error(`Failed to fetch ${oembedUrl}:`, res.statusText);
-    return;
-  }
-
-  const json = await res.json();
-
-  embededTitle = `${json.title} ${json.author_name}`
-  if (!embededTitle) {
-    return;
-  }
-
-  // Store in cache
-  window.YoutubeAntiTranslate.cache.set(oembedUrl, json);
-
-  let languageDetected;
   try {
-    languageDetected = await window.YoutubeAntiTranslate.getBrowserOrChrome().i18n.detectLanguage(embededTitle);
-  } catch (err) {
-    console.warn("detectLanguage() failed, using navigator.language");
-    return navigator.language;
+    const detection = await window.YoutubeAntiTranslate.getBrowserOrChrome().detectLanguage(combinedTitle);
+    if (!detection.isReliable) {
+      console.warn(`${window.YoutubeAntiTranslate.LOG_PREFIX} language detection may be unreliable`);
+    }
+    return detection.languages[0].language;
   }
-
-  if (!languageDetected.isReliable) {
-    console.warn(`${window.YoutubeAntiTranslate.LOG_PREFIX} the language detected may not be correct`);
+  catch (err) {
+    console.warn(`${window.YoutubeAntiTranslate.LOG_PREFIX} detectLanguage() failed`);
+    return null;
   }
-  return languageDetected.languages[0].language
 }
 
 /**
@@ -114,8 +112,9 @@ async function lookupChannelId(query) {
   const requestIdentifier = `youtubei/v1/search_${JSON.stringify(body)}`
 
   // Check cache
-  if (window.YoutubeAntiTranslate.cache.has(requestIdentifier)) {
-    return window.YoutubeAntiTranslate.cache.get(requestIdentifier);
+  const storedResponse = window.YoutubeAntiTranslate.getSessionCache(requestIdentifier);
+  if (storedResponse) {
+    return storedResponse;
   }
 
   const search = "https://www.youtube.com/youtubei/v1/search?prettyPrint=false"
@@ -140,7 +139,7 @@ async function lookupChannelId(query) {
   }
 
   // Store in cache
-  window.YoutubeAntiTranslate.cache.set(requestIdentifier, channelUcid);
+  window.YoutubeAntiTranslate.setSessionCache(requestIdentifier, channelUcid);
 
   return channelUcid;
 }
@@ -218,8 +217,9 @@ async function getChannelBranding(ucid = null, locale = null) {
   const requestIdentifier = `youtubei/v1/browse_${JSON.stringify(body)}`
 
   // Check cache
-  if (window.YoutubeAntiTranslate.cache.has(requestIdentifier)) {
-    return window.YoutubeAntiTranslate.cache.get(requestIdentifier);
+  const storedResponse = window.YoutubeAntiTranslate.getSessionCache(requestIdentifier);
+  if (storedResponse) {
+    return storedResponse;
   }
 
   const browse = "https://www.youtube.com/youtubei/v1/browse?prettyPrint=false";
@@ -254,7 +254,7 @@ async function getChannelBranding(ucid = null, locale = null) {
   }
 
   // Store in cache
-  window.YoutubeAntiTranslate.cache.set(requestIdentifier, result);
+  window.YoutubeAntiTranslate.setSessionCache(requestIdentifier, result);
 
   return result;
 }
@@ -294,9 +294,12 @@ async function fetchChannelTitleAndDescription(youtubeDataApiKey) {
     return null;
   }
 
+  const url = `https://www.googleapis.com/youtube/v3/channels?part=brandingSettings&${channelFilter}`;
+
   // Check cache
-  if (window.YoutubeAntiTranslate.cache.has(channelFilter)) {
-    return window.YoutubeAntiTranslate.cache.get(channelFilter);
+  const storedResponse = window.YoutubeAntiTranslate.getSessionCache(url);
+  if (storedResponse) {
+    return storedResponse;
   }
 
   const apiKey = youtubeDataApiKey
@@ -305,8 +308,7 @@ async function fetchChannelTitleAndDescription(youtubeDataApiKey) {
     return null;
   }
 
-  const url = `https://www.googleapis.com/youtube/v3/channels?part=brandingSettings&${channelFilter}&key=${apiKey}`;
-  const response = await fetch(url);
+  const response = await fetch(`${url}&key=${apiKey}`);
 
   if (!response.ok) {
     console.error('Failed to fetch from YouTube API:', response.statusText);
@@ -327,7 +329,7 @@ async function fetchChannelTitleAndDescription(youtubeDataApiKey) {
   };
 
   // Store in cache
-  window.YoutubeAntiTranslate.cache.set(channelFilter, result);
+  window.YoutubeAntiTranslate.setSessionCache(url, result);
 
   return result;
 }

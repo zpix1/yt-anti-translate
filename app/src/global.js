@@ -9,7 +9,55 @@ window.YoutubeAntiTranslate = {
 
   /** @type {string} */ CORE_ATTRIBUTED_STRING_SELECTOR: ".yt-core-attributed-string",
 
-  /** @type {Map<any, any>} */ cache: new Map(),
+  /** @type {string} */ ALL_ARRAYS_VIDEOS_SELECTOR: `ytd-video-renderer,
+ytd-rich-item-renderer,
+ytd-compact-video-renderer,
+ytd-grid-video-renderer,
+ytd-playlist-video-renderer,
+ytd-playlist-panel-video-renderer`,
+
+  /** @type {string} */ ALL_ARRAYS_SHORTS_SELECTOR: `div.style-scope.ytd-rich-item-renderer,
+ytm-shorts-lockup-view-model`,
+
+  /** @type {string} */ cacheSessionStorageKey: "[YoutubeAntiTranslate]cache",
+
+  /** 
+   * Retrieves a deserialized object from session storage.
+   * @type {Fuction} 
+   * @param {string} key
+   * @return {any|null}
+  */
+  getSessionCache: function (key) {
+    const fullKey = `${this.cacheSessionStorageKey}_${key}`;
+    const raw = sessionStorage.getItem(fullKey);
+    if (!raw) return null;
+
+    try {
+      return JSON.parse(raw);
+    }
+    catch (err) {
+      console.warn(`${this.LOG_PREFIX} Failed to parse session cache for key "${key}"`, err);
+      sessionStorage.removeItem(fullKey); // clear corrupted entry
+      return null;
+    }
+  },
+
+  /** 
+   * Stores a value in session storage after serializing
+   * @type {Fuction} 
+   * @param {string} key
+   * @param {any} value
+  */
+  setSessionCache: function (key, value) {
+    const fullKey = `${this.cacheSessionStorageKey}_${key}`;
+    try {
+      sessionStorage.setItem(fullKey, JSON.stringify(value));
+    } catch (err) {
+      console.error(`${this.LOG_PREFIX} Failed to set session cache for key "${key}"`, err);
+    }
+  },
+
+  cache: new Map(),
 
   /** 
    * @type {Fuction} 
@@ -53,9 +101,9 @@ window.YoutubeAntiTranslate = {
    * Given a Node it uses computed style to determine if it is visible
    * @type {Function}
    * @param {Node} node - A Node of type ELEMENT_NODE
-   * @param {boolean} shouldCheckViewport - If true the element position is checked to be inside or outside the viewport. Viewport is extended based on VIEWPORT_EXTENSION_PERCENTAGE_FRACTION
-   * @param {boolean} onlyOutsideViewport - only relevant when `shouldCheckViewport` is true. When this is also true the element is returned only if outside the viewport. By default the element is returned only if inside the viewport
-   * @param {boolean} useOutsideLimit - when true, outside elements are limited to those contained inside the frame between the extended viewport and the limit based on VIEWPORT_OUTSIDE_LIMIT_FRACTION.
+   * @param {boolean} shouldCheckViewport - Optional. If true the element position is checked to be inside or outside the viewport. Viewport is extended based on VIEWPORT_EXTENSION_PERCENTAGE_FRACTION. Defaults true
+   * @param {boolean} onlyOutsideViewport - Optional. only relevant when `shouldCheckViewport` is true. When this is also true the element is returned only if outside the viewport. By default the element is returned only if inside the viewport. Defaults false
+   * @param {boolean} useOutsideLimit - Optional. when true, outside elements are limited to those contained inside the frame between the extended viewport and the limit based on VIEWPORT_OUTSIDE_LIMIT_FRACTION. Defaults false
    * @return {boolean} - true if the node is computed as visible
    */
   isVisible: function (node, shouldCheckViewport = true, onlyOutsideViewport = false, useOutsideLimit = false) {
@@ -142,7 +190,7 @@ window.YoutubeAntiTranslate = {
    * Given an Array of HTMLElements it returns visible HTMLElement or null
    * @type {Function}
    * @param {Node|NodeList} nodes - A NodeList or single Node of type ELEMENT_NODE
-   * @param {boolean} shouldBeInsideViewport - If true the element should also be inside the viewport to be considered visible
+   * @param {boolean} shouldBeInsideViewport - Optional. If true the element should also be inside the viewport to be considered visible. Defaults true
    * @returns {Node|null} - The first visible Node or null
    */
   getFirstVisible: function (nodes, shouldBeInsideViewport = true) {
@@ -166,10 +214,11 @@ window.YoutubeAntiTranslate = {
    * Given an Array of HTMLElements it returns visible HTMLElement or null
    * @type {Function}
    * @param {Node|NodeList} nodes - A NodeList or single Node of type ELEMENT_NODE
-   * @param {boolean} shouldBeInsideViewport - If true the element should also be inside the viewport to be considered visible
+   * @param {boolean} shouldBeInsideViewport - Optional. If true the element should also be inside the viewport to be considered visible. Defaults true
+   * @param {Number} lengthLimit - Optional. Limit the number of items in the array. As soon as the correspoinding array length is reached, the array is returned prematurelly. Defaults to Number.MAX_VALUE
    * @returns {Array<Node>|null} - A array of all the visible nodes or null
    */
-  getAllVisibleNodes: function (nodes, shouldBeInsideViewport = true) {
+  getAllVisibleNodes: function (nodes, shouldBeInsideViewport = true, lengthLimit = Number.MAX_VALUE) {
     if (!nodes) {
       return null;
     }
@@ -187,6 +236,10 @@ window.YoutubeAntiTranslate = {
         else {
           visibleNodes = [node];
         }
+
+        if (visibleNodes.length === lengthLimit) {
+          continue;
+        }
       }
     }
 
@@ -197,7 +250,7 @@ window.YoutubeAntiTranslate = {
    * Given an Array of HTMLElements it returns visible HTMLElement or null only if they are loaded outside the viewport
    * @type {Function}
    * @param {Node|NodeList} nodes - A NodeList or single Node of type ELEMENT_NODE
-   * @param {boolean} useOutsideLimit - when true, outside elements are limited to those contained inside the frame between the extended viewport and the limit based on VIEWPORT_OUTSIDE_LIMIT_FRACTION.
+   * @param {boolean} useOutsideLimit - Optional. when true, outside elements are limited to those contained inside the frame between the extended viewport and the limit based on VIEWPORT_OUTSIDE_LIMIT_FRACTION. Defaults false
    * @returns {Array<Node>|null} - A array of all the visible nodes or null that are outside the viewport
    */
   getAllVisibleNodesOutsideViewport: function (nodes, useOutsideLimit = false) {

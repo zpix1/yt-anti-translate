@@ -1,11 +1,5 @@
 const MUTATION_UPDATE_STEP = 2;
 
-const ALL_ARRAYS_VIDEOS_SELECTOR = `ytd-video-renderer,
-ytd-rich-item-renderer,
-ytd-compact-video-renderer,
-ytd-grid-video-renderer,
-ytd-playlist-video-renderer,
-ytd-playlist-panel-video-renderer`;
 const INTERSECTION_UPDATE_STEP_VIDEOS = 2;
 let allIntersectVideoElements = null;
 const intersectionObserverOtherVideos = new IntersectionObserver(untranslateOtherVideosOnIntersect, {
@@ -14,8 +8,6 @@ const intersectionObserverOtherVideos = new IntersectionObserver(untranslateOthe
   threshold: 0 // Trigger when ANY part of the observed elements are inside the extended viewport
 });
 
-const ALL_ARRAYS_SHORTS_SELECTOR = `div.style-scope.ytd-rich-item-renderer,
-ytm-shorts-lockup-view-model`;
 const INTERSECTION_UPDATE_STEP_SHORTS = 2;
 let allIntersectShortElements = null;
 const intersectionObserverOtherShorts = new IntersectionObserver(untranslateOtherShortsOnIntersect, {
@@ -25,21 +17,22 @@ const intersectionObserverOtherShorts = new IntersectionObserver(untranslateOthe
 });
 
 async function get(url) {
-  if (window.YoutubeAntiTranslate.cache.has(url)) {
-    return window.YoutubeAntiTranslate.cache.get(url);
+  const storedResponse = window.YoutubeAntiTranslate.getSessionCache(url);
+  if (storedResponse) {
+    return storedResponse;
   }
 
   try {
     const response = await fetch(url);
     if (!response.ok) {
       if (response.status === 404 || response.status === 401) {
-        window.YoutubeAntiTranslate.cache.set(url, null);
+        window.YoutubeAntiTranslate.setSessionCache(url, null);
         return null;
       }
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const data = await response.json();
-    window.YoutubeAntiTranslate.cache.set(url, data);
+    window.YoutubeAntiTranslate.setSessionCache(url, data);
     return data;
   } catch (error) {
     console.error("Error fetching:", error);
@@ -242,7 +235,7 @@ async function createOrUpdateUntranslatedFakeNode(fakeNodeID, originalNodeSelect
 
     if (shouldSetDocumentTitle) {
       // This is sometimes skipped on first update as youtube translate the document title late; so we use a cached oldTitle
-      const cachedOldTitle = window.YoutubeAntiTranslate.cache.get(`${fakeNodeID}_${getUrlForElement}`) ?? oldTitle
+      const cachedOldTitle = window.YoutubeAntiTranslate.getSessionCache(`${fakeNodeID}_${getUrlForElement}`) ?? oldTitle
 
       // document tile is sometimes not a perfect match to the oldTile due to spacing, so normalize all
       const normalizedDocumentTitle = window.YoutubeAntiTranslate.normalizeSpaces(document.title);
@@ -259,7 +252,7 @@ async function createOrUpdateUntranslatedFakeNode(fakeNodeID, originalNodeSelect
     }
     else {
       // cache old title for future reference
-      window.YoutubeAntiTranslate.cache.set(`${fakeNodeID}_${getUrlForElement}`, oldTitle)
+      window.YoutubeAntiTranslate.setSessionCache(`${fakeNodeID}_${getUrlForElement}`, oldTitle)
     }
 
     console.log(
@@ -382,7 +375,7 @@ async function untranslateOtherVideos(intersectElements = null) {
   }
   // Selectors for all video containers
   await untranslateOtherVideosArray(
-    window.YoutubeAntiTranslate.getAllVisibleNodes(document.querySelectorAll(ALL_ARRAYS_VIDEOS_SELECTOR))
+    window.YoutubeAntiTranslate.getAllVisibleNodes(document.querySelectorAll(window.YoutubeAntiTranslate.ALL_ARRAYS_VIDEOS_SELECTOR))
   );
 }
 
@@ -476,7 +469,7 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
   }
   // Run for all shorts items
   await untranslateOtherShortsArray(
-    window.YoutubeAntiTranslate.getAllVisibleNodes(document.querySelectorAll(ALL_ARRAYS_SHORTS_SELECTOR))
+    window.YoutubeAntiTranslate.getAllVisibleNodes(document.querySelectorAll(window.YoutubeAntiTranslate.ALL_ARRAYS_SHORTS_SELECTOR))
   );
 }
 
@@ -546,7 +539,10 @@ function updateObserverOtherVideosOnIntersect() {
   for (const el of allIntersectVideoElements ?? []) {
     intersectionObserverOtherVideos.unobserve(el)
   }
-  allIntersectVideoElements = window.YoutubeAntiTranslate.getAllVisibleNodesOutsideViewport(document.querySelectorAll(ALL_ARRAYS_VIDEOS_SELECTOR), true);
+  allIntersectVideoElements = window.YoutubeAntiTranslate.getAllVisibleNodesOutsideViewport(document.querySelectorAll(
+    window.YoutubeAntiTranslate.ALL_ARRAYS_VIDEOS_SELECTOR),
+    true
+  );
   for (const el of allIntersectVideoElements ?? []) {
     intersectionObserverOtherVideos.observe(el)
   }
@@ -580,7 +576,10 @@ function updateObserverOtherShortsOnIntersect() {
   for (const el of allIntersectShortElements ?? []) {
     intersectionObserverOtherShorts.unobserve(el)
   }
-  allIntersectShortElements = window.YoutubeAntiTranslate.getAllVisibleNodesOutsideViewport(document.querySelectorAll(ALL_ARRAYS_SHORTS_SELECTOR), true);
+  allIntersectShortElements = window.YoutubeAntiTranslate.getAllVisibleNodesOutsideViewport(document.querySelectorAll(
+    window.YoutubeAntiTranslate.ALL_ARRAYS_SHORTS_SELECTOR),
+    true
+  );
   for (const el of allIntersectShortElements ?? []) {
     intersectionObserverOtherShorts.observe(el)
   }
