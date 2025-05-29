@@ -16,9 +16,9 @@ test.describe("YouTube Anti-Translate extension", () => {
       // If this test is retring then check uBlock and Auth again
       await setupUBlockAndAuth([browserNameWithExtensions], [localeString]);
     }
+
     // Launch browser with the extension
     let context;
-
     switch (browserNameWithExtensions) {
       case "chromium":
         const browserTypeWithExtension = withExtension(
@@ -176,9 +176,9 @@ test.describe("YouTube Anti-Translate extension", () => {
       // If this test is retring then check uBlock and Auth again
       await setupUBlockAndAuth([browserNameWithExtensions], [localeString]);
     }
+
     // Launch browser with the extension
     let context;
-
     switch (browserNameWithExtensions) {
       case "chromium":
         const browserTypeWithExtension = withExtension(
@@ -296,9 +296,9 @@ test.describe("YouTube Anti-Translate extension", () => {
       // If this test is retring then check uBlock and Auth again
       await setupUBlockAndAuth([browserNameWithExtensions], [localeString]);
     }
+
     // Launch browser with the extension
     let context;
-
     switch (browserNameWithExtensions) {
       case "chromium":
         const browserTypeWithExtension = withExtension(
@@ -398,9 +398,9 @@ test.describe("YouTube Anti-Translate extension", () => {
       // If this test is retring then check uBlock and Auth again
       await setupUBlockAndAuth([browserNameWithExtensions], [localeString]);
     }
+
     // Launch browser with the extension
     let context;
-
     switch (browserNameWithExtensions) {
       case "chromium":
         const browserTypeWithExtension = withExtension(
@@ -555,9 +555,9 @@ test.describe("YouTube Anti-Translate extension", () => {
       // If this test is retring then check uBlock and Auth again
       await setupUBlockAndAuth([browserNameWithExtensions], [localeString]);
     }
+
     // Launch browser with the extension
     let context;
-
     switch (browserNameWithExtensions) {
       case "chromium":
         const browserTypeWithExtension = withExtension(

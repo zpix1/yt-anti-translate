@@ -1,3 +1,4 @@
+import { BrowserContext } from '@playwright/test';
 import fs from 'fs';
 import * as OTPAuth from "otpauth";
 import path from 'path';
@@ -8,10 +9,10 @@ const authFileName = 'user.json';
 require('dotenv').config();
 
 /**
- * @param {Browser} context
+ * @param {BrowserContext} context
  * @param {string} browserName
  * @param {string} locale
- * @returns {page: Page; localeLoaded: boolean;} {"page": Page, "localeLoaded": boolean }
+ * @returns
  */
 export async function newPageWithStorageStateIfItExists(context, browserName: string, locale: string) {
   let authFile;
@@ -52,8 +53,6 @@ export async function newPageWithStorageStateIfItExists(context, browserName: st
     const ageInHours = (now.getTime() - modifiedTime.getTime()) / (1000 * 60 * 60);
 
     if (ageInHours <= maxHours) {
-      // Reuse existing LOCALE authentication state if it's fresh (less than 12 hours old).
-
       if (browserName === "chromium") {
         // Chromium must be launched as persistentContext to load 
         // So we can only load the cookies as the newPage does not accept a storage state
@@ -86,12 +85,10 @@ export async function newPageWithStorageStateIfItExists(context, browserName: st
 }
 
 /**
- * 
  * @param {Page} page 
  * @returns {Locator|null} 
  */
 export async function findLoginButton(page) {
-  //Check if we need to login
   const possibleLabels = ["Sign in", "Войти", "ลงชื่อเข้าใช้"];
   for (const label of possibleLabels) {
     const button = page.locator(`#masthead a:has-text("${label}")`).first();
@@ -112,15 +109,11 @@ export async function handleGoogleLogin(context, page, browserName: string, loca
   try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
 
   //Check if we need to login
-  const possibleLabels = ["Sign in", "Войти", "ลงชื่อเข้าใช้"];
-  for (const label of possibleLabels) {
-    const button = page.locator(`#masthead a:has-text("${label}")`).first();
-    if (await button.isVisible()) {
-      await button.scrollIntoViewIfNeeded();
-      await button.click();
-      await continueLoginSteps(page);
-      break;
-    }
+  const button = await findLoginButton(page);
+  if (button && await button.isVisible()) {
+    await button.scrollIntoViewIfNeeded();
+    await button.click();
+    await continueLoginSteps(page);
   }
 
   //Check youtube locale is set correctly

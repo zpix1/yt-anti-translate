@@ -57,17 +57,14 @@ export async function setupUBlockAndAuth(allBrowserNameWithExtensions: string[],
       });
 
       if (!localeLoaded) {
-        // Navigate to the specified YouTube channel page
         await page.goto("https://www.youtube.com/@MrBeast");
 
-        // Wait for the page to load
         try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
 
         // Sometimes youtube redirects to consent page so wait 2 seconds before proceeding
         await page.waitForTimeout(2000);
         try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
 
-        // Sometimes youtube redirects to consent so handle it
         await handleYoutubeConsent(page);
 
         // If we did not load a locale storage state, login to test account and set locale
