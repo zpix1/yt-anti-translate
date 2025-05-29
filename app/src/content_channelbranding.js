@@ -80,7 +80,8 @@ async function detectChannelOriginalLanguage() {
   try {
     const detection = await window.YoutubeAntiTranslate.getBrowserOrChrome().i18n.detectLanguage(combinedTitle);
     if (!detection.isReliable) {
-      console.warn(`${window.YoutubeAntiTranslate.LOG_PREFIX} language detection may be unreliable`);
+      console.warn(`${window.YoutubeAntiTranslate.LOG_PREFIX} language detection unreliable`);
+      return null;
     }
     return detection.languages[0].language;
   }
@@ -342,11 +343,12 @@ async function restoreOriginalBrandingHeader() {
         youtubeDataApiKey: null
       },
       async (items) => {
-        const originalBrandingData = items.youtubeDataApiKey ? await getChannelBrandingWithYoutubeDataAPI(items.youtubeDataApiKey) : await getChannelBrandingWithYoutubeI()
-          || await getChannelBrandingWithYoutubeI(); // Fallback to YouTubeI again if something went wrong with YoutubeDataAPI
-
+        let originalBrandingData;
+        if (items.youtubeDataApiKey && items.youtubeDataApiKey.trim !== "") {
+          originalBrandingData = await getChannelBrandingWithYoutubeDataAPI(items.youtubeDataApiKey)
+        }
         if (!originalBrandingData) {
-          // fallback to YoutubeI and i18n.detectedLanguage() solution
+          // Fallback to YouTubeI+i18n if YoutubeDataAPI Key was not set OR if it failed 
           originalBrandingData = await getChannelBrandingWithYoutubeI();
         }
 
@@ -438,8 +440,14 @@ async function restoreOriginalBrandingAbout() {
         youtubeDataApiKey: null
       },
       async (items) => {
-        const originalBrandingData = items.youtubeDataApiKey ? await getChannelBrandingWithYoutubeDataAPI(items.youtubeDataApiKey) : await getChannelBrandingWithYoutubeI()
-          || await getChannelBrandingWithYoutubeI(); // Fallback to YouTubeI again if something went wrong with YoutubeDataAPI
+        let originalBrandingData;
+        if (items.youtubeDataApiKey && items.youtubeDataApiKey.trim !== "") {
+          originalBrandingData = await getChannelBrandingWithYoutubeDataAPI(items.youtubeDataApiKey)
+        }
+        if (!originalBrandingData) {
+          // Fallback to YouTubeI+i18n if YoutubeDataAPI Key was not set OR if it failed 
+          originalBrandingData = await getChannelBrandingWithYoutubeI();
+        }
 
         if (!originalBrandingData) {
         }
