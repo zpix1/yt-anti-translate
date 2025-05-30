@@ -82,7 +82,7 @@ jobs:
 
           # Extract the lines AFTER the heading (START_LINE+1 to END_LINE-1)
           echo "✂️  Extracting lines $((START_LINE + 1)) to $((END_LINE - 1))"
-          sed -n "$((START_LINE + 1)),$((END_LINE - 1))p" "$CHANGELOG_FILE" > release_notes.txt
+          sed -n "$((START_LINE + 1)),$((END_LINE - 1))p" "$CHANGELOG_FILE" >> release_notes.txt
 
           # # The following section is not needed with step `Append auto-generated release notes`
           # # but keeping it in case we want to revert it
