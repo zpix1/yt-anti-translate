@@ -43,7 +43,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     const page = result.page;
     const localeLoaded = result.localeLoaded;
     if (!localeLoaded) {
-      // Setup failed to create a matching locale so test wil fail.
+      // Setup failed to create a matching locale so test will fail.
       expect(localeLoaded).toBe(true)
     }
 
@@ -203,7 +203,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     const page = result.page;
     const localeLoaded = result.localeLoaded
     if (!localeLoaded) {
-      // Setup failed to create a matching locale so test wil fail.
+      // Setup failed to create a matching locale so test will fail.
       expect(localeLoaded).toBe(true)
     }
 
@@ -323,7 +323,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     const page = result.page;
     const localeLoaded = result.localeLoaded;
     if (!localeLoaded) {
-      // Setup failed to create a matching locale so test wil fail.
+      // Setup failed to create a matching locale so test will fail.
       expect(localeLoaded).toBe(true)
     }
 
@@ -425,7 +425,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     const page = result.page;
     const localeLoaded = result.localeLoaded;
     if (!localeLoaded) {
-      // Setup failed to create a matching locale so test wil fail.
+      // Setup failed to create a matching locale so test will fail.
       expect(localeLoaded).toBe(true)
     }
 
@@ -595,7 +595,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     const page = result.page;
     const localeLoaded = result.localeLoaded
     if (!localeLoaded) {
-      // Setup failed to create a matching locale so test wil fail.
+      // Setup failed to create a matching locale so test will fail.
       expect(localeLoaded).toBe(true)
     }
 
