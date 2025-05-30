@@ -62,7 +62,7 @@ jobs:
 
           echo "📦 Extracting release notes for version: $VERSION"
 
-          echo "## Release Notes\n"> release_notes.txt
+          echo -e "## Release Notes\n" > release_notes.txt
 
           # Find the start line of the current version section
           START_LINE=$(grep -n "^## \[$VERSION\]" "$CHANGELOG_FILE" | cut -d: -f1)
