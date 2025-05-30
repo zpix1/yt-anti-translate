@@ -450,7 +450,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     await page.waitForSelector("ytd-rich-grid-media");
 
     // --- Check Videos Tab ---
-    const originalVideoTitle = "Surviving The 5 Deadliest Places On Earth";
+    const originalVideoTitle = "I Survived The 5 Deadliest Places On Earth";
     const translatedVideoTitle = "Я Выжил В 5 Самых Опасных Местах На Земле";
     const videoSelector = `ytd-rich-item-renderer:has-text("${originalVideoTitle}")`;
     const translatedVideoSelector = `ytd-rich-item-renderer:has-text("${translatedVideoTitle}")`;
