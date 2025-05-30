@@ -34,6 +34,7 @@ jobs:
       - name: Check PR title for [CI-FIX]
         id: check_ci_fix
         run: |
+          bash <<'EOF'
           TITLE="${{ github.event.pull_request.title }}"
           if printf '%s\n' "$TITLE" | grep -iq '^\[ci-fix\]'; then
             echo "skip=true" >> $GITHUB_OUTPUT
@@ -106,6 +107,7 @@ jobs:
       - name: Set release name suffix
         id: suffix
         run: |
+          bash <<'EOF'
           BRANCH_NAME="${{ github.event.pull_request.head.ref }}"
           if printf '%s\n' "$BRANCH_NAME" | grep -iq '^fix-'; then
             echo "suffix= Fix" >> $GITHUB_OUTPUT
