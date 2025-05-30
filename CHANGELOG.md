@@ -5,98 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.18.1.7] - 2025-05-27
+## [1.18.2] - 2025-05-27
+
+### New Feature
+
+- Ported to Firefox as Manifest V3 [YouTube Anti Translate - mv3](https://addons.mozilla.org/firefox/addon/youtube-anti-translate-mv3/)
+- YouTube Channel Branding Header and About untranslation
+- Untranslation of Channel Highlited video
 
 ### Fixed
 
-- Fixed INTERSECTION_UPDATE_STEP_VIDEOS configuration not vorking for video list format (was only working with grids)
-
-### Added
-
-- Check host_permissions and request user to approve access if lacking
-
-## [1.18.1.6] - 2025-05-27
-
-### Changed
-
-- Further optimize IntersectionObserver logic
-
-## [1.18.1.5] - 2025-05-26
-
-### Fixed
-
-- Fixed broken link to YouTube Data API guide
-
-## [1.18.1.4] - 2025-05-26
-
-### Fixed
-
-- Fix bug with audio (dubbing) not always untranslating on the first load (due to the persistence of player.unstranslatedAudio)
-
-### Changed
-
-- Do not process elements outside the viewport or not visible to avoid slowing the page
-- Use IntersectionObserver to dynamically work on the elements entering the viewport
-
-## [1.18.1.3] - 2025-05-23
-
-### Fixed
-
+- Fix bug with audio (dubbing) not always untranslating (due to the persistence of player.unstranslatedAudio and player.setAudioTrack(originalTrack) not checked for boolean response)
 - Fix bug with page/tab title not being untranslated
-
-## [1.18.1.2] - 2025-05-20
-
-### Fixed
-
 - Fix untranslation of video player head link
 - Fix duplication of untranslated fake node
+- Fix untranslation of link to last video on a short
+- Fix [Titles stay from previous videos #22](https://github.com/zpix1/yt-anti-translate/issues/22)
 
 ### Changed
 
+- Avoid triggering functionalities if not needed in the current page
+- Do not process elements outside the viewport or not visible to avoid slowing the page
+- Use IntersectionObserver to dynamically work on the elements entering the viewport
 - Improve code using windowDOM to avoid repetition
 
 ### Added
 
-- Test extension in both Firefox and Chromium
-
-## [1.18.1.1] - 2025-05-16
-
-### Fixed
-
-- Fix bug with title untranslate introduced with an error when doing "Avoid triggering functionalities if not needed in the current page"
-- Fix layout bug when changing the Author above description
-- Fix player.setAudioTrack(originalTrack) not being awaited and checked for the boolean response, causing player. audioUntranslated to be set true prematurely
-
-## [1.18.1] - 2025-05-15
-
-### Fixed
-
-- Fixed channel branding about not untranslation when opened via "more links" then "..more" (or opposite order) - a new popup is created the second time, so the duplicate element was not handled
-- Fixed flex position of branding header "..more" link not updating
-- Fixed untranslation of embedded video title and description - like in highlighted video of a channel
-- Fixed untranslation of short video link to video
-
-### Changed
-
-- Optimise start-up logic for better performance
-- Avoid triggering functionalities if not needed in the current page
-
-## [1.18.0] - 2025-05-13
-
-### New Feature
-
-- YouTube Channel Branding Header and About untranslation
-
-### Fixed
-
-- Fixed video title untranslation when in full screen
-- Fixed channel name untranslation above video player description
-
-## [1.17.0.1] - 2025-05-08
-
-### Support
-
-- Ported to Firefox as Manifest V3 [YouTube Anti Translate - mv3](https://addons.mozilla.org/firefox/addon/youtube-anti-translate-mv3/)
+- Check host_permissions and request user to approve access if lacking
+- Automatic testing of the extension in both Firefox and Chromium for ease of mantainance and quick response to broken features.
 
 ## [1.17.0] - 2025-04-05
 

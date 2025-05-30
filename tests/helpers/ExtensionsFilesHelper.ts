@@ -20,38 +20,30 @@ export function handleTestDistribution(configObject) {
   function copyFiles(src: string, dest: string) {
     const stats = fs.statSync(src);
     if (stats.isDirectory()) {
-      // If it's a directory, create the directory in the destination
       if (!fs.existsSync(dest)) {
         fs.mkdirSync(dest, { recursive: true });
       }
 
-      // Copy all files inside the current directory
       const files = fs.readdirSync(src);
       for (const file of files) {
         copyFiles(path.join(src, file), path.join(dest, file));
       }
     } else if (stats.isFile()) {
-      // If it's a file, copy it to the destination
       fs.copyFileSync(src, dest);
     }
   }
 
   // Function to modify the start.js file in testDist/src
   const modifyStartJs = (filePath: string, storageObject: object) => {
-    // Ensure the file exists before modifying
     if (fs.existsSync(filePath)) {
       const data = fs.readFileSync(filePath, 'utf-8');
 
-      // Convert the object to a string that can be used in the JavaScript code
       const storageObjectString = JSON.stringify(storageObject);
 
-      // Create the line to be inserted at the beginning of the file
+      // Create the line to be inserted at the beginning of the file that will set the user options
       const newLine = `chrome.storage.sync.set(${storageObjectString});\n`;
 
-      // Add the line to the beginning of the file
       const modifiedData = newLine + data;
-
-      // Write the modified content back to the file
       fs.writeFileSync(filePath, modifiedData, 'utf-8');
       console.log('content_start modified successfully!');
     } else {
@@ -59,13 +51,11 @@ export function handleTestDistribution(configObject) {
     }
   };
 
-  // Create the testDist directory if it doesn't exist
   if (!fs.existsSync(destDirExtension)) {
     fs.mkdirSync(destDirExtension);
     console.log('Created testDist directory');
   }
 
-  // Copy all files from ../app to testDist
   copyFiles(srcDirExtension, destDirExtension);
   console.log('Files copied successfully!');
 
@@ -118,7 +108,6 @@ export async function downloadAndExtractUBlock(browserName) {
     console.log('No manifest.json found. Proceeding with download.');
   }
 
-  // Ensure destination directory exists
   if (!fs.existsSync(destDirUBlock)) {
     fs.mkdirSync(destDirUBlock, { recursive: true });
     console.log('Created testUBlockOrigin directory');

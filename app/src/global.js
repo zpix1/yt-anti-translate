@@ -9,7 +9,55 @@ window.YoutubeAntiTranslate = {
 
   /** @type {string} */ CORE_ATTRIBUTED_STRING_SELECTOR: ".yt-core-attributed-string",
 
-  /** @type {Map<any, any>} */ cache: new Map(),
+  /** @type {string} */ ALL_ARRAYS_VIDEOS_SELECTOR: `ytd-video-renderer,
+ytd-rich-item-renderer,
+ytd-compact-video-renderer,
+ytd-grid-video-renderer,
+ytd-playlist-video-renderer,
+ytd-playlist-panel-video-renderer`,
+
+  /** @type {string} */ ALL_ARRAYS_SHORTS_SELECTOR: `div.style-scope.ytd-rich-item-renderer,
+ytm-shorts-lockup-view-model`,
+
+  /** @type {string} */ cacheSessionStorageKey: "[YoutubeAntiTranslate]cache",
+
+  /** 
+   * Retrieves a deserialized object from session storage.
+   * @type {Fuction} 
+   * @param {string} key
+   * @return {any|null}
+  */
+  getSessionCache: function (key) {
+    const fullKey = `${this.cacheSessionStorageKey}_${key}`;
+    const raw = sessionStorage.getItem(fullKey);
+    if (!raw) return null;
+
+    try {
+      return JSON.parse(raw);
+    }
+    catch (err) {
+      console.warn(`${this.LOG_PREFIX} Failed to parse session cache for key "${key}"`, err);
+      sessionStorage.removeItem(fullKey); // clear corrupted entry
+      return null;
+    }
+  },
+
+  /** 
+   * Stores a value in session storage after serializing
+   * @type {Fuction} 
+   * @param {string} key
+   * @param {any} value
+  */
+  setSessionCache: function (key, value) {
+    const fullKey = `${this.cacheSessionStorageKey}_${key}`;
+    try {
+      sessionStorage.setItem(fullKey, JSON.stringify(value));
+    } catch (err) {
+      console.error(`${this.LOG_PREFIX} Failed to set session cache for key "${key}"`, err);
+    }
+  },
+
+  cache: new Map(),
 
   /** 
    * @type {Fuction} 
@@ -19,6 +67,24 @@ window.YoutubeAntiTranslate = {
     return window.location.pathname.startsWith("/shorts")
       ? "#shorts-player"
       : "ytd-player .html5-video-player";
+  },
+
+  /** 
+   * @type {Fuction} 
+   * @returns {string}
+  */
+  getBrowserOrChrome: function () {
+    return typeof browser !== 'undefined'
+      ? browser
+      : chrome;
+  },
+
+  /** 
+   * @type {Fuction} 
+   * @returns {bool}
+  */
+  isFirefoxBasedBrowser: function () {
+    return typeof browser !== "undefined" && typeof browser.runtime !== "undefined" && typeof browser.runtime.getBrowserInfo === 'function';
   },
 
   /**
@@ -35,9 +101,12 @@ window.YoutubeAntiTranslate = {
    * Given a Node it uses computed style to determine if it is visible
    * @type {Function}
    * @param {Node} node - A Node of type ELEMENT_NODE
-   * @param {boolean} shouldCheckViewport - If true the element position is checked to be inside or outside the viewport. Viewport is extended based on VIEWPORT_EXTENSION_PERCENTAGE_FRACTION
-   * @param {boolean} onlyOutsideViewport - only relevant when `shouldCheckViewport` is true. When this is also true the element is returned only if outside the viewport. By default the element is returned only if inside the viewport
-   * @param {boolean} useOutsideLimit - when true, outside elements are limited to those contained inside the frame between the extended viewport and the limit based on VIEWPORT_OUTSIDE_LIMIT_FRACTION.
+   * @param {boolean} shouldCheckViewport - Optional. If true the element position is checked to be inside or outside the viewport. Viewport is extended based on 
+   *                                        VIEWPORT_EXTENSION_PERCENTAGE_FRACTION. Defaults true
+   * @param {boolean} onlyOutsideViewport - Optional. only relevant when `shouldCheckViewport` is true. When this is also true the element is returned only if outside
+   *                                        the viewport. By default the element is returned only if inside the viewport. Defaults false
+   * @param {boolean} useOutsideLimit - Optional. when true, outside elements are limited to those contained inside the frame between the extended viewport and the 
+   *                                    limit based on VIEWPORT_OUTSIDE_LIMIT_FRACTION. Defaults false
    * @return {boolean} - true if the node is computed as visible
    */
   isVisible: function (node, shouldCheckViewport = true, onlyOutsideViewport = false, useOutsideLimit = false) {
@@ -124,7 +193,7 @@ window.YoutubeAntiTranslate = {
    * Given an Array of HTMLElements it returns visible HTMLElement or null
    * @type {Function}
    * @param {Node|NodeList} nodes - A NodeList or single Node of type ELEMENT_NODE
-   * @param {boolean} shouldBeInsideViewport - If true the element should also be inside the viewport to be considered visible
+   * @param {boolean} shouldBeInsideViewport - Optional. If true the element should also be inside the viewport to be considered visible. Defaults true
    * @returns {Node|null} - The first visible Node or null
    */
   getFirstVisible: function (nodes, shouldBeInsideViewport = true) {
@@ -148,10 +217,12 @@ window.YoutubeAntiTranslate = {
    * Given an Array of HTMLElements it returns visible HTMLElement or null
    * @type {Function}
    * @param {Node|NodeList} nodes - A NodeList or single Node of type ELEMENT_NODE
-   * @param {boolean} shouldBeInsideViewport - If true the element should also be inside the viewport to be considered visible
+   * @param {boolean} shouldBeInsideViewport - Optional. If true the element should also be inside the viewport to be considered visible. Defaults true
+   * @param {Number} lengthLimit - Optional. Limit the number of items in the array. As soon as the correspoinding array length is reached, 
+   *                               the array is returned prematurelly. Defaults to Number.MAX_VALUE
    * @returns {Array<Node>|null} - A array of all the visible nodes or null
    */
-  getAllVisibleNodes: function (nodes, shouldBeInsideViewport = true) {
+  getAllVisibleNodes: function (nodes, shouldBeInsideViewport = true, lengthLimit = Number.MAX_VALUE) {
     if (!nodes) {
       return null;
     }
@@ -169,6 +240,10 @@ window.YoutubeAntiTranslate = {
         else {
           visibleNodes = [node];
         }
+
+        if (visibleNodes.length === lengthLimit) {
+          break;
+        }
       }
     }
 
@@ -179,7 +254,8 @@ window.YoutubeAntiTranslate = {
    * Given an Array of HTMLElements it returns visible HTMLElement or null only if they are loaded outside the viewport
    * @type {Function}
    * @param {Node|NodeList} nodes - A NodeList or single Node of type ELEMENT_NODE
-   * @param {boolean} useOutsideLimit - when true, outside elements are limited to those contained inside the frame between the extended viewport and the limit based on VIEWPORT_OUTSIDE_LIMIT_FRACTION.
+   * @param {boolean} useOutsideLimit - Optional. when true, outside elements are limited to those contained inside the frame between 
+   *                                    the extended viewport and the limit based on VIEWPORT_OUTSIDE_LIMIT_FRACTION. Defaults false
    * @returns {Array<Node>|null} - A array of all the visible nodes or null that are outside the viewport
    */
   getAllVisibleNodesOutsideViewport: function (nodes, useOutsideLimit = false) {
@@ -399,6 +475,79 @@ window.YoutubeAntiTranslate = {
 
     // Add new content
     container.appendChild(newContent);
+  },
+
+  /** @type {Set} */ SUPPORTED_BCP47_CODES: new Set([
+    "af-ZA", "az-AZ", "id-ID", "ms-MY", "bs-BA", "ca-ES", "cs-CZ", "da-DK", "de-DE", "et-EE",
+    "en-IN", "en-GB", "en-US", "es-ES", "es-419", "es-US", "eu-ES", "fil-PH", "fr-FR", "fr-CA",
+    "gl-ES", "hr-HR", "zu-ZA", "is-IS", "it-IT", "sw-TZ", "lv-LV", "lt-LT", "hu-HU", "nl-NL",
+    "nb-NO", "uz-UZ", "pl-PL", "pt-PT", "pt-BR", "ro-RO", "sq-AL", "sk-SK", "sl-SI", "sr-RS",
+    "fi-FI", "sv-SE", "vi-VN", "tr-TR", "be-BY", "bg-BG", "ky-KG", "kk-KZ", "mk-MK", "mn-MN",
+    "ru-RU", "sr-BA", "uk-UA", "el-GR", "hy-AM", "he-IL", "ur-PK", "ar-SA", "fa-IR", "ne-NP",
+    "mr-IN", "hi-IN", "as-IN", "bn-BD", "pa-IN", "gu-IN", "or-IN", "ta-IN", "te-IN", "kn-IN",
+    "ml-IN", "si-LK", "th-TH", "lo-LA", "my-MM", "ka-GE", "am-ET", "km-KH", "zh-CN", "zh-TW",
+    "zh-HK", "ja-JP", "ko-KR"
+  ]),
+
+  /** @type {Record<string, string>} */COMMON_BCP47_FALLBACKS: {
+    af: "af-ZA", am: "am-ET", ar: "ar-SA", as: "as-IN", az: "az-AZ", be: "be-BY", bg: "bg-BG", bn: "bn-BD", bs: "bs-BA", ca: "ca-ES",
+    cs: "cs-CZ", da: "da-DK", de: "de-DE", el: "el-GR", en: "en-US", es: "es-419", et: "et-EE", eu: "eu-ES", fa: "fa-IR", fi: "fi-FI",
+    fil: "fil-PH", fr: "fr-FR", gl: "gl-ES", gu: "gu-IN", he: "he-IL", hi: "hi-IN", hr: "hr-HR", hu: "hu-HU", hy: "hy-AM", id: "id-ID",
+    is: "is-IS", it: "it-IT", ja: "ja-JP", ka: "ka-GE", km: "km-KH", kn: "kn-IN", ko: "ko-KR", lo: "lo-LA", lt: "lt-LT", lv: "lv-LV",
+    mk: "mk-MK", ml: "ml-IN", mn: "mn-MN", mr: "mr-IN", ms: "ms-MY", ne: "ne-NP", nl: "nl-NL", nb: "nb-NO", or: "or-IN", pa: "pa-IN",
+    pl: "pl-PL", pt: "pt-BR", ro: "ro-RO", ru: "ru-RU", si: "si-LK", sk: "sk-SK", sl: "sl-SI", sq: "sq-AL", sr: "sr-RS", sv: "sv-SE",
+    sw: "sw-TZ", ta: "ta-IN", te: "te-IN", th: "th-TH", tr: "tr-TR", uk: "uk-UA", ur: "ur-PK", uz: "uz-UZ", vi: "vi-VN", zh: "zh-CN",
+    zu: "zu-ZA"
+  },
+
+  /**
+   * Attempts to detect the closest YouTube Supported BCP-47 language code(s) from the given text.
+   * Uses the browser/chrome i18n.detectLanguage API with retries and filtering.
+   * @type {Function}
+   * @param {string} text - The input text to detect the language from.
+   * @param {number} [maxRetries=3] - Optional - Maximum number of retries if detection results are not valid. Defaults to 3
+   * @param {number} [minProbability=50] - Optional - Minimum confidence percentage (0-100) to accept a detected language. Defaults to 50
+   * @returns {Promise<string[] | null>} - Resolves with an array of valid BCP-47 language codes that match or closely fallback to supported languages,
+   *                                       or null on failure or if no suitable match is found within retries.
+   */
+  detectSupportedLanguage: async function (text, maxRetries = 3, minProbability = 50) {
+    const api = this.getBrowserOrChrome();
+    let attempts = 0;
+
+    while (attempts < maxRetries) {
+      attempts++;
+
+      try {
+        const result = await api.i18n.detectLanguage(text);
+
+        // Filter detected languages by minProbability threshold
+        const filteredLanguages = result.languages.filter(l => (l.percentage ?? 0) >= minProbability);
+
+        // exact matches from VALID_BCP47_CODES
+        const exactMatches = filteredLanguages
+          .map(l => l.language)
+          .filter(lang => this.SUPPORTED_BCP47_CODES.has(lang));
+
+        if (exactMatches.length > 0) {
+          return exactMatches;
+        }
+
+        // tolerant fallback matches using COMMON_BCP47_FALLBACKS
+        const tolerantMatches = filteredLanguages
+          .map(l => this.COMMON_BCP47_FALLBACKS[l.language])
+          .filter(lang => this.SUPPORTED_BCP47_CODES.has(lang));
+
+        if (tolerantMatches.length > 0) {
+          return tolerantMatches;
+        }
+
+        // else retry
+      } catch (err) {
+        return null;
+      }
+    }
+
+    return null;
   }
 }
 

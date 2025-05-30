@@ -82,6 +82,12 @@ function restoreOriginalDescriptionAndAuthor() {
   }
 
   if (originalAuthor) {
+    // We should skip this operation if the video player was embeded as it does not have the author above the desciption
+    const player = window.YoutubeAntiTranslate.getFirstVisible(document.querySelectorAll(window.YoutubeAntiTranslate.getPlayerSelector()));
+    if (player && player.id === "c4-player") {
+      return;
+    }
+
     const authorContainer = window.YoutubeAntiTranslate.getFirstVisible(document.querySelectorAll(AUTHOR_SELECTOR));
 
     if (authorContainer) {

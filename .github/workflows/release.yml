@@ -49,6 +49,8 @@ jobs:
           echo "tag=v$VERSION" >> $GITHUB_OUTPUT
 
       - name: Extract release notes
+        env:
+          VERSION: ${{ env.VERSION }}
         run: |
           set -euxo pipefail
 
@@ -106,8 +108,24 @@ jobs:
             echo "suffix=" >> $GITHUB_OUTPUT
           fi
 
+      - name: Append auto-generated release notes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ env.VERSION }}
+        run: |
+          TAG="v$VERSION"
+          echo -e "\n---\n" >> release_notes.txt
+          echo "🪄 Appending auto-generated GitHub release notes..." >> release_notes.txt
+
+          gh api repos/${{ github.repository }}/releases/generate-notes \
+            -f tag_name="$TAG" \
+            -f target_commitish="${{ github.event.pull_request.merge_commit_sha }}" \
+            --jq '.body' >> release_notes.txt
+
       - name: Create Draft GitHub Release
         if: steps.check_ci_fix.outputs.skip == 'false'
+        env:
+          VERSION: ${{ env.VERSION }}
         uses: ncipollo/release-action@v1
         with:
           allowUpdates: true
@@ -130,6 +148,8 @@ jobs:
           event-type: trigger-chromium-extension-publish
 
       - name: Save release info instead (CI-FIX skip)
+        env:
+          VERSION: ${{ env.VERSION }}
         if: steps.check_ci_fix.outputs.skip == 'true'
         run: |
           echo "Release would have been skipped due to [CI-FIX] PR title." > skipped_release_info.txt
