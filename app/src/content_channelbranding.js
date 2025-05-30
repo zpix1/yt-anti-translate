@@ -558,10 +558,11 @@ async function untranslateBranding() {
 // Initialize the mutation observer for branding
 chrome.storage.sync.get(
   {
+    disabled: false,
     untranslateChannelBranding: true
   },
   async (items) => {
-    if (items.untranslateChannelBranding) {
+    if (items.disabled && items.untranslateChannelBranding) {
       const targetNode = document.body;
       const observerConfig = { childList: true, subtree: true };
       const brandingObserver = new MutationObserver(untranslateBranding);
