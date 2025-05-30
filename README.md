@@ -21,6 +21,7 @@ It is much easier to use than its analogues (such as [YoutubeAutotranslateCancel
 ### Enhanced Features Reliability Option
 
 In the extension settings, you can optionally provide a YouTube Data API Key. Although this is optional, it is reccomended.
+
 When that is populated, some features work more reliably.
 [Read more on how to obtain](https://github.com/zpix1/yt-anti-translate/blob/main/YOUTUBE_DATA_API_KEY.md)
 
@@ -38,7 +39,7 @@ However, it is currently outdated, as it was last updated on Aug 2, 2024 and is 
 2. Navigate to the cloned folder and run the following command in a terminal window
    `npm ci`
 3. Open with the IDE editor of choice
-4. You can verify functionality by running Playwright Test (make sure you install extensions for your IDE is needed)
+4. You can verify functionality by running Playwright Test (make sure you install Playwright extensions for your IDE if needed)
    - Before running the tests, you will need to install playwright browsers and dependencies
      `npx playwright install --with-deps`
    - Please create or update tests if adding new capabilities
