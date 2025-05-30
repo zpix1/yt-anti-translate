@@ -35,7 +35,7 @@ jobs:
         id: check_ci_fix
         run: |
           TITLE="${{ github.event.pull_request.title }}"
-          if echo "$TITLE" | grep -iq '^\[ci-fix\]'; then
+          if printf '%s\n' "$TITLE" | grep -iq '^\[ci-fix\]'; then
             echo "skip=true" >> $GITHUB_OUTPUT
           else
             echo "skip=false" >> $GITHUB_OUTPUT
@@ -107,7 +107,7 @@ jobs:
         id: suffix
         run: |
           BRANCH_NAME="${{ github.event.pull_request.head.ref }}"
-          if echo "$BRANCH_NAME" | grep -iq '^fix-'; then
+          if printf '%s\n' "$BRANCH_NAME" | grep -iq '^fix-'; then
             echo "suffix= Fix" >> $GITHUB_OUTPUT
           else
             echo "suffix=" >> $GITHUB_OUTPUT
