@@ -101,9 +101,12 @@ ytm-shorts-lockup-view-model`,
    * Given a Node it uses computed style to determine if it is visible
    * @type {Function}
    * @param {Node} node - A Node of type ELEMENT_NODE
-   * @param {boolean} shouldCheckViewport - Optional. If true the element position is checked to be inside or outside the viewport. Viewport is extended based on VIEWPORT_EXTENSION_PERCENTAGE_FRACTION. Defaults true
-   * @param {boolean} onlyOutsideViewport - Optional. only relevant when `shouldCheckViewport` is true. When this is also true the element is returned only if outside the viewport. By default the element is returned only if inside the viewport. Defaults false
-   * @param {boolean} useOutsideLimit - Optional. when true, outside elements are limited to those contained inside the frame between the extended viewport and the limit based on VIEWPORT_OUTSIDE_LIMIT_FRACTION. Defaults false
+   * @param {boolean} shouldCheckViewport - Optional. If true the element position is checked to be inside or outside the viewport. Viewport is extended based on 
+   *                                        VIEWPORT_EXTENSION_PERCENTAGE_FRACTION. Defaults true
+   * @param {boolean} onlyOutsideViewport - Optional. only relevant when `shouldCheckViewport` is true. When this is also true the element is returned only if outside
+   *                                        the viewport. By default the element is returned only if inside the viewport. Defaults false
+   * @param {boolean} useOutsideLimit - Optional. when true, outside elements are limited to those contained inside the frame between the extended viewport and the 
+   *                                    limit based on VIEWPORT_OUTSIDE_LIMIT_FRACTION. Defaults false
    * @return {boolean} - true if the node is computed as visible
    */
   isVisible: function (node, shouldCheckViewport = true, onlyOutsideViewport = false, useOutsideLimit = false) {
@@ -215,7 +218,8 @@ ytm-shorts-lockup-view-model`,
    * @type {Function}
    * @param {Node|NodeList} nodes - A NodeList or single Node of type ELEMENT_NODE
    * @param {boolean} shouldBeInsideViewport - Optional. If true the element should also be inside the viewport to be considered visible. Defaults true
-   * @param {Number} lengthLimit - Optional. Limit the number of items in the array. As soon as the correspoinding array length is reached, the array is returned prematurelly. Defaults to Number.MAX_VALUE
+   * @param {Number} lengthLimit - Optional. Limit the number of items in the array. As soon as the correspoinding array length is reached, 
+   *                               the array is returned prematurelly. Defaults to Number.MAX_VALUE
    * @returns {Array<Node>|null} - A array of all the visible nodes or null
    */
   getAllVisibleNodes: function (nodes, shouldBeInsideViewport = true, lengthLimit = Number.MAX_VALUE) {
@@ -250,7 +254,8 @@ ytm-shorts-lockup-view-model`,
    * Given an Array of HTMLElements it returns visible HTMLElement or null only if they are loaded outside the viewport
    * @type {Function}
    * @param {Node|NodeList} nodes - A NodeList or single Node of type ELEMENT_NODE
-   * @param {boolean} useOutsideLimit - Optional. when true, outside elements are limited to those contained inside the frame between the extended viewport and the limit based on VIEWPORT_OUTSIDE_LIMIT_FRACTION. Defaults false
+   * @param {boolean} useOutsideLimit - Optional. when true, outside elements are limited to those contained inside the frame between 
+   *                                    the extended viewport and the limit based on VIEWPORT_OUTSIDE_LIMIT_FRACTION. Defaults false
    * @returns {Array<Node>|null} - A array of all the visible nodes or null that are outside the viewport
    */
   getAllVisibleNodesOutsideViewport: function (nodes, useOutsideLimit = false) {
@@ -470,6 +475,79 @@ ytm-shorts-lockup-view-model`,
 
     // Add new content
     container.appendChild(newContent);
+  },
+
+  /** @type {Set} */ SUPPORTED_BCP47_CODES: new Set([
+    "af-ZA", "az-AZ", "id-ID", "ms-MY", "bs-BA", "ca-ES", "cs-CZ", "da-DK", "de-DE", "et-EE",
+    "en-IN", "en-GB", "en-US", "es-ES", "es-419", "es-US", "eu-ES", "fil-PH", "fr-FR", "fr-CA",
+    "gl-ES", "hr-HR", "zu-ZA", "is-IS", "it-IT", "sw-TZ", "lv-LV", "lt-LT", "hu-HU", "nl-NL",
+    "nb-NO", "uz-UZ", "pl-PL", "pt-PT", "pt-BR", "ro-RO", "sq-AL", "sk-SK", "sl-SI", "sr-RS",
+    "fi-FI", "sv-SE", "vi-VN", "tr-TR", "be-BY", "bg-BG", "ky-KG", "kk-KZ", "mk-MK", "mn-MN",
+    "ru-RU", "sr-BA", "uk-UA", "el-GR", "hy-AM", "he-IL", "ur-PK", "ar-SA", "fa-IR", "ne-NP",
+    "mr-IN", "hi-IN", "as-IN", "bn-BD", "pa-IN", "gu-IN", "or-IN", "ta-IN", "te-IN", "kn-IN",
+    "ml-IN", "si-LK", "th-TH", "lo-LA", "my-MM", "ka-GE", "am-ET", "km-KH", "zh-CN", "zh-TW",
+    "zh-HK", "ja-JP", "ko-KR"
+  ]),
+
+  /** @type {Record<string, string>} */COMMON_BCP47_FALLBACKS: {
+    af: "af-ZA", am: "am-ET", ar: "ar-SA", as: "as-IN", az: "az-AZ", be: "be-BY", bg: "bg-BG", bn: "bn-BD", bs: "bs-BA", ca: "ca-ES",
+    cs: "cs-CZ", da: "da-DK", de: "de-DE", el: "el-GR", en: "en-US", es: "es-419", et: "et-EE", eu: "eu-ES", fa: "fa-IR", fi: "fi-FI",
+    fil: "fil-PH", fr: "fr-FR", gl: "gl-ES", gu: "gu-IN", he: "he-IL", hi: "hi-IN", hr: "hr-HR", hu: "hu-HU", hy: "hy-AM", id: "id-ID",
+    is: "is-IS", it: "it-IT", ja: "ja-JP", ka: "ka-GE", km: "km-KH", kn: "kn-IN", ko: "ko-KR", lo: "lo-LA", lt: "lt-LT", lv: "lv-LV",
+    mk: "mk-MK", ml: "ml-IN", mn: "mn-MN", mr: "mr-IN", ms: "ms-MY", ne: "ne-NP", nl: "nl-NL", nb: "nb-NO", or: "or-IN", pa: "pa-IN",
+    pl: "pl-PL", pt: "pt-BR", ro: "ro-RO", ru: "ru-RU", si: "si-LK", sk: "sk-SK", sl: "sl-SI", sq: "sq-AL", sr: "sr-RS", sv: "sv-SE",
+    sw: "sw-TZ", ta: "ta-IN", te: "te-IN", th: "th-TH", tr: "tr-TR", uk: "uk-UA", ur: "ur-PK", uz: "uz-UZ", vi: "vi-VN", zh: "zh-CN",
+    zu: "zu-ZA"
+  },
+
+  /**
+   * Attempts to detect the closest YouTube Supported BCP-47 language code(s) from the given text.
+   * Uses the browser/chrome i18n.detectLanguage API with retries and filtering.
+   * @type {Function}
+   * @param {string} text - The input text to detect the language from.
+   * @param {number} [maxRetries=3] - Optional - Maximum number of retries if detection results are not valid. Defaults to 3
+   * @param {number} [minProbability=50] - Optional - Minimum confidence percentage (0-100) to accept a detected language. Defaults to 50
+   * @returns {Promise<string[] | null>} - Resolves with an array of valid BCP-47 language codes that match or closely fallback to supported languages,
+   *                                       or null on failure or if no suitable match is found within retries.
+   */
+  detectSupportedLanguage: async function (text, maxRetries = 3, minProbability = 50) {
+    const api = this.getBrowserOrChrome();
+    let attempts = 0;
+
+    while (attempts < maxRetries) {
+      attempts++;
+
+      try {
+        const result = await api.i18n.detectLanguage(text);
+
+        // Filter detected languages by minProbability threshold
+        const filteredLanguages = result.languages.filter(l => (l.percentage ?? 0) >= minProbability);
+
+        // exact matches from VALID_BCP47_CODES
+        const exactMatches = filteredLanguages
+          .map(l => l.language)
+          .filter(lang => this.SUPPORTED_BCP47_CODES.has(lang));
+
+        if (exactMatches.length > 0) {
+          return exactMatches;
+        }
+
+        // tolerant fallback matches using COMMON_BCP47_FALLBACKS
+        const tolerantMatches = filteredLanguages
+          .map(l => this.COMMON_BCP47_FALLBACKS[l.language])
+          .filter(lang => this.SUPPORTED_BCP47_CODES.has(lang));
+
+        if (tolerantMatches.length > 0) {
+          return tolerantMatches;
+        }
+
+        // else retry
+      } catch (err) {
+        return null;
+      }
+    }
+
+    return null;
   }
 }
 

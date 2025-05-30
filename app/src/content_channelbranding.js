@@ -77,19 +77,12 @@ async function detectChannelOriginalLanguage() {
     return;
   }
 
-  try {
-    const detection = await window.YoutubeAntiTranslate.getBrowserOrChrome().i18n.detectLanguage(combinedTitle);
-    if (
-      !detection.languages
-      || detection.languages.length === 0
-    ) {
-      return null;
-    }
-    return detection.languages[0].language;
-  }
-  catch (err) {
+  const detection = await window.YoutubeAntiTranslate.detectSupportedLanguage(combinedTitle);
+
+  if (!detection) {
     return null;
   }
+  return detection[0]
 }
 
 /**
@@ -188,6 +181,11 @@ async function getChannelBrandingWithYoutubeI(ucid = null, locale = null) {
   }
 
   if (!locale) {
+    // Check if we have a previusly successful locale
+    locale = window.YoutubeAntiTranslate.getSessionCache(ucid);
+  }
+  if (!locale) {
+    // detect original language based on oembeded data for videos or shorts on the current channel page
     locale = await detectChannelOriginalLanguage();
   }
   if (!locale) {
@@ -255,6 +253,9 @@ async function getChannelBrandingWithYoutubeI(ucid = null, locale = null) {
 
   // Store in cache
   window.YoutubeAntiTranslate.setSessionCache(requestIdentifier, result);
+
+  // Store also the successful detected locale that worked
+  window.YoutubeAntiTranslate.setSessionCache(ucid, locale);
 
   return result;
 }

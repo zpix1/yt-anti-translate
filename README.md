@@ -20,7 +20,7 @@ It is much easier to use than its analogues (such as [YoutubeAutotranslateCancel
 
 ### Enhanced Features Reliability Option
 
-In the extension settings, you can optionally provide a YouTube Data API Key.
+In the extension settings, you can optionally provide a YouTube Data API Key. Although this is optional, it is reccomended.
 When that is populated, some features work more reliably.
 [Read more on how to obtain](https://github.com/zpix1/yt-anti-translate/blob/main/YOUTUBE_DATA_API_KEY.md)
 
