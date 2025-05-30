@@ -385,24 +385,27 @@ function updateBrandingHeaderTitleContent(container, originalBrandingData) {
     if (!titleTextContainer) {
       console.log(`${window.YoutubeAntiTranslate.LOG_PREFIX} No branding header title text containers found`);
     }
-    else if (!document.title.includes(originalBrandingData.title)) {
-      // This is sometimes skipped on first update as youtube translate the document title late; so we use a cached oldTitle
-      const cachedOldTitle = window.YoutubeAntiTranslate.getSessionCache(`pageTitle_${document.location.href}`) ?? titleTextContainer.textContent
+    else {
+      const cachedOldTitle = window.YoutubeAntiTranslate.getSessionCache(`pageTitle_${document.location.href}`)
 
-      // document tile is sometimes not a perfect match to the oldTile due to spacing, so normalize all
-      const normalizedDocumentTitle = window.YoutubeAntiTranslate.normalizeSpaces(document.title);
-      const normalizedOldTitle = window.YoutubeAntiTranslate.normalizeSpaces(cachedOldTitle);
-      const normalizeRealTitle = window.YoutubeAntiTranslate.normalizeSpaces(originalBrandingData.title);
-      const realDocumentTitle = normalizedDocumentTitle.replace(normalizedOldTitle, normalizeRealTitle);
-      if (normalizedDocumentTitle !== realDocumentTitle) {
-        document.title = realDocumentTitle;
+      if (cachedOldTitle && document.title.includes(cachedOldTitle)) {
+        // This is sometimes skipped on first update as youtube translate the document title late; so we use a cached oldTitle
+
+        // document tile is sometimes not a perfect match to the oldTile due to spacing, so normalize all
+        const normalizedDocumentTitle = window.YoutubeAntiTranslate.normalizeSpaces(document.title);
+        const normalizedOldTitle = window.YoutubeAntiTranslate.normalizeSpaces(cachedOldTitle);
+        const normalizeRealTitle = window.YoutubeAntiTranslate.normalizeSpaces(originalBrandingData.title);
+        const realDocumentTitle = normalizedDocumentTitle.replace(normalizedOldTitle, normalizeRealTitle);
+        if (normalizedDocumentTitle !== realDocumentTitle) {
+          document.title = realDocumentTitle;
+        }
       }
-    }
-    else if (titleTextContainer.textContent !== originalBrandingData.title) {
-      // cache old title for future reference
-      window.YoutubeAntiTranslate.setSessionCache(`pageTitle_${document.location.href}`, titleTextContainer.textContent)
+      if (titleTextContainer.textContent !== originalBrandingData.title) {
+        // cache old title for future reference
+        window.YoutubeAntiTranslate.setSessionCache(`pageTitle_${document.location.href}`, titleTextContainer.textContent)
 
-      window.YoutubeAntiTranslate.replaceTextOnly(titleTextContainer, originalBrandingData.title)
+        window.YoutubeAntiTranslate.replaceTextOnly(titleTextContainer, originalBrandingData.title)
+      }
     }
   }
 }
