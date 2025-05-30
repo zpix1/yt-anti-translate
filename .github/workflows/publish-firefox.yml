@@ -13,7 +13,7 @@ jobs:
   build-firefox-extension:
     name: Build Firefox extension artifact
     runs-on: ubuntu-latest
-    if: github.repository_owner == 'namakeingo'
+    if: github.repository_owner == 'namakeingo' || github.repository_owner == 'zpix1'
     outputs:
       tag: ${{ steps.get_version.outputs.tag }}
       version: ${{ steps.get_version.outputs.version }}
@@ -56,7 +56,7 @@ jobs:
   upload-extension:
     name: Upload extension
     runs-on: ubuntu-latest
-    if: github.repository_owner == 'namakeingo'
+    if: github.repository_owner == 'namakeingo' || github.repository_owner == 'zpix1'
     needs: build-firefox-extension
 
     steps:
