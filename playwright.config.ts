@@ -31,10 +31,10 @@ export default defineConfig<TestOptions>({
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
-  /* Retry 2 times on CI, or once locally */
-  retries: process.env.CI ? 2 : 1,
+  /* Retry 3 times on CI, or once locally */
+  retries: process.env.CI ? 3 : 1,
   /* Limit parallel workers on CI as they cause random failures some of the times */
-  workers: process.env.CI ? 3 : undefined,
+  workers: process.env.CI ? 2 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: "html",
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
