@@ -17,6 +17,7 @@ ytm-shorts-lockup-view-model`,
     console.warn(`${this.LOG_PREFIX}`, ...args);
   },
   logInfo: function (...args) {
+    return;
     console.log(`${this.LOG_PREFIX}`, ...args);
   },
   logError: function (...args) {

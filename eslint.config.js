@@ -2,8 +2,9 @@
 import js from "@eslint/js";
 import eslintPluginPrettierRecommended from "eslint-plugin-prettier/recommended";
 import globals from "globals";
+import tseslint from "typescript-eslint";
 
-export default [
+export default tseslint.config([
   // 1. Global ignores
   {
     languageOptions: {
@@ -31,6 +32,7 @@ export default [
 
   // 2. ESLint's recommended configurations
   js.configs.recommended,
+  tseslint.configs.recommended,
 
   // 3. Prettier recommended configuration
   // This applies Prettier formatting as ESLint rules and disables conflicting ESLint rules.
@@ -56,6 +58,7 @@ export default [
       "prefer-const": "error",
       curly: "error",
       eqeqeq: "error",
+      "no-empty": "warn",
 
       // Add any other project-specific rules or overrides here.
       // For example:
@@ -65,4 +68,4 @@ export default [
     // you would need to install @typescript-eslint/parser and @typescript-eslint/eslint-plugin,
     // and configure them here. This setup will apply basic ESLint rules and Prettier to .ts/.tsx files.
   },
-];
+]);

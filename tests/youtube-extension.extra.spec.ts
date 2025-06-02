@@ -1,25 +1,27 @@
-import { expect, firefox, chromium } from "@playwright/test";
-import { test } from "../playwright.config"
-import path from "path";
-import { withExtension } from "playwright-webextext";
-import { newPageWithStorageStateIfItExists, findLoginButton } from "./helpers/AuthStorageHelper";
+import { expect, BrowserContext } from "@playwright/test";
+import { test } from "../playwright.config";
 import { handleTestDistribution } from "./helpers/ExtensionsFilesHelper";
-import { setupUBlockAndAuth } from "./helpers/setupUBlockAndAuth";
+import {
+  handleRetrySetup,
+  createBrowserContext,
+  setupPageWithAuth,
+  loadPageAndVerifyAuth,
+} from "./helpers/TestSetupHelper";
 
-require('dotenv').config();
+import "dotenv/config";
 
 // This are tests for additional features that benefit from Youtube Data API and a APIKey provided by the user
 // OR
 // Tests that use locale th-TH (instead of ru-RU)
 
 test.describe("YouTube Anti-Translate extension - Extras", () => {
-  test("YouTube channel branding header and about retain original content - WITH Api Key Set", async ({ browserNameWithExtensions, localeString }, testInfo) => {
+  test("YouTube channel branding header and about retain original content - WITH Api Key Set", async ({
+    browserNameWithExtensions,
+    localeString,
+  }, testInfo) => {
     expect(process.env.YOUTUBE_API_KEY?.trim() || "").not.toBe("");
 
-    if (testInfo.retry > 0) {
-      // If this test is retring then check uBlock and Auth again
-      expect(await setupUBlockAndAuth([browserNameWithExtensions], [localeString])).toBe(true);
-    }
+    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
 
     // --- Update Extension Settings and distribute a test copy ---
     // The object to be passed and inserted into the start.js file
@@ -27,89 +29,57 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     handleTestDistribution(configObject);
 
     // Launch browser with the extension
-    let context;
-    switch (browserNameWithExtensions) {
-      case "chromium":
-        const browserTypeWithExtension = withExtension(
-          chromium,
-          [path.resolve(__dirname, "testDist"), path.resolve(__dirname, "testUBlockOriginLite")]
-        );
-        context = await browserTypeWithExtension.launchPersistentContext("", {
-          headless: false
-        });
-        break;
-      case "firefox":
-        context = await (withExtension(
-          firefox,
-          [path.resolve(__dirname, "testDist"), path.resolve(__dirname, "testUBlockOrigin")]
-        )).launch()
-        break;
-      default:
-        throw "Unsupported browserNameWithExtensions"
-    }
+    const context = await createBrowserContext(
+      browserNameWithExtensions,
+      "testDist",
+    );
 
     // Create a new page
-    await channelBrandingAboutTest(context, browserNameWithExtensions, localeString);
+    await channelBrandingAboutTest(
+      context,
+      browserNameWithExtensions,
+      localeString,
+    );
   });
-  test("YouTube channel branding header and about retain original content - WITHOUT Api Key (YouTubeI)", async ({ browserNameWithExtensions, localeString }, testInfo) => {
-    if (testInfo.retry > 0) {
-      // If this test is retring then check uBlock and Auth again
-      expect(await setupUBlockAndAuth([browserNameWithExtensions], [localeString])).toBe(true);
-    }
+
+  test("YouTube channel branding header and about retain original content - WITHOUT Api Key (YouTubeI)", async ({
+    browserNameWithExtensions,
+    localeString,
+  }, testInfo) => {
+    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
 
     // Launch browser with the extension
-    let context;
-    switch (browserNameWithExtensions) {
-      case "chromium":
-        const browserTypeWithExtension = withExtension(
-          chromium,
-          [path.resolve(__dirname, "../app"), path.resolve(__dirname, "testUBlockOriginLite")]
-        );
-        context = await browserTypeWithExtension.launchPersistentContext("", {
-          headless: false
-        });
-        break;
-      case "firefox":
-        context = await (withExtension(
-          firefox,
-          [path.resolve(__dirname, "../app"), path.resolve(__dirname, "testUBlockOrigin")]
-        )).launch()
-        break;
-      default:
-        throw "Unsupported browserNameWithExtensions"
-    }
+    const context = await createBrowserContext(
+      browserNameWithExtensions,
+      "../app",
+    );
 
     // Create a new page
-    await channelBrandingAboutTest(context, browserNameWithExtensions, localeString, "-youtubeI");
+    await channelBrandingAboutTest(
+      context,
+      browserNameWithExtensions,
+      localeString,
+      "-youtubeI",
+    );
   });
-  async function channelBrandingAboutTest(context: any, browserNameWithExtensions: string, localeString: string, addToScreenshotName: string = "") {
-    const result = await newPageWithStorageStateIfItExists(context, browserNameWithExtensions, localeString);
-    const page = result.page;
-    const localeLoaded = result.localeLoaded;
-    if (!localeLoaded) {
-      // Setup failed to create a matching locale so test will fail.
-      expect(localeLoaded).toBe(true);
-    }
 
-    // Set up console message counting
-    let consoleMessageCount = 0;
-    page.on("console", () => {
-      consoleMessageCount++;
-    });
+  async function channelBrandingAboutTest(
+    context: BrowserContext,
+    browserNameWithExtensions: string,
+    localeString: string,
+    addToScreenshotName: string = "",
+  ) {
+    const { page, consoleMessageCount } = await setupPageWithAuth(
+      context,
+      browserNameWithExtensions,
+      localeString,
+    );
 
-    // Navigate to the specified YouTube channel page
-    await page.goto("https://www.youtube.com/@MrBeast");
-
-    // Wait for the page to load
-    try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
-    // .waitForLoadState("networkidle" is not always right so wait 5 extra seconds
-    await page.waitForTimeout(5000);
-
-    // If for whatever reason we are not logged in, then fail the test
-    expect(await findLoginButton(page)).toBe(null);
+    await loadPageAndVerifyAuth(page, "https://www.youtube.com/@MrBeast");
 
     // Wait for the video grid to appear
-    const channelHeaderSelector = "#page-header-container #page-header .page-header-view-model-wiz__page-header-headline-info";
+    const channelHeaderSelector =
+      "#page-header-container #page-header .page-header-view-model-wiz__page-header-headline-info";
     await page.waitForSelector(channelHeaderSelector);
 
     // --- Check Branding Title ---
@@ -143,20 +113,24 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     await expect(page.locator(channelDescriptionSelector)).toBeVisible();
 
     // --- Open About Popup ---
-    console.log("Clicking '..more' button on description to open About Popup...");
-    await page.locator(`${channelHeaderSelector} .truncated-text-wiz__absolute-button`).click();
-    try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
+    console.log(
+      "Clicking '..more' button on description to open About Popup...",
+    );
+    await page
+      .locator(`${channelHeaderSelector} .truncated-text-wiz__absolute-button`)
+      .click();
+    try {
+      await page.waitForLoadState("networkidle", { timeout: 5000 });
+    } catch {}
     await page.waitForTimeout(500);
 
     // --- Check About Popup ---
-    const aboutContainer = 'ytd-engagement-panel-section-list-renderer';
+    const aboutContainer = "ytd-engagement-panel-section-list-renderer";
 
     const aboutTitleSelector = `${aboutContainer} #title-text:visible`;
     console.log("Checking Channel header for original description...");
     // Get the about title
-    const aboutTitle = await page
-      .locator(aboutTitleSelector)
-      .textContent();
+    const aboutTitle = await page.locator(aboutTitleSelector).textContent();
     console.log("Channel about title:", aboutTitle?.trim());
 
     // Check that the branding about title is in English and not in Thai
@@ -177,21 +151,33 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
 
     // --- Close Popup
     console.log("Clicking 'X' button to close Popup...");
-    await page.locator(`${aboutContainer} #visibility-button button.yt-spec-button-shape-next:visible`).click();
-    try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
+    await page
+      .locator(
+        `${aboutContainer} #visibility-button button.yt-spec-button-shape-next:visible`,
+      )
+      .click();
+    try {
+      await page.waitForLoadState("networkidle", { timeout: 5000 });
+    } catch {}
     await page.waitForTimeout(500);
 
     // --- Open About Popup via more links ---
-    console.log("Clicking '..more links' button on description to open About Popup...");
-    await page.locator(`${channelHeaderSelector} span.yt-core-attributed-string>span>a.yt-core-attributed-string__link[role="button"]`).click();
-    try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
+    console.log(
+      "Clicking '..more links' button on description to open About Popup...",
+    );
+    await page
+      .locator(
+        `${channelHeaderSelector} span.yt-core-attributed-string>span>a.yt-core-attributed-string__link[role="button"]`,
+      )
+      .click();
+    try {
+      await page.waitForLoadState("networkidle", { timeout: 5000 });
+    } catch {}
     await page.waitForTimeout(500);
 
     // --- Check About A second time via the moreLinks Popup ---
     // Get the about title
-    const aboutTitle2 = await page
-      .locator(aboutTitleSelector)
-      .textContent();
+    const aboutTitle2 = await page.locator(aboutTitleSelector).textContent();
     console.log("Channel about title:", aboutTitle?.trim());
 
     // Check that the branding about title is in English and not in Thai
@@ -210,89 +196,67 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     await expect(page.locator(aboutDescriptionSelector)).toBeVisible();
 
     // Take a screenshot for visual verification
-    await page.screenshot({ path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-channel-branding-about${addToScreenshotName}-test.png` });
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-channel-branding-about${addToScreenshotName}-test.png`,
+    });
 
     // --- Close Popup
     console.log("Clicking 'X' button to close Popup...");
-    await page.locator(`${aboutContainer} #visibility-button button.yt-spec-button-shape-next:visible`).click();
-    try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
+    await page
+      .locator(
+        `${aboutContainer} #visibility-button button.yt-spec-button-shape-next:visible`,
+      )
+      .click();
+    try {
+      await page.waitForLoadState("networkidle", { timeout: 5000 });
+    } catch {}
     await page.waitForTimeout(500);
 
     // Take a screenshot for visual verification
-    await page.screenshot({ path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-channel-branding-header${addToScreenshotName}-test.png` });
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-channel-branding-header${addToScreenshotName}-test.png`,
+    });
 
     // Check page title
-    const pageTitle = await page.title()
+    const pageTitle = await page.title();
     console.log("Document title for the Video is:", pageTitle?.trim());
     // Check that the document title is in English and not in Thai
     expect(pageTitle).toContain("MrBeast");
     expect(pageTitle).not.toContain("มิสเตอร์บีสต์");
 
     // Check console message count
-    expect(consoleMessageCount).toBeLessThan(
-      2000
-    );
+    expect(consoleMessageCount).toBeLessThan(2000);
 
     // Close the browser context
     await context.close();
   }
 
-  test("YouTube video player retain original author", async ({ browserNameWithExtensions, localeString }, testInfo) => {
-    if (testInfo.retry > 0) {
-      // If this test is retring then check uBlock and Auth again
-      expect(await setupUBlockAndAuth([browserNameWithExtensions], [localeString])).toBe(true);
-    }
+  test("YouTube video player retain original author", async ({
+    browserNameWithExtensions,
+    localeString,
+  }, testInfo) => {
+    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
 
     // Launch browser with the extension
-    let context;
-    switch (browserNameWithExtensions) {
-      case "chromium":
-        const browserTypeWithExtension = withExtension(
-          chromium,
-          [path.resolve(__dirname, "../app"), path.resolve(__dirname, "testUBlockOriginLite")]
-        );
-        context = await browserTypeWithExtension.launchPersistentContext("", {
-          headless: false
-        });
-        break;
-      case "firefox":
-        context = await (withExtension(
-          firefox,
-          [path.resolve(__dirname, "../app"), path.resolve(__dirname, "testUBlockOrigin")]
-        )).launch()
-        break;
-      default:
-        throw "Unsupported browserNameWithExtensions"
-    }
+    const context = await createBrowserContext(
+      browserNameWithExtensions,
+      "../app",
+    );
 
     // Create a new page
-    const result = await newPageWithStorageStateIfItExists(context, browserNameWithExtensions, localeString);
-    const page = result.page;
-    const localeLoaded = result.localeLoaded;
-    if (!localeLoaded) {
-      // Setup failed to create a matching locale so test will fail.
-      expect(localeLoaded).toBe(true)
-    }
+    const { page, consoleMessageCount } = await setupPageWithAuth(
+      context,
+      browserNameWithExtensions,
+      localeString,
+    );
 
-    // Set up console message counting
-    let consoleMessageCount = 0;
-    page.on("console", () => {
-      consoleMessageCount++;
-    });
-
-    // Navigate to the specified YouTube video page
-    await page.goto("https://www.youtube.com/watch?v=l-nMKJ5J3Uc");
-
-    // Wait for the page to load
-    try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
-    // .waitForLoadState("networkidle" is not always right so wait 5 extra seconds
-    await page.waitForTimeout(5000);
-
-    // If for whatever reason we are not logged in, then fail the test
-    expect(await findLoginButton(page)).toBe(null);
+    await loadPageAndVerifyAuth(
+      page,
+      "https://www.youtube.com/watch?v=l-nMKJ5J3Uc",
+    );
 
     // Wait for the video player to appear
-    const videoPlayerSelector = "#movie_player"
+    const videoPlayerSelector = "#movie_player";
     await page.waitForSelector(videoPlayerSelector);
 
     // --- Check Branding Title ---
@@ -300,24 +264,22 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
 
     console.log("Checking video author for original author...");
     // Get the channel branding header title
-    const brandingTitle = await page
-      .locator(videoAuthorSelector)
-      .textContent();
+    const brandingTitle = await page.locator(videoAuthorSelector).textContent();
     console.log("Video author:", brandingTitle?.trim());
 
     // Check that the channel name is in English and not in Thai
     expect(brandingTitle).toContain("MrBeast");
     expect(brandingTitle).not.toContain("มิสเตอร์บีสต์");
-    await expect(page.locator(videoAuthorSelector)).toBeVisible()
+    await expect(page.locator(videoAuthorSelector)).toBeVisible();
 
     // Take a screenshot for visual verification
     await page.waitForTimeout(4000);
-    await page.screenshot({ path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-video-author-test.png` });
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-video-author-test.png`,
+    });
 
     // Check console message count
-    expect(consoleMessageCount).toBeLessThan(
-      2000
-    );
+    expect(consoleMessageCount).toBeLessThan(2000);
 
     // Close the browser context
     await context.close();

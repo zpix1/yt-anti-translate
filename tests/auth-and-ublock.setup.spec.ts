@@ -1,6 +1,6 @@
 import { expect } from "@playwright/test";
 import { test } from "../playwright.config";
-import { setupUBlockAndAuth } from "./helpers/setupUBlockAndAuth";
+import { setupUBlockAndAuth } from "./helpers/SetupUBlockAndAuth";
 
 // This is a setup test used to download uBlock and set up a Storage State with Google Auth and Locale setting
 

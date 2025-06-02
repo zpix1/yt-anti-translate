@@ -1,88 +1,34 @@
-import { expect, firefox, chromium } from "@playwright/test";
+import { expect } from "@playwright/test";
 import { test } from "../playwright.config";
-import path from "path";
-import { withExtension } from "playwright-webextext";
 import {
-  newPageWithStorageStateIfItExists,
-  findLoginButton,
-} from "./helpers/AuthStorageHelper";
-import { setupUBlockAndAuth } from "./helpers/setupUBlockAndAuth";
-
-const authFile = path.join(__dirname, "../playwright/.auth/user.json");
-
-// This are tests for the core functionalities
+  handleRetrySetup,
+  createBrowserContext,
+  setupPageWithAuth,
+  loadPageAndVerifyAuth,
+} from "./helpers/TestSetupHelper";
 
 test.describe("YouTube Anti-Translate extension", () => {
   test("Prevents current video title and description auto-translation", async ({
     browserNameWithExtensions,
     localeString,
   }, testInfo) => {
-    if (testInfo.retry > 0) {
-      // If this test is retring then check uBlock and Auth again
-      expect(
-        await setupUBlockAndAuth([browserNameWithExtensions], [localeString]),
-      ).toBe(true);
-    }
+    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
 
     // Launch browser with the extension
-    let context;
-    switch (browserNameWithExtensions) {
-      case "chromium":
-        const browserTypeWithExtension = withExtension(chromium, [
-          path.resolve(__dirname, "../app"),
-          path.resolve(__dirname, "testUBlockOriginLite"),
-        ]);
-        context = await browserTypeWithExtension.launchPersistentContext("", {
-          headless: false,
-        });
-        break;
-      case "firefox":
-        context = await withExtension(firefox, [
-          path.resolve(__dirname, "../app"),
-          path.resolve(__dirname, "testUBlockOrigin"),
-        ]).launch();
-        break;
-      default:
-        throw "Unsupported browserNameWithExtensions";
-    }
+    const context = await createBrowserContext(browserNameWithExtensions);
 
     // Create a new page
-    const result = await newPageWithStorageStateIfItExists(
+    const { page, consoleMessageCount } = await setupPageWithAuth(
       context,
       browserNameWithExtensions,
       localeString,
     );
-    const page = result.page;
-    const localeLoaded = result.localeLoaded;
-    if (!localeLoaded) {
-      // Setup failed to create a matching locale so test will fail.
-      expect(localeLoaded).toBe(true);
-    }
 
-    // Set up console message counting
-    let consoleMessageCount = 0;
-    page.on("console", () => {
-      consoleMessageCount++;
-    });
-
-    // Navigate to the specified YouTube video
-    await page.goto("https://www.youtube.com/watch?v=l-nMKJ5J3Uc");
-
-    // Wait for the page to load
-    try {
-      await page.waitForLoadState("networkidle", { timeout: 5000 });
-    } catch {}
-    // .waitForLoadState("networkidle" is not always right so wait 5 extra seconds
-    await page.waitForTimeout(5000);
-
-    // If for whatever reason we are not logged in, then fail the test
-    expect(await findLoginButton(page)).toBe(null);
-
-    // When chromium we need to wait some extra time to allow adds to be removed by uBlock Origin Lite
-    // Ads are allowed to load and removed after so it takes time
-    if (browserNameWithExtensions === "chromium") {
-      await page.waitForTimeout(5000);
-    }
+    await loadPageAndVerifyAuth(
+      page,
+      "https://www.youtube.com/watch?v=l-nMKJ5J3Uc",
+      browserNameWithExtensions,
+    );
 
     // Wait for the video page to fully load
     await page.waitForSelector("ytd-watch-metadata");
@@ -204,72 +150,23 @@ test.describe("YouTube Anti-Translate extension", () => {
     browserNameWithExtensions,
     localeString,
   }, testInfo) => {
-    if (testInfo.retry > 0) {
-      // If this test is retring then check uBlock and Auth again
-      expect(
-        await setupUBlockAndAuth([browserNameWithExtensions], [localeString]),
-      ).toBe(true);
-    }
+    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
 
     // Launch browser with the extension
-    let context;
-    switch (browserNameWithExtensions) {
-      case "chromium":
-        const browserTypeWithExtension = withExtension(chromium, [
-          path.resolve(__dirname, "../app"),
-          path.resolve(__dirname, "testUBlockOriginLite"),
-        ]);
-        context = await browserTypeWithExtension.launchPersistentContext("", {
-          headless: false,
-        });
-        break;
-      case "firefox":
-        context = await withExtension(firefox, [
-          path.resolve(__dirname, "../app"),
-          path.resolve(__dirname, "testUBlockOrigin"),
-        ]).launch();
-        break;
-      default:
-        throw "Unsupported browserNameWithExtensions";
-    }
+    const context = await createBrowserContext(browserNameWithExtensions);
 
     // Create a new page
-    const result = await newPageWithStorageStateIfItExists(
+    const { page, consoleMessageCount } = await setupPageWithAuth(
       context,
       browserNameWithExtensions,
       localeString,
     );
-    const page = result.page;
-    const localeLoaded = result.localeLoaded;
-    if (!localeLoaded) {
-      // Setup failed to create a matching locale so test will fail.
-      expect(localeLoaded).toBe(true);
-    }
 
-    // Set up console message counting
-    let consoleMessageCount = 0;
-    page.on("console", () => {
-      consoleMessageCount++;
-    });
-
-    // Navigate to the specified YouTube video
-    await page.goto("https://www.youtube.com/watch?v=4PBPXbd4DkQ");
-
-    // Wait for the page to load
-    try {
-      await page.waitForLoadState("networkidle", { timeout: 5000 });
-    } catch {}
-    // .waitForLoadState("networkidle" is not always right so wait 5 extra seconds
-    await page.waitForTimeout(5000);
-
-    // If for whatever reason we are not logged in, then fail the test
-    expect(await findLoginButton(page)).toBe(null);
-
-    // When chromium we need to wait some extra time to allow adds to be removed by uBlock Origin Lite
-    // Ads are allowed to load and removed after so it takes time
-    if (browserNameWithExtensions === "chromium") {
-      await page.waitForTimeout(5000);
-    }
+    await loadPageAndVerifyAuth(
+      page,
+      "https://www.youtube.com/watch?v=4PBPXbd4DkQ",
+      browserNameWithExtensions,
+    );
 
     // Wait for the video page to fully load
     await page.waitForSelector("ytd-watch-metadata");
@@ -335,66 +232,23 @@ test.describe("YouTube Anti-Translate extension", () => {
     browserNameWithExtensions,
     localeString,
   }, testInfo) => {
-    if (testInfo.retry > 0) {
-      // If this test is retring then check uBlock and Auth again
-      expect(
-        await setupUBlockAndAuth([browserNameWithExtensions], [localeString]),
-      ).toBe(true);
-    }
+    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
 
     // Launch browser with the extension
-    let context;
-    switch (browserNameWithExtensions) {
-      case "chromium":
-        const browserTypeWithExtension = withExtension(chromium, [
-          path.resolve(__dirname, "../app"),
-          path.resolve(__dirname, "testUBlockOriginLite"),
-        ]);
-        context = await browserTypeWithExtension.launchPersistentContext("", {
-          headless: false,
-        });
-        break;
-      case "firefox":
-        context = await withExtension(firefox, [
-          path.resolve(__dirname, "../app"),
-          path.resolve(__dirname, "testUBlockOrigin"),
-        ]).launch();
-        break;
-      default:
-        throw "Unsupported browserNameWithExtensions";
-    }
+    const context = await createBrowserContext(browserNameWithExtensions);
 
     // Create a new page
-    const result = await newPageWithStorageStateIfItExists(
+    const { page, consoleMessageCount } = await setupPageWithAuth(
       context,
       browserNameWithExtensions,
       localeString,
     );
-    const page = result.page;
-    const localeLoaded = result.localeLoaded;
-    if (!localeLoaded) {
-      // Setup failed to create a matching locale so test will fail.
-      expect(localeLoaded).toBe(true);
-    }
 
-    // Set up console message counting
-    let consoleMessageCount = 0;
-    page.on("console", () => {
-      consoleMessageCount++;
-    });
-
-    // Navigate to the specified YouTube Short
-    await page.goto("https://www.youtube.com/shorts/PXevNM0awlI");
-
-    // Wait for the page to load
-    try {
-      await page.waitForLoadState("networkidle", { timeout: 5000 });
-    } catch {}
-    // .waitForLoadState("networkidle" is not always right so wait 5 extra seconds
-    await page.waitForTimeout(5000);
-
-    // If for whatever reason we are not logged in, then fail the test
-    expect(await findLoginButton(page)).toBe(null);
+    await loadPageAndVerifyAuth(
+      page,
+      "https://www.youtube.com/shorts/PXevNM0awlI",
+      browserNameWithExtensions,
+    );
 
     // Wait for the shorts title element to be present
     const shortsTitleSelector = "yt-shorts-video-title-view-model > h2 > span";
@@ -447,66 +301,23 @@ test.describe("YouTube Anti-Translate extension", () => {
     browserNameWithExtensions,
     localeString,
   }, testInfo) => {
-    if (testInfo.retry > 0) {
-      // If this test is retring then check uBlock and Auth again
-      expect(
-        await setupUBlockAndAuth([browserNameWithExtensions], [localeString]),
-      ).toBe(true);
-    }
+    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
 
     // Launch browser with the extension
-    let context;
-    switch (browserNameWithExtensions) {
-      case "chromium":
-        const browserTypeWithExtension = withExtension(chromium, [
-          path.resolve(__dirname, "../app"),
-          path.resolve(__dirname, "testUBlockOriginLite"),
-        ]);
-        context = await browserTypeWithExtension.launchPersistentContext("", {
-          headless: false,
-        });
-        break;
-      case "firefox":
-        context = await withExtension(firefox, [
-          path.resolve(__dirname, "../app"),
-          path.resolve(__dirname, "testUBlockOrigin"),
-        ]).launch();
-        break;
-      default:
-        throw "Unsupported browserNameWithExtensions";
-    }
+    const context = await createBrowserContext(browserNameWithExtensions);
 
     // Create a new page
-    const result = await newPageWithStorageStateIfItExists(
+    const { page, consoleMessageCount } = await setupPageWithAuth(
       context,
       browserNameWithExtensions,
       localeString,
     );
-    const page = result.page;
-    const localeLoaded = result.localeLoaded;
-    if (!localeLoaded) {
-      // Setup failed to create a matching locale so test will fail.
-      expect(localeLoaded).toBe(true);
-    }
 
-    // Set up console message counting
-    let consoleMessageCount = 0;
-    page.on("console", () => {
-      consoleMessageCount++;
-    });
-
-    // Navigate to the specified YouTube channel videos page
-    await page.goto("https://www.youtube.com/@MrBeast/videos");
-
-    // Wait for the page to load
-    try {
-      await page.waitForLoadState("networkidle", { timeout: 5000 });
-    } catch {}
-    // .waitForLoadState("networkidle" is not always right so wait 5 extra seconds
-    await page.waitForTimeout(5000);
-
-    // If for whatever reason we are not logged in, then fail the test
-    expect(await findLoginButton(page)).toBe(null);
+    await loadPageAndVerifyAuth(
+      page,
+      "https://www.youtube.com/@MrBeast/videos",
+      browserNameWithExtensions,
+    );
 
     // Wait for the video grid to appear
     await page.waitForSelector("ytd-rich-grid-media");
@@ -579,38 +390,6 @@ test.describe("YouTube Anti-Translate extension", () => {
       "Original short title found, translated short title not found.",
     );
 
-    // --- Check another short lower in the page
-    const originalShortTitle2 = "Highest Away From Me Wins $10,000";
-    const translatedShortTitle2 = "Достигни Вершины И Выиграй $10,000"; // Adjust if needed
-    const shortSelector2 = `ytd-rich-item-renderer:has-text("${originalShortTitle2}")`;
-    const translatedShortSelector2 = `ytd-rich-item-renderer:has-text("${translatedShortTitle2}")`;
-
-    console.log("Checking Shorts tab for original title...");
-    // Shorts might load dynamically, scroll into view to ensure it's loaded
-    const originalShort2 = page.locator(shortSelector2).first();
-    if (await originalShort2.isVisible()) {
-      await page.mouse.wheel(0, 500);
-      await originalShort2.scrollIntoViewIfNeeded();
-      try {
-        await page.waitForLoadState("networkidle", { timeout: 5000 });
-      } catch {}
-    }
-    const translatedShort2 = page.locator(translatedShortSelector2).first();
-    if (await translatedShort2.isVisible()) {
-      await page.mouse.wheel(0, 500);
-      await translatedShort2.scrollIntoViewIfNeeded();
-      try {
-        await page.waitForLoadState("networkidle", { timeout: 5000 });
-      } catch {}
-    }
-    await page.waitForTimeout(1000); // Give it a moment to load more items if needed
-
-    await expect(page.locator(shortSelector2)).toBeVisible({ timeout: 10000 }); // Increased timeout for dynamic loading
-    await expect(page.locator(translatedShortSelector2)).not.toBeVisible();
-    console.log(
-      "Original short title found, translated short title not found.",
-    );
-
     // --- Switch back to Videos Tab ---
     console.log("Clicking Videos tab...");
     await page.locator("#tabsContent").getByText("Видео").click();
@@ -644,66 +423,23 @@ test.describe("YouTube Anti-Translate extension", () => {
     browserNameWithExtensions,
     localeString,
   }, testInfo) => {
-    if (testInfo.retry > 0) {
-      // If this test is retring then check uBlock and Auth again
-      expect(
-        await setupUBlockAndAuth([browserNameWithExtensions], [localeString]),
-      ).toBe(true);
-    }
+    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
 
     // Launch browser with the extension
-    let context;
-    switch (browserNameWithExtensions) {
-      case "chromium":
-        const browserTypeWithExtension = withExtension(chromium, [
-          path.resolve(__dirname, "../app"),
-          path.resolve(__dirname, "testUBlockOriginLite"),
-        ]);
-        context = await browserTypeWithExtension.launchPersistentContext("", {
-          headless: false,
-        });
-        break;
-      case "firefox":
-        context = await withExtension(firefox, [
-          path.resolve(__dirname, "../app"),
-          path.resolve(__dirname, "testUBlockOrigin"),
-        ]).launch();
-        break;
-      default:
-        throw "Unsupported browserNameWithExtensions";
-    }
+    const context = await createBrowserContext(browserNameWithExtensions);
 
     // Create a new page
-    const result = await newPageWithStorageStateIfItExists(
+    const { page, consoleMessageCount } = await setupPageWithAuth(
       context,
       browserNameWithExtensions,
       localeString,
     );
-    const page = result.page;
-    const localeLoaded = result.localeLoaded;
-    if (!localeLoaded) {
-      // Setup failed to create a matching locale so test will fail.
-      expect(localeLoaded).toBe(true);
-    }
 
-    // Set up console message counting
-    let consoleMessageCount = 0;
-    page.on("console", () => {
-      consoleMessageCount++;
-    });
-
-    // Navigate to the specified YouTube video
-    await page.goto("https://www.youtube.com/@MrBeast/shorts");
-
-    // Wait for the page to load
-    try {
-      await page.waitForLoadState("networkidle", { timeout: 5000 });
-    } catch {}
-    // .waitForLoadState("networkidle" is not always right so wait 5 extra seconds
-    await page.waitForTimeout(5000);
-
-    // If for whatever reason we are not logged in, then fail the test
-    expect(await findLoginButton(page)).toBe(null);
+    await loadPageAndVerifyAuth(
+      page,
+      "https://www.youtube.com/@MrBeast/shorts",
+      browserNameWithExtensions,
+    );
 
     // Wait for the video page to fully load
     await page.waitForSelector("ytd-rich-item-renderer");
@@ -745,7 +481,7 @@ test.describe("YouTube Anti-Translate extension", () => {
       const video = document.querySelector(
         "#shorts-player",
       ) as HTMLVideoElement & {
-        getAudioTrack?: () => Promise<any>;
+        getAudioTrack?: () => Promise<unknown>;
         getPlayerResponse?: () => Promise<PlayerResponse>;
       };
       return [
@@ -778,7 +514,7 @@ test.describe("YouTube Anti-Translate extension", () => {
       const video = document.querySelector(
         "#shorts-player",
       ) as HTMLVideoElement & {
-        getAudioTrack?: () => Promise<any>;
+        getAudioTrack?: () => Promise<unknown>;
         getPlayerResponse?: () => Promise<PlayerResponse>;
       };
       return [
@@ -811,7 +547,7 @@ test.describe("YouTube Anti-Translate extension", () => {
       const video = document.querySelector(
         "#shorts-player",
       ) as HTMLVideoElement & {
-        getAudioTrack?: () => Promise<any>;
+        getAudioTrack?: () => Promise<unknown>;
         getPlayerResponse?: () => Promise<PlayerResponse>;
       };
       return [

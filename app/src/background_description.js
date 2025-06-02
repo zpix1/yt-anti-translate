@@ -275,7 +275,7 @@ document.addEventListener("click", (event) => {
   }
 
   // Use YouTube's API to seek to the timestamp
-  const player = YoutubeAntiTranslate.getFirstVisible(
+  const player = window.YoutubeAntiTranslate.getFirstVisible(
     document.querySelectorAll(window.YoutubeAntiTranslate.getPlayerSelector()),
   );
   if (player && typeof player.seekTo === "function") {

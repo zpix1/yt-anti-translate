@@ -25,7 +25,8 @@
   },
   "homepage": "https://github.com/zpix1/yt-anti-translate#readme",
   "devDependencies": {
-    "@playwright/test": "^1.51.0",
+    "@eslint/js": "^9.28.0",
+    "@playwright/test": "^1.52.0",
     "@types/node": "^22.13.9",
     "crx-util": "^1.0.0",
     "dotenv": "^16.5.0",
@@ -36,6 +37,8 @@
     "playwright-webextext": "^0.0.4",
     "prettier": "^3.5.3",
     "tslib": "^2.8.1",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.33.0",
     "unzipper": "^0.12.3"
   }
 }
