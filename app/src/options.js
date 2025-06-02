@@ -16,7 +16,7 @@ async function checkPermissions() {
   const permissionWarning = document.getElementById("permission-warning");
 
   if (!permissionWarning) {
-    console.warn("Permission elements not found in DOM");
+    window.YoutubeAntiTranslate.logInfo("Permission elements not found in DOM");
     return;
   }
 
@@ -163,7 +163,7 @@ function apiKeyUpdate() {
           youtubeDataApiKey: newApiKey,
         },
         () => {
-          console.log("API key saved");
+          window.YoutubeAntiTranslate.logInfo("API key saved");
         },
       );
     },

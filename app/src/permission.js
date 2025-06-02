@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
         status.className = "error";
       }
     } catch (e) {
-      console.error("Permission request error:", e);
+      window.YoutubeAntiTranslate.logInfo("Permission request error:", e);
       status.textContent =
         "❌ Failed to request permission - An error occurred.";
       status.className = "error";

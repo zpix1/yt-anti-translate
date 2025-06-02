@@ -48,7 +48,7 @@ async function get(url) {
       window.YoutubeAntiTranslate.setSessionCache(url, data);
       return data;
     } catch (error) {
-      console.error("Error fetching:", error);
+      window.YoutubeAntiTranslate.logWarning("Error fetching:", error);
       // Cache null even on general fetch error to prevent immediate retries for the same failing URL
       window.YoutubeAntiTranslate.setSessionCache(url, null);
       return null;
@@ -80,7 +80,7 @@ async function untranslateCurrentShortVideo() {
     );
 
     if (!translatedTitleElement) {
-      // console.debug(`${window.YoutubeAntiTranslate.LOG_PREFIX}  Shorts title element not found using selector:`, shortsTitleSelector);
+      // console.debug(` Shorts title element not found using selector:`, shortsTitleSelector);
       return;
     }
 
@@ -91,8 +91,8 @@ async function untranslateCurrentShortVideo() {
 
     const videoId = window.location.pathname.split("/")[2];
     if (!videoId) {
-      console.error(
-        `${window.YoutubeAntiTranslate.LOG_PREFIX} Could not extract Shorts video ID from URL:`,
+      window.YoutubeAntiTranslate.logWarning(
+        `Could not extract Shorts video ID from URL:`,
         window.location.href,
       );
       return;
@@ -101,10 +101,10 @@ async function untranslateCurrentShortVideo() {
     const oembedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/shorts/${videoId}`;
 
     try {
-      // console.debug(`${window.YoutubeAntiTranslate.LOG_PREFIX} Fetching oEmbed for Short:`, videoId);
+      // console.debug(`Fetching oEmbed for Short:`, videoId);
       const response = await get(oembedUrl);
       if (!response || !response.title) {
-        // console.debug(`${window.YoutubeAntiTranslate.LOG_PREFIX}  No oEmbed data for Short:`, videoId);
+        // console.debug(` No oEmbed data for Short:`, videoId);
         // Mark as checked even if no data, to prevent retrying unless element changes
         translatedTitleElement.setAttribute(
           "data-ytat-untranslated",
@@ -122,8 +122,8 @@ async function untranslateCurrentShortVideo() {
         window.YoutubeAntiTranslate.normalizeSpaces(realTitle) !==
           window.YoutubeAntiTranslate.normalizeSpaces(currentTitle)
       ) {
-        console.log(
-          `${window.YoutubeAntiTranslate.LOG_PREFIX}  Untranslating Short title: "${currentTitle}" -> "${realTitle}"`,
+        window.YoutubeAntiTranslate.logInfo(
+          `Untranslating Short title: "${currentTitle}" -> "${realTitle}"`,
         );
         translatedTitleElement.textContent = realTitle;
         translatedTitleElement.setAttribute("data-ytat-untranslated", "true"); // Mark as done
@@ -140,8 +140,8 @@ async function untranslateCurrentShortVideo() {
         translatedTitleElement.setAttribute("data-ytat-untranslated", "true");
       }
     } catch (error) {
-      console.error(
-        `${window.YoutubeAntiTranslate.LOG_PREFIX} Error fetching oEmbed for Short:`,
+      window.YoutubeAntiTranslate.logWarning(
+        `Error fetching oEmbed for Short:`,
         videoId,
         error,
       );
@@ -319,8 +319,8 @@ async function createOrUpdateUntranslatedFakeNode(
       );
     }
 
-    console.log(
-      `${window.YoutubeAntiTranslate.LOG_PREFIX} translated title to "${realTitle}" from "${oldTitle}"`,
+    window.YoutubeAntiTranslate.logInfo(
+      `translated title to "${realTitle}" from "${oldTitle}"`,
     );
 
     if (!fakeNode && translatedElement) {
@@ -387,7 +387,7 @@ async function untranslateOtherVideos(intersectElements = null) {
           titleElement = video.querySelector("yt-formatted-string#video-title");
         }
         if (!linkElement || !titleElement) {
-          // console.debug(`${window.YoutubeAntiTranslate.LOG_PREFIX} Skipping video item, missing link or title:`, video);
+          // console.debug(`Skipping video item, missing link or title:`, video);
           continue; // Skip if essential elements aren't found
         }
       }
@@ -395,12 +395,12 @@ async function untranslateOtherVideos(intersectElements = null) {
       const videoHref = linkElement.href; // Use the link's href for oEmbed and as the key
 
       try {
-        // console.debug(`${window.YoutubeAntiTranslate.LOG_PREFIX} Fetching oEmbed for video:`, videoHref);
+        // console.debug(`Fetching oEmbed for video:`, videoHref);
         const response = await get(
           "https://www.youtube.com/oembed?url=" + encodeURIComponent(videoHref),
         );
         if (!response || !response.title) {
-          // console.debug(`${window.YoutubeAntiTranslate.LOG_PREFIX} No oEmbed data for video:`, videoHref);
+          // console.debug(`No oEmbed data for video:`, videoHref);
           continue; // Skip if no oEmbed data
         }
 
@@ -414,8 +414,8 @@ async function untranslateOtherVideos(intersectElements = null) {
           window.YoutubeAntiTranslate.normalizeSpaces(originalTitle) !==
             window.YoutubeAntiTranslate.normalizeSpaces(currentTitle)
         ) {
-          console.log(
-            `${window.YoutubeAntiTranslate.LOG_PREFIX} Untranslating Video: "${currentTitle}" -> "${originalTitle}"`,
+          window.YoutubeAntiTranslate.logInfo(
+            `Untranslating Video: "${currentTitle}" -> "${originalTitle}"`,
           );
           // Update both innerText and title attribute
           titleElement.innerText = originalTitle;
@@ -425,11 +425,11 @@ async function untranslateOtherVideos(intersectElements = null) {
             linkElement.title = originalTitle;
           }
         } else {
-          // console.debug(`${window.YoutubeAntiTranslate.LOG_PREFIX} Video title unchanged or element missing:`, { href: videoHref, originalTitle, currentTitle });
+          // console.debug(`Video title unchanged or element missing:`, { href: videoHref, originalTitle, currentTitle });
         }
       } catch (error) {
-        console.error(
-          `${window.YoutubeAntiTranslate.LOG_PREFIX} Error processing video:`,
+        window.YoutubeAntiTranslate.logInfo(
+          `Error processing video:`,
           videoHref,
           error,
         );
@@ -526,8 +526,8 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
           shortElement.setAttribute("data-ytat-untranslated-other", "true");
         }
       } catch (error) {
-        console.error(
-          `${window.YoutubeAntiTranslate.LOG_PREFIX} Error fetching oEmbed for other Short:`,
+        window.YoutubeAntiTranslate.logInfo(
+          `Error fetching oEmbed for other Short:`,
           videoId,
           error,
         );

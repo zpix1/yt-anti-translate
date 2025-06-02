@@ -63,8 +63,8 @@ function getOriginalTrack(tracks) {
     const trackName = track[languageFieldName].name.toLowerCase();
     for (const originalWord of ORIGINAL_TRANSLATIONS) {
       if (trackName.includes(originalWord.toLowerCase())) {
-        console.log(
-          `${window.YoutubeAntiTranslate.LOG_PREFIX}: setting original audio track as ${trackName} with id ${track.id}`,
+        window.YoutubeAntiTranslate.logInfo(
+          `setting original audio track as ${trackName} with id ${track.id}`,
         );
         return track;
       }

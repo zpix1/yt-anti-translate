@@ -40,22 +40,26 @@ ytm-shorts-lockup-view-model`,
 
   logWarning: function (...args) {
     if (this.currentLogLevel >= this.LOG_LEVELS.WARN) {
-      console.warn(`${this.LOG_PREFIX}`, ...args);
+      console.log(`${this.LOG_PREFIX} [WARN ]`, ...args);
     }
   },
+
   logInfo: function (...args) {
     if (this.currentLogLevel >= this.LOG_LEVELS.INFO) {
-      console.log(`${this.LOG_PREFIX}`, ...args);
+      console.log(`${this.LOG_PREFIX} [INFO ]`, ...args);
     }
   },
+
+  /** Use only for app errors */
   logError: function (...args) {
     if (this.currentLogLevel >= this.LOG_LEVELS.ERROR) {
-      console.error(`${this.LOG_PREFIX}`, ...args);
+      console.error(`${this.LOG_PREFIX} [ERROR]`, ...args);
     }
   },
+
   logDebug: function (...args) {
     if (this.currentLogLevel >= this.LOG_LEVELS.DEBUG) {
-      console.debug(`${this.LOG_PREFIX}`, ...args);
+      console.debug(`${this.LOG_PREFIX} [DEBUG]`, ...args);
     }
   },
 
@@ -793,5 +797,3 @@ ytm-shorts-lockup-view-model`,
     return null;
   },
 };
-
-Object.freeze(window.YoutubeAntiTranslate);

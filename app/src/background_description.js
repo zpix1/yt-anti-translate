@@ -16,9 +16,7 @@ function fetchOriginalDescription() {
     document.querySelectorAll(window.YoutubeAntiTranslate.getPlayerSelector()),
   );
   if (!player) {
-    console.log(
-      `${window.YoutubeAntiTranslate.LOG_PREFIX} Player element not found`,
-    );
+    window.YoutubeAntiTranslate.logWarning(`Player element not found`);
     return null;
   }
 
@@ -32,9 +30,7 @@ function fetchOriginalDescription() {
       return embededPlayerResponse?.videoDetails?.shortDescription || null;
     }
   } catch (error) {
-    console.log(
-      `${window.YoutubeAntiTranslate.LOG_PREFIX} Error: ${error.message || error}`,
-    );
+    window.YoutubeAntiTranslate.logWarning(`Error: ${error.message || error}`);
     return null;
   }
 }
@@ -48,9 +44,7 @@ function fetchOriginalAuthor() {
     document.querySelectorAll(window.YoutubeAntiTranslate.getPlayerSelector()),
   );
   if (!player) {
-    console.log(
-      `${window.YoutubeAntiTranslate.LOG_PREFIX} Player element not found`,
-    );
+    window.YoutubeAntiTranslate.logWarning(`Player element not found`);
     return null;
   }
 
@@ -64,9 +58,7 @@ function fetchOriginalAuthor() {
       return embededPlayerResponse?.videoDetails?.author || null;
     }
   } catch (error) {
-    console.log(
-      `${window.YoutubeAntiTranslate.LOG_PREFIX} Error: ${error.message || error}`,
-    );
+    window.YoutubeAntiTranslate.logWarning(`Error: ${error.message || error}`);
     return null;
   }
 }
@@ -90,8 +82,8 @@ function restoreOriginalDescriptionAndAuthor() {
     if (descriptionContainer) {
       updateDescriptionContent(descriptionContainer, originalDescription);
     } else {
-      console.log(
-        `${window.YoutubeAntiTranslate.LOG_PREFIX} Video Description container not found`,
+      window.YoutubeAntiTranslate.logWarning(
+        `Video Description container not found`,
       );
     }
   }
@@ -114,8 +106,8 @@ function restoreOriginalDescriptionAndAuthor() {
     if (authorContainer) {
       updateAuthorContent(authorContainer, originalAuthor);
     } else {
-      console.log(
-        `${window.YoutubeAntiTranslate.LOG_PREFIX} Video Author container not found`,
+      window.YoutubeAntiTranslate.logWarning(
+        `Video Author container not found`,
       );
     }
   }
@@ -138,8 +130,8 @@ function updateDescriptionContent(container, originalText) {
   );
 
   if (!mainTextContainer && !snippetTextContainer) {
-    console.log(
-      `${window.YoutubeAntiTranslate.LOG_PREFIX} No video description text containers found`,
+    window.YoutubeAntiTranslate.logWarning(
+      `No video description text containers found`,
     );
     return;
   }
@@ -206,8 +198,8 @@ function updateAuthorContent(container, originalText) {
   );
 
   if (!mainTextContainer && !snippetTextContainer) {
-    console.log(
-      `${window.YoutubeAntiTranslate.LOG_PREFIX} No video author text containers found`,
+    window.YoutubeAntiTranslate.logWarning(
+      `No video author text containers found`,
     );
     return;
   }
@@ -281,18 +273,18 @@ document.addEventListener("click", (event) => {
   if (player && typeof player.seekTo === "function") {
     try {
       player.seekTo(seconds, true);
-      console.log(
-        `${window.YoutubeAntiTranslate.LOG_PREFIX} Seeking to ${link.textContent} (${seconds}s)`,
+      window.YoutubeAntiTranslate.logInfo(
+        `Seeking to ${link.textContent} (${seconds}s)`,
       );
     } catch (error) {
-      console.error(
-        `${window.YoutubeAntiTranslate.LOG_PREFIX} Error seeking to timestamp:`,
+      window.YoutubeAntiTranslate.logWarning(
+        `Error seeking to timestamp:`,
         error,
       );
     }
   } else {
-    console.error(
-      `${window.YoutubeAntiTranslate.LOG_PREFIX} Player not found or seekTo not available`,
+    window.YoutubeAntiTranslate.logInfo(
+      `Player not found or seekTo not available`,
     );
   }
 });
