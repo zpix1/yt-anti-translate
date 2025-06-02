@@ -65,6 +65,7 @@ Contributions are welcome! Here's how you can help:
 1. **Report bugs**: If you find any issues, please open an issue in this repository
 2. **Suggest features**: Have an idea to improve the extension? Let me know by opening an issue
 3. **Submit code**: Feel free to fork the repository and submit pull requests
+4. **Join our Discord server**: You can also join our [Discord server](https://discord.gg/B2aaaEdmEw) to discuss development and contribute.
 
 ## Support
 

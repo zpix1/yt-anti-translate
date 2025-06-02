@@ -26,20 +26,10 @@
         "*://*.youtube.com/*"
       ],
       "js": [
-        "src/content_start.js"
-      ]
-    }, 
-    {
-      "matches": [
-        "*://*.youtube.com/channel/*", 
-        "*://*.youtube.com/c/*", 
-        "*://*.youtube.com/user/*",
-        "*://*.youtube.com/@*"
-      ],
-      "js": [
+        "src/content_start.js",
         "src/content_channelbranding.js"
       ]
-    } 
+    }
   ],
   "externally_connectable": {
     "matches": [

@@ -668,9 +668,6 @@ async function untranslateBranding() {
     const brandingHeaderPromise = restoreOriginalBrandingHeader();
     const brandingAboutPromise = restoreOriginalBrandingAbout();
 
-    // EXAMPLE ─ get branding in i18n detected language for current channel
-    // await getChannelBranding(null, null);
-
     // Wait for all promises to resolve concurrently
     await Promise.all([brandingHeaderPromise, brandingAboutPromise]);
   }

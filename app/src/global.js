@@ -19,7 +19,9 @@ window.YoutubeAntiTranslate = {
     const newLevel = this.LOG_LEVELS[levelName.toUpperCase()];
     if (typeof newLevel === "number") {
       this.currentLogLevel = newLevel;
-      this.logInfo(`Log level set to ${levelName.toUpperCase()} (${newLevel})`);
+      this.logDebug(
+        `Log level set to ${levelName.toUpperCase()} (${newLevel})`,
+      );
     } else {
       this.logWarning(`Invalid log level: ${levelName}`);
     }
@@ -63,17 +65,17 @@ ytm-shorts-lockup-view-model`,
    * @return {any|null}
    */
   getSessionCache: function (key) {
-    this.logInfo(`getSessionCache called with key: ${key}`);
+    this.logDebug(`getSessionCache called with key: ${key}`);
     const fullKey = `${this.cacheSessionStorageKey}_${key}`;
     const raw = sessionStorage.getItem(fullKey);
     if (!raw) {
-      this.logInfo(`getSessionCache: No data found for key ${key}`);
+      this.logDebug(`getSessionCache: No data found for key ${key}`);
       return null;
     }
 
     try {
       const result = JSON.parse(raw);
-      this.logInfo(`getSessionCache: Successfully parsed data for key ${key}`);
+      this.logDebug(`getSessionCache: Successfully parsed data for key ${key}`);
       return result;
     } catch (err) {
       this.logError(`Failed to parse session cache for key "${key}"`, err);
@@ -88,11 +90,11 @@ ytm-shorts-lockup-view-model`,
    * @param {any} value
    */
   setSessionCache: function (key, value) {
-    this.logInfo(`setSessionCache called with key: ${key}`);
+    this.logDebug(`setSessionCache called with key: ${key}`);
     const fullKey = `${this.cacheSessionStorageKey}_${key}`;
     try {
       sessionStorage.setItem(fullKey, JSON.stringify(value));
-      this.logInfo(`setSessionCache: Successfully stored data for key ${key}`);
+      this.logDebug(`setSessionCache: Successfully stored data for key ${key}`);
     } catch (err) {
       this.logError(`Failed to set session cache for key "${key}"`, err);
     }
@@ -102,11 +104,11 @@ ytm-shorts-lockup-view-model`,
    * @returns {string}
    */
   getPlayerSelector: function () {
-    this.logInfo(`getPlayerSelector called`);
+    this.logDebug(`getPlayerSelector called`);
     const selector = window.location.pathname.startsWith("/shorts")
       ? "#shorts-player"
       : "ytd-player .html5-video-player";
-    this.logInfo(`getPlayerSelector returning: ${selector}`);
+    this.logDebug(`getPlayerSelector returning: ${selector}`);
     return selector;
   },
 
@@ -114,9 +116,9 @@ ytm-shorts-lockup-view-model`,
    * @returns {string}
    */
   getBrowserOrChrome: function () {
-    this.logInfo(`getBrowserOrChrome called`);
+    this.logDebug(`getBrowserOrChrome called`);
     const result = typeof browser !== "undefined" ? browser : chrome;
-    this.logInfo(`getBrowserOrChrome returning browser type`);
+    this.logDebug(`getBrowserOrChrome returning browser type`);
     return result;
   },
 
@@ -124,12 +126,12 @@ ytm-shorts-lockup-view-model`,
    * @returns {bool}
    */
   isFirefoxBasedBrowser: function () {
-    this.logInfo(`isFirefoxBasedBrowser called`);
+    this.logDebug(`isFirefoxBasedBrowser called`);
     const result =
       typeof browser !== "undefined" &&
       typeof browser.runtime !== "undefined" &&
       typeof browser.runtime.getBrowserInfo === "function";
-    this.logInfo(`isFirefoxBasedBrowser returning: ${result}`);
+    this.logDebug(`isFirefoxBasedBrowser returning: ${result}`);
     return result;
   },
 
@@ -139,11 +141,7 @@ ytm-shorts-lockup-view-model`,
    * @returns
    */
   normalizeSpaces: function (str) {
-    this.logInfo(`normalizeSpaces called`);
     const result = str.replace(/\s+/g, " ").trim();
-    this.logInfo(
-      `normalizeSpaces: processed string of length ${str.length} to ${result.length}`,
-    );
     return result;
   },
 
@@ -164,10 +162,6 @@ ytm-shorts-lockup-view-model`,
     onlyOutsideViewport = false,
     useOutsideLimit = false,
   ) {
-    this.logInfo(
-      `isVisible called with shouldCheckViewport: ${shouldCheckViewport}, onlyOutsideViewport: ${onlyOutsideViewport}, useOutsideLimit: ${useOutsideLimit}`,
-    );
-
     if (!node || node.nodeType !== Node.ELEMENT_NODE) {
       this.logError(
         `Provided node is not a valid Element.`,
@@ -188,7 +182,6 @@ ytm-shorts-lockup-view-model`,
       element.offsetWidth === 0 ||
       element.offsetHeight === 0
     ) {
-      this.logInfo(`isVisible: Element is not visible due to style properties`);
       return false;
     }
 
@@ -216,9 +209,6 @@ ytm-shorts-lockup-view-model`,
 
         if (!useOutsideLimit) {
           const result = !fullyContained;
-          this.logInfo(
-            `isVisible: onlyOutsideViewport check result: ${result}`,
-          );
           return result;
         }
 
@@ -241,9 +231,6 @@ ytm-shorts-lockup-view-model`,
           rect.left < outerRightBoundary;
 
         const result = !fullyContained && intersectsOuterLimitViewport;
-        this.logInfo(
-          `isVisible: onlyOutsideViewport with limit check result: ${result}`,
-        );
         return result;
       } else {
         // Return true if ANY part of the element is INSIDE the extended viewport
@@ -253,13 +240,9 @@ ytm-shorts-lockup-view-model`,
           rect.left < rightBoundary &&
           rect.right > leftBoundary;
 
-        this.logInfo(
-          `isVisible: viewport intersection check result: ${intersectsExtendedViewport}`,
-        );
         return intersectsExtendedViewport;
       }
     }
-    this.logInfo(`isVisible: returning true (no viewport check)`);
     return true;
   },
 
@@ -270,27 +253,18 @@ ytm-shorts-lockup-view-model`,
    * @returns {Node|null} - The first visible Node or null
    */
   getFirstVisible: function (nodes, shouldBeInsideViewport = true) {
-    this.logInfo(
-      `getFirstVisible called with shouldBeInsideViewport: ${shouldBeInsideViewport}`,
-    );
-
     if (!nodes) {
-      this.logInfo(`getFirstVisible: no nodes provided`);
       return null;
     } else {
       nodes = Array.from(nodes);
     }
 
-    this.logInfo(`getFirstVisible: checking ${nodes.length} nodes`);
-
     for (const node of nodes) {
       if (this.isVisible(node, shouldBeInsideViewport, false, false)) {
-        this.logInfo(`getFirstVisible: found visible node`);
         return node;
       }
     }
 
-    this.logInfo(`getFirstVisible: no visible nodes found`);
     return null;
   },
 
@@ -307,18 +281,12 @@ ytm-shorts-lockup-view-model`,
     shouldBeInsideViewport = true,
     lengthLimit = Number.MAX_VALUE,
   ) {
-    this.logInfo(
-      `getAllVisibleNodes called with shouldBeInsideViewport: ${shouldBeInsideViewport}, lengthLimit: ${lengthLimit}`,
-    );
-
     if (!nodes) {
-      this.logInfo(`getAllVisibleNodes: no nodes provided`);
       return null;
     } else {
       nodes = Array.from(nodes);
     }
 
-    this.logInfo(`getAllVisibleNodes: checking ${nodes.length} nodes`);
     let visibleNodes = null;
 
     for (const node of nodes) {
@@ -330,16 +298,11 @@ ytm-shorts-lockup-view-model`,
         }
 
         if (visibleNodes.length === lengthLimit) {
-          this.logInfo(
-            `getAllVisibleNodes: reached length limit ${lengthLimit}`,
-          );
           break;
         }
       }
     }
 
-    const count = visibleNodes ? visibleNodes.length : 0;
-    this.logInfo(`getAllVisibleNodes: found ${count} visible nodes`);
     return visibleNodes;
   },
 
@@ -351,20 +314,12 @@ ytm-shorts-lockup-view-model`,
    * @returns {Array<Node>|null} - A array of all the visible nodes or null that are outside the viewport
    */
   getAllVisibleNodesOutsideViewport: function (nodes, useOutsideLimit = false) {
-    this.logInfo(
-      `getAllVisibleNodesOutsideViewport called with useOutsideLimit: ${useOutsideLimit}`,
-    );
-
     if (!nodes) {
-      this.logInfo(`getAllVisibleNodesOutsideViewport: no nodes provided`);
       return null;
     } else {
       nodes = Array.from(nodes);
     }
 
-    this.logInfo(
-      `getAllVisibleNodesOutsideViewport: checking ${nodes.length} nodes`,
-    );
     let visibleNodes = null;
 
     for (const node of nodes) {
@@ -377,10 +332,6 @@ ytm-shorts-lockup-view-model`,
       }
     }
 
-    const count = visibleNodes ? visibleNodes.length : 0;
-    this.logInfo(
-      `getAllVisibleNodesOutsideViewport: found ${count} visible nodes outside viewport`,
-    );
     return visibleNodes;
   },
 
@@ -390,7 +341,7 @@ ytm-shorts-lockup-view-model`,
    * @returns {HTMLElement} - Anchor element
    */
   createLinkElement: function (url) {
-    this.logInfo(`createLinkElement called for URL: ${url}`);
+    this.logDebug(`createLinkElement called for URL: ${url}`);
     const link = document.createElement("a");
     link.href = url;
     link.textContent = url;
@@ -398,7 +349,7 @@ ytm-shorts-lockup-view-model`,
     link.target = "_blank";
     link.dir = "auto";
     link.className = "yt-simple-endpoint style-scope yt-formatted-string";
-    this.logInfo(`createLinkElement: created link element`);
+    this.logDebug(`createLinkElement: created link element`);
     return link;
   },
 
@@ -408,7 +359,7 @@ ytm-shorts-lockup-view-model`,
    * @returns {number} - Total seconds
    */
   convertTimecodeToSeconds: function (timecode) {
-    this.logInfo(`convertTimecodeToSeconds called with: ${timecode}`);
+    this.logDebug(`convertTimecodeToSeconds called with: ${timecode}`);
     const parts = timecode.split(":").map(Number);
 
     let result = 0;
@@ -420,7 +371,7 @@ ytm-shorts-lockup-view-model`,
       result = parts[0] * 3600 + parts[1] * 60 + parts[2];
     }
 
-    this.logInfo(
+    this.logDebug(
       `convertTimecodeToSeconds: converted ${timecode} to ${result} seconds`,
     );
     return result;
@@ -431,10 +382,10 @@ ytm-shorts-lockup-view-model`,
    * @returns {string} - The YouTube video ID
    */
   getCurrentVideoId: function () {
-    this.logInfo(`getCurrentVideoId called`);
+    this.logDebug(`getCurrentVideoId called`);
     const urlParams = new URLSearchParams(window.location.search);
     const videoId = urlParams.get("v") || "";
-    this.logInfo(`getCurrentVideoId: found video ID: ${videoId}`);
+    this.logDebug(`getCurrentVideoId: found video ID: ${videoId}`);
     return videoId;
   },
 
@@ -444,7 +395,7 @@ ytm-shorts-lockup-view-model`,
    * @returns {HTMLElement} - Span element containing the timecode link
    */
   createTimecodeLink: function (timecode) {
-    this.logInfo(`createTimecodeLink called with: ${timecode}`);
+    this.logDebug(`createTimecodeLink called with: ${timecode}`);
     // Convert timecode to seconds for the URL
     const seconds = this.convertTimecodeToSeconds(timecode);
 
@@ -475,7 +426,7 @@ ytm-shorts-lockup-view-model`,
    * @returns {HTMLElement} - Span element with clickable links
    */
   convertUrlsToLinks: function (text) {
-    this.logInfo(`convertUrlsToLinks called with text length: ${text.length}`);
+    this.logDebug(`convertUrlsToLinks called with text length: ${text.length}`);
     const container = document.createElement("span");
     // Group 1: URL (https?:\/\/[^\s]+)
     // Group 2: Full timecode match including preceding space/start of line `(?:^|\s)((?:\d{1,2}:)?\d{1,2}:\d{2})`
@@ -527,7 +478,7 @@ ytm-shorts-lockup-view-model`,
       container.appendChild(document.createTextNode(text.substring(lastIndex)));
     }
 
-    this.logInfo(`convertUrlsToLinks: created ${linkCount} links`);
+    this.logDebug(`convertUrlsToLinks: created ${linkCount} links`);
     return container;
   },
 
@@ -537,7 +488,7 @@ ytm-shorts-lockup-view-model`,
    * @returns {HTMLElement} - Formatted span element
    */
   createFormattedContent: function (text) {
-    this.logInfo(
+    this.logDebug(
       `createFormattedContent called with text length: ${text.length}`,
     );
     const contentElement = document.createElement("span");
@@ -546,7 +497,7 @@ ytm-shorts-lockup-view-model`,
     contentElement.dir = "auto";
 
     const textLines = text.split("\n");
-    this.logInfo(
+    this.logDebug(
       `createFormattedContent: processing ${textLines.length} lines`,
     );
 
@@ -560,7 +511,7 @@ ytm-shorts-lockup-view-model`,
       }
     });
 
-    this.logInfo(`createFormattedContent: created formatted content element`);
+    this.logDebug(`createFormattedContent: created formatted content element`);
     return contentElement;
   },
 
@@ -571,14 +522,14 @@ ytm-shorts-lockup-view-model`,
    * @param {string} replaceText - The new text to insert
    */
   replaceTextOnly: function (element, replaceText) {
-    this.logInfo(
+    this.logDebug(
       `replaceTextOnly called with text length: ${replaceText.length}`,
     );
     // Loop through child nodes to find the first text node
     for (const node of element.childNodes) {
       if (node.nodeType === Node.TEXT_NODE) {
         node.textContent = replaceText;
-        this.logInfo(`replaceTextOnly: replaced first text node`);
+        this.logDebug(`replaceTextOnly: replaced first text node`);
         break; // stop after updating the first text node
       }
     }
@@ -590,7 +541,7 @@ ytm-shorts-lockup-view-model`,
    * @param {HTMLElement} newContent - The new content to insert
    */
   replaceContainerContent: function (container, newContent) {
-    this.logInfo(`replaceContainerContent called`);
+    this.logDebug(`replaceContainerContent called`);
     // Clear existing content
     while (container.firstChild) {
       container.removeChild(container.firstChild);
@@ -598,7 +549,7 @@ ytm-shorts-lockup-view-model`,
 
     // Add new content
     container.appendChild(newContent);
-    this.logInfo(`replaceContainerContent: replaced container content`);
+    this.logDebug(`replaceContainerContent: replaced container content`);
   },
 
   SUPPORTED_BCP47_CODES: new Set([
@@ -775,7 +726,7 @@ ytm-shorts-lockup-view-model`,
     maxRetries = 3,
     minProbability = 50,
   ) {
-    this.logInfo(
+    this.logDebug(
       `detectSupportedLanguage called with text length: ${text.length}, maxRetries: ${maxRetries}, minProbability: ${minProbability}`,
     );
     const api = this.getBrowserOrChrome();
@@ -783,7 +734,7 @@ ytm-shorts-lockup-view-model`,
 
     while (attempts < maxRetries) {
       attempts++;
-      this.logInfo(
+      this.logDebug(
         `detectSupportedLanguage: attempt ${attempts}/${maxRetries}`,
       );
 
@@ -795,7 +746,7 @@ ytm-shorts-lockup-view-model`,
           (l) => (l.percentage ?? 0) >= minProbability,
         );
 
-        this.logInfo(
+        this.logDebug(
           `detectSupportedLanguage: found ${filteredLanguages.length} languages above ${minProbability}% confidence`,
         );
 
@@ -805,7 +756,7 @@ ytm-shorts-lockup-view-model`,
           .filter((lang) => this.SUPPORTED_BCP47_CODES.has(lang));
 
         if (exactMatches.length > 0) {
-          this.logInfo(
+          this.logDebug(
             `detectSupportedLanguage: found ${exactMatches.length} exact matches: ${exactMatches.join(", ")}`,
           );
           return exactMatches;
@@ -817,13 +768,13 @@ ytm-shorts-lockup-view-model`,
           .filter((lang) => this.SUPPORTED_BCP47_CODES.has(lang));
 
         if (tolerantMatches.length > 0) {
-          this.logInfo(
+          this.logDebug(
             `detectSupportedLanguage: found ${tolerantMatches.length} fallback matches: ${tolerantMatches.join(", ")}`,
           );
           return tolerantMatches;
         }
 
-        this.logInfo(
+        this.logDebug(
           `detectSupportedLanguage: no matches found in attempt ${attempts}, retrying...`,
         );
         // else retry
@@ -836,7 +787,7 @@ ytm-shorts-lockup-view-model`,
       }
     }
 
-    this.logInfo(
+    this.logDebug(
       `detectSupportedLanguage: all attempts exhausted, returning null`,
     );
     return null;

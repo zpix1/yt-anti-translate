@@ -22,28 +22,43 @@ const intersectionObserverOtherShorts = new IntersectionObserver(
   },
 );
 
+const pendingRequests = new Map();
+
 async function get(url) {
   const storedResponse = window.YoutubeAntiTranslate.getSessionCache(url);
   if (storedResponse) {
     return storedResponse;
   }
 
-  try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      if (response.status === 404 || response.status === 401) {
-        window.YoutubeAntiTranslate.setSessionCache(url, null);
-        return null;
-      }
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    const data = await response.json();
-    window.YoutubeAntiTranslate.setSessionCache(url, data);
-    return data;
-  } catch (error) {
-    console.error("Error fetching:", error);
-    return null;
+  if (pendingRequests.has(url)) {
+    return pendingRequests.get(url);
   }
+
+  const requestPromise = (async () => {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        if (response.status === 404 || response.status === 401) {
+          window.YoutubeAntiTranslate.setSessionCache(url, null);
+          return null;
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      window.YoutubeAntiTranslate.setSessionCache(url, data);
+      return data;
+    } catch (error) {
+      console.error("Error fetching:", error);
+      // Cache null even on general fetch error to prevent immediate retries for the same failing URL
+      window.YoutubeAntiTranslate.setSessionCache(url, null);
+      return null;
+    } finally {
+      pendingRequests.delete(url);
+    }
+  })();
+
+  pendingRequests.set(url, requestPromise);
+  return requestPromise;
 }
 
 async function untranslateCurrentShortVideo() {
@@ -183,6 +198,11 @@ async function untranslateCurrentVideoHeadLink() {
 async function untranslateCurrentVideoFullScreenEdu() {
   const fakeNodeID = "yt-anti-translate-fake-node-fullscreen-edu";
   const originalNodeSelector = `${window.YoutubeAntiTranslate.getPlayerSelector()} div.ytp-fullerscreen-edu-text:not(#${fakeNodeID})`;
+
+  // Skip if on a channel page
+  if (document.location.pathname.startsWith("@")) {
+    return;
+  }
 
   await createOrUpdateUntranslatedFakeNode(
     fakeNodeID,
