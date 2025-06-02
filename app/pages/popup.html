@@ -82,35 +82,23 @@
         font-size: 15px;
       }
 
-      details#anti-translate-enhance-section a,
       .footer {
         font-size: 13px;
         font-style: italic;
       }
 
-      details#anti-translate-enhance-section a,
-      .footer a {
+      a {
         color: #008cba;
         text-decoration: none;
       }
 
-      details#anti-translate-enhance-section a:hover,
-      .footer a:hover {
+      a:hover {
         text-decoration: underline;
       }
       
       small {
         font-size: 11px;
         color: #666;
-      }
-
-      #api-key-container {
-        display: block;
-        flex-direction: column;
-        align-items: stretch;
-        gap: 5px;
-        margin-top: 0px;
-        margin-bottom: 0px !important;
       }
 
       #api-key-container label {
@@ -135,12 +123,65 @@
         border-radius: 5px;
       }
 
+      .advanced-options {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .advanced-options-summary {
+        font-size: 14px;
+        color: #008cba;
+        cursor: pointer;
+        user-select: none;
+        text-decoration: none;
+      }
+
+      .advanced-options-summary:hover {
+        text-decoration: underline;
+      }
+
+      .simple-button {
+        background-color: #f0f0f0 !important;
+        color: #333 !important;
+        border: 1px solid #ccc !important;
+        font-size: 13px !important;
+        padding: 8px 12px !important;
+      }
+
+      .simple-button:hover {
+        background-color: #e0e0e0 !important;
+      }
+
+      #api-key-container {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 5px;
+        margin-top: 8px;
+        margin-bottom: 0px;
+      }
+
       @media (prefers-color-scheme: dark) {
         body {
           background-color: #121212;
           color: #f0f0f0;
         }
-        details#anti-translate-enhance-section a,
+        
+        .advanced-options-summary {
+          color: #66d9ef;
+        }
+        
+        .simple-button {
+          background-color: #2a2a2a !important;
+          color: #f0f0f0 !important;
+          border: 1px solid #555 !important;
+        }
+
+        .simple-button:hover {
+          background-color: #3a3a3a !important;
+        }
+        
         .footer a {
           color: #66d9ef;
         }
@@ -154,54 +195,6 @@
       }
       #save-api-key-text.saving {
         animation: fadeInOut 1.5s ease;
-      }
-
-      details#anti-translate-enhance-section {
-        display: block !important;
-        flex-direction: column;
-        background-color: #f5f5f5;
-        border-radius: 5px;
-        padding: 5px;
-        margin-top: 20px;
-        margin-bottom: 10px;
-        overflow: hidden;
-      }
-
-      details#anti-translate-enhance-section summary {
-        display: block !important;
-        width: auto;
-        background-color: #008cba;
-        color: #fff;
-        padding: 6px 10px;
-        border-radius: 5px;
-        cursor: pointer;
-        user-select: none;
-        font-size: 15px;
-        margin-bottom: 8px;
-      }
-
-      details#anti-translate-enhance-section[open] summary {
-        border-bottom-left-radius: 0;
-        border-bottom-right-radius: 0; 
-        margin-bottom: 0;
-      }
-
-      details#anti-translate-enhance-section summary:hover {
-        background-color: #007bb5;
-      }
-
-      @media (prefers-color-scheme: dark) {
-        details#anti-translate-enhance-section {
-          background-color: #1e1e1e;
-        }
-      }
-
-      details#anti-translate-enhance-section > #api-key-container,
-      details#anti-translate-enhance-section > #additional-features {
-        display: flex;
-        flex-direction: column;
-        align-items: stretch;
-        gap: 6px;
       }
 
       /* === Slim Scrollbar for Chrome, Edge, Safari === */
@@ -230,7 +223,7 @@
   <body id="yt-anti-translate">
     <div class="scroll-wrapper">
       <div class="container">
-        <div class="header">YT Anti Translate 1.18.2<br><small>(Manifest V3)</small></div>
+        <div class="header">YT Anti Translate 1.18.2</div>
         <div id="permission-warning" style="display: none; margin-top: 15px;">
           <div class="small" style="color: red;">
             <p><strong>Permission to access YouTube is not granted.</strong></p>
@@ -260,16 +253,15 @@
             <span>Reload page automatically</span>
             <input id="reload-checkbox" type="checkbox" checked />
           </div>
-          <details id="anti-translate-enhance-section" class="option" style="margin-bottom: 10px;">
-            <summary><strong>Enhance <i>YT Anti Translate</i></strong></summary>
+          <details id="anti-translate-enhance-section" class="option advanced-options">
+            <summary class="advanced-options-summary">Advanced options</summary>
             <div id="api-key-container">
-              <div>
-                <p><a target="_blank" href="https://github.com/zpix1/yt-anti-translate/blob/main/YOUTUBE_DATA_API_KEY.md">Some features <b>work better</b> with a YouTube Data API Key</a></p>
-              </div>
+              <span>
+                Some features work better with a <a target="_blank" href="https://github.com/zpix1/yt-anti-translate/blob/main/YOUTUBE_DATA_API_KEY.md">YouTube Data API Key</a> <i>(never leaves your browser)</i></a>
+              </span>
               <input id="api-key-input" type="password" placeholder="Enter API key" />
-              <button id="save-api-key-button"><span id="save-api-key-text">Save API Key</span></button>
+              <button id="save-api-key-button" class="simple-button"><span id="save-api-key-text">Save API Key</span></button>
             </div>
-            <!--TODO: Add `Performance Preference` slider that sets VIEWPORT_EXTENSION_PERCENTAGE_FRACTION-->
           </details>
         </div>
         <div class="footer" id="footer-links"></div>

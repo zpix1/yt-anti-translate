@@ -7,13 +7,17 @@ import {
   TestInfo,
   Page,
 } from "@playwright/test";
-import path from "path";
+import path, { dirname } from "path";
 import { withExtension } from "playwright-webextext";
 import {
   newPageWithStorageStateIfItExists,
   findLoginButton,
 } from "./AuthStorageHelper";
 import { setupUBlockAndAuth } from "./SetupUBlockAndAuth";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Helper function to handle retry setup
 export async function handleRetrySetup(
@@ -32,14 +36,14 @@ export async function handleRetrySetup(
 // Helper function to create browser context with extension
 export async function createBrowserContext(
   browserNameWithExtensions: string,
-  extensionPath: string = "../app",
+  extensionPath: string = "../../app",
 ): Promise<BrowserContext> {
   let context: BrowserContext;
   switch (browserNameWithExtensions) {
     case "chromium": {
       const browserTypeWithExtension = withExtension(chromium, [
         path.resolve(__dirname, extensionPath),
-        path.resolve(__dirname, "testUBlockOriginLite"),
+        path.resolve(__dirname, "..", "testUBlockOriginLite"),
       ]);
       context = await browserTypeWithExtension.launchPersistentContext("", {
         headless: false,
