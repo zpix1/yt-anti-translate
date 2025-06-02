@@ -1,4 +1,4 @@
-import { expect, BrowserContext } from "@playwright/test";
+import { expect, BrowserContext, Browser } from "@playwright/test";
 import { test } from "../playwright.config";
 import { handleTestDistribution } from "./helpers/ExtensionsFilesHelper";
 import {
@@ -31,7 +31,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     // Launch browser with the extension
     const context = await createBrowserContext(
       browserNameWithExtensions,
-      "testDist",
+      "../testDist",
     );
 
     // Create a new page
@@ -51,7 +51,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     // Launch browser with the extension
     const context = await createBrowserContext(
       browserNameWithExtensions,
-      "../app",
+      "../../app",
     );
 
     // Create a new page
@@ -64,7 +64,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
   });
 
   async function channelBrandingAboutTest(
-    context: BrowserContext,
+    context: BrowserContext | Browser,
     browserNameWithExtensions: string,
     localeString: string,
     addToScreenshotName: string = "",
@@ -240,7 +240,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     // Launch browser with the extension
     const context = await createBrowserContext(
       browserNameWithExtensions,
-      "../app",
+      "../../app",
     );
 
     // Create a new page

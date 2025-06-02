@@ -38,8 +38,8 @@ export async function handleRetrySetup(
 export async function createBrowserContext(
   browserNameWithExtensions: string,
   extensionPath: string = "../../app",
-): Promise<BrowserContext> {
-  let context: BrowserContext;
+): Promise<BrowserContext | Browser> {
+  let context;
   switch (browserNameWithExtensions) {
     case "chromium": {
       const browserTypeWithExtension = withExtension(chromium, [
@@ -53,12 +53,14 @@ export async function createBrowserContext(
     }
     case "firefox": {
       const uBlockPath =
-        extensionPath === "testDist" ? "testUBlockOrigin" : "testUBlockOrigin";
-      const browser: Browser = await withExtension(firefox, [
+        extensionPath === "../testDist"
+          ? "testUBlockOrigin"
+          : "testUBlockOrigin";
+      const browserTypeWithExtension = await withExtension(firefox, [
         path.resolve(__dirname, extensionPath),
         path.resolve(__dirname, "..", uBlockPath),
-      ]).launch();
-      context = await browser.newContext();
+      ]);
+      context = await browserTypeWithExtension.launch();
       break;
     }
     default:
@@ -71,7 +73,7 @@ export async function createBrowserContext(
 
 // Helper function to setup page with common configurations
 export async function setupPageWithAuth(
-  context: BrowserContext,
+  context: BrowserContext | Browser,
   browserNameWithExtensions: string,
   localeString: string,
 ) {

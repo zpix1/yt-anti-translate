@@ -474,7 +474,7 @@ test.describe("YouTube Anti-Translate extension", () => {
       }
     }
 
-    const [currentTrack, currentId] = await page.evaluate(async () => {
+    let [currentTrack, currentId] = await page.evaluate(async () => {
       type PlayerResponse = {
         videoDetails?: { videoId?: string };
       };
@@ -489,6 +489,12 @@ test.describe("YouTube Anti-Translate extension", () => {
         (await video?.getPlayerResponse?.())?.videoDetails?.videoId,
       ];
     });
+
+    // When we detect an Ads short then go next and return the new audio track and video id
+    [currentTrack, currentId] = await IfAdvertThenReturnNext(
+      currentTrack,
+      currentId,
+    );
 
     // Check original track is the selected one
     expect(
@@ -507,7 +513,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     }
     await page.waitForTimeout(2000);
 
-    const [currentTrack2, currentId2] = await page.evaluate(async () => {
+    let [currentTrack2, currentId2] = await page.evaluate(async () => {
       type PlayerResponse = {
         videoDetails?: { videoId?: string };
       };
@@ -522,6 +528,12 @@ test.describe("YouTube Anti-Translate extension", () => {
         (await video?.getPlayerResponse?.())?.videoDetails?.videoId,
       ];
     });
+
+    // When we detect an Ads short then go next and return the new audio track and video id
+    [currentTrack2, currentId2] = await IfAdvertThenReturnNext(
+      currentTrack2,
+      currentId2,
+    );
 
     // Check original track is the selected one
     expect(
@@ -540,7 +552,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     }
     await page.waitForTimeout(2000);
 
-    const [currentTrack3, currentId3] = await page.evaluate(async () => {
+    let [currentTrack3, currentId3] = await page.evaluate(async () => {
       type PlayerResponse = {
         videoDetails?: { videoId?: string };
       };
@@ -556,6 +568,12 @@ test.describe("YouTube Anti-Translate extension", () => {
       ];
     });
 
+    // When we detect an Ads short then go next and return the new audio track and video id
+    [currentTrack3, currentId3] = await IfAdvertThenReturnNext(
+      currentTrack3,
+      currentId3,
+    );
+
     // Check original track is the selected one
     expect(
       currentTrack3[getTrackLanguageFieldObjectName(currentTrack3)!]?.name,
@@ -567,5 +585,47 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Close the browser context
     await context.close();
+
+    /**
+     * If Track name is "Default" that is always an advert
+     * @param currentTrack the audio track that could be of an advert
+     * @returns a new short audio track and video id
+     */
+    async function IfAdvertThenReturnNext(currentTrack, currentVideoId) {
+      if (
+        currentTrack[getTrackLanguageFieldObjectName(currentTrack)!]?.name ===
+        "Default"
+      ) {
+        const buttonDown2 = page
+          .locator("#navigation-button-down button")
+          .first();
+        if (await buttonDown2.isVisible()) {
+          await buttonDown2.scrollIntoViewIfNeeded();
+          await buttonDown2.click();
+          try {
+            await page.waitForLoadState("networkidle", { timeout: 5000 });
+          } catch {}
+        }
+        await page.waitForTimeout(2000);
+
+        return await page.evaluate(async () => {
+          type PlayerResponse = {
+            videoDetails?: { videoId?: string };
+          };
+          const video = document.querySelector(
+            "#shorts-player",
+          ) as HTMLVideoElement & {
+            getAudioTrack?: () => Promise<unknown>;
+            getPlayerResponse?: () => Promise<PlayerResponse>;
+          };
+          return [
+            await video?.getAudioTrack?.(),
+            (await video?.getPlayerResponse?.())?.videoDetails?.videoId,
+          ];
+        });
+      } else {
+        return [currentTrack, currentVideoId];
+      }
+    }
   });
 });
