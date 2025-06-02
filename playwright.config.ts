@@ -39,14 +39,14 @@ export default defineConfig<TestOptions>({
 
   /* Configure projects for major browsers */
   projects: [
-    // {
-    //   name: "setup-auth-and-ublock",
-    //   testMatch: /.*setup\.spec\.ts/,
-    //   use: {
-    //     allBrowserNameWithExtensions: ["chromium"],
-    //     allLocaleStrings: ["ru-RU"],
-    //   },
-    // },
+    {
+      name: "setup-auth-and-ublock",
+      testMatch: /.*setup\.spec\.ts/,
+      use: {
+        allBrowserNameWithExtensions: ["chromium"],
+        allLocaleStrings: ["ru-RU"],
+      },
+    },
     {
       name: "chromium-extension-ru-RU",
       testMatch: /.*extension\.spec\.ts/,
@@ -63,6 +63,7 @@ export default defineConfig<TestOptions>({
         },
         locale: "ru-RU",
       },
+      dependencies: ["setup-auth-and-ublock"],
     },
     // {
     //   name: "firefox-extension-ru-RU",
