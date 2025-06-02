@@ -65,21 +65,21 @@ export default defineConfig<TestOptions>({
       },
       dependencies: ["setup-auth-and-ublock"],
     },
-    // {
-    //   name: "firefox-extension-ru-RU",
-    //   testMatch: /.*extension\.spec\.ts/,
-    //   use: {
-    //     browserNameWithExtensions: "firefox",
-    //     localeString: "ru-RU",
-    //     ...devices["Desktop Firefox"],
-    //     contextOptions: {},
-    //     launchOptions: {
-    //       args: ["--headless=new"],
-    //     },
-    //     locale: "ru-RU",
-    //   },
-    //   dependencies: ["setup-auth-and-ublock"],
-    // },
+    {
+      name: "firefox-extension-ru-RU",
+      testMatch: /.*extension\.spec\.ts/,
+      use: {
+        browserNameWithExtensions: "firefox",
+        localeString: "ru-RU",
+        ...devices["Desktop Firefox"],
+        contextOptions: {},
+        launchOptions: {
+          args: ["--headless=new"],
+        },
+        locale: "ru-RU",
+      },
+      dependencies: ["setup-auth-and-ublock"],
+    },
     // {
     //   name: "chromium-extension-extra-th-TH",
     //   testMatch: /.*extension\.extra\.spec\.ts/,
