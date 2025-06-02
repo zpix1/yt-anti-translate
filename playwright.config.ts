@@ -27,7 +27,7 @@ export default defineConfig<TestOptions>({
   /* Limit parallel workers on CI as they cause random failures some of the times */
   workers: process.env.CI ? 2 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: "html",
+  reporter: [["github"], ["html"]],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */

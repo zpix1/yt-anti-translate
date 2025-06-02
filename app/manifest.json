@@ -54,8 +54,7 @@
   },
   "options_page": "pages/popup.html",
   "permissions": [
-    "storage",
-    "tabs"
+    "storage"
   ],
   "host_permissions": [
     "*://*.youtube.com/*"
