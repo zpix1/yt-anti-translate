@@ -2,6 +2,29 @@ window.YoutubeAntiTranslate = {
   VIEWPORT_EXTENSION_PERCENTAGE_FRACTION: 0.5,
   VIEWPORT_OUTSIDE_LIMIT_FRACTION: 0.5,
   LOG_PREFIX: "[YoutubeAntiTranslate]",
+  LOG_LEVELS: {
+    NONE: 0,
+    ERROR: 1,
+    WARN: 2,
+    INFO: 3,
+    DEBUG: 4,
+  },
+  currentLogLevel: 2, // Default to WARN
+
+  /**
+   * Sets the current log level.
+   * @param {string} levelName - The name of the log level (e.g., "INFO", "DEBUG").
+   */
+  setLogLevel: function (levelName) {
+    const newLevel = this.LOG_LEVELS[levelName.toUpperCase()];
+    if (typeof newLevel === "number") {
+      this.currentLogLevel = newLevel;
+      this.logInfo(`Log level set to ${levelName.toUpperCase()} (${newLevel})`);
+    } else {
+      this.logWarning(`Invalid log level: ${levelName}`);
+    }
+  },
+
   CORE_ATTRIBUTED_STRING_SELECTOR: ".yt-core-attributed-string",
   ALL_ARRAYS_VIDEOS_SELECTOR: `ytd-video-renderer,
 ytd-rich-item-renderer,
@@ -14,14 +37,24 @@ ytm-shorts-lockup-view-model`,
   cacheSessionStorageKey: "[YoutubeAntiTranslate]cache",
 
   logWarning: function (...args) {
-    console.warn(`${this.LOG_PREFIX}`, ...args);
+    if (this.currentLogLevel >= this.LOG_LEVELS.WARN) {
+      console.warn(`${this.LOG_PREFIX}`, ...args);
+    }
   },
   logInfo: function (...args) {
-    return;
-    console.log(`${this.LOG_PREFIX}`, ...args);
+    if (this.currentLogLevel >= this.LOG_LEVELS.INFO) {
+      console.log(`${this.LOG_PREFIX}`, ...args);
+    }
   },
   logError: function (...args) {
-    console.error(`${this.LOG_PREFIX}`, ...args);
+    if (this.currentLogLevel >= this.LOG_LEVELS.ERROR) {
+      console.error(`${this.LOG_PREFIX}`, ...args);
+    }
+  },
+  logDebug: function (...args) {
+    if (this.currentLogLevel >= this.LOG_LEVELS.DEBUG) {
+      console.debug(`${this.LOG_PREFIX}`, ...args);
+    }
   },
 
   /**
