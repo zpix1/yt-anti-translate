@@ -55,7 +55,7 @@ export async function createBrowserContext(
         extensionPath === "testDist" ? "testUBlockOrigin" : "testUBlockOrigin";
       const browser: Browser = await withExtension(firefox, [
         path.resolve(__dirname, extensionPath),
-        path.resolve(__dirname, uBlockPath),
+        path.resolve(__dirname, "..", uBlockPath),
       ]).launch();
       context = await browser.newContext();
       break;

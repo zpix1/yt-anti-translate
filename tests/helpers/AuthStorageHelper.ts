@@ -239,6 +239,9 @@ export async function handleGoogleLogin(
 
     const totpInput = page.locator("#totpPin");
     if (await totpInput.isVisible()) {
+      if (!process.env.GOOGLE_OTP_SECRET) {
+        throw "GOOGLE_OTP_SECRET is not set while required for 2FA";
+      }
       const twoFACode = generateOTP(process.env.GOOGLE_OTP_SECRET);
       await totpInput.fill(twoFACode);
       await page.getByRole("button", { name: nextText }).click();

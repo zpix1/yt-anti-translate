@@ -30,6 +30,12 @@ export async function setupUBlockAndAuth(
       // 5. Close browser context
       for (let index = 0; index < allLocaleStrings.length; index++) {
         const localeString = allLocaleStrings[index];
+        console.log(
+          "setting up locale",
+          localeString,
+          "for browser",
+          browserNameWithExtensions,
+        );
 
         // Launch browser with the extension
         let context;
