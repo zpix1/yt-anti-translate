@@ -37,7 +37,9 @@ function getOriginalTrack(tracks) {
 
   let languageFieldName = null;
   for (const track of tracks) {
-    if (!track || typeof track !== "object") continue;
+    if (!track || typeof track !== "object") {
+      continue;
+    }
 
     for (const [fieldName, field] of Object.entries(track)) {
       if (field && typeof field === "object" && field.name) {
@@ -45,42 +47,35 @@ function getOriginalTrack(tracks) {
         break;
       }
     }
-    if (languageFieldName) break;
+    if (languageFieldName) {
+      break;
+    }
   }
 
   if (!languageFieldName) {
     return;
   }
-
-  let longestTrackNameTrack = null;
-  let longestTrackNameCharLength = 0;
   for (const track of tracks) {
-    if (!track || !track[languageFieldName] || !track[languageFieldName].name)
+    if (!track || !track[languageFieldName] || !track[languageFieldName].name) {
       continue;
-
-    const trackName = track[languageFieldName].name.toLowerCase();
-    if (trackName.length > longestTrackNameCharLength) {
-      longestTrackNameCharLength = trackName.length
-      longestTrackNameTrack = track;
     }
 
+    const trackName = track[languageFieldName].name.toLowerCase();
     for (const originalWord of ORIGINAL_TRANSLATIONS) {
       if (trackName.includes(originalWord.toLowerCase())) {
-        console.log(`${window.YoutubeAntiTranslate.LOG_PREFIX}: setting original audio track as ${trackName} with id ${track.id}`)
+        console.log(
+          `${window.YoutubeAntiTranslate.LOG_PREFIX}: setting original audio track as ${trackName} with id ${track.id}`,
+        );
         return track;
       }
     }
   }
-
-  if (longestTrackNameTrack) {
-    // Pick the longest track name as backup if ORIGINAL_TRANSLATIONS failed
-    console.log(`${window.YoutubeAntiTranslate.LOG_PREFIX}: setting longest-name audio track as ${longestTrackNameTrack[languageFieldName].name}${trackName} with id ${track.id}`)
-    return longestTrackNameTrack
-  }
 }
 
 async function untranslateAudioTrack() {
-  const player = window.YoutubeAntiTranslate.getFirstVisible(document.querySelectorAll(window.YoutubeAntiTranslate.getPlayerSelector()));
+  const player = window.YoutubeAntiTranslate.getFirstVisible(
+    document.querySelectorAll(window.YoutubeAntiTranslate.getPlayerSelector()),
+  );
 
   if (!player) {
     return;
@@ -89,17 +84,13 @@ async function untranslateAudioTrack() {
   const tracks = await player.getAvailableAudioTracks();
   const currentTrack = await player.getAudioTrack();
 
-  if (
-    !playerResponse
-    || !tracks
-    || !currentTrack
-  ) {
+  if (!playerResponse || !tracks || !currentTrack) {
     return;
   }
   const currentVideoId = playerResponse.videoDetails.videoId;
   if (
-    !currentVideoId
-    || player.lastUntranslated === `${currentVideoId}+${currentTrack}`
+    !currentVideoId ||
+    player.lastUntranslated === `${currentVideoId}+${currentTrack}`
   ) {
     return;
   }
@@ -123,7 +114,7 @@ async function untranslateAudioTrack() {
 }
 
 async function untranslate() {
-  if (mutationIdx % MUTATION_UPDATE_STEP == 0) {
+  if (mutationIdx % MUTATION_UPDATE_STEP === 0) {
     await untranslateAudioTrack();
   }
   mutationIdx++;

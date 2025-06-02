@@ -1,50 +1,62 @@
 import { expect, firefox, chromium } from "@playwright/test";
-import { test } from "../playwright.config"
+import { test } from "../playwright.config";
 import path from "path";
 import { withExtension } from "playwright-webextext";
-import { newPageWithStorageStateIfItExists, findLoginButton } from "./helpers/AuthStorageHelper";
+import {
+  newPageWithStorageStateIfItExists,
+  findLoginButton,
+} from "./helpers/AuthStorageHelper";
 import { setupUBlockAndAuth } from "./helpers/setupUBlockAndAuth";
 
-const authFile = path.join(__dirname, '../playwright/.auth/user.json');
+const authFile = path.join(__dirname, "../playwright/.auth/user.json");
 
 // This are tests for the core functionalities
 
 test.describe("YouTube Anti-Translate extension", () => {
-  test("Prevents current video title and description auto-translation", async ({ browserNameWithExtensions, localeString }, testInfo) => {
+  test("Prevents current video title and description auto-translation", async ({
+    browserNameWithExtensions,
+    localeString,
+  }, testInfo) => {
     if (testInfo.retry > 0) {
       // If this test is retring then check uBlock and Auth again
-      expect(await setupUBlockAndAuth([browserNameWithExtensions], [localeString])).toBe(true);
+      expect(
+        await setupUBlockAndAuth([browserNameWithExtensions], [localeString]),
+      ).toBe(true);
     }
 
     // Launch browser with the extension
     let context;
     switch (browserNameWithExtensions) {
       case "chromium":
-        const browserTypeWithExtension = withExtension(
-          chromium,
-          [path.resolve(__dirname, "../app"), path.resolve(__dirname, "testUBlockOriginLite")]
-        );
+        const browserTypeWithExtension = withExtension(chromium, [
+          path.resolve(__dirname, "../app"),
+          path.resolve(__dirname, "testUBlockOriginLite"),
+        ]);
         context = await browserTypeWithExtension.launchPersistentContext("", {
-          headless: false
+          headless: false,
         });
         break;
       case "firefox":
-        context = await (withExtension(
-          firefox,
-          [path.resolve(__dirname, "../app"), path.resolve(__dirname, "testUBlockOrigin")]
-        )).launch()
+        context = await withExtension(firefox, [
+          path.resolve(__dirname, "../app"),
+          path.resolve(__dirname, "testUBlockOrigin"),
+        ]).launch();
         break;
       default:
-        throw "Unsupported browserNameWithExtensions"
+        throw "Unsupported browserNameWithExtensions";
     }
 
     // Create a new page
-    const result = await newPageWithStorageStateIfItExists(context, browserNameWithExtensions, localeString);
+    const result = await newPageWithStorageStateIfItExists(
+      context,
+      browserNameWithExtensions,
+      localeString,
+    );
     const page = result.page;
     const localeLoaded = result.localeLoaded;
     if (!localeLoaded) {
       // Setup failed to create a matching locale so test will fail.
-      expect(localeLoaded).toBe(true)
+      expect(localeLoaded).toBe(true);
     }
 
     // Set up console message counting
@@ -57,7 +69,9 @@ test.describe("YouTube Anti-Translate extension", () => {
     await page.goto("https://www.youtube.com/watch?v=l-nMKJ5J3Uc");
 
     // Wait for the page to load
-    try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
+    try {
+      await page.waitForLoadState("networkidle", { timeout: 5000 });
+    } catch {}
     // .waitForLoadState("networkidle" is not always right so wait 5 extra seconds
     await page.waitForTimeout(5000);
 
@@ -75,7 +89,7 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Expand the description if it's collapsed
     const moreButton = page.locator(
-      "#description-inline-expander ytd-text-inline-expander #expand"
+      "#description-inline-expander ytd-text-inline-expander #expand",
     );
     if (await moreButton.isVisible()) {
       await moreButton.click();
@@ -91,120 +105,145 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Get the video title
     const videoTitle = await page
-      .locator("h1.ytd-watch-metadata #yt-anti-translate-fake-node-current-video:visible")
+      .locator(
+        "h1.ytd-watch-metadata #yt-anti-translate-fake-node-current-video:visible",
+      )
       .textContent();
     console.log("Video title:", videoTitle?.trim());
 
     // Check that the title is in English and not in Russian
     expect(videoTitle).toContain("Ages 1 - 100 Decide Who Wins $250,000");
     expect(videoTitle).not.toContain(
-      "Люди от 1 до 100 Лет Решают, кто Выиграет $250,000"
+      "Люди от 1 до 100 Лет Решают, кто Выиграет $250,000",
     );
 
     // Check page title
-    const pageTitle = await page.title()
+    const pageTitle = await page.title();
     console.log("Document title for the Video is:", pageTitle?.trim());
     // Check that the document title is in English and not in Russian
     expect(pageTitle).toContain("Ages 1 - 100 Decide Who Wins $250,000");
     expect(pageTitle).not.toContain(
-      "Люди от 1 до 100 Лет Решают, кто Выиграет $250,000"
+      "Люди от 1 до 100 Лет Решают, кто Выиграет $250,000",
     );
 
     // Take a screenshot for visual verification
-    await page.screenshot({ path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-extension-test-title.png` });
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-extension-test-title.png`,
+    });
 
     // Open full screen
-    await page.keyboard.press('F');
+    await page.keyboard.press("F");
     await page.waitForTimeout(500);
 
     // Get the head link video title
     const headLinkVideoTitle = await page
-      .locator("ytd-player .html5-video-player a.ytp-title-link#yt-anti-translate-fake-node-video-head-link")
+      .locator(
+        "ytd-player .html5-video-player a.ytp-title-link#yt-anti-translate-fake-node-video-head-link",
+      )
       .textContent();
     console.log("Head Link Video title:", headLinkVideoTitle?.trim());
 
     // Check that the title is in English and not in Russian
-    expect(headLinkVideoTitle).toContain("Ages 1 - 100 Decide Who Wins $250,000");
+    expect(headLinkVideoTitle).toContain(
+      "Ages 1 - 100 Decide Who Wins $250,000",
+    );
     expect(headLinkVideoTitle).not.toContain(
-      "Люди от 1 до 100 Лет Решают, кто Выиграет $250,000"
+      "Люди от 1 до 100 Лет Решают, кто Выиграет $250,000",
     );
 
     // Get the full screen footer video title
     const fullStreenVideoTitleFooter = await page
-      .locator("ytd-player .html5-video-player div.ytp-fullerscreen-edu-text#yt-anti-translate-fake-node-fullscreen-edu")
+      .locator(
+        "ytd-player .html5-video-player div.ytp-fullerscreen-edu-text#yt-anti-translate-fake-node-fullscreen-edu",
+      )
       .textContent();
     console.log("Head Link Video title:", fullStreenVideoTitleFooter?.trim());
 
     // Check that the title is in English and not in Russian
-    expect(fullStreenVideoTitleFooter).toContain("Ages 1 - 100 Decide Who Wins $250,000");
+    expect(fullStreenVideoTitleFooter).toContain(
+      "Ages 1 - 100 Decide Who Wins $250,000",
+    );
     expect(fullStreenVideoTitleFooter).not.toContain(
-      "Люди от 1 до 100 Лет Решают, кто Выиграет $250,000"
+      "Люди от 1 до 100 Лет Решают, кто Выиграет $250,000",
     );
 
     // Take a screenshot for visual verification
-    await page.screenshot({ path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-extension-test-fullscreen.png` });
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-extension-test-fullscreen.png`,
+    });
 
     // Exit full screen
-    await page.keyboard.press('F');
+    await page.keyboard.press("F");
     await page.waitForTimeout(500);
 
-    await page.locator("#description-inline-expander:visible").scrollIntoViewIfNeeded();
+    await page
+      .locator("#description-inline-expander:visible")
+      .scrollIntoViewIfNeeded();
     // Check that the description contains the original English text and not the Russian translation
     expect(descriptionText).toContain("believe who they picked");
     expect(descriptionText).toContain(
-      "Thanks Top Troops for sponsoring this video"
+      "Thanks Top Troops for sponsoring this video",
     );
     expect(descriptionText).not.toContain(
-      "Я не могу поверить, кого они выбрали"
+      "Я не могу поверить, кого они выбрали",
     );
 
     // Take a screenshot for visual verification
-    await page.screenshot({ path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-extension-test-description.png` });
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-extension-test-description.png`,
+    });
 
     // Check console message count
-    expect(consoleMessageCount).toBeLessThan(
-      2000
-    );
+    expect(consoleMessageCount).toBeLessThan(2000);
 
     // Close the browser context
     await context.close();
   });
 
-  test("YouTube timecode links in description work correctly with Anti-Translate extension", async ({ browserNameWithExtensions, localeString }, testInfo) => {
+  test("YouTube timecode links in description work correctly with Anti-Translate extension", async ({
+    browserNameWithExtensions,
+    localeString,
+  }, testInfo) => {
     if (testInfo.retry > 0) {
       // If this test is retring then check uBlock and Auth again
-      expect(await setupUBlockAndAuth([browserNameWithExtensions], [localeString])).toBe(true);
+      expect(
+        await setupUBlockAndAuth([browserNameWithExtensions], [localeString]),
+      ).toBe(true);
     }
 
     // Launch browser with the extension
     let context;
     switch (browserNameWithExtensions) {
       case "chromium":
-        const browserTypeWithExtension = withExtension(
-          chromium,
-          [path.resolve(__dirname, "../app"), path.resolve(__dirname, "testUBlockOriginLite")]
-        );
+        const browserTypeWithExtension = withExtension(chromium, [
+          path.resolve(__dirname, "../app"),
+          path.resolve(__dirname, "testUBlockOriginLite"),
+        ]);
         context = await browserTypeWithExtension.launchPersistentContext("", {
-          headless: false
+          headless: false,
         });
         break;
       case "firefox":
-        context = await (withExtension(
-          firefox,
-          [path.resolve(__dirname, "../app"), path.resolve(__dirname, "testUBlockOrigin")]
-        )).launch()
+        context = await withExtension(firefox, [
+          path.resolve(__dirname, "../app"),
+          path.resolve(__dirname, "testUBlockOrigin"),
+        ]).launch();
         break;
       default:
-        throw "Unsupported browserNameWithExtensions"
+        throw "Unsupported browserNameWithExtensions";
     }
 
     // Create a new page
-    const result = await newPageWithStorageStateIfItExists(context, browserNameWithExtensions, localeString);
+    const result = await newPageWithStorageStateIfItExists(
+      context,
+      browserNameWithExtensions,
+      localeString,
+    );
     const page = result.page;
-    const localeLoaded = result.localeLoaded
+    const localeLoaded = result.localeLoaded;
     if (!localeLoaded) {
       // Setup failed to create a matching locale so test will fail.
-      expect(localeLoaded).toBe(true)
+      expect(localeLoaded).toBe(true);
     }
 
     // Set up console message counting
@@ -217,7 +256,9 @@ test.describe("YouTube Anti-Translate extension", () => {
     await page.goto("https://www.youtube.com/watch?v=4PBPXbd4DkQ");
 
     // Wait for the page to load
-    try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
+    try {
+      await page.waitForLoadState("networkidle", { timeout: 5000 });
+    } catch {}
     // .waitForLoadState("networkidle" is not always right so wait 5 extra seconds
     await page.waitForTimeout(5000);
 
@@ -254,7 +295,7 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Verify description contains expected English text
     expect(descriptionText).toContain(
-      "Toy Rockets Challenge - Fun Outdoor Activities for kids!"
+      "Toy Rockets Challenge - Fun Outdoor Activities for kids!",
     );
     expect(descriptionText).toContain("Chris helps Alice find her cars");
     expect(descriptionText).toContain("Please Subscribe!");
@@ -279,52 +320,61 @@ test.describe("YouTube Anti-Translate extension", () => {
     expect(newTime).toBeLessThan(350); // And a small buffer above
 
     // Take a screenshot for visual verification
-    await page.screenshot({ path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-timecode-test.png` });
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-timecode-test.png`,
+    });
 
     // Check console message count
-    expect(consoleMessageCount).toBeLessThan(
-      2000
-    );
+    expect(consoleMessageCount).toBeLessThan(2000);
 
     // Close the browser context
     await context.close();
   });
 
-  test("YouTube Shorts title is not translated with Anti-Translate extension", async ({ browserNameWithExtensions, localeString }, testInfo) => {
+  test("YouTube Shorts title is not translated with Anti-Translate extension", async ({
+    browserNameWithExtensions,
+    localeString,
+  }, testInfo) => {
     if (testInfo.retry > 0) {
       // If this test is retring then check uBlock and Auth again
-      expect(await setupUBlockAndAuth([browserNameWithExtensions], [localeString])).toBe(true);
+      expect(
+        await setupUBlockAndAuth([browserNameWithExtensions], [localeString]),
+      ).toBe(true);
     }
 
     // Launch browser with the extension
     let context;
     switch (browserNameWithExtensions) {
       case "chromium":
-        const browserTypeWithExtension = withExtension(
-          chromium,
-          [path.resolve(__dirname, "../app"), path.resolve(__dirname, "testUBlockOriginLite")]
-        );
+        const browserTypeWithExtension = withExtension(chromium, [
+          path.resolve(__dirname, "../app"),
+          path.resolve(__dirname, "testUBlockOriginLite"),
+        ]);
         context = await browserTypeWithExtension.launchPersistentContext("", {
-          headless: false
+          headless: false,
         });
         break;
       case "firefox":
-        context = await (withExtension(
-          firefox,
-          [path.resolve(__dirname, "../app"), path.resolve(__dirname, "testUBlockOrigin")]
-        )).launch()
+        context = await withExtension(firefox, [
+          path.resolve(__dirname, "../app"),
+          path.resolve(__dirname, "testUBlockOrigin"),
+        ]).launch();
         break;
       default:
-        throw "Unsupported browserNameWithExtensions"
+        throw "Unsupported browserNameWithExtensions";
     }
 
     // Create a new page
-    const result = await newPageWithStorageStateIfItExists(context, browserNameWithExtensions, localeString);
+    const result = await newPageWithStorageStateIfItExists(
+      context,
+      browserNameWithExtensions,
+      localeString,
+    );
     const page = result.page;
     const localeLoaded = result.localeLoaded;
     if (!localeLoaded) {
       // Setup failed to create a matching locale so test will fail.
-      expect(localeLoaded).toBe(true)
+      expect(localeLoaded).toBe(true);
     }
 
     // Set up console message counting
@@ -337,7 +387,9 @@ test.describe("YouTube Anti-Translate extension", () => {
     await page.goto("https://www.youtube.com/shorts/PXevNM0awlI");
 
     // Wait for the page to load
-    try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
+    try {
+      await page.waitForLoadState("networkidle", { timeout: 5000 });
+    } catch {}
     // .waitForLoadState("networkidle" is not always right so wait 5 extra seconds
     await page.waitForTimeout(5000);
 
@@ -356,19 +408,18 @@ test.describe("YouTube Anti-Translate extension", () => {
     // Verify the title is the original English one and not the Russian translation
     expect(shortsTitle?.trim()).toBe("Highest Away From Me Wins $10,000");
     expect(shortsTitle?.trim()).not.toBe("Достигни Вершины И Выиграй $10,000");
-    await expect(page.locator(shortsTitleSelector)).toBeVisible()
+    await expect(page.locator(shortsTitleSelector)).toBeVisible();
 
     // Check page title
-    const pageTitle = await page.title()
+    const pageTitle = await page.title();
     console.log("Document title for the Short is:", pageTitle?.trim());
     // Check that the document title is in English and not in Russian
     expect(pageTitle).toContain("Highest Away From Me Wins $10,000");
-    expect(pageTitle).not.toContain(
-      "Достигни Вершины И Выиграй $10,000"
-    );
+    expect(pageTitle).not.toContain("Достигни Вершины И Выиграй $10,000");
 
     // Wait for the shorts video link element to be present
-    const shortsVideoLinkSelector = ".ytReelMultiFormatLinkViewModelEndpoint span.yt-core-attributed-string>span:visible";
+    const shortsVideoLinkSelector =
+      ".ytReelMultiFormatLinkViewModelEndpoint span.yt-core-attributed-string>span:visible";
     await page.waitForSelector(shortsVideoLinkSelector);
 
     // Get the title text
@@ -381,52 +432,61 @@ test.describe("YouTube Anti-Translate extension", () => {
     expect(shortsLinkTitle?.trim()).not.toMatch(/[А-Яа-яЁё]/); // Ensures no Russian letters
 
     // Take a screenshot for visual verification
-    await page.screenshot({ path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-shorts-test.png` });
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-shorts-test.png`,
+    });
 
     // Check console message count
-    expect(consoleMessageCount).toBeLessThan(
-      2000
-    );
+    expect(consoleMessageCount).toBeLessThan(2000);
 
     // Close the browser context
     await context.close();
   });
 
-  test("YouTube channel Videos and Shorts tabs retain original titles", async ({ browserNameWithExtensions, localeString }, testInfo) => {
+  test("YouTube channel Videos and Shorts tabs retain original titles", async ({
+    browserNameWithExtensions,
+    localeString,
+  }, testInfo) => {
     if (testInfo.retry > 0) {
       // If this test is retring then check uBlock and Auth again
-      expect(await setupUBlockAndAuth([browserNameWithExtensions], [localeString])).toBe(true);
+      expect(
+        await setupUBlockAndAuth([browserNameWithExtensions], [localeString]),
+      ).toBe(true);
     }
 
     // Launch browser with the extension
     let context;
     switch (browserNameWithExtensions) {
       case "chromium":
-        const browserTypeWithExtension = withExtension(
-          chromium,
-          [path.resolve(__dirname, "../app"), path.resolve(__dirname, "testUBlockOriginLite")]
-        );
+        const browserTypeWithExtension = withExtension(chromium, [
+          path.resolve(__dirname, "../app"),
+          path.resolve(__dirname, "testUBlockOriginLite"),
+        ]);
         context = await browserTypeWithExtension.launchPersistentContext("", {
-          headless: false
+          headless: false,
         });
         break;
       case "firefox":
-        context = await (withExtension(
-          firefox,
-          [path.resolve(__dirname, "../app"), path.resolve(__dirname, "testUBlockOrigin")]
-        )).launch()
+        context = await withExtension(firefox, [
+          path.resolve(__dirname, "../app"),
+          path.resolve(__dirname, "testUBlockOrigin"),
+        ]).launch();
         break;
       default:
-        throw "Unsupported browserNameWithExtensions"
+        throw "Unsupported browserNameWithExtensions";
     }
 
     // Create a new page
-    const result = await newPageWithStorageStateIfItExists(context, browserNameWithExtensions, localeString);
+    const result = await newPageWithStorageStateIfItExists(
+      context,
+      browserNameWithExtensions,
+      localeString,
+    );
     const page = result.page;
     const localeLoaded = result.localeLoaded;
     if (!localeLoaded) {
       // Setup failed to create a matching locale so test will fail.
-      expect(localeLoaded).toBe(true)
+      expect(localeLoaded).toBe(true);
     }
 
     // Set up console message counting
@@ -439,7 +499,9 @@ test.describe("YouTube Anti-Translate extension", () => {
     await page.goto("https://www.youtube.com/@MrBeast/videos");
 
     // Wait for the page to load
-    try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
+    try {
+      await page.waitForLoadState("networkidle", { timeout: 5000 });
+    } catch {}
     // .waitForLoadState("networkidle" is not always right so wait 5 extra seconds
     await page.waitForTimeout(5000);
 
@@ -455,17 +517,21 @@ test.describe("YouTube Anti-Translate extension", () => {
     const videoSelector = `ytd-rich-item-renderer:has-text("${originalVideoTitle}")`;
     const translatedVideoSelector = `ytd-rich-item-renderer:has-text("${translatedVideoTitle}")`;
 
-    const originalVideo = page.locator(videoSelector).first()
+    const originalVideo = page.locator(videoSelector).first();
     if (await originalVideo.isVisible()) {
       await page.mouse.wheel(0, 500);
       await originalVideo.scrollIntoViewIfNeeded();
-      try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
+      try {
+        await page.waitForLoadState("networkidle", { timeout: 5000 });
+      } catch {}
     }
-    const translatedVideo = page.locator(translatedVideoSelector).first()
+    const translatedVideo = page.locator(translatedVideoSelector).first();
     if (await translatedVideo.isVisible()) {
       await page.mouse.wheel(0, 500);
       await translatedVideo.scrollIntoViewIfNeeded();
-      try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
+      try {
+        await page.waitForLoadState("networkidle", { timeout: 5000 });
+      } catch {}
     }
 
     console.log("Checking Videos tab for original title...");
@@ -476,7 +542,9 @@ test.describe("YouTube Anti-Translate extension", () => {
     // --- Switch to Shorts Tab ---
     console.log("Clicking Shorts tab...");
     await page.locator("#tabsContent").getByText("Shorts").click();
-    try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
+    try {
+      await page.waitForLoadState("networkidle", { timeout: 5000 });
+    } catch {}
     await page.waitForTimeout(1000); // Give it a moment to load more items if needed
 
     // --- Check Shorts Tab ---
@@ -487,24 +555,28 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     console.log("Checking Shorts tab for original title...");
     // Shorts might load dynamically, scroll into view to ensure it's loaded
-    const originalShort = page.locator(shortSelector).first()
+    const originalShort = page.locator(shortSelector).first();
     if (await originalShort.isVisible()) {
       await page.mouse.wheel(0, 500);
       await originalShort.scrollIntoViewIfNeeded();
-      try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
+      try {
+        await page.waitForLoadState("networkidle", { timeout: 5000 });
+      } catch {}
     }
-    const translatedShort = page.locator(translatedShortSelector).first()
+    const translatedShort = page.locator(translatedShortSelector).first();
     if (await translatedShort.isVisible()) {
       await page.mouse.wheel(0, 500);
       await translatedShort.scrollIntoViewIfNeeded();
-      try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
+      try {
+        await page.waitForLoadState("networkidle", { timeout: 5000 });
+      } catch {}
     }
     await page.waitForTimeout(1000); // Give it a moment to load more items if needed
 
     await expect(page.locator(shortSelector)).toBeVisible({ timeout: 10000 }); // Increased timeout for dynamic loading
     await expect(page.locator(translatedShortSelector)).not.toBeVisible();
     console.log(
-      "Original short title found, translated short title not found."
+      "Original short title found, translated short title not found.",
     );
 
     // --- Check another short lower in the page
@@ -515,33 +587,39 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     console.log("Checking Shorts tab for original title...");
     // Shorts might load dynamically, scroll into view to ensure it's loaded
-    const originalShort2 = page.locator(shortSelector2).first()
+    const originalShort2 = page.locator(shortSelector2).first();
     if (await originalShort2.isVisible()) {
       await page.mouse.wheel(0, 500);
       await originalShort2.scrollIntoViewIfNeeded();
-      try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
+      try {
+        await page.waitForLoadState("networkidle", { timeout: 5000 });
+      } catch {}
     }
-    const translatedShort2 = page.locator(translatedShortSelector2).first()
+    const translatedShort2 = page.locator(translatedShortSelector2).first();
     if (await translatedShort2.isVisible()) {
       await page.mouse.wheel(0, 500);
       await translatedShort2.scrollIntoViewIfNeeded();
-      try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
+      try {
+        await page.waitForLoadState("networkidle", { timeout: 5000 });
+      } catch {}
     }
     await page.waitForTimeout(1000); // Give it a moment to load more items if needed
 
     await expect(page.locator(shortSelector2)).toBeVisible({ timeout: 10000 }); // Increased timeout for dynamic loading
     await expect(page.locator(translatedShortSelector2)).not.toBeVisible();
     console.log(
-      "Original short title found, translated short title not found."
+      "Original short title found, translated short title not found.",
     );
 
     // --- Switch back to Videos Tab ---
     console.log("Clicking Videos tab...");
     await page.locator("#tabsContent").getByText("Видео").click();
-    try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
+    try {
+      await page.waitForLoadState("networkidle", { timeout: 5000 });
+    } catch {}
     await page.waitForSelector(
       "ytd-rich-grid-media >> ytd-thumbnail-overlay-time-status-renderer:not([overlay-style='SHORTS'])",
-      { state: "visible" }
+      { state: "visible" },
     ); // Wait for videos to load
 
     // --- Re-check Videos Tab ---
@@ -551,52 +629,61 @@ test.describe("YouTube Anti-Translate extension", () => {
     console.log("Original video title confirmed on Videos tab again.");
 
     // Take a screenshot for visual verification
-    await page.screenshot({ path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-channel-tabs-test.png` });
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-channel-tabs-test.png`,
+    });
 
     // Check console message count
-    expect(consoleMessageCount).toBeLessThan(
-      2000
-    );
+    expect(consoleMessageCount).toBeLessThan(2000);
 
     // Close the browser context
     await context.close();
   });
 
-  test("YouTube Shorts audio dubbing is untranslated with Anti-Translate extension", async ({ browserNameWithExtensions, localeString }, testInfo) => {
+  test("YouTube Shorts audio dubbing is untranslated with Anti-Translate extension", async ({
+    browserNameWithExtensions,
+    localeString,
+  }, testInfo) => {
     if (testInfo.retry > 0) {
       // If this test is retring then check uBlock and Auth again
-      expect(await setupUBlockAndAuth([browserNameWithExtensions], [localeString])).toBe(true);
+      expect(
+        await setupUBlockAndAuth([browserNameWithExtensions], [localeString]),
+      ).toBe(true);
     }
 
     // Launch browser with the extension
     let context;
     switch (browserNameWithExtensions) {
       case "chromium":
-        const browserTypeWithExtension = withExtension(
-          chromium,
-          [path.resolve(__dirname, "../app"), path.resolve(__dirname, "testUBlockOriginLite")]
-        );
+        const browserTypeWithExtension = withExtension(chromium, [
+          path.resolve(__dirname, "../app"),
+          path.resolve(__dirname, "testUBlockOriginLite"),
+        ]);
         context = await browserTypeWithExtension.launchPersistentContext("", {
-          headless: false
+          headless: false,
         });
         break;
       case "firefox":
-        context = await (withExtension(
-          firefox,
-          [path.resolve(__dirname, "../app"), path.resolve(__dirname, "testUBlockOrigin")]
-        )).launch()
+        context = await withExtension(firefox, [
+          path.resolve(__dirname, "../app"),
+          path.resolve(__dirname, "testUBlockOrigin"),
+        ]).launch();
         break;
       default:
-        throw "Unsupported browserNameWithExtensions"
+        throw "Unsupported browserNameWithExtensions";
     }
 
     // Create a new page
-    const result = await newPageWithStorageStateIfItExists(context, browserNameWithExtensions, localeString);
+    const result = await newPageWithStorageStateIfItExists(
+      context,
+      browserNameWithExtensions,
+      localeString,
+    );
     const page = result.page;
-    const localeLoaded = result.localeLoaded
+    const localeLoaded = result.localeLoaded;
     if (!localeLoaded) {
       // Setup failed to create a matching locale so test will fail.
-      expect(localeLoaded).toBe(true)
+      expect(localeLoaded).toBe(true);
     }
 
     // Set up console message counting
@@ -609,7 +696,9 @@ test.describe("YouTube Anti-Translate extension", () => {
     await page.goto("https://www.youtube.com/@MrBeast/shorts");
 
     // Wait for the page to load
-    try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
+    try {
+      await page.waitForLoadState("networkidle", { timeout: 5000 });
+    } catch {}
     // .waitForLoadState("networkidle" is not always right so wait 5 extra seconds
     await page.waitForTimeout(5000);
 
@@ -620,11 +709,13 @@ test.describe("YouTube Anti-Translate extension", () => {
     await page.waitForSelector("ytd-rich-item-renderer");
 
     // Find the first short and click to open
-    const firstShort = page.locator("ytd-rich-item-renderer").first()
+    const firstShort = page.locator("ytd-rich-item-renderer").first();
     if (await firstShort.isVisible()) {
       await firstShort.scrollIntoViewIfNeeded();
       await firstShort.click();
-      try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
+      try {
+        await page.waitForLoadState("networkidle", { timeout: 5000 });
+      } catch {}
     }
     await page.waitForTimeout(2000);
 
@@ -642,8 +733,7 @@ test.describe("YouTube Anti-Translate extension", () => {
       }
       if (!languageFieldName!) {
         return;
-      }
-      else {
+      } else {
         return languageFieldName;
       }
     }
@@ -652,23 +742,32 @@ test.describe("YouTube Anti-Translate extension", () => {
       type PlayerResponse = {
         videoDetails?: { videoId?: string };
       };
-      const video = document.querySelector("#shorts-player") as HTMLVideoElement & {
+      const video = document.querySelector(
+        "#shorts-player",
+      ) as HTMLVideoElement & {
         getAudioTrack?: () => Promise<any>;
         getPlayerResponse?: () => Promise<PlayerResponse>;
       };
-      return [await video?.getAudioTrack?.(), (await video?.getPlayerResponse?.())?.videoDetails?.videoId];
+      return [
+        await video?.getAudioTrack?.(),
+        (await video?.getPlayerResponse?.())?.videoDetails?.videoId,
+      ];
     });
 
     // Check original track is the selected one
-    expect(currentTrack[getTrackLanguageFieldObjectName(currentTrack)!]?.name).toContain("оригинал");
-    expect(currentId).not.toBeNull()
+    expect(
+      currentTrack[getTrackLanguageFieldObjectName(currentTrack)!]?.name,
+    ).toContain("оригинал");
+    expect(currentId).not.toBeNull();
 
     // Go to next short
-    const buttonDown = page.locator('#navigation-button-down button').first()
+    const buttonDown = page.locator("#navigation-button-down button").first();
     if (await buttonDown.isVisible()) {
       await buttonDown.scrollIntoViewIfNeeded();
       await buttonDown.click();
-      try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
+      try {
+        await page.waitForLoadState("networkidle", { timeout: 5000 });
+      } catch {}
     }
     await page.waitForTimeout(2000);
 
@@ -676,23 +775,32 @@ test.describe("YouTube Anti-Translate extension", () => {
       type PlayerResponse = {
         videoDetails?: { videoId?: string };
       };
-      const video = document.querySelector("#shorts-player") as HTMLVideoElement & {
+      const video = document.querySelector(
+        "#shorts-player",
+      ) as HTMLVideoElement & {
         getAudioTrack?: () => Promise<any>;
         getPlayerResponse?: () => Promise<PlayerResponse>;
       };
-      return [await video?.getAudioTrack?.(), (await video?.getPlayerResponse?.())?.videoDetails?.videoId];
+      return [
+        await video?.getAudioTrack?.(),
+        (await video?.getPlayerResponse?.())?.videoDetails?.videoId,
+      ];
     });
 
     // Check original track is the selected one
-    expect(currentTrack2[getTrackLanguageFieldObjectName(currentTrack2)!]?.name).toContain("оригинал");
+    expect(
+      currentTrack2[getTrackLanguageFieldObjectName(currentTrack2)!]?.name,
+    ).toContain("оригинал");
     expect(currentId2).not.toBe(currentId);
 
     // Go to next short
-    const buttonDown2 = page.locator('#navigation-button-down button').first()
+    const buttonDown2 = page.locator("#navigation-button-down button").first();
     if (await buttonDown2.isVisible()) {
       await buttonDown2.scrollIntoViewIfNeeded();
       await buttonDown2.click();
-      try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
+      try {
+        await page.waitForLoadState("networkidle", { timeout: 5000 });
+      } catch {}
     }
     await page.waitForTimeout(2000);
 
@@ -700,21 +808,26 @@ test.describe("YouTube Anti-Translate extension", () => {
       type PlayerResponse = {
         videoDetails?: { videoId?: string };
       };
-      const video = document.querySelector("#shorts-player") as HTMLVideoElement & {
+      const video = document.querySelector(
+        "#shorts-player",
+      ) as HTMLVideoElement & {
         getAudioTrack?: () => Promise<any>;
         getPlayerResponse?: () => Promise<PlayerResponse>;
       };
-      return [await video?.getAudioTrack?.(), (await video?.getPlayerResponse?.())?.videoDetails?.videoId];
+      return [
+        await video?.getAudioTrack?.(),
+        (await video?.getPlayerResponse?.())?.videoDetails?.videoId,
+      ];
     });
 
     // Check original track is the selected one
-    expect(currentTrack3[getTrackLanguageFieldObjectName(currentTrack3)!]?.name).toContain("оригинал");
+    expect(
+      currentTrack3[getTrackLanguageFieldObjectName(currentTrack3)!]?.name,
+    ).toContain("оригинал");
     expect(currentId3).not.toBe(currentId2);
 
     // Check console message count
-    expect(consoleMessageCount).toBeLessThan(
-      2000
-    );
+    expect(consoleMessageCount).toBeLessThan(2000);
 
     // Close the browser context
     await context.close();

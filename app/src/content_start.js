@@ -16,7 +16,7 @@ chrome.storage.sync.get(
         const backgroundAudioScript = document.createElement("script");
         backgroundAudioScript.type = "module";
         backgroundAudioScript.src = chrome.runtime.getURL(
-          "src/background_audio.js"
+          "src/background_audio.js",
         );
         document.body.appendChild(backgroundAudioScript);
       }
@@ -24,9 +24,11 @@ chrome.storage.sync.get(
       if (items.untranslateDescription) {
         const descriptionScript = document.createElement("script");
         descriptionScript.type = "module";
-        descriptionScript.src = chrome.runtime.getURL("src/background_description.js");
+        descriptionScript.src = chrome.runtime.getURL(
+          "src/background_description.js",
+        );
         document.body.appendChild(descriptionScript);
       }
     }
-  }
+  },
 );

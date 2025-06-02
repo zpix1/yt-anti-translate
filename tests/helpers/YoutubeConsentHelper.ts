@@ -1,6 +1,8 @@
 export async function handleYoutubeConsent(page) {
   await page.waitForTimeout(1000);
-  try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
+  try {
+    await page.waitForLoadState("networkidle", { timeout: 5000 });
+  } catch {}
 
   // Sometimes YouTube shows a consent dialog, handle it if it appears
   const consentButton = page.getByRole("button", {
@@ -11,7 +13,9 @@ export async function handleYoutubeConsent(page) {
     await consentButton.click();
     await page.waitForTimeout(1500);
   }
-  try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
+  try {
+    await page.waitForLoadState("networkidle", { timeout: 5000 });
+  } catch {}
 
   // Sometimes YouTube shows a cookies dialog, handle it if it appears
   const possibleLabels = ["Accept all", "Принять все", "ยอมรับทั้งหมด"];
@@ -27,5 +31,7 @@ export async function handleYoutubeConsent(page) {
   }
 
   await page.waitForTimeout(1000);
-  try { await page.waitForLoadState("networkidle", { timeout: 5000 }); } catch { }
+  try {
+    await page.waitForLoadState("networkidle", { timeout: 5000 });
+  } catch {}
 }

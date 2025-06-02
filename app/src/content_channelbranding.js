@@ -1,6 +1,7 @@
-// Constants
-const CHANNELBRANDING_HEADER_SELECTOR = "#page-header-container #page-header .page-header-view-model-wiz__page-header-headline-info";
-const CHANNELBRANDING_ABOUT_SELECTOR = "ytd-engagement-panel-section-list-renderer";
+const CHANNELBRANDING_HEADER_SELECTOR =
+  "#page-header-container #page-header .page-header-view-model-wiz__page-header-headline-info";
+const CHANNELBRANDING_ABOUT_SELECTOR =
+  "ytd-engagement-panel-section-list-renderer";
 const CHANNELBRANDING_MUTATION_UPDATE_FREQUENCY = 1;
 
 /**
@@ -12,7 +13,7 @@ async function detectChannelOriginalLanguage() {
     document.querySelectorAll(`${window.YoutubeAntiTranslate.ALL_ARRAYS_SHORTS_SELECTOR},
       ${window.YoutubeAntiTranslate.ALL_ARRAYS_VIDEOS_SELECTOR}`),
     true,
-    20
+    20,
   );
 
   if (!videoElements || videoElements.length === 0) {
@@ -22,7 +23,7 @@ async function detectChannelOriginalLanguage() {
   let combinedTitle = "";
 
   for (const el of videoElements) {
-    let linkElement =
+    const linkElement =
       el.querySelector("a#video-title-link") ||
       el.querySelector("a#thumbnail") ||
       el.querySelector("ytd-thumbnail a") ||
@@ -30,15 +31,21 @@ async function detectChannelOriginalLanguage() {
       el.querySelector("a.shortsLockupViewModelHostEndpoint") ||
       el.querySelector(`a[href*="/shorts/"]`);
 
-    if (!linkElement) continue;
+    if (!linkElement) {
+      continue;
+    }
 
     let href = linkElement.href;
-    if (!href) continue;
+    if (!href) {
+      continue;
+    }
 
     // Handle shorts specifically
     if (href.includes("/shorts/")) {
       const match = href.match(/shorts\/([a-zA-Z0-9_-]+)/);
-      if (!match || !match[1]) continue;
+      if (!match || !match[1]) {
+        continue;
+      }
       href = `https://www.youtube.com/shorts/${match[1]}`;
     }
 
@@ -47,11 +54,11 @@ async function detectChannelOriginalLanguage() {
     let titleFromEmbed;
 
     // Check cache first
-    const storedResponse = window.YoutubeAntiTranslate.getSessionCache(oembedUrl);
+    const storedResponse =
+      window.YoutubeAntiTranslate.getSessionCache(oembedUrl);
     if (storedResponse) {
       titleFromEmbed = `${storedResponse.title} ${storedResponse.author_name}`;
-    }
-    else {
+    } else {
       try {
         const res = await fetch(oembedUrl);
         if (!res.ok) {
@@ -77,12 +84,13 @@ async function detectChannelOriginalLanguage() {
     return;
   }
 
-  const detection = await window.YoutubeAntiTranslate.detectSupportedLanguage(combinedTitle);
+  const detection =
+    await window.YoutubeAntiTranslate.detectSupportedLanguage(combinedTitle);
 
   if (!detection) {
     return null;
   }
-  return detection[0]
+  return detection[0];
 }
 
 /**
@@ -96,25 +104,28 @@ async function lookupChannelId(query) {
     context: {
       client: {
         clientName: "WEB",
-        clientVersion: "2.20250527.00.00"
-      }
+        clientVersion: "2.20250527.00.00",
+      },
     },
     query,
     // "EgIQAg==" = filter=channels  (protobuf: {12: {1:2}})
-    params: "EgIQAg=="
+    params: "EgIQAg==",
   };
 
-  const requestIdentifier = `youtubei/v1/search_${JSON.stringify(body)}`
+  const requestIdentifier = `youtubei/v1/search_${JSON.stringify(body)}`;
 
   // Check cache
-  const storedResponse = window.YoutubeAntiTranslate.getSessionCache(requestIdentifier);
+  const storedResponse =
+    window.YoutubeAntiTranslate.getSessionCache(requestIdentifier);
   if (storedResponse) {
     return storedResponse;
   }
 
-  const search = "https://www.youtube.com/youtubei/v1/search?prettyPrint=false"
+  const search = "https://www.youtube.com/youtubei/v1/search?prettyPrint=false";
   const res = await fetch(search, {
-    method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body)
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
   });
 
   if (!res.ok) {
@@ -124,10 +135,10 @@ async function lookupChannelId(query) {
 
   const json = await res.json();
 
-  const channelUcid = json.contents?.twoColumnSearchResultsRenderer
-    ?.primaryContents.sectionListRenderer
-    ?.contents[0].itemSectionRenderer.contents[0]
-    ?.channelRenderer?.channelId || null;
+  const channelUcid =
+    json.contents?.twoColumnSearchResultsRenderer?.primaryContents
+      .sectionListRenderer?.contents[0].itemSectionRenderer.contents[0]
+      ?.channelRenderer?.channelId || null;
 
   if (!channelUcid) {
     return;
@@ -149,17 +160,15 @@ async function getChannelUCID() {
     return match ? `${match[1]}` : null;
   }
 
-  var handle = null;
+  let handle = null;
   if (window.location.pathname.startsWith("/c/")) {
-    var match = window.location.pathname.match(/\/c\/([\w-]+)/);
+    const match = window.location.pathname.match(/\/c\/([\w-]+)/);
     handle = match ? `${match[1]}` : null;
-  }
-  else if (window.location.pathname.startsWith("/@")) {
-    var match = window.location.pathname.match(/\/(@[\w-]+)/);
+  } else if (window.location.pathname.startsWith("/@")) {
+    const match = window.location.pathname.match(/\/(@[\w-]+)/);
     handle = match ? `${match[1]}` : null;
-  }
-  else if (window.location.pathname.startsWith("/user/")) {
-    var match = window.location.pathname.match(/\/user\/(@[\w-]+)/);
+  } else if (window.location.pathname.startsWith("/user/")) {
+    const match = window.location.pathname.match(/\/user\/(@[\w-]+)/);
     handle = match ? `${match[1]}` : null;
   }
   return await lookupChannelId(handle);
@@ -176,7 +185,9 @@ async function getChannelBrandingWithYoutubeI(ucid = null, locale = null) {
     ucid = await getChannelUCID();
   }
   if (!ucid) {
-    console.error(`${window.YoutubeAntiTranslate.LOG_PREFIX} could not find channel UCID`);
+    console.error(
+      `${window.YoutubeAntiTranslate.LOG_PREFIX} could not find channel UCID`,
+    );
     return;
   }
 
@@ -189,15 +200,17 @@ async function getChannelBrandingWithYoutubeI(ucid = null, locale = null) {
     locale = await detectChannelOriginalLanguage();
   }
   if (!locale) {
-    console.error(`${window.YoutubeAntiTranslate.LOG_PREFIX} could not find channel original locale`);
+    console.error(
+      `${window.YoutubeAntiTranslate.LOG_PREFIX} could not find channel original locale`,
+    );
     return;
   }
 
   // split the locale into hl (= language) and gl (= region)
   //    • “it-IT” → ["it","IT"]
   //    • “fr”    → ["fr"]
-  const [hl, region] = locale.split(/[-_]/);// tolerate "pt-BR" or "pt_BR"
-  const gl = region
+  const [hl, region] = locale.split(/[-_]/); // tolerate "pt-BR" or "pt_BR"
+  const gl = region;
 
   // build the request body
   const body = {
@@ -206,29 +219,38 @@ async function getChannelBrandingWithYoutubeI(ucid = null, locale = null) {
         hl, // language
         gl, // region
         clientName: "WEB",
-        clientVersion: "2.20250527.00.00"
-      }
+        clientVersion: "2.20250527.00.00",
+      },
     },
     browseId: ucid,
     // “about” tab protobuf — old first, then fall back to the newer encoding
-    params: "EgVhYm91dA==" // {2:string:"about"} :contentReference[oaicite:0]{index=0}
+    params: "EgVhYm91dA==", // {2:string:"about"} :contentReference[oaicite:0]{index=0}
   };
 
-  const requestIdentifier = `youtubei/v1/browse_${JSON.stringify(body)}`
+  const requestIdentifier = `youtubei/v1/browse_${JSON.stringify(body)}`;
 
   // Check cache
-  const storedResponse = window.YoutubeAntiTranslate.getSessionCache(requestIdentifier);
+  const storedResponse =
+    window.YoutubeAntiTranslate.getSessionCache(requestIdentifier);
   if (storedResponse) {
     return storedResponse;
   }
 
   const browse = "https://www.youtube.com/youtubei/v1/browse?prettyPrint=false";
-  let res = await fetch(browse, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+  let res = await fetch(browse, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  });
 
   // YT sometimes rejects the legacy protobuf with 400; try the newer one.
   if (res.status === 400) {
     body.params = "EgVhYm91dPIGBAoCEgA="; // wrapped “about” protobuf (2023-present) :contentReference[oaicite:1]{index=1}
-    res = await fetch(browse, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+    res = await fetch(browse, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+    });
   }
 
   if (!res.ok) {
@@ -243,8 +265,10 @@ async function getChannelBrandingWithYoutubeI(ucid = null, locale = null) {
 
   const result = {
     title: metadata?.title, // channel name
-    truncatedDescription: hdr?.content?.pageHeaderViewModel?.description?.descriptionPreviewViewModel?.description?.content,
-    description: metadata?.description // full description
+    truncatedDescription:
+      hdr?.content?.pageHeaderViewModel?.description
+        ?.descriptionPreviewViewModel?.description?.content,
+    description: metadata?.description, // full description
   };
 
   if (!metadata || !hdr) {
@@ -270,15 +294,13 @@ function getChannelFilter() {
     return match ? `id=${match[1]}` : null;
   }
   if (window.location.pathname.startsWith("/c/")) {
-    var match = window.location.pathname.match(/\/c\/([\w-]+)/);
+    const match = window.location.pathname.match(/\/c\/([\w-]+)/);
     return match ? `forHandle=${match[1]}` : null;
-  }
-  else if (window.location.pathname.startsWith("/@")) {
-    var match = window.location.pathname.match(/\/(@[\w-]+)/);
+  } else if (window.location.pathname.startsWith("/@")) {
+    const match = window.location.pathname.match(/\/(@[\w-]+)/);
     return match ? `forHandle=${match[1]}` : null;
-  }
-  else if (window.location.pathname.startsWith("/user/")) {
-    var match = window.location.pathname.match(/\/user\/(@[\w-]+)/);
+  } else if (window.location.pathname.startsWith("/user/")) {
+    const match = window.location.pathname.match(/\/user\/(@[\w-]+)/);
     return match ? `forUsername=${match[1]}` : null;
   }
 }
@@ -291,7 +313,7 @@ function getChannelFilter() {
 async function getChannelBrandingWithYoutubeDataAPI(youtubeDataApiKey) {
   const channelFilter = await getChannelFilter();
   if (!channelFilter) {
-    console.error('Channel ID not found');
+    console.error("Channel ID not found");
     return null;
   }
 
@@ -303,16 +325,16 @@ async function getChannelBrandingWithYoutubeDataAPI(youtubeDataApiKey) {
     return storedResponse;
   }
 
-  const apiKey = youtubeDataApiKey
+  const apiKey = youtubeDataApiKey;
   if (!apiKey || apiKey.trim() === "") {
-    console.error('Missing YOUTUBE_API_KEY is not set');
+    console.error("Missing YOUTUBE_API_KEY is not set");
     return null;
   }
 
   const response = await fetch(`${url}&key=${apiKey}`);
 
   if (!response.ok) {
-    console.error('Failed to fetch from YouTube API:', response.statusText);
+    console.error("Failed to fetch from YouTube API:", response.statusText);
     return null;
   }
 
@@ -320,13 +342,13 @@ async function getChannelBrandingWithYoutubeDataAPI(youtubeDataApiKey) {
   const branding = data.items?.[0]?.brandingSettings?.channel;
 
   if (!branding) {
-    console.error('Branding settings not found');
+    console.error("Branding settings not found");
     return null;
   }
 
   const result = {
     title: branding.title,
-    description: branding.description
+    description: branding.description,
   };
 
   // Store in cache
@@ -339,35 +361,59 @@ async function getChannelBrandingWithYoutubeDataAPI(youtubeDataApiKey) {
  * Processes the branding header and restores it to its original form
  */
 async function restoreOriginalBrandingHeader() {
-  if (window.YoutubeAntiTranslate.getFirstVisible(document.querySelectorAll(CHANNELBRANDING_HEADER_SELECTOR))) {
+  if (
+    window.YoutubeAntiTranslate.getFirstVisible(
+      document.querySelectorAll(CHANNELBRANDING_HEADER_SELECTOR),
+    )
+  ) {
     await chrome.storage.sync.get(
       {
-        youtubeDataApiKey: null
+        youtubeDataApiKey: null,
       },
       async (items) => {
         let originalBrandingData;
         if (items.youtubeDataApiKey && items.youtubeDataApiKey.trim !== "") {
-          originalBrandingData = await getChannelBrandingWithYoutubeDataAPI(items.youtubeDataApiKey)
+          originalBrandingData = await getChannelBrandingWithYoutubeDataAPI(
+            items.youtubeDataApiKey,
+          );
         }
         if (!originalBrandingData) {
-          // Fallback to YouTubeI+i18n if YoutubeDataAPI Key was not set OR if it failed 
+          // Fallback to YouTubeI+i18n if YoutubeDataAPI Key was not set OR if it failed
           originalBrandingData = await getChannelBrandingWithYoutubeI();
         }
 
         if (!originalBrandingData) {
-        }
-        else if (!originalBrandingData.title && !originalBrandingData.description) {
-        }
-        else {
-          const brandingHeaderContainer = window.YoutubeAntiTranslate.getFirstVisible(document.querySelectorAll(CHANNELBRANDING_HEADER_SELECTOR));
+          window.YoutubeAntiTranslate.logWarning(
+            "No original branding data found",
+          );
+        } else if (
+          !originalBrandingData.title &&
+          !originalBrandingData.description
+        ) {
+          window.YoutubeAntiTranslate.logWarning(
+            "No original branding data found for title and description",
+          );
+        } else {
+          const brandingHeaderContainer =
+            window.YoutubeAntiTranslate.getFirstVisible(
+              document.querySelectorAll(CHANNELBRANDING_HEADER_SELECTOR),
+            );
           if (brandingHeaderContainer) {
-            updateBrandingHeaderTitleContent(brandingHeaderContainer, originalBrandingData);
-            updateBrandingHeaderDescriptionContent(brandingHeaderContainer, originalBrandingData);
+            updateBrandingHeaderTitleContent(
+              brandingHeaderContainer,
+              originalBrandingData,
+            );
+            updateBrandingHeaderDescriptionContent(
+              brandingHeaderContainer,
+              originalBrandingData,
+            );
           } else {
-            console.log(`${window.YoutubeAntiTranslate.LOG_PREFIX} Channel Branding Header container not found`);
+            window.YoutubeAntiTranslate.logWarning(
+              "Channel Branding Header container not found",
+            );
           }
         }
-      }
+      },
     );
   }
 }
@@ -380,31 +426,49 @@ async function restoreOriginalBrandingHeader() {
 function updateBrandingHeaderTitleContent(container, originalBrandingData) {
   if (originalBrandingData.title) {
     // Find the title text containers
-    const titleTextContainer = container.querySelector(`h1 ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}`);
+    const titleTextContainer = container.querySelector(
+      `h1 ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}`,
+    );
 
     if (!titleTextContainer) {
-      console.log(`${window.YoutubeAntiTranslate.LOG_PREFIX} No branding header title text containers found`);
-    }
-    else {
-      const cachedOldTitle = window.YoutubeAntiTranslate.getSessionCache(`pageTitle_${document.location.href}`)
+      console.log(
+        `${window.YoutubeAntiTranslate.LOG_PREFIX} No branding header title text containers found`,
+      );
+    } else {
+      const cachedOldTitle = window.YoutubeAntiTranslate.getSessionCache(
+        `pageTitle_${document.location.href}`,
+      );
 
       if (cachedOldTitle && document.title.includes(cachedOldTitle)) {
         // This is sometimes skipped on first update as youtube translate the document title late; so we use a cached oldTitle
 
         // document tile is sometimes not a perfect match to the oldTile due to spacing, so normalize all
-        const normalizedDocumentTitle = window.YoutubeAntiTranslate.normalizeSpaces(document.title);
-        const normalizedOldTitle = window.YoutubeAntiTranslate.normalizeSpaces(cachedOldTitle);
-        const normalizeRealTitle = window.YoutubeAntiTranslate.normalizeSpaces(originalBrandingData.title);
-        const realDocumentTitle = normalizedDocumentTitle.replace(normalizedOldTitle, normalizeRealTitle);
+        const normalizedDocumentTitle =
+          window.YoutubeAntiTranslate.normalizeSpaces(document.title);
+        const normalizedOldTitle =
+          window.YoutubeAntiTranslate.normalizeSpaces(cachedOldTitle);
+        const normalizeRealTitle = window.YoutubeAntiTranslate.normalizeSpaces(
+          originalBrandingData.title,
+        );
+        const realDocumentTitle = normalizedDocumentTitle.replace(
+          normalizedOldTitle,
+          normalizeRealTitle,
+        );
         if (normalizedDocumentTitle !== realDocumentTitle) {
           document.title = realDocumentTitle;
         }
       }
       if (titleTextContainer.textContent !== originalBrandingData.title) {
         // cache old title for future reference
-        window.YoutubeAntiTranslate.setSessionCache(`pageTitle_${document.location.href}`, titleTextContainer.textContent)
+        window.YoutubeAntiTranslate.setSessionCache(
+          `pageTitle_${document.location.href}`,
+          titleTextContainer.textContent,
+        );
 
-        window.YoutubeAntiTranslate.replaceTextOnly(titleTextContainer, originalBrandingData.title)
+        window.YoutubeAntiTranslate.replaceTextOnly(
+          titleTextContainer,
+          originalBrandingData.title,
+        );
       }
     }
   }
@@ -415,21 +479,39 @@ function updateBrandingHeaderTitleContent(container, originalBrandingData) {
  * @param {HTMLElement} container - The branding header container element
  * @param {JSON} originalBrandingData - The original branding title and description
  */
-function updateBrandingHeaderDescriptionContent(container, originalBrandingData) {
+function updateBrandingHeaderDescriptionContent(
+  container,
+  originalBrandingData,
+) {
   if (originalBrandingData.description) {
     // Find the description text container
-    const descriptionTextContainer = container.querySelector(`yt-description-preview-view-model .truncated-text-wiz__truncated-text-content > ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}:nth-child(1)`);
+    const descriptionTextContainer = container.querySelector(
+      `yt-description-preview-view-model .truncated-text-wiz__truncated-text-content > ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}:nth-child(1)`,
+    );
     if (!descriptionTextContainer) {
-      console.log(`${window.YoutubeAntiTranslate.LOG_PREFIX} No branding header description text containers found`);
-    }
-    else {
-      const truncatedDescription = originalBrandingData.truncatedDescription || originalBrandingData.description.split("\n")[0];
-      if (descriptionTextContainer.innerText?.trim() !== truncatedDescription?.trim()) {
-        const storeStyleDisplay = descriptionTextContainer.parentElement.style.display
-        descriptionTextContainer.parentElement.style.display = "none"
-        window.YoutubeAntiTranslate.replaceTextOnly(descriptionTextContainer, truncatedDescription)
+      console.log(
+        `${window.YoutubeAntiTranslate.LOG_PREFIX} No branding header description text containers found`,
+      );
+    } else {
+      const truncatedDescription =
+        originalBrandingData.truncatedDescription ||
+        originalBrandingData.description.split("\n")[0];
+      if (
+        descriptionTextContainer.innerText?.trim() !==
+        truncatedDescription?.trim()
+      ) {
+        const storeStyleDisplay =
+          descriptionTextContainer.parentElement.style.display;
+        descriptionTextContainer.parentElement.style.display = "none";
+        window.YoutubeAntiTranslate.replaceTextOnly(
+          descriptionTextContainer,
+          truncatedDescription,
+        );
         // Force reflow
-        setTimeout(() => { descriptionTextContainer.parentElement.style.display = storeStyleDisplay }, 50);
+        setTimeout(() => {
+          descriptionTextContainer.parentElement.style.display =
+            storeStyleDisplay;
+        }, 50);
       }
     }
   }
@@ -439,37 +521,57 @@ function updateBrandingHeaderDescriptionContent(container, originalBrandingData)
  * Processes the about and restores it to its original form
  */
 async function restoreOriginalBrandingAbout() {
-  if (window.YoutubeAntiTranslate.getFirstVisible(document.querySelectorAll(CHANNELBRANDING_ABOUT_SELECTOR))) {
+  if (
+    window.YoutubeAntiTranslate.getFirstVisible(
+      document.querySelectorAll(CHANNELBRANDING_ABOUT_SELECTOR),
+    )
+  ) {
     await chrome.storage.sync.get(
       {
-        youtubeDataApiKey: null
+        youtubeDataApiKey: null,
       },
       async (items) => {
         let originalBrandingData;
         if (items.youtubeDataApiKey && items.youtubeDataApiKey.trim !== "") {
-          originalBrandingData = await getChannelBrandingWithYoutubeDataAPI(items.youtubeDataApiKey)
+          originalBrandingData = await getChannelBrandingWithYoutubeDataAPI(
+            items.youtubeDataApiKey,
+          );
         }
         if (!originalBrandingData) {
-          // Fallback to YouTubeI+i18n if YoutubeDataAPI Key was not set OR if it failed 
+          // Fallback to YouTubeI+i18n if YoutubeDataAPI Key was not set OR if it failed
           originalBrandingData = await getChannelBrandingWithYoutubeI();
         }
 
         if (!originalBrandingData) {
-        }
-        else if (!originalBrandingData.title && !originalBrandingData.description) {
-        }
-        else {
-          const aboutContainer = window.YoutubeAntiTranslate.getAllVisibleNodes(document.querySelectorAll(CHANNELBRANDING_ABOUT_SELECTOR));
-          if (aboutContainer || titleTextContainer.length > 0) {
-            aboutContainer.forEach(element => {
-              updateBrandingAboutDescriptionContent(element, originalBrandingData);
+          window.YoutubeAntiTranslate.logWarning(
+            "No original branding data found",
+          );
+        } else if (
+          !originalBrandingData.title &&
+          !originalBrandingData.description
+        ) {
+          window.YoutubeAntiTranslate.logWarning(
+            "No original branding data found for title and description",
+          );
+        } else {
+          const aboutContainer = window.YoutubeAntiTranslate.getAllVisibleNodes(
+            document.querySelectorAll(CHANNELBRANDING_ABOUT_SELECTOR),
+          );
+          if (aboutContainer || aboutContainer.length > 0) {
+            aboutContainer.forEach((element) => {
+              updateBrandingAboutDescriptionContent(
+                element,
+                originalBrandingData,
+              );
               updateBrandingAboutTitleContent(element, originalBrandingData);
             });
           } else {
-            console.log(`${window.YoutubeAntiTranslate.LOG_PREFIX} Channel About container not found`);
+            console.log(
+              `${window.YoutubeAntiTranslate.LOG_PREFIX} Channel About container not found`,
+            );
           }
         }
-      }
+      },
     );
   }
 }
@@ -485,11 +587,15 @@ function updateBrandingAboutTitleContent(container, originalBrandingData) {
     const titleTextContainer = container.querySelector(`#title-text`);
 
     if (!titleTextContainer) {
-      console.log(`${window.YoutubeAntiTranslate.LOG_PREFIX} No branding about title text containers found`);
-    }
-    else {
+      console.log(
+        `${window.YoutubeAntiTranslate.LOG_PREFIX} No branding about title text containers found`,
+      );
+    } else {
       if (titleTextContainer.innerText !== originalBrandingData.title) {
-        window.YoutubeAntiTranslate.replaceTextOnly(titleTextContainer, originalBrandingData.title)
+        window.YoutubeAntiTranslate.replaceTextOnly(
+          titleTextContainer,
+          originalBrandingData.title,
+        );
       }
     }
   }
@@ -500,38 +606,57 @@ function updateBrandingAboutTitleContent(container, originalBrandingData) {
  * @param {HTMLElement} container - The about container element
  * @param {JSON} originalBrandingData - The original branding title and description
  */
-function updateBrandingAboutDescriptionContent(container, originalBrandingData) {
+function updateBrandingAboutDescriptionContent(
+  container,
+  originalBrandingData,
+) {
   if (originalBrandingData.description) {
     // Find the description text container
-    const descriptionTextContainer = container.querySelector(`#description-container > ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}:nth-child(1)`);
+    const descriptionTextContainer = container.querySelector(
+      `#description-container > ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}:nth-child(1)`,
+    );
 
     if (!descriptionTextContainer) {
-      console.log(`${window.YoutubeAntiTranslate.LOG_PREFIX} No branding about description text containers found`);
-    }
-    else {
+      console.log(
+        `${window.YoutubeAntiTranslate.LOG_PREFIX} No branding about description text containers found`,
+      );
+    } else {
       let formattedContent;
-      const originalTextFirstLine = originalBrandingData.truncatedDescription || originalBrandingData.description.split("\n")[0];
+      const originalTextFirstLine =
+        originalBrandingData.truncatedDescription ||
+        originalBrandingData.description.split("\n")[0];
       // Compare text first span>span against first line first to avaoid waisting resources on formatting content
       if (
-        descriptionTextContainer.hasChildNodes()
-        && descriptionTextContainer.firstChild.hasChildNodes()
-        && descriptionTextContainer.firstChild.firstChild.textContent?.trim() === originalTextFirstLine?.trim()
+        descriptionTextContainer.hasChildNodes() &&
+        descriptionTextContainer.firstChild.hasChildNodes() &&
+        descriptionTextContainer.firstChild.firstChild.textContent?.trim() ===
+          originalTextFirstLine?.trim()
       ) {
         // If identical create formatted content and compare with firstchild text content to determine if any change is needed
-        formattedContent = window.YoutubeAntiTranslate.createFormattedContent(originalBrandingData.description);
+        formattedContent = window.YoutubeAntiTranslate.createFormattedContent(
+          originalBrandingData.description,
+        );
         if (
-          descriptionTextContainer.hasChildNodes()
-          && descriptionTextContainer.firstChild.textContent !== formattedContent.textContent
+          descriptionTextContainer.hasChildNodes() &&
+          descriptionTextContainer.firstChild.textContent !==
+            formattedContent.textContent
         ) {
           // No changes are needed
-          window.YoutubeAntiTranslate.replaceContainerContent(descriptionTextContainer, formattedContent.cloneNode(true))
+          window.YoutubeAntiTranslate.replaceContainerContent(
+            descriptionTextContainer,
+            formattedContent.cloneNode(true),
+          );
         }
-      }
-      else {
+      } else {
         // First line was different so we can continue with untraslation
         // Create formatted content
-        formattedContent = window.YoutubeAntiTranslate.createFormattedContent(originalBrandingData.description);
-        window.YoutubeAntiTranslate.replaceContainerContent(descriptionTextContainer, formattedContent.cloneNode(true))
+        formattedContent = window.YoutubeAntiTranslate.createFormattedContent(
+          originalBrandingData.description,
+        );
+        window.YoutubeAntiTranslate.replaceContainerContent(
+          descriptionTextContainer,
+          formattedContent.cloneNode(true),
+        );
       }
     }
   }
@@ -547,10 +672,7 @@ async function untranslateBranding() {
     // await getChannelBranding(null, null);
 
     // Wait for all promises to resolve concurrently
-    await Promise.all([
-      brandingHeaderPromise,
-      brandingAboutPromise,
-    ]);
+    await Promise.all([brandingHeaderPromise, brandingAboutPromise]);
   }
   mutationBrandingIdx++;
 }
@@ -559,7 +681,7 @@ async function untranslateBranding() {
 chrome.storage.sync.get(
   {
     disabled: false,
-    untranslateChannelBranding: true
+    untranslateChannelBranding: true,
   },
   async (items) => {
     if (!items.disabled && items.untranslateChannelBranding) {
@@ -568,5 +690,5 @@ chrome.storage.sync.get(
       const brandingObserver = new MutationObserver(untranslateBranding);
       brandingObserver.observe(targetNode, observerConfig);
     }
-  }
+  },
 );

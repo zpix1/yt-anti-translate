@@ -5,19 +5,22 @@ document.addEventListener("DOMContentLoaded", () => {
   button.addEventListener("click", async () => {
     try {
       const granted = await chrome.permissions.request({
-        origins: ["*://*.youtube.com/*"]
+        origins: ["*://*.youtube.com/*"],
       });
 
       if (granted) {
-        status.textContent = "✅ Permission granted! You can close this page now 😊";
+        status.textContent =
+          "✅ Permission granted! You can close this page now 😊";
         status.className = "success";
       } else {
-        status.textContent = "❌ Permission denied. Please retry and select 'Allow' when prompted";
+        status.textContent =
+          "❌ Permission denied. Please retry and select 'Allow' when prompted";
         status.className = "error";
       }
     } catch (e) {
       console.error("Permission request error:", e);
-      status.textContent = "❌ Failed to request permission - An error occurred.";
+      status.textContent =
+        "❌ Failed to request permission - An error occurred.";
       status.className = "error";
     }
   });

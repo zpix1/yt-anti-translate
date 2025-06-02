@@ -11,5 +11,5 @@ chrome.storage.sync.get(
       globalPropertiesScript.src = chrome.runtime.getURL("src/global.js");
       document.body.appendChild(globalPropertiesScript);
     }
-  }
+  },
 );

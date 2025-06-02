@@ -1,12 +1,14 @@
 async function hasPermanentHostPermission(origin) {
   return new Promise((resolve, reject) => {
-    window.YoutubeAntiTranslate.getBrowserOrChrome().permissions.getAll((allPermissions) => {
-      if (chrome.runtime.lastError) {
-        reject(chrome.runtime.lastError);
-      } else {
-        resolve(allPermissions.origins?.includes(origin));
-      }
-    });
+    window.YoutubeAntiTranslate.getBrowserOrChrome().permissions.getAll(
+      (allPermissions) => {
+        if (chrome.runtime.lastError) {
+          reject(chrome.runtime.lastError);
+        } else {
+          resolve(allPermissions.origins?.includes(origin));
+        }
+      },
+    );
   });
 }
 
@@ -27,16 +29,17 @@ async function checkPermissions() {
 
 function requestPermissions() {
   chrome.tabs.create({
-    url: chrome.runtime.getURL("pages/permission.html")
+    url: chrome.runtime.getURL("pages/permission.html"),
   });
   window.close();
 }
 
-// --- Render footer ---
 function renderFooterLinks() {
   const footer = document.getElementById("footer-links");
 
-  if (!footer) return;
+  if (!footer) {
+    return;
+  }
 
   const commonLinks = `
     <a target="_blank" href="https://github.com/zpix1/yt-anti-translate">Report issues</a>
@@ -57,7 +60,6 @@ function renderFooterLinks() {
   }
 }
 
-// --- Handle options ---
 function saveOptions() {
   if (document.getElementById("reload-checkbox").checked) {
     chrome.tabs.reload();
@@ -69,10 +71,10 @@ function saveOptions() {
       untranslateAudio: true,
       untranslateDescription: true,
       untranslateChannelBranding: true,
-      youtubeDataApiKey: null
+      youtubeDataApiKey: null,
     },
     function (items) {
-      let disabled = !items.disabled;
+      const disabled = !items.disabled;
       chrome.storage.sync.set(
         {
           disabled: disabled,
@@ -89,9 +91,9 @@ function saveOptions() {
           document.getElementById("disable-button").className = disabled
             ? "disabled"
             : "enabled";
-        }
+        },
       );
-    }
+    },
   );
 }
 
@@ -103,7 +105,7 @@ function loadOptions() {
       untranslateAudio: true,
       untranslateDescription: true,
       untranslateChannelBranding: true,
-      youtubeDataApiKey: null
+      youtubeDataApiKey: null,
     },
     function (items) {
       document.getElementById("disable-button").innerText = items.disabled
@@ -125,9 +127,8 @@ function loadOptions() {
         items.untranslateDescription;
       document.getElementById("channel-branding-checkbox").checked =
         items.untranslateChannelBranding;
-      document.getElementById("api-key-input").value =
-        items.youtubeDataApiKey;
-    }
+      document.getElementById("api-key-input").value = items.youtubeDataApiKey;
+    },
   );
 }
 
@@ -135,8 +136,11 @@ function checkboxUpdate() {
   chrome.storage.sync.set({
     autoreloadOption: document.getElementById("reload-checkbox").checked,
     untranslateAudio: document.getElementById("audio-checkbox").checked,
-    untranslateDescription: document.getElementById("description-checkbox").checked,
-    untranslateChannelBranding: document.getElementById("channel-branding-checkbox").checked
+    untranslateDescription: document.getElementById("description-checkbox")
+      .checked,
+    untranslateChannelBranding: document.getElementById(
+      "channel-branding-checkbox",
+    ).checked,
   });
 }
 
@@ -145,25 +149,26 @@ function apiKeyUpdate() {
   const saveButton = document.getElementById("save-api-key-button");
   const saveButtonText = document.getElementById("save-api-key-text");
 
-  // Save API key
   chrome.storage.sync.get(
     {
-      youtubeDataApiKey: null
+      youtubeDataApiKey: null,
     },
     function (items) {
-      if (items.youtubeDataApiKey === newApiKey) return; // No change, no update needed
+      if (items.youtubeDataApiKey === newApiKey) {
+        return;
+      }
 
       chrome.storage.sync.set(
         {
-          youtubeDataApiKey: newApiKey
+          youtubeDataApiKey: newApiKey,
         },
         () => {
           console.log("API key saved");
-        }
+        },
       );
-    });
+    },
+  );
 
-  // Show feedback in the button
   const originalText = saveButtonText.textContent;
   saveButtonText.classList.add("saving");
   saveButtonText.textContent = "Saved!";
@@ -199,7 +204,6 @@ function addListeners() {
     .addEventListener("click", apiKeyUpdate);
 }
 
-// --- Init ---
 document.addEventListener("DOMContentLoaded", renderFooterLinks);
 document.addEventListener("DOMContentLoaded", checkPermissions);
 document.addEventListener("DOMContentLoaded", loadOptions);
