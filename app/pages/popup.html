@@ -1,139 +1,281 @@
 <!DOCTYPE html>
 <html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>YT Anti Translate Options</title>
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        overflow-y: auto;
+        height: auto;
+        font-family: Arial, sans-serif;
+        border-radius: 10px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>YT Anti Translate Options</title>
-  <style>
-    body {
-      margin: 0;
-      padding: 20px;
-      font-family: Arial, sans-serif;
-      border-radius: 10px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
+      .scroll-wrapper {
+        max-height: 600px;
+        overflow-y: scroll;
+        scrollbar-gutter: stable;
+      }
 
-    .container {
-      width: 220px;
-      height: fit-content;
-      text-align: center;
-    }
+      .container {
+        padding: 20px 15px 20px 20px;
+        width: 315px;
+        height: fit-content;
+        text-align: center;
+      }
 
-    .header {
-      font-size: 20px;
-      font-weight: bold;
-      margin-bottom: 15px;
-    }
+      .header {
+        font-size: 20px;
+        font-weight: bold;
+        margin-bottom: 15px;
+      }
 
-    .status {
-      margin: 10px auto;
-      width: 100px;
-      height: 100px;
-      line-height: 100px;
-      border-radius: 50%;
-      font-size: 22px;
-      color: #fff;
-    }
+      .status {
+        margin: 5px auto;
+        width: 100px;
+        height: 100px;
+        line-height: 100px;
+        border-radius: 50%;
+        font-size: 22px;
+        color: #fff;
+      }
 
-    .status.enabled {
-      background-color: #4caf50;
-    }
+      .status.enabled {
+        background-color: #4caf50;
+      }
 
-    .status.disabled {
-      background-color: #f44336;
-    }
+      .status.disabled {
+        background-color: #f44336;
+      }
 
-    button {
-      background-color: #008cba;
-      color: #fff;
-      border: none;
-      border-radius: 5px;
-      font-size: 16px;
-      padding: 10px 20px;
-      cursor: pointer;
-      margin-bottom: 15px;
-    }
+      button {
+        background-color: #008cba;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        font-size: 15px;
+        padding: 10px 20px;
+        cursor: pointer;
+        margin-bottom: 15px;
+      }
 
-    button:hover {
-      background-color: #007bb5;
-    }
+      button:hover {
+        background-color: #007bb5;
+      }
 
-    .options {
-      text-align: left;
-      margin-bottom: 15px;
-    }
+      .options {
+        text-align: left;
+        margin-bottom: 15px;
+      }
 
-    .option {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 5px 0;
-      font-size: 15px;
-    }
+      .option {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 5px 0;
+        font-size: 15px;
+      }
 
-    .footer {
-      font-size: 13px;
-      font-style: italic;
-    }
+      details#anti-translate-enhance-section a,
+      .footer {
+        font-size: 13px;
+        font-style: italic;
+      }
 
-    .footer a {
-      color: #008cba;
-      text-decoration: none;
-    }
+      details#anti-translate-enhance-section a,
+      .footer a {
+        color: #008cba;
+        text-decoration: none;
+      }
 
-    .footer a:hover {
-      text-decoration: underline;
-    }
-    
-    small {
-      font-size: 11px;
-      color: #666;
-    }
+      details#anti-translate-enhance-section a:hover,
+      .footer a:hover {
+        text-decoration: underline;
+      }
+      
+      small {
+        font-size: 11px;
+        color: #666;
+      }
 
-    @media (prefers-color-scheme: dark) {
+      #api-key-container {
+        display: block;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 5px;
+        margin-top: 0px;
+        margin-bottom: 0px !important;
+      }
+
+      #api-key-container label {
+        font-size: 14px;
+        margin-bottom: 2px;
+      }
+
+      #api-key-container input,
+      #api-key-container button {
+        width: 100%;
+        padding: 5px;
+        box-sizing: border-box;
+      }
+
+      .bordered-group {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 5px;
+        margin-top: 0px;
+        padding: 5px;
+        border: 1px solid black;
+        border-radius: 5px;
+      }
+
+      @media (prefers-color-scheme: dark) {
         body {
           background-color: #121212;
           color: #f0f0f0;
         }
+        details#anti-translate-enhance-section a,
         .footer a {
           color: #66d9ef;
         }
       }
-  </style>
-</head>
 
-<body>
-  <div class="container">
-    <div class="header">YT Anti Translate 1.17.0 <small>(Manifest V3)</small></div>
-    <div>
-      Status:
-      <div class="status enabled" id="status">Enabled</div>
-    </div>
-    <button id="disable-button">Disable</button>
-    <div class="options">
-      <div class="option">
-        <span>Untranslate audio track</span>
-        <input id="audio-checkbox" type="checkbox" checked />
-      </div>
-      <div class="option">
-        <span>Untranslate description</span>
-        <input id="description-checkbox" type="checkbox" checked />
-      </div>
-      <div class="option">
-        <span>Reload page automatically</span>
-        <input id="reload-checkbox" type="checkbox" checked />
-      </div>
-    </div>
-    <div class="footer">
-      <a target="_blank" href="https://chrome.google.com/webstore/detail/yt-anti-translate/ndpmhjnlfkgfalaieeneneenijondgag">Rate extension</a> • 
-      <a target="_blank" href="https://github.com/zpix1/yt-anti-translate">Report issues</a> • 
-      <a target="_blank" href="https://zpix1.github.io/donate/">Support development</a>
-    </div>
-    <script src="/src/options.js"></script>
-  </div>
-</body>
+      @keyframes fadeInOut {
+        0% { opacity: 0; }
+        20% { opacity: 1; }
+        80% { opacity: 1; }
+        100% { opacity: 0; }
+      }
+      #save-api-key-text.saving {
+        animation: fadeInOut 1.5s ease;
+      }
 
+      details#anti-translate-enhance-section {
+        display: block !important;
+        flex-direction: column;
+        background-color: #f5f5f5;
+        border-radius: 5px;
+        padding: 5px;
+        margin-top: 20px;
+        margin-bottom: 10px;
+        overflow: hidden;
+      }
+
+      details#anti-translate-enhance-section summary {
+        display: block !important;
+        width: auto;
+        background-color: #008cba;
+        color: #fff;
+        padding: 6px 10px;
+        border-radius: 5px;
+        cursor: pointer;
+        user-select: none;
+        font-size: 15px;
+        margin-bottom: 8px;
+      }
+
+      details#anti-translate-enhance-section[open] summary {
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0; 
+        margin-bottom: 0;
+      }
+
+      details#anti-translate-enhance-section summary:hover {
+        background-color: #007bb5;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        details#anti-translate-enhance-section {
+          background-color: #1e1e1e;
+        }
+      }
+
+      details#anti-translate-enhance-section > #api-key-container,
+      details#anti-translate-enhance-section > #additional-features {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 6px;
+      }
+
+      /* === Slim Scrollbar for Chrome, Edge, Safari === */
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background-color: rgba(0, 140, 186, 0.6);
+        border-radius: 3px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      /* === Slim Scrollbar for Firefox === */
+      * {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(0, 140, 186, 0.6) transparent;
+      }
+    </style>
+  </head>
+
+  <body id="yt-anti-translate">
+    <div class="scroll-wrapper">
+      <div class="container">
+        <div class="header">YT Anti Translate 1.18.2<br><small>(Manifest V3)</small></div>
+        <div id="permission-warning" style="display: none; margin-top: 15px;">
+          <div class="small" style="color: red;">
+            <p><strong>Permission to access YouTube is not granted.</strong></p>
+            <p>This extension needs access to <code>*.youtube.com/*</code> to function properly.</p>
+          </div>
+          <button id="request-permission-button">Grant Permission</button>
+        </div>
+        <div>
+          Status:
+          <div class="status enabled" id="status">Enabled</div>
+        </div>
+        <button id="disable-button">Disable</button>
+        <div class="options">
+          <div class="option">
+            <span>Untranslate audio track</span>
+            <input id="audio-checkbox" type="checkbox" checked />
+          </div>
+          <div class="option">
+            <span>Untranslate description</span>
+            <input id="description-checkbox" type="checkbox" checked />
+          </div>
+          <div class="option">
+            <span>Untranslate channel branding</span>
+            <input id="channel-branding-checkbox" type="checkbox" />
+          </div>
+          <div class="option">
+            <span>Reload page automatically</span>
+            <input id="reload-checkbox" type="checkbox" checked />
+          </div>
+          <details id="anti-translate-enhance-section" class="option" style="margin-bottom: 10px;">
+            <summary><strong>Enhance <i>YT Anti Translate</i></strong></summary>
+            <div id="api-key-container">
+              <div>
+                <p><a target="_blank" href="https://github.com/zpix1/yt-anti-translate/blob/main/YOUTUBE_DATA_API_KEY.md">Some features <b>work better</b> with a YouTube Data API Key</a></p>
+              </div>
+              <input id="api-key-input" type="password" placeholder="Enter API key" />
+              <button id="save-api-key-button"><span id="save-api-key-text">Save API Key</span></button>
+            </div>
+            <!--TODO: Add `Performance Preference` slider that sets VIEWPORT_EXTENSION_PERCENTAGE_FRACTION-->
+          </details>
+        </div>
+        <div class="footer" id="footer-links"></div>
+        <script src="/src/global.js"></script>
+        <script src="/src/options.js"></script>
+      </div>
+    </div>
+  </body>
 </html>

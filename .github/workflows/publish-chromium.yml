@@ -5,11 +5,14 @@ on:
     tags:
       - v*.*.*
       - cifix*
+  repository_dispatch:
+    types: [trigger-chromium-extension-publish]
 
 jobs:
   build-chrome-extension:
     name: Build Chrome extension artifact
     runs-on: ubuntu-latest
+    if: github.repository_owner == 'zpix1'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -25,9 +28,11 @@ jobs:
         with:
           name: chrome-extension
           path: chrome-extension.zip
+
   upload-extension:
     name: Upload extension
     runs-on: ubuntu-latest
+    if: github.repository_owner == 'zpix1'
     needs: build-chrome-extension
     env:
       # you can optionally specify extension ID here, we do this so that

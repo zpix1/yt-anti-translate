@@ -1,0 +1,107 @@
+name: Update Firefox Extension
+
+on:
+  push:
+    tags:
+      - v*.*.*
+      - cifix*
+      - unlisted_v*.*.*
+  repository_dispatch:
+    types: [trigger-firefox-extension-publish]
+
+jobs:
+  build-firefox-extension:
+    name: Build Firefox extension artifact
+    runs-on: ubuntu-latest
+    if: github.repository_owner == 'namakeingo' || github.repository_owner == 'zpix1'
+    outputs:
+      tag: ${{ steps.get_version.outputs.tag }}
+      version: ${{ steps.get_version.outputs.version }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Ensures full git history
+          fetch-tags: true # Ensures tags are fetched
+
+      - name: Build
+        env:
+          FIREFOX_name: "YouTube Anti Translate - mv3"
+          FIREFOX_author: "zpix1; ported by namakeingo"
+          FIREFOX_gecko_id: "youtube-anti-translate-mv3@namakeingo.co.uk"
+          FIREFOX_gecko_strict_min_version: "109.0"
+        run: |-
+          cp -r app dist
+          # Modify manifest.json using jq
+          jq --arg name "$FIREFOX_name" --arg author "$FIREFOX_author" \
+            '.name = $name | .author = $author' \
+            dist/manifest.json > dist/manifest.tmp.json && mv dist/manifest.tmp.json dist/manifest.json
+          # we archive the dist folder and include SHA commit as the last step
+          zip -r firefox-extension.zip dist
+
+      - name: Get version from manifest.json
+        id: get_version
+        run: |
+          VERSION=$(jq -r .version app/manifest.json)
+          echo "version=$VERSION" >> $GITHUB_ENV
+          echo "tag=v$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Archive firefox-extension artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: firefox-extension
+          path: firefox-extension.zip
+
+  upload-extension:
+    name: Upload extension
+    runs-on: ubuntu-latest
+    if: github.repository_owner == 'namakeingo' || github.repository_owner == 'zpix1'
+    needs: build-firefox-extension
+
+    steps:
+      - uses: actions/setup-node@v2-beta
+        with:
+          node-version: "18"
+
+      - name: Download bundle artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: firefox-extension
+
+      - name: Install web-ext cli
+        run: |-
+          npm install --global web-ext
+          ls
+
+      - name: Determine channel
+        id: determine-channel
+        run: |-
+          if [[ "${GITHUB_REF##*/}" == unlisted_v* ]]; then
+            echo "channel=unlisted" >> "$GITHUB_OUTPUT"
+          else
+            echo "channel=listed" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Sign and upload step
+        run: |-
+          unzip firefox-extension.zip -d .
+          cd dist
+          web-ext sign --channel=${{ steps.determine-channel.outputs.channel }} --api-key="${{ secrets.AMO_JWT_ISSUER }}" --api-secret="${{ secrets.AMO_JWT_SECRET }}"
+
+      - name: Archive signed Firefox extension
+        uses: actions/upload-artifact@v4
+        with:
+          name: youtube_anti_translate_mv3-signed.xpi
+          path: dist/web-ext-artifacts/youtube_anti_translate_mv3-*.xpi
+
+      - name: Update and Publish GitHub Release
+        uses: ncipollo/release-action@v1
+        with:
+          allowUpdates: true
+          updateOnlyUnreleased: true
+          tag: ${{ needs.build-firefox-extension.outputs.tag }}
+          name: ${{ needs.build-firefox-extension.outputs.version }}
+          omitBodyDuringUpdate: true
+          draft: false
+          artifacts: dist/web-ext-artifacts/youtube_anti_translate_mv3-*.xpi

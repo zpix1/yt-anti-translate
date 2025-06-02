@@ -1,5 +1,4 @@
-// To run in page environment
-
+// Load scripts that will run in page environment
 chrome.storage.sync.get(
   {
     disabled: false,
@@ -25,7 +24,7 @@ chrome.storage.sync.get(
       if (items.untranslateDescription) {
         const descriptionScript = document.createElement("script");
         descriptionScript.type = "module";
-        descriptionScript.src = chrome.runtime.getURL("src/description.js");
+        descriptionScript.src = chrome.runtime.getURL("src/background_description.js");
         document.body.appendChild(descriptionScript);
       }
     }

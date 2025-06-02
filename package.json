@@ -1,7 +1,7 @@
 {
   "name": "yt-anti-translate",
   "version": "1.0.0",
-  "description": "Source code of [YouTube Anti Translate](https://chrome.google.com/webstore/detail/yt-anti-translate/ndpmhjnlfkgfalaieeneneenijondgag).",
+  "description": "Source code of [Chromium - YouTube Anti Translate](https://chrome.google.com/webstore/detail/yt-anti-translate/ndpmhjnlfkgfalaieeneneenijondgag) and [Firfox - YouTube Anti Translate - mv3](https://addons.mozilla.org/firefox/addon/youtube-anti-translate-mv3/).",
   "main": "index.js",
   "scripts": {
     "test": "playwright test",
@@ -22,6 +22,12 @@
   "homepage": "https://github.com/zpix1/yt-anti-translate#readme",
   "devDependencies": {
     "@playwright/test": "^1.51.0",
-    "@types/node": "^22.13.9"
+    "@types/node": "^22.13.9",
+    "crx-util": "^1.0.0",
+    "dotenv": "^16.5.0",
+    "otpauth": "^9.4.0",
+    "playwright-webextext": "^0.0.4",
+    "tslib": "^2.8.1",
+    "unzipper": "^0.12.3"
   }
 }
