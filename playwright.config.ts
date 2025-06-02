@@ -19,11 +19,11 @@ export default defineConfig<TestOptions>({
   timeout: 960_000,
   testDir: "./tests",
   /* Run tests in files in parallel */
-  fullyParallel: false,
+  fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
   /* Retry 3 times on CI, or once locally */
-  retries: process.env.CI ? 1 : 1,
+  retries: process.env.CI ? 3 : 1,
   /* Limit parallel workers on CI as they cause random failures some of the times */
   workers: process.env.CI ? 2 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
@@ -43,8 +43,8 @@ export default defineConfig<TestOptions>({
       name: "setup-auth-and-ublock",
       testMatch: /.*setup\.spec\.ts/,
       use: {
-        allBrowserNameWithExtensions: ["chromium"],
-        allLocaleStrings: ["ru-RU"],
+        allBrowserNameWithExtensions: ["chromium", "firefox"],
+        allLocaleStrings: ["ru-RU", "th-TH"],
       },
     },
     {
@@ -80,38 +80,38 @@ export default defineConfig<TestOptions>({
       },
       dependencies: ["setup-auth-and-ublock"],
     },
-    // {
-    //   name: "chromium-extension-extra-th-TH",
-    //   testMatch: /.*extension\.extra\.spec\.ts/,
-    //   use: {
-    //     browserNameWithExtensions: "chromium",
-    //     localeString: "th-TH",
-    //     ...devices["Desktop Chrome"],
-    //     contextOptions: {
-    //       // Load the extension from the app directory
-    //       permissions: ["clipboard-read", "clipboard-write"],
-    //     },
-    //     launchOptions: {
-    //       args: ["--headless=new"],
-    //     },
-    //     locale: "th-TH",
-    //   },
-    //   dependencies: ["setup-auth-and-ublock"],
-    // },
-    // {
-    //   name: "firefox-extension-extra-th-TH",
-    //   testMatch: /.*extension\.extra\.spec\.ts/,
-    //   use: {
-    //     browserNameWithExtensions: "firefox",
-    //     localeString: "th-TH",
-    //     ...devices["Desktop Firefox"],
-    //     contextOptions: {},
-    //     launchOptions: {
-    //       args: ["--headless=new"],
-    //     },
-    //     locale: "th-TH",
-    //   },
-    //   dependencies: ["setup-auth-and-ublock"],
-    // },
+    {
+      name: "chromium-extension-extra-th-TH",
+      testMatch: /.*extension\.extra\.spec\.ts/,
+      use: {
+        browserNameWithExtensions: "chromium",
+        localeString: "th-TH",
+        ...devices["Desktop Chrome"],
+        contextOptions: {
+          // Load the extension from the app directory
+          permissions: ["clipboard-read", "clipboard-write"],
+        },
+        launchOptions: {
+          args: ["--headless=new"],
+        },
+        locale: "th-TH",
+      },
+      dependencies: ["setup-auth-and-ublock"],
+    },
+    {
+      name: "firefox-extension-extra-th-TH",
+      testMatch: /.*extension\.extra\.spec\.ts/,
+      use: {
+        browserNameWithExtensions: "firefox",
+        localeString: "th-TH",
+        ...devices["Desktop Firefox"],
+        contextOptions: {},
+        launchOptions: {
+          args: ["--headless=new"],
+        },
+        locale: "th-TH",
+      },
+      dependencies: ["setup-auth-and-ublock"],
+    },
   ],
 });
