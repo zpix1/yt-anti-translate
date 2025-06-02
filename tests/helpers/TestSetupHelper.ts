@@ -26,6 +26,7 @@ export async function handleRetrySetup(
   localeString: string,
 ) {
   if (testInfo.retry > 0) {
+    console.log("retrying test", testInfo.title, "doing setup again");
     // If this test is retrying then check uBlock and Auth again
     expect(
       await setupUBlockAndAuth([browserNameWithExtensions], [localeString]),
