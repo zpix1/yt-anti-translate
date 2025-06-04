@@ -276,7 +276,9 @@ async function createOrUpdateUntranslatedFakeNode(
       return;
     }
 
-    const getUrlForElement = getUrl(translatedElement ?? fakeNode);
+    const getUrlForElement = window.YoutubeAntiTranslate.stripNonEssentialParams(
+      getUrl(translatedElement ?? fakeNode)
+    );
     const response = await get(
       "https://www.youtube.com/oembed?url=" + getUrlForElement,
     );
@@ -398,7 +400,9 @@ async function untranslateOtherVideos(intersectElements = null) {
         }
       }
 
-      const videoHref = linkElement.href; // Use the link's href for oEmbed and as the key
+      // Use the link's href for oEmbed and as the key
+      // These afaik always conform to "/watch?v=id", and don't have any extra parameters, but just to be safe
+      const videoHref = window.YoutubeAntiTranslate.stripNonEssentialParams(linkElement.href);
 
       try {
         // console.debug(`Fetching oEmbed for video:`, videoHref);

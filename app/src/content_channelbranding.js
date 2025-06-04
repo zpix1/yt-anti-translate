@@ -49,6 +49,7 @@ async function detectChannelOriginalLanguage() {
       href = `https://www.youtube.com/shorts/${match[1]}`;
     }
 
+    href = window.YoutubeAntiTranslate.stripNonEssentialParams(href);
     const oembedUrl = `https://www.youtube.com/oembed?url=${href}`;
 
     let titleFromEmbed;
