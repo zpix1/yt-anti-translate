@@ -3,6 +3,12 @@ const CHANNELBRANDING_HEADER_SELECTOR =
 const CHANNELBRANDING_ABOUT_SELECTOR =
   "ytd-engagement-panel-section-list-renderer";
 const CHANNELBRANDING_MUTATION_UPDATE_FREQUENCY = 1;
+const CHANNEL_LOCATION_REGEXES = [
+  /:\/\/(?:www\.)?youtube\.com\/channel\//,
+  /:\/\/(?:www\.)?youtube\.com\/c\//,
+  /:\/\/(?:www\.)?youtube\.com\/@/,
+  /:\/\/(?:www\.)?youtube\.com\/user\//,
+];
 
 /**
  * Use channel videos or shorts original titles to determine the original locale with i18n.detectLanguage()
@@ -676,11 +682,18 @@ function updateBrandingAboutDescriptionContent(
 let mutationBrandingIdx = 0;
 async function untranslateBranding() {
   if (mutationBrandingIdx % CHANNELBRANDING_MUTATION_UPDATE_FREQUENCY === 0) {
-    const brandingHeaderPromise = restoreOriginalBrandingHeader();
-    const brandingAboutPromise = restoreOriginalBrandingAbout();
+    const url = document.location.href;
+    const isChannelPage = CHANNEL_LOCATION_REGEXES.some((regex) =>
+      regex.test(url),
+    );
 
-    // Wait for all promises to resolve concurrently
-    await Promise.all([brandingHeaderPromise, brandingAboutPromise]);
+    if (isChannelPage) {
+      const brandingHeaderPromise = restoreOriginalBrandingHeader();
+      const brandingAboutPromise = restoreOriginalBrandingAbout();
+
+      // Wait for all promises to resolve concurrently
+      await Promise.all([brandingHeaderPromise, brandingAboutPromise]);
+    }
   }
   mutationBrandingIdx++;
 }

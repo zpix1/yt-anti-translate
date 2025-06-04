@@ -31,11 +31,6 @@
       ]
     }
   ],
-  "externally_connectable": {
-    "matches": [
-      "*://*.youtube.com/*"
-    ]
-  },
   "web_accessible_resources": [
     {
       "resources": [
