@@ -150,6 +150,7 @@ async function untranslateCurrentShortVideo() {
   }
 }
 
+//Changes main short title on "/shorts/shortid" pages
 async function untranslateCurrentShortVideoLinks() {
   const fakeNodeID = "yt-anti-translate-fake-node-current-short-video-links";
   const originalNodeSelector = `.ytReelMultiFormatLinkViewModelEndpoint span${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}>span:not(#${fakeNodeID})`;
@@ -163,6 +164,7 @@ async function untranslateCurrentShortVideoLinks() {
   );
 }
 
+//Changes main video title on "/watch?v=videoid" pages
 async function untranslateCurrentVideo() {
   const fakeNodeID = "yt-anti-translate-fake-node-current-video";
   const originalNodeSelector = `#title > h1 > yt-formatted-string:not(#${fakeNodeID})`;
@@ -176,6 +178,8 @@ async function untranslateCurrentVideo() {
   );
 }
 
+//For channel ("/@MrBeast") pages, for the pinned video's title **in** the video player
+//See "docs/Figure 2.png"
 async function untranslateCurrentVideoHeadLink() {
   const fakeNodeID = "yt-anti-translate-fake-node-video-head-link";
   const originalNodeSelector = `${window.YoutubeAntiTranslate.getPlayerSelector()} a.ytp-title-link:not(#${fakeNodeID})`;
@@ -213,6 +217,8 @@ async function untranslateCurrentVideoFullScreenEdu() {
   );
 }
 
+//For channel ("/@MrBeast") pages, for the pinned video's title **under** the video player
+//See "docs/Figure 1.png"
 async function untranslateCurrentChannelEmbededVideoTitle() {
   const fakeNodeID = "yt-anti-translate-fake-node-channel-embeded-title";
   const originalNodeSelector = `div.ytd-channel-video-player-renderer #metadata-container.ytd-channel-video-player-renderer a:not(#${fakeNodeID})`;
