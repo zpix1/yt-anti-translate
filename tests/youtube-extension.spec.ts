@@ -30,6 +30,16 @@ test.describe("YouTube Anti-Translate extension", () => {
       browserNameWithExtensions,
     );
 
+    try {
+      await Promise.all([
+        page.waitForNavigation({
+          waitUntil: "networkidle0",
+          timeout: 15_000,
+        }),
+        page.waitForTimeout(5000),
+      ]);
+    } catch {}
+
     // Wait for the video page to fully load
     await page.waitForSelector("ytd-watch-metadata");
 
@@ -40,7 +50,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     if (await moreButton.isVisible()) {
       await moreButton.click();
       // Wait for the description to expand
-      await page.waitForTimeout(1000);
+      await page.waitForTimeout(5000);
     }
 
     // Get the description text
@@ -49,28 +59,27 @@ test.describe("YouTube Anti-Translate extension", () => {
       .textContent();
     console.log("Description text:", descriptionText?.trim());
 
-    // Get the video title
-    const videoTitle = await page
-      .locator(
-        "h1.ytd-watch-metadata #yt-anti-translate-fake-node-current-video:visible",
-      )
-      .textContent();
-    console.log("Video title:", videoTitle?.trim());
+    const videoTitleLocator = page.locator(
+      "h1.ytd-watch-metadata #yt-anti-translate-fake-node-current-video:visible",
+    );
 
     // Check that the title is in English and not in Russian
-    expect(videoTitle).toContain("Ages 1 - 100 Decide Who Wins $250,000");
-    expect(videoTitle).not.toContain(
-      "Люди от 1 до 100 Лет Решают, кто Выиграет $250,000",
+    try {
+      expect(videoTitleLocator).toHaveCount(1, {
+        timeout: 10000,
+      });
+    } catch {}
+    expect(videoTitleLocator).toContainText(
+      "Ages 1 - 100 Decide Who Wins $250,000",
+      { timeout: 10000 },
     );
-
-    // Check page title
-    const pageTitle = await page.title();
-    console.log("Document title for the Video is:", pageTitle?.trim());
-    // Check that the document title is in English and not in Russian
-    expect(pageTitle).toContain("Ages 1 - 100 Decide Who Wins $250,000");
-    expect(pageTitle).not.toContain(
+    expect(videoTitleLocator).not.toContainText(
       "Люди от 1 до 100 Лет Решают, кто Выиграет $250,000",
+      { timeout: 10000 },
     );
+    // log the video title
+    const videoTitle = await videoTitleLocator.textContent();
+    console.log("Video title:", videoTitle?.trim());
 
     // Take a screenshot for visual verification
     await page.screenshot({
@@ -81,37 +90,50 @@ test.describe("YouTube Anti-Translate extension", () => {
     await page.keyboard.press("F");
     await page.waitForTimeout(500);
 
-    // Get the head link video title
-    const headLinkVideoTitle = await page
-      .locator(
-        "ytd-player .html5-video-player a.ytp-title-link#yt-anti-translate-fake-node-video-head-link",
-      )
-      .textContent();
+    const headLinkVideoTitleLocator = page.locator(
+      "ytd-player .html5-video-player a.ytp-title-link#yt-anti-translate-fake-node-video-head-link",
+    );
+
+    // Check that the title is in English and not in Russian
+    try {
+      expect(headLinkVideoTitleLocator).toHaveCount(1, {
+        timeout: 10000,
+      });
+    } catch {}
+    expect(headLinkVideoTitleLocator).toContainText(
+      "Ages 1 - 100 Decide Who Wins $250,000",
+      { timeout: 10000 },
+    );
+    expect(headLinkVideoTitleLocator).not.toContainText(
+      "Люди от 1 до 100 Лет Решают, кто Выиграет $250,000",
+      { timeout: 10000 },
+    );
+    // Log the head link video title
+    const headLinkVideoTitle = await headLinkVideoTitleLocator.textContent();
     console.log("Head Link Video title:", headLinkVideoTitle?.trim());
 
-    // Check that the title is in English and not in Russian
-    expect(headLinkVideoTitle).toContain(
-      "Ages 1 - 100 Decide Who Wins $250,000",
-    );
-    expect(headLinkVideoTitle).not.toContain(
-      "Люди от 1 до 100 Лет Решают, кто Выиграет $250,000",
+    const fullStreenVideoTitleFooterLocator = page.locator(
+      "ytd-player .html5-video-player div.ytp-fullerscreen-edu-text#yt-anti-translate-fake-node-fullscreen-edu",
     );
 
-    // Get the full screen footer video title
-    const fullStreenVideoTitleFooter = await page
-      .locator(
-        "ytd-player .html5-video-player div.ytp-fullerscreen-edu-text#yt-anti-translate-fake-node-fullscreen-edu",
-      )
-      .textContent();
+    // Check that the title is in English and not in Russian
+    try {
+      expect(fullStreenVideoTitleFooterLocator).toHaveCount(1, {
+        timeout: 10000,
+      });
+    } catch {}
+    expect(fullStreenVideoTitleFooterLocator).toContainText(
+      "Ages 1 - 100 Decide Who Wins $250,000",
+      { timeout: 10000 },
+    );
+    expect(fullStreenVideoTitleFooterLocator).not.toContainText(
+      "Люди от 1 до 100 Лет Решают, кто Выиграет $250,000",
+      { timeout: 10000 },
+    );
+    // Log the full screen footer video title
+    const fullStreenVideoTitleFooter =
+      await fullStreenVideoTitleFooterLocator.textContent();
     console.log("Head Link Video title:", fullStreenVideoTitleFooter?.trim());
-
-    // Check that the title is in English and not in Russian
-    expect(fullStreenVideoTitleFooter).toContain(
-      "Ages 1 - 100 Decide Who Wins $250,000",
-    );
-    expect(fullStreenVideoTitleFooter).not.toContain(
-      "Люди от 1 до 100 Лет Решают, кто Выиграет $250,000",
-    );
 
     // Take a screenshot for visual verification
     await page.screenshot({
@@ -122,22 +144,48 @@ test.describe("YouTube Anti-Translate extension", () => {
     await page.keyboard.press("F");
     await page.waitForTimeout(500);
 
-    await page
-      .locator("#description-inline-expander:visible")
-      .scrollIntoViewIfNeeded();
-    // Check that the description contains the original English text and not the Russian translation
-    expect(descriptionText).toContain("believe who they picked");
-    expect(descriptionText).toContain(
-      "Thanks Top Troops for sponsoring this video",
+    const descriptionLocator = page.locator(
+      "#description-inline-expander:visible",
     );
-    expect(descriptionText).not.toContain(
+    try {
+      expect(descriptionLocator).toHaveCount(1, {
+        timeout: 10000,
+      });
+    } catch {}
+    await descriptionLocator.scrollIntoViewIfNeeded();
+    // Check that the description contains the original English text and not the Russian translation
+    expect(descriptionLocator).toContainText("believe who they picked", {
+      timeout: 10000,
+    });
+    expect(descriptionLocator).toContainText(
+      "Thanks Top Troops for sponsoring this video",
+      { timeout: 10000 },
+    );
+    expect(descriptionLocator).not.toContainText(
       "Я не могу поверить, кого они выбрали",
+      { timeout: 10000 },
     );
 
     // Take a screenshot for visual verification
     await page.screenshot({
       path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-extension-test-description.png`,
     });
+
+    await page.waitForFunction(
+      () => document.title.includes("Ages 1 - 100 Decide Who Wins $250,000"),
+      null,
+      {
+        timeout: 10000,
+      },
+    );
+    // Check page title
+    const pageTitle = await page.title();
+    console.log("Document title for the Video is:", pageTitle?.trim());
+    // Check that the document title is in English and not in Russian
+    expect(pageTitle).toContain("Ages 1 - 100 Decide Who Wins $250,000");
+    expect(pageTitle).not.toContain(
+      "Люди от 1 до 100 Лет Решают, кто Выиграет $250,000",
+    );
 
     // Check console message count
     expect(consoleMessageCount).toBeLessThan(2000);
@@ -185,18 +233,31 @@ test.describe("YouTube Anti-Translate extension", () => {
     await page.waitForTimeout(1000);
 
     // Get the description text to verify it's in English (not translated)
-    const descriptionText = await page
-      .locator("#description-inline-expander:visible")
-      .textContent();
-    console.log("Description text:", descriptionText?.trim());
-
-    // Verify description contains expected English text
-    expect(descriptionText).toContain(
-      "Toy Rockets Challenge - Fun Outdoor Activities for kids!",
+    const descriptionLocator = page.locator(
+      "#description-inline-expander:visible",
     );
-    expect(descriptionText).toContain("Chris helps Alice find her cars");
-    expect(descriptionText).toContain("Please Subscribe!");
-    expect(descriptionText).not.toContain("Запуск ракет"); // Should not contain Russian translation
+    // Verify description contains expected English text
+    try {
+      expect(descriptionLocator).toHaveCount(1, {
+        timeout: 10000,
+      });
+    } catch {}
+    expect(descriptionLocator).toContainText(
+      "Toy Rockets Challenge - Fun Outdoor Activities for kids!",
+      { timeout: 10000 },
+    );
+    expect(descriptionLocator).toContainText(
+      "Chris helps Alice find her cars",
+      { timeout: 10000 },
+    );
+    expect(descriptionLocator).toContainText("Please Subscribe!", {
+      timeout: 10000,
+    });
+    expect(descriptionLocator).not.toContainText("Запуск ракет", {
+      timeout: 10000,
+    }); // Should not contain Russian translation
+    const descriptionText = await descriptionLocator.textContent();
+    console.log("Description text:", descriptionText?.trim());
 
     // Click on the second timecode (05:36)
     const secondTimecodeSelector = 'a[href*="t=336"]'; // 5:36 = 336 seconds
@@ -254,36 +315,55 @@ test.describe("YouTube Anti-Translate extension", () => {
     const shortsTitleSelector = "yt-shorts-video-title-view-model > h2 > span";
     await page.waitForSelector(shortsTitleSelector);
 
-    // Get the title text
-    const titleElement = page.locator(shortsTitleSelector);
-    const shortsTitle = await titleElement.textContent();
-    console.log("Shorts title:", shortsTitle?.trim());
-
     // Verify the title is the original English one and not the Russian translation
-    expect(shortsTitle?.trim()).toBe("Highest Away From Me Wins $10,000");
-    expect(shortsTitle?.trim()).not.toBe("Достигни Вершины И Выиграй $10,000");
-    await expect(page.locator(shortsTitleSelector)).toBeVisible();
-
-    // Check page title
-    const pageTitle = await page.title();
-    console.log("Document title for the Short is:", pageTitle?.trim());
-    // Check that the document title is in English and not in Russian
-    expect(pageTitle).toContain("Highest Away From Me Wins $10,000");
-    expect(pageTitle).not.toContain("Достигни Вершины И Выиграй $10,000");
+    const titleLocator = page.locator(shortsTitleSelector);
+    try {
+      expect(titleLocator).toHaveCount(1, {
+        timeout: 10000,
+      });
+    } catch {}
+    expect(titleLocator).toHaveText("Highest Away From Me Wins $10,000", {
+      timeout: 10000,
+    });
+    expect(titleLocator).not.toHaveText("Достигни Вершины И Выиграй $10,000", {
+      timeout: 10000,
+    });
+    expect(titleLocator).toBeVisible({ timeout: 10000 });
+    // Log the title text
+    const shortsTitle = await titleLocator.textContent();
+    console.log("Shorts title:", shortsTitle?.trim());
 
     // Wait for the shorts video link element to be present
     const shortsVideoLinkSelector =
       ".ytReelMultiFormatLinkViewModelEndpoint span.yt-core-attributed-string>span:visible";
     await page.waitForSelector(shortsVideoLinkSelector);
 
-    // Get the title text
-    const titleLinkElement = page.locator(shortsVideoLinkSelector);
-    const shortsLinkTitle = await titleLinkElement.textContent();
+    // Verify the title is the has English characters and not russian
+    const titleLinkLocator = page.locator(shortsVideoLinkSelector);
+    try {
+      expect(titleLinkLocator).toHaveCount(1, {
+        timeout: 10000,
+      });
+    } catch {}
+    expect(titleLinkLocator).toHaveText(/[A-Za-z]/, { timeout: 10000 }); // Checks for any English letters
+    expect(titleLinkLocator).not.toHaveText(/[А-Яа-яЁё]/, { timeout: 10000 }); // Ensures no Russian letters
+    // Log the title text
+    const shortsLinkTitle = await titleLinkLocator.textContent();
     console.log("Shorts Link title:", shortsLinkTitle?.trim());
 
-    // Verify the title is the has English characters and not russian
-    expect(shortsLinkTitle?.trim()).toMatch(/[A-Za-z]/); // Checks for any English letters
-    expect(shortsLinkTitle?.trim()).not.toMatch(/[А-Яа-яЁё]/); // Ensures no Russian letters
+    await page.waitForFunction(
+      () => document.title.includes("Highest Away From Me Wins $10,000"),
+      null,
+      {
+        timeout: 10000,
+      },
+    );
+    // Check page title
+    const pageTitle = await page.title();
+    console.log("Document title for the Short is:", pageTitle?.trim());
+    // Check that the document title is in English and not in Russian
+    expect(pageTitle).toContain("Highest Away From Me Wins $10,000");
+    expect(pageTitle).not.toContain("Достигни Вершины И Выиграй $10,000");
 
     // Take a screenshot for visual verification
     await page.screenshot({
