@@ -219,8 +219,8 @@ async function untranslateCurrentVideoFullScreenEdu() {
 
 //For channel ("/@MrBeast") pages, for the pinned video's title **under** the video player
 //See "docs/Figure 1.png"
-async function untranslateCurrentChannelEmbededVideoTitle() {
-  const fakeNodeID = "yt-anti-translate-fake-node-channel-embeded-title";
+async function untranslateCurrentChannelEmbeddedVideoTitle() {
+  const fakeNodeID = "yt-anti-translate-fake-node-channel-embedded-title";
   const originalNodeSelector = `div.ytd-channel-video-player-renderer #metadata-container.ytd-channel-video-player-renderer a:not(#${fakeNodeID})`;
 
   await createOrUpdateUntranslatedFakeNode(
@@ -565,8 +565,8 @@ async function untranslate() {
     const currentVideoFullScreenLinkPromise = untranslateCurrentVideoHeadLink();
     const currentVideoFullScreenEduPromise =
       untranslateCurrentVideoFullScreenEdu();
-    const channelEmbededVideoPromise =
-      untranslateCurrentChannelEmbededVideoTitle();
+    const channelEmbeddedVideoPromise =
+      untranslateCurrentChannelEmbeddedVideoTitle();
     const otherVideosPromise = untranslateOtherVideos();
     const currentShortPromise = untranslateCurrentShortVideo();
     const currentShortVideoLinksPromise = untranslateCurrentShortVideoLinks();
@@ -577,7 +577,7 @@ async function untranslate() {
       currentVideoPromise,
       currentVideoFullScreenLinkPromise,
       currentVideoFullScreenEduPromise,
-      channelEmbededVideoPromise,
+      channelEmbeddedVideoPromise,
       otherVideosPromise,
       currentShortPromise,
       currentShortVideoLinksPromise,
