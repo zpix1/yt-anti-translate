@@ -89,7 +89,7 @@ function restoreOriginalDescriptionAndAuthor() {
   }
 
   if (originalAuthor) {
-    // We should skip this operation if the video player was embedded as it does not have the author above the desciption
+    // We should skip this operation if the video player was embedded as it does not have the author above the description
     const player = window.YoutubeAntiTranslate.getFirstVisible(
       document.querySelectorAll(
         window.YoutubeAntiTranslate.getPlayerSelector(),
