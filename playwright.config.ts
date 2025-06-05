@@ -5,6 +5,7 @@ export type TestOptions = {
   allBrowserNameWithExtensions: string[];
   localeString: string;
   allLocaleStrings: string[];
+  ciTimeoutMultiplier: number;
 };
 
 export const test = base.extend<TestOptions>({
@@ -13,6 +14,7 @@ export const test = base.extend<TestOptions>({
   allBrowserNameWithExtensions: [["John"], { option: true }],
   localeString: ["John", { option: true }],
   allLocaleStrings: [["John"], { option: true }],
+  ciTimeoutMultiplier: [1, { option: true }],
 });
 
 export default defineConfig<TestOptions>({
@@ -53,6 +55,7 @@ export default defineConfig<TestOptions>({
       use: {
         browserNameWithExtensions: "chromium",
         localeString: "ru-RU",
+        ciTimeoutMultiplier: process.env.CI ? 2 : 1,
         ...devices["Desktop Chrome"],
         contextOptions: {
           // Load the extension from the app directory
@@ -71,6 +74,7 @@ export default defineConfig<TestOptions>({
       use: {
         browserNameWithExtensions: "firefox",
         localeString: "ru-RU",
+        ciTimeoutMultiplier: process.env.CI ? 2 : 1,
         ...devices["Desktop Firefox"],
         contextOptions: {},
         launchOptions: {
@@ -86,6 +90,7 @@ export default defineConfig<TestOptions>({
       use: {
         browserNameWithExtensions: "chromium",
         localeString: "th-TH",
+        ciTimeoutMultiplier: process.env.CI ? 2 : 1,
         ...devices["Desktop Chrome"],
         contextOptions: {
           // Load the extension from the app directory
@@ -104,6 +109,7 @@ export default defineConfig<TestOptions>({
       use: {
         browserNameWithExtensions: "firefox",
         localeString: "th-TH",
+        ciTimeoutMultiplier: process.env.CI ? 2 : 1,
         ...devices["Desktop Firefox"],
         contextOptions: {},
         launchOptions: {
