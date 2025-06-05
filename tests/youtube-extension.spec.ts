@@ -88,7 +88,14 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Open full screen
     await page.keyboard.press("F");
-    await page.waitForTimeout(500 * ciTimeoutMultiplier);
+    try {
+      await Promise.all([
+        page.waitForTimeout(500 * ciTimeoutMultiplier),
+        page.waitForLoadState("networkidle", {
+          timeout: 5000 * ciTimeoutMultiplier,
+        }),
+      ]);
+    } catch {}
 
     const headLinkVideoTitleLocator = page.locator(
       "ytd-player .html5-video-player a.ytp-title-link#yt-anti-translate-fake-node-video-head-link",
@@ -142,7 +149,14 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Exit full screen
     await page.keyboard.press("F");
-    await page.waitForTimeout(500 * ciTimeoutMultiplier);
+    try {
+      await Promise.all([
+        page.waitForTimeout(500 * ciTimeoutMultiplier),
+        page.waitForLoadState("networkidle", {
+          timeout: 5000 * ciTimeoutMultiplier,
+        }),
+      ]);
+    } catch {}
 
     const descriptionLocator = page.locator(
       "#description-inline-expander:visible",

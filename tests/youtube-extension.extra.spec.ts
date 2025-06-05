@@ -121,6 +121,13 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
 
     // --- Check Branding Title ---
     const channelTitleSelector = `${channelHeaderSelector} h1 .yt-core-attributed-string:visible`;
+    await page.waitForSelector(channelTitleSelector);
+
+    try {
+      await page.waitForLoadState("networkidle", {
+        timeout: 5000 * ciTimeoutMultiplier,
+      });
+    } catch {}
 
     console.log("Checking Channel header for original title...");
 
@@ -146,6 +153,12 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
 
     // --- Check Branding Description
     const channelDescriptionSelector = `${channelHeaderSelector} yt-description-preview-view-model .truncated-text-wiz__truncated-text-content > .yt-core-attributed-string:nth-child(1)`;
+    await page.waitForSelector(channelDescriptionSelector);
+    try {
+      await page.waitForLoadState("networkidle", {
+        timeout: 5000 * ciTimeoutMultiplier,
+      });
+    } catch {}
 
     console.log("Checking Channel header for original description...");
 
@@ -191,6 +204,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     const aboutContainer = "ytd-engagement-panel-section-list-renderer";
 
     const aboutTitleSelector = `${aboutContainer} #title-text:visible`;
+    await page.waitForSelector(aboutTitleSelector);
     console.log("Checking Channel header for original description...");
 
     // Check that the branding about title is in English and not in Thai
@@ -212,6 +226,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     console.log("Channel about title:", aboutTitle?.trim());
 
     const aboutDescriptionSelector = `${aboutContainer} #description-container > .yt-core-attributed-string:nth-child(1):visible`;
+    await page.waitForSelector(aboutDescriptionSelector);
 
     // Check that the branding about description is in English and not in Thai
     const aboutDescriptionLocator = page.locator(aboutDescriptionSelector);
@@ -388,6 +403,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
 
     // --- Check Branding Title ---
     const videoAuthorSelector = `#upload-info.ytd-video-owner-renderer yt-formatted-string a`;
+    await page.waitForSelector(videoAuthorSelector);
     const videoAuthorLocator = page.locator(videoAuthorSelector);
 
     console.log("Checking video author for original author...");
