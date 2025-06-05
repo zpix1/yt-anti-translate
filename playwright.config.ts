@@ -55,7 +55,7 @@ export default defineConfig<TestOptions>({
       use: {
         browserNameWithExtensions: "chromium",
         localeString: "ru-RU",
-        ciTimeoutMultiplier: process.env.CI ? 2 : 1,
+        ciTimeoutMultiplier: process.env.CI ? 1.5 : 1,
         ...devices["Desktop Chrome"],
         contextOptions: {
           // Load the extension from the app directory
@@ -74,7 +74,7 @@ export default defineConfig<TestOptions>({
       use: {
         browserNameWithExtensions: "firefox",
         localeString: "ru-RU",
-        ciTimeoutMultiplier: process.env.CI ? 2 : 1,
+        ciTimeoutMultiplier: process.env.CI ? 1.5 : 1,
         ...devices["Desktop Firefox"],
         contextOptions: {},
         launchOptions: {
@@ -90,7 +90,7 @@ export default defineConfig<TestOptions>({
       use: {
         browserNameWithExtensions: "chromium",
         localeString: "th-TH",
-        ciTimeoutMultiplier: process.env.CI ? 2 : 1,
+        ciTimeoutMultiplier: process.env.CI ? 1.5 : 1,
         ...devices["Desktop Chrome"],
         contextOptions: {
           // Load the extension from the app directory
@@ -109,7 +109,7 @@ export default defineConfig<TestOptions>({
       use: {
         browserNameWithExtensions: "firefox",
         localeString: "th-TH",
-        ciTimeoutMultiplier: process.env.CI ? 2 : 1,
+        ciTimeoutMultiplier: process.env.CI ? 1.5 : 1,
         ...devices["Desktop Firefox"],
         contextOptions: {},
         launchOptions: {
