@@ -172,13 +172,19 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     console.log(
       "Clicking '..more' button on description to open About Popup...",
     );
-    await page
-      .locator(`${channelHeaderSelector} .truncated-text-wiz__absolute-button`)
-      .click();
     try {
-      await page.waitForLoadState("networkidle", {
-        timeout: 5000 * ciTimeoutMultiplier,
-      });
+      await Promise.all([
+        page
+          .locator(
+            `${channelHeaderSelector} .truncated-text-wiz__absolute-button`,
+          )
+          .click(),
+        page.waitForNavigation({
+          waitUntil: "networkidle0",
+          timeout: 15000 * ciTimeoutMultiplier,
+        }),
+        page.waitForTimeout(1000 * ciTimeoutMultiplier),
+      ]);
     } catch {}
 
     // --- Check About Popup ---
@@ -243,15 +249,19 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     console.log(
       "Clicking '..more links' button on description to open About Popup...",
     );
-    await page
-      .locator(
-        `${channelHeaderSelector} span.yt-core-attributed-string>span>a.yt-core-attributed-string__link[role="button"]`,
-      )
-      .click();
     try {
-      await page.waitForLoadState("networkidle", {
-        timeout: 5000 * ciTimeoutMultiplier,
-      });
+      await Promise.all([
+        page
+          .locator(
+            `${channelHeaderSelector} span.yt-core-attributed-string>span>a.yt-core-attributed-string__link[role="button"]`,
+          )
+          .click(),
+        page.waitForNavigation({
+          waitUntil: "networkidle0",
+          timeout: 15000 * ciTimeoutMultiplier,
+        }),
+        page.waitForTimeout(1000 * ciTimeoutMultiplier),
+      ]);
     } catch {}
 
     // --- Check About A second time via the moreLinks Popup ---
