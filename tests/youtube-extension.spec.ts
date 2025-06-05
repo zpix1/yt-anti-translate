@@ -30,6 +30,8 @@ test.describe("YouTube Anti-Translate extension", () => {
       "https://www.youtube.com/watch?v=l-nMKJ5J3Uc",
       browserNameWithExtensions,
     );
+    // Wait for the video page to fully load
+    await page.waitForSelector("ytd-watch-metadata");
 
     try {
       await Promise.all([
@@ -40,9 +42,6 @@ test.describe("YouTube Anti-Translate extension", () => {
         page.waitForTimeout(5000 * ciTimeoutMultiplier),
       ]);
     } catch {}
-
-    // Wait for the video page to fully load
-    await page.waitForSelector("ytd-watch-metadata");
 
     // Expand the description if it's collapsed
     const moreButton = page.locator(
@@ -218,6 +217,9 @@ test.describe("YouTube Anti-Translate extension", () => {
       browserNameWithExtensions,
     );
 
+    // Wait for the video page to fully load
+    await page.waitForSelector("ytd-watch-metadata");
+
     try {
       await Promise.all([
         page.waitForNavigation({
@@ -227,9 +229,6 @@ test.describe("YouTube Anti-Translate extension", () => {
         page.waitForTimeout(5000 * ciTimeoutMultiplier),
       ]);
     } catch {}
-
-    // Wait for the video page to fully load
-    await page.waitForSelector("ytd-watch-metadata");
 
     // Get the initial video time
     const initialTime = await page.evaluate(() => {
@@ -324,6 +323,10 @@ test.describe("YouTube Anti-Translate extension", () => {
       browserNameWithExtensions,
     );
 
+    // Wait for the shorts title element to be present
+    const shortsTitleSelector = "yt-shorts-video-title-view-model > h2 > span";
+    await page.waitForSelector(shortsTitleSelector);
+
     try {
       await Promise.all([
         page.waitForNavigation({
@@ -333,10 +336,6 @@ test.describe("YouTube Anti-Translate extension", () => {
         page.waitForTimeout(5000 * ciTimeoutMultiplier),
       ]);
     } catch {}
-
-    // Wait for the shorts title element to be present
-    const shortsTitleSelector = "yt-shorts-video-title-view-model > h2 > span";
-    await page.waitForSelector(shortsTitleSelector);
 
     // Verify the title is the original English one and not the Russian translation
     const titleLocator = page.locator(shortsTitleSelector);
@@ -427,6 +426,9 @@ test.describe("YouTube Anti-Translate extension", () => {
       browserNameWithExtensions,
     );
 
+    // Wait for the video grid to appear
+    await page.waitForSelector("ytd-rich-grid-media");
+
     try {
       await Promise.all([
         page.waitForNavigation({
@@ -436,9 +438,6 @@ test.describe("YouTube Anti-Translate extension", () => {
         page.waitForTimeout(5000 * ciTimeoutMultiplier),
       ]);
     } catch {}
-
-    // Wait for the video grid to appear
-    await page.waitForSelector("ytd-rich-grid-media");
 
     // --- Check Videos Tab ---
     const originalVideoTitle = "I Survived The 5 Deadliest Places On Earth";
@@ -574,6 +573,9 @@ test.describe("YouTube Anti-Translate extension", () => {
       browserNameWithExtensions,
     );
 
+    // Wait for the shorts page to fully load
+    await page.waitForSelector("ytd-rich-item-renderer");
+
     try {
       await Promise.all([
         page.waitForNavigation({
@@ -584,24 +586,30 @@ test.describe("YouTube Anti-Translate extension", () => {
       ]);
     } catch {}
 
-    // Wait for the video page to fully load
-    await page.waitForSelector("ytd-rich-item-renderer");
-
     // Find the first short and click to open
     const firstShort = page.locator("ytd-rich-item-renderer").first();
     if (await firstShort.isVisible()) {
       await firstShort.scrollIntoViewIfNeeded();
-      await firstShort.click();
       try {
-        await page.waitForLoadState("networkidle", {
-          timeout: 5000 * ciTimeoutMultiplier,
-        });
+        await Promise.all([
+          page.waitForNavigation({
+            waitUntil: "networkidle0",
+            timeout: 15000 * ciTimeoutMultiplier,
+          }),
+          page.waitForTimeout(5000 * ciTimeoutMultiplier),
+          firstShort.click(),
+        ]);
       } catch {}
     }
-    await page.waitForTimeout(2000 * ciTimeoutMultiplier);
 
     // Wait for the video page to fully load
     await page.waitForSelector("#shorts-player");
+
+    try {
+      await page.waitForLoadState("networkidle", {
+        timeout: 5000 * ciTimeoutMultiplier,
+      });
+    } catch {}
 
     function getTrackLanguageFieldObjectName(track: object) {
       let languageFieldName: string;

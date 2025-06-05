@@ -108,10 +108,16 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
       });
     } catch {}
 
-    // Wait for the video grid to appear
+    // Wait for the channel header to appear
     const channelHeaderSelector =
       "#page-header-container #page-header .page-header-view-model-wiz__page-header-headline-info";
     await page.waitForSelector(channelHeaderSelector);
+
+    try {
+      await page.waitForLoadState("networkidle", {
+        timeout: 5000 * ciTimeoutMultiplier,
+      });
+    } catch {}
 
     // --- Check Branding Title ---
     const channelTitleSelector = `${channelHeaderSelector} h1 .yt-core-attributed-string:visible`;
@@ -350,6 +356,10 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
       "https://www.youtube.com/watch?v=l-nMKJ5J3Uc",
     );
 
+    // Wait for the video player to appear
+    const videoPlayerSelector = "#movie_player";
+    await page.waitForSelector(videoPlayerSelector);
+
     try {
       await Promise.all([
         page.waitForNavigation({
@@ -360,9 +370,11 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
       ]);
     } catch {}
 
-    // Wait for the video player to appear
-    const videoPlayerSelector = "#movie_player";
-    await page.waitForSelector(videoPlayerSelector);
+    try {
+      await page.waitForLoadState("networkidle", {
+        timeout: 5000 * ciTimeoutMultiplier,
+      });
+    } catch {}
 
     // --- Check Branding Title ---
     const videoAuthorSelector = `#upload-info.ytd-video-owner-renderer yt-formatted-string a`;
