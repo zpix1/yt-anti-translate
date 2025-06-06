@@ -410,7 +410,7 @@ async function untranslateOtherVideos(intersectElements = null) {
       try {
         // console.debug(`Fetching oEmbed for video:`, videoHref);
         const response = await get(
-          "https://www.youtube.com/oembed?url=" + encodeURIComponent(videoHref),
+          "https://www.youtube.com/oembed?url=" + videoHref,
         );
         if (!response || !response.title) {
           // console.debug(`No oEmbed data for video:`, videoHref);
