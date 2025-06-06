@@ -31,40 +31,25 @@ test.describe("YouTube Anti-Translate extension", () => {
       browserNameWithExtensions,
     );
     // Wait for the video page to fully load
-    await page.waitForSelector("ytd-watch-metadata", {
+    await page.locator("ytd-watch-metadata").waitFor({
       timeout: 10000 * ciTimeoutMultiplier,
     });
 
     try {
       await Promise.all([
-        page.waitForNavigation({
-          waitUntil: "networkidle0",
+        page.waitForLoadState("networkidle", {
           timeout: 15000 * ciTimeoutMultiplier,
         }),
         page.waitForTimeout(5000 * ciTimeoutMultiplier),
       ]);
     } catch {}
 
-    // Expand the description if it's collapsed
-    const moreButton = page.locator(
-      "#description-inline-expander ytd-text-inline-expander #expand",
-    );
-    if (await moreButton.isVisible()) {
-      await moreButton.click();
-      // Wait for the description to expand
-      await page.waitForTimeout(5000 * ciTimeoutMultiplier);
-    }
-
-    // Get the description text
-    const descriptionText = await page
-      .locator("#description-inline-expander", { state: "visible" })
-      .textContent();
-    console.log("Description text:", descriptionText?.trim());
-
-    const videoTitleLocator = page.locator(
-      "h1.ytd-watch-metadata #yt-anti-translate-fake-node-current-video",
-      { state: "visible" },
-    );
+    const videoTitleSelector =
+      "h1.ytd-watch-metadata #yt-anti-translate-fake-node-current-video:visible";
+    const videoTitleLocator = page.locator(videoTitleSelector);
+    await videoTitleLocator.waitFor({
+      timeout: 10000 * ciTimeoutMultiplier,
+    });
 
     // Check that the title is in English and not in Russian
     try {
@@ -161,15 +146,41 @@ test.describe("YouTube Anti-Translate extension", () => {
       ]);
     } catch {}
 
-    const descriptionLocator = page.locator("#description-inline-expander", {
-      state: "visible",
-    });
+    const descriptionLocator = page.locator(
+      "#description-inline-expander:visible",
+    );
+
+    // Expand the description if it's collapsed
+    const moreButton = page.locator(
+      "#description-inline-expander ytd-text-inline-expander #expand",
+    );
+    if (await moreButton.isVisible()) {
+      try {
+        // Wait for the description to expand
+        await Promise.all([
+          moreButton.click(),
+          page.waitForLoadState("networkidle", {
+            timeout: 10000 * ciTimeoutMultiplier,
+          }),
+          page.waitForTimeout(1000 * ciTimeoutMultiplier),
+        ]);
+      } catch {}
+    }
+
+    await descriptionLocator.scrollIntoViewIfNeeded();
+    try {
+      await Promise.all([
+        page.waitForTimeout(500 * ciTimeoutMultiplier),
+        page.waitForLoadState("networkidle", {
+          timeout: 5000 * ciTimeoutMultiplier,
+        }),
+      ]);
+    } catch {}
     try {
       expect(descriptionLocator).toHaveCount(1, {
         timeout: 10000 * ciTimeoutMultiplier,
       });
     } catch {}
-    await descriptionLocator.scrollIntoViewIfNeeded();
     // Check that the description contains the original English text and not the Russian translation
     expect(descriptionLocator).toContainText("believe who they picked", {
       timeout: 10000 * ciTimeoutMultiplier,
@@ -182,6 +193,11 @@ test.describe("YouTube Anti-Translate extension", () => {
       "Я не могу поверить, кого они выбрали",
       { timeout: 10000 * ciTimeoutMultiplier },
     );
+    // Log the description text
+    const descriptionText = await page
+      .locator("#description-inline-expander:visible")
+      .textContent();
+    console.log("Description text:", descriptionText?.trim());
 
     // Take a screenshot for visual verification
     await page.screenshot({
@@ -235,14 +251,13 @@ test.describe("YouTube Anti-Translate extension", () => {
     );
 
     // Wait for the video page to fully load
-    await page.waitForSelector("ytd-watch-metadata", {
+    await page.locator("ytd-watch-metadata").waitFor({
       timeout: 10000 * ciTimeoutMultiplier,
     });
 
     try {
       await Promise.all([
-        page.waitForNavigation({
-          waitUntil: "networkidle0",
+        page.waitForLoadState("networkidle", {
           timeout: 15000 * ciTimeoutMultiplier,
         }),
         page.waitForTimeout(5000 * ciTimeoutMultiplier),
@@ -263,9 +278,9 @@ test.describe("YouTube Anti-Translate extension", () => {
     await page.waitForTimeout(1000 * ciTimeoutMultiplier);
 
     // Get the description text to verify it's in English (not translated)
-    const descriptionLocator = page.locator("#description-inline-expander", {
-      state: "visible",
-    });
+    const descriptionLocator = page.locator(
+      "#description-inline-expander:visible",
+    );
     // Verify description contains expected English text
     try {
       expect(descriptionLocator).toHaveCount(1, {
@@ -290,11 +305,12 @@ test.describe("YouTube Anti-Translate extension", () => {
     console.log("Description text:", descriptionText?.trim());
 
     // Click on the second timecode (05:36)
-    const secondTimecodeSelector = 'a[href*="t=336"]'; // 5:36 = 336 seconds
-    await page.waitForSelector(secondTimecodeSelector, {
+    const secondTimecodeSelector = 'a[href*="t=336"]:visible'; // 5:36 = 336 seconds
+    const secondTimecodeLocator = page.locator(secondTimecodeSelector).first();
+    await secondTimecodeLocator.waitFor({
       timeout: 10000 * ciTimeoutMultiplier,
     });
-    await page.click(secondTimecodeSelector);
+    await secondTimecodeLocator.click();
 
     // Wait for video to update its playback position
     await page.waitForTimeout(2000 * ciTimeoutMultiplier);
@@ -345,16 +361,16 @@ test.describe("YouTube Anti-Translate extension", () => {
     );
 
     // Wait for the shorts title element to be present
-    const shortsTitleSelector = "yt-shorts-video-title-view-model > h2 > span";
-    await page.waitForSelector(shortsTitleSelector, {
+    const shortsTitleSelector =
+      "yt-shorts-video-title-view-model > h2 > span:visible";
+    const titleLocator = page.locator(shortsTitleSelector);
+    await titleLocator.waitFor({
       timeout: 10000 * ciTimeoutMultiplier,
-      state: "visible",
     });
 
     try {
       await Promise.all([
-        page.waitForNavigation({
-          waitUntil: "networkidle0",
+        page.waitForLoadState("networkidle", {
           timeout: 15000 * ciTimeoutMultiplier,
         }),
         page.waitForTimeout(5000 * ciTimeoutMultiplier),
@@ -362,7 +378,6 @@ test.describe("YouTube Anti-Translate extension", () => {
     } catch {}
 
     // Verify the title is the original English one and not the Russian translation
-    const titleLocator = page.locator(shortsTitleSelector);
     try {
       expect(titleLocator).toHaveCount(1, {
         timeout: 10000 * ciTimeoutMultiplier,
@@ -381,16 +396,13 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Wait for the shorts video link element to be present
     const shortsVideoLinkSelector =
-      ".ytReelMultiFormatLinkViewModelEndpoint span.yt-core-attributed-string>span";
-    await page.waitForSelector(shortsVideoLinkSelector, {
+      ".ytReelMultiFormatLinkViewModelEndpoint span.yt-core-attributed-string>span:visible";
+    const titleLinkLocator = page.locator(shortsVideoLinkSelector);
+    await titleLinkLocator.waitFor({
       timeout: 10000 * ciTimeoutMultiplier,
-      state: "visible",
     });
 
     // Verify the title is the has English characters and not russian
-    const titleLinkLocator = page.locator(shortsVideoLinkSelector, {
-      state: "visible",
-    });
     try {
       expect(titleLinkLocator).toHaveCount(1, {
         timeout: 10000 * ciTimeoutMultiplier,
@@ -456,15 +468,16 @@ test.describe("YouTube Anti-Translate extension", () => {
     );
 
     // Wait for the video grid to appear
-    await page.waitForSelector("ytd-rich-grid-media", {
-      timeout: 10000 * ciTimeoutMultiplier,
-      state: "visible",
-    });
+    await page
+      .locator("ytd-rich-grid-media:visible")
+      .first()
+      .waitFor({
+        timeout: 10000 * ciTimeoutMultiplier,
+      });
 
     try {
       await Promise.all([
-        page.waitForNavigation({
-          waitUntil: "networkidle0",
+        page.waitForLoadState("networkidle", {
           timeout: 15000 * ciTimeoutMultiplier,
         }),
         page.waitForTimeout(5000 * ciTimeoutMultiplier),
@@ -565,10 +578,12 @@ test.describe("YouTube Anti-Translate extension", () => {
         timeout: 5000 * ciTimeoutMultiplier,
       });
     } catch {}
-    await page.waitForSelector(
-      "ytd-rich-grid-media >> ytd-thumbnail-overlay-time-status-renderer:not([overlay-style='SHORTS'])",
-      { state: "visible", timeout: 10000 * ciTimeoutMultiplier },
-    ); // Wait for videos to load
+    await page
+      .locator(
+        "ytd-rich-grid-media >> ytd-thumbnail-overlay-time-status-renderer:not([overlay-style='SHORTS']):visible",
+      )
+      .first()
+      .waitFor({ timeout: 10000 * ciTimeoutMultiplier }); // Wait for videos to load
 
     // --- Re-check Videos Tab ---
     console.log("Re-checking Videos tab for original title...");
@@ -616,15 +631,16 @@ test.describe("YouTube Anti-Translate extension", () => {
     );
 
     // Wait for the shorts page to fully load
-    await page.waitForSelector("ytd-rich-item-renderer", {
-      timeout: 10000 * ciTimeoutMultiplier,
-      state: "visible",
-    });
+    await page
+      .locator("ytd-rich-item-renderer:visible")
+      .first()
+      .waitFor({
+        timeout: 10000 * ciTimeoutMultiplier,
+      });
 
     try {
       await Promise.all([
-        page.waitForNavigation({
-          waitUntil: "networkidle0",
+        page.waitForLoadState("networkidle", {
           timeout: 15000 * ciTimeoutMultiplier,
         }),
         page.waitForTimeout(5000 * ciTimeoutMultiplier),
@@ -637,8 +653,7 @@ test.describe("YouTube Anti-Translate extension", () => {
       await firstShort.scrollIntoViewIfNeeded();
       try {
         await Promise.all([
-          page.waitForNavigation({
-            waitUntil: "networkidle0",
+          page.waitForLoadState("networkidle", {
             timeout: 15000 * ciTimeoutMultiplier,
           }),
           page.waitForTimeout(5000 * ciTimeoutMultiplier),
@@ -648,9 +663,8 @@ test.describe("YouTube Anti-Translate extension", () => {
     }
 
     // Wait for the video page to fully load
-    await page.waitForSelector("#shorts-player", {
+    await page.locator("#shorts-player:visible").waitFor({
       timeout: 10000 * ciTimeoutMultiplier,
-      state: "visible",
     });
 
     try {
@@ -676,13 +690,10 @@ test.describe("YouTube Anti-Translate extension", () => {
     }
 
     let [currentTrack, currentId] = await page.evaluate(async () => {
-      type PlayerResponse = {
-        videoDetails?: { videoId?: string };
-      };
       const video = document.querySelector(
         "#shorts-player",
       ) as HTMLVideoElement & {
-        getAudioTrack?: () => Promise<unknown>;
+        getAudioTrack?: () => Promise<AudioTrackResponse>;
         getPlayerResponse?: () => Promise<PlayerResponse>;
       };
       return [
@@ -699,7 +710,7 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Check original track is the selected one
     expect(
-      currentTrack[getTrackLanguageFieldObjectName(currentTrack)!]?.name,
+      currentTrack![getTrackLanguageFieldObjectName(currentTrack!)!]?.name,
     ).toContain("оригинал");
     expect(currentId).not.toBeNull();
 
@@ -717,13 +728,10 @@ test.describe("YouTube Anti-Translate extension", () => {
     await page.waitForTimeout(2000 * ciTimeoutMultiplier);
 
     let [currentTrack2, currentId2] = await page.evaluate(async () => {
-      type PlayerResponse = {
-        videoDetails?: { videoId?: string };
-      };
       const video = document.querySelector(
         "#shorts-player",
       ) as HTMLVideoElement & {
-        getAudioTrack?: () => Promise<unknown>;
+        getAudioTrack?: () => Promise<AudioTrackResponse>;
         getPlayerResponse?: () => Promise<PlayerResponse>;
       };
       return [
@@ -740,7 +748,7 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Check original track is the selected one
     expect(
-      currentTrack2[getTrackLanguageFieldObjectName(currentTrack2)!]?.name,
+      currentTrack2![getTrackLanguageFieldObjectName(currentTrack2!)!]?.name,
     ).toContain("оригинал");
     expect(currentId2).not.toBe(currentId);
 
@@ -758,13 +766,10 @@ test.describe("YouTube Anti-Translate extension", () => {
     await page.waitForTimeout(2000 * ciTimeoutMultiplier);
 
     let [currentTrack3, currentId3] = await page.evaluate(async () => {
-      type PlayerResponse = {
-        videoDetails?: { videoId?: string };
-      };
       const video = document.querySelector(
         "#shorts-player",
       ) as HTMLVideoElement & {
-        getAudioTrack?: () => Promise<unknown>;
+        getAudioTrack?: () => Promise<AudioTrackResponse>;
         getPlayerResponse?: () => Promise<PlayerResponse>;
       };
       return [
@@ -781,7 +786,7 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Check original track is the selected one
     expect(
-      currentTrack3[getTrackLanguageFieldObjectName(currentTrack3)!]?.name,
+      currentTrack3![getTrackLanguageFieldObjectName(currentTrack3!)!]?.name,
     ).toContain("оригинал");
     expect(currentId3).not.toBe(currentId2);
 
@@ -818,13 +823,10 @@ test.describe("YouTube Anti-Translate extension", () => {
 
         // Re-fetch currentTrack and currentVideoId from the page
         [currentTrack, currentVideoId] = await page.evaluate(async () => {
-          type PlayerResponse = {
-            videoDetails?: { videoId?: string };
-          };
           const video = document.querySelector(
             "#shorts-player",
           ) as HTMLVideoElement & {
-            getAudioTrack?: () => Promise<unknown>;
+            getAudioTrack?: () => Promise<AudioTrackResponse>;
             getPlayerResponse?: () => Promise<PlayerResponse>;
           };
           return [
@@ -836,5 +838,10 @@ test.describe("YouTube Anti-Translate extension", () => {
 
       return [currentTrack, currentVideoId];
     }
+
+    type PlayerResponse = {
+      videoDetails?: { videoId?: string };
+    };
+    type AudioTrackResponse = object;
   });
 });

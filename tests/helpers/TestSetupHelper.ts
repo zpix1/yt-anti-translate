@@ -76,14 +76,14 @@ export async function setupPageWithAuth(
   context: BrowserContext | Browser,
   browserNameWithExtensions: string,
   localeString: string,
-) {
+): Promise<{ page: Page; consoleMessageCount: number }> {
   const result = await newPageWithStorageStateIfItExists(
     context,
     browserNameWithExtensions,
     localeString,
   );
-  const page = result.page;
-  const localeLoaded = result.localeLoaded;
+  const page: Page = result.page;
+  const localeLoaded: boolean = result.localeLoaded;
 
   if (!localeLoaded) {
     // Setup failed to create a matching locale so test will fail.
