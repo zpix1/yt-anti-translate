@@ -20,7 +20,7 @@ const destDirExtension = path.join(__dirname, "../testDist");
 /** Function to copy files and directories recursively
  * @param {JSON} configObject - The object to be passed and inserted into the start.js file to set the chome.storage settings
  **/
-export function handleTestDistribution(configObject) {
+export async function handleTestDistribution(configObject) {
   //Function to copy files and directories recursively
   function copyFiles(src: string, dest: string) {
     const stats = fs.statSync(src);
@@ -38,8 +38,29 @@ export function handleTestDistribution(configObject) {
     }
   }
 
+  // Helper to safely write file with retries on EBUSY errors
+  async function safeWriteFileSync(
+    filePath: string,
+    data: string,
+    retries = 5,
+    delayMs = 100,
+  ) {
+    for (let i = 0; i < retries; i++) {
+      try {
+        fs.writeFileSync(filePath, data, "utf-8");
+        return; // success
+      } catch (err) {
+        if (err.code === "EBUSY" && i < retries - 1) {
+          await new Promise((res) => setTimeout(res, delayMs));
+          continue; // retry
+        }
+        throw err; // rethrow other errors or after max retries
+      }
+    }
+  }
+
   // Function to modify the start.js file in testDist/src
-  const modifyStartJs = (filePath: string, storageObject: object) => {
+  const modifyStartJs = async (filePath: string, storageObject: object) => {
     if (fs.existsSync(filePath)) {
       const data = fs.readFileSync(filePath, "utf-8");
 
@@ -49,7 +70,7 @@ export function handleTestDistribution(configObject) {
       const newLine = `chrome.storage.sync.set(${storageObjectString});\n`;
 
       const modifiedData = newLine + data;
-      fs.writeFileSync(filePath, modifiedData, "utf-8");
+      await safeWriteFileSync(filePath, modifiedData);
       console.log("content_start modified successfully!");
     } else {
       console.log("content_start not found!");
@@ -67,7 +88,7 @@ export function handleTestDistribution(configObject) {
   // Modify the start.js file after copying
   if (configObject) {
     const startJsPath = path.join(destDirExtension, "src", "content_start.js");
-    modifyStartJs(startJsPath, configObject);
+    await modifyStartJs(startJsPath, configObject);
   }
 }
 

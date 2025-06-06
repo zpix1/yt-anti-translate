@@ -1,10 +1,19 @@
 import { defineConfig, devices, test as base } from "@playwright/test";
 
+// Timeout Settings
+const defaultTimeoutMultiplier: number = 1;
+const ciTimeoutMultiplier: number = 2;
+const basePageTimeoutMs: number = 15000;
+const defaultPageTimeoutMs: number = process.env.CI
+  ? basePageTimeoutMs * ciTimeoutMultiplier
+  : basePageTimeoutMs * defaultTimeoutMultiplier;
+
 export type TestOptions = {
   browserNameWithExtensions: string;
   allBrowserNameWithExtensions: string[];
   localeString: string;
   allLocaleStrings: string[];
+  defaultTimeoutMs: number;
 };
 
 export const test = base.extend<TestOptions>({
@@ -13,6 +22,7 @@ export const test = base.extend<TestOptions>({
   allBrowserNameWithExtensions: [["John"], { option: true }],
   localeString: ["John", { option: true }],
   allLocaleStrings: [["John"], { option: true }],
+  defaultTimeoutMs: [defaultPageTimeoutMs, { option: true }],
 });
 
 export default defineConfig<TestOptions>({
@@ -23,7 +33,7 @@ export default defineConfig<TestOptions>({
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
   /* Retry 3 times on CI, or once locally */
-  retries: process.env.CI ? 3 : 1,
+  retries: process.env.CI ? 3 : 0,
   /* Limit parallel workers on CI as they cause random failures some of the times */
   workers: process.env.CI ? 2 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
