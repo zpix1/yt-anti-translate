@@ -1,11 +1,19 @@
 import { defineConfig, devices, test as base } from "@playwright/test";
 
+// Timeout Settings
+const defaultTimeoutMultiplier: number = 1;
+const ciTimeoutMultiplier: number = 2;
+const basePageTimeoutMs: number = 15000;
+const defaultPageTimeoutMs: number = process.env.CI
+  ? basePageTimeoutMs * ciTimeoutMultiplier
+  : basePageTimeoutMs * defaultTimeoutMultiplier;
+
 export type TestOptions = {
   browserNameWithExtensions: string;
   allBrowserNameWithExtensions: string[];
   localeString: string;
   allLocaleStrings: string[];
-  ciTimeoutMultiplier: number;
+  defaultTimeoutMs: number;
 };
 
 export const test = base.extend<TestOptions>({
@@ -14,7 +22,7 @@ export const test = base.extend<TestOptions>({
   allBrowserNameWithExtensions: [["John"], { option: true }],
   localeString: ["John", { option: true }],
   allLocaleStrings: [["John"], { option: true }],
-  ciTimeoutMultiplier: [1, { option: true }],
+  defaultTimeoutMs: [defaultPageTimeoutMs, { option: true }],
 });
 
 export default defineConfig<TestOptions>({
@@ -55,7 +63,6 @@ export default defineConfig<TestOptions>({
       use: {
         browserNameWithExtensions: "chromium",
         localeString: "ru-RU",
-        ciTimeoutMultiplier: process.env.CI ? 2 : 1,
         ...devices["Desktop Chrome"],
         contextOptions: {
           // Load the extension from the app directory
@@ -74,7 +81,6 @@ export default defineConfig<TestOptions>({
       use: {
         browserNameWithExtensions: "firefox",
         localeString: "ru-RU",
-        ciTimeoutMultiplier: process.env.CI ? 2 : 1,
         ...devices["Desktop Firefox"],
         contextOptions: {},
         launchOptions: {
@@ -90,7 +96,6 @@ export default defineConfig<TestOptions>({
       use: {
         browserNameWithExtensions: "chromium",
         localeString: "th-TH",
-        ciTimeoutMultiplier: process.env.CI ? 2 : 1,
         ...devices["Desktop Chrome"],
         contextOptions: {
           // Load the extension from the app directory
@@ -109,7 +114,6 @@ export default defineConfig<TestOptions>({
       use: {
         browserNameWithExtensions: "firefox",
         localeString: "th-TH",
-        ciTimeoutMultiplier: process.env.CI ? 2 : 1,
         ...devices["Desktop Firefox"],
         contextOptions: {},
         launchOptions: {

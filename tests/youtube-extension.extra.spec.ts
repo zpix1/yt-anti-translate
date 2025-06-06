@@ -18,7 +18,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
   test("YouTube channel branding header and about retain original content - WITH Api Key Set", async ({
     browserNameWithExtensions,
     localeString,
-    ciTimeoutMultiplier,
+    defaultTimeoutMs,
   }, testInfo) => {
     expect(process.env.YOUTUBE_API_KEY?.trim() || "").not.toBe("");
 
@@ -40,14 +40,14 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
       context,
       browserNameWithExtensions,
       localeString,
-      ciTimeoutMultiplier,
+      defaultTimeoutMs,
     );
   });
 
   test("YouTube channel branding header and about retain original content - WITHOUT Api Key (YouTubeI)", async ({
     browserNameWithExtensions,
     localeString,
-    ciTimeoutMultiplier,
+    defaultTimeoutMs: defaultTimeoutMs,
   }, testInfo) => {
     await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
 
@@ -62,7 +62,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
       context,
       browserNameWithExtensions,
       localeString,
-      ciTimeoutMultiplier,
+      defaultTimeoutMs,
       "-youtubeI",
     );
   });
@@ -71,13 +71,14 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     context: BrowserContext | Browser,
     browserNameWithExtensions: string,
     localeString: string,
-    ciTimeoutMultiplier: number,
+    defaultTimeoutMs: number,
     addToScreenshotName: string = "",
   ) {
     const { page, consoleMessageCount } = await setupPageWithAuth(
       context,
       browserNameWithExtensions,
       localeString,
+      defaultTimeoutMs,
     );
 
     await loadPageAndVerifyAuth(
@@ -86,73 +87,51 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     );
 
     try {
-      await page.waitForLoadState("networkidle", {
-        timeout: 5000 * ciTimeoutMultiplier,
-      });
+      await page.waitForLoadState("networkidle");
     } catch {}
 
     try {
       await Promise.all([
-        page.waitForLoadState("networkidle", {
-          timeout: 15000 * ciTimeoutMultiplier,
-        }),
         page.getByRole("link", { name: "MrBeast", exact: true }).click(),
-        page.waitForTimeout(5000 * ciTimeoutMultiplier),
+        page.waitForLoadState("networkidle"),
+        page.waitForTimeout(5000),
       ]);
     } catch {}
 
     try {
-      await page.waitForLoadState("networkidle", {
-        timeout: 5000 * ciTimeoutMultiplier,
-      });
+      await page.waitForLoadState("networkidle");
     } catch {}
 
     // Wait for the channel header to appear
     const channelHeaderSelector =
       "#page-header-container #page-header .page-header-view-model-wiz__page-header-headline-info:visible";
-    await page.locator(channelHeaderSelector).waitFor({
-      timeout: 10000 * ciTimeoutMultiplier,
-    });
+    await page.locator(channelHeaderSelector).waitFor();
 
     try {
       await Promise.all([
-        page.waitForLoadState("networkidle", {
-          timeout: 15000 * ciTimeoutMultiplier,
-        }),
-        page.waitForTimeout(5000 * ciTimeoutMultiplier),
+        page.waitForLoadState("networkidle"),
+        page.waitForTimeout(5000),
       ]);
     } catch {}
 
     // --- Check Branding Title ---
     const channelTitleSelector = `${channelHeaderSelector} h1 .yt-core-attributed-string:visible`;
     const channelTitleLocator = page.locator(channelTitleSelector);
-    await channelTitleLocator.waitFor({
-      timeout: 10000 * ciTimeoutMultiplier,
-    });
+    await channelTitleLocator.waitFor();
 
     try {
-      await page.waitForLoadState("networkidle", {
-        timeout: 5000 * ciTimeoutMultiplier,
-      });
+      await page.waitForLoadState("networkidle");
     } catch {}
 
     console.log("Checking Channel header for original title...");
 
     // Check that the branding header title is in English and not in Thai
     try {
-      expect(channelTitleLocator).toHaveCount(1, {
-        timeout: 10000 * ciTimeoutMultiplier,
-      });
+      expect(channelTitleLocator).toHaveCount(1);
     } catch {}
-    expect(channelTitleLocator).toContainText("MrBeast", {
-      timeout: 10000 * ciTimeoutMultiplier,
-    });
-    expect(channelTitleLocator).not.toContainText("มิสเตอร์บีสต์", {
-      timeout: 10000 * ciTimeoutMultiplier,
-    });
-    await expect(channelTitleLocator).toBeVisible({
-      timeout: 10000 * ciTimeoutMultiplier,
-    });
+    expect(channelTitleLocator).toContainText("MrBeast");
+    expect(channelTitleLocator).not.toContainText("มิสเตอร์บีสต์");
+    await expect(channelTitleLocator).toBeVisible();
     // Log the channel branding header title
     const brandingTitle = await page
       .locator(channelTitleSelector)
@@ -162,33 +141,22 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     // --- Check Branding Description
     const channelDescriptionSelector = `${channelHeaderSelector} yt-description-preview-view-model .truncated-text-wiz__truncated-text-content > .yt-core-attributed-string:nth-child(1):visible`;
     const channelDescriptionLocator = page.locator(channelDescriptionSelector);
-    await channelDescriptionLocator.waitFor({
-      timeout: 10000 * ciTimeoutMultiplier,
-    });
+    await channelDescriptionLocator.waitFor();
     try {
-      await page.waitForLoadState("networkidle", {
-        timeout: 5000 * ciTimeoutMultiplier,
-      });
+      await page.waitForLoadState("networkidle");
     } catch {}
 
     console.log("Checking Channel header for original description...");
 
     // Check that the branding header title is in English and not in Thai
     try {
-      expect(channelDescriptionLocator).toHaveCount(1, {
-        timeout: 10000 * ciTimeoutMultiplier,
-      });
+      expect(channelDescriptionLocator).toHaveCount(1);
     } catch {}
-    expect(channelDescriptionLocator).toContainText("SUBSCRIBE FOR A COOKIE", {
-      timeout: 10000 * ciTimeoutMultiplier,
-    });
+    expect(channelDescriptionLocator).toContainText("SUBSCRIBE FOR A COOKIE");
     expect(channelDescriptionLocator).not.toContainText(
       "ไปดู Beast Games ได้แล้ว",
-      { timeout: 10000 * ciTimeoutMultiplier },
     );
-    await expect(channelDescriptionLocator).toBeVisible({
-      timeout: 10000 * ciTimeoutMultiplier,
-    });
+    await expect(channelDescriptionLocator).toBeVisible();
     // Log the channel branding header description
     const brandingDescription = await channelDescriptionLocator.textContent();
     console.log("Channel header description:", brandingDescription?.trim());
@@ -204,10 +172,8 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
             `${channelHeaderSelector} .truncated-text-wiz__absolute-button`,
           )
           .click(),
-        page.waitForLoadState("networkidle", {
-          timeout: 15000 * ciTimeoutMultiplier,
-        }),
-        page.waitForTimeout(1000 * ciTimeoutMultiplier),
+        page.waitForLoadState("networkidle"),
+        page.waitForTimeout(1000),
       ]);
     } catch {}
 
@@ -216,67 +182,49 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
 
     const aboutTitleSelector = `${aboutContainer} #title-text:visible`;
     const aboutTitleLocator = page.locator(aboutTitleSelector);
-    await aboutTitleLocator.waitFor({
-      timeout: 10000 * ciTimeoutMultiplier,
-    });
+    await aboutTitleLocator.waitFor();
     console.log("Checking Channel header for original description...");
 
     // Check that the branding about title is in English and not in Thai
     try {
-      expect(aboutTitleLocator).toHaveCount(1, {
-        timeout: 10000 * ciTimeoutMultiplier,
-      });
+      expect(aboutTitleLocator).toHaveCount(1);
     } catch {}
-    expect(aboutTitleLocator).toContainText("MrBeast", {
-      timeout: 10000 * ciTimeoutMultiplier,
-    });
-    expect(aboutTitleLocator).not.toContainText("มิสเตอร์บีสต์", {
-      timeout: 10000 * ciTimeoutMultiplier,
-    });
-    await expect(aboutTitleLocator).toBeVisible({
-      timeout: 10000 * ciTimeoutMultiplier,
-    });
+    expect(aboutTitleLocator).toContainText("MrBeast");
+    expect(aboutTitleLocator).not.toContainText("มิสเตอร์บีสต์");
+    await expect(aboutTitleLocator).toBeVisible();
     // Log the about title
     const aboutTitle = await aboutTitleLocator.textContent();
     console.log("Channel about title:", aboutTitle?.trim());
 
     const aboutDescriptionSelector = `${aboutContainer} #description-container > .yt-core-attributed-string:nth-child(1):visible`;
     const aboutDescriptionLocator = page.locator(aboutDescriptionSelector);
-    await aboutDescriptionLocator.waitFor({
-      timeout: 10000 * ciTimeoutMultiplier,
-    });
+    await aboutDescriptionLocator.waitFor();
 
     // Check that the branding about description is in English and not in Thai
     try {
-      expect(aboutDescriptionLocator).toHaveCount(1, {
-        timeout: 10000 * ciTimeoutMultiplier,
-      });
+      expect(aboutDescriptionLocator).toHaveCount(1);
     } catch {}
-    expect(aboutDescriptionLocator).toContainText("SUBSCRIBE FOR A COOKIE", {
-      timeout: 10000 * ciTimeoutMultiplier,
-    });
+    expect(aboutDescriptionLocator).toContainText("SUBSCRIBE FOR A COOKIE");
     expect(aboutDescriptionLocator).not.toContainText(
       "ไปดู Beast Games ได้แล้ว",
-      { timeout: 10000 * ciTimeoutMultiplier },
     );
-    await expect(aboutDescriptionLocator).toBeVisible({
-      timeout: 10000 * ciTimeoutMultiplier,
-    });
+    await expect(aboutDescriptionLocator).toBeVisible();
     // Log the about description
     const aboutDescription = await aboutDescriptionLocator.textContent();
     console.log("Channel about title:", aboutDescription?.trim());
 
     // --- Close Popup
     console.log("Clicking 'X' button to close Popup...");
-    await page
-      .locator(
-        `${aboutContainer} #visibility-button button.yt-spec-button-shape-next:visible`,
-      )
-      .click();
     try {
-      await page.waitForLoadState("networkidle", {
-        timeout: 5000 * ciTimeoutMultiplier,
-      });
+      await Promise.all([
+        page
+          .locator(
+            `${aboutContainer} #visibility-button button.yt-spec-button-shape-next:visible`,
+          )
+          .click(),
+        page.waitForLoadState("networkidle"),
+        page.waitForTimeout(500),
+      ]);
     } catch {}
 
     // --- Open About Popup via more links ---
@@ -290,56 +238,35 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
             `${channelHeaderSelector} span.yt-core-attributed-string>span>a.yt-core-attributed-string__link[role="button"]`,
           )
           .click(),
-        page.waitForLoadState("networkidle", {
-          timeout: 15000 * ciTimeoutMultiplier,
-        }),
-        page.waitForTimeout(1000 * ciTimeoutMultiplier),
+        page.waitForLoadState("networkidle"),
+        page.waitForTimeout(1000),
       ]);
     } catch {}
 
     // --- Check About A second time via the moreLinks Popup ---
 
     // Check that the branding about title is in English and not in Thai
-    await aboutTitleLocator.waitFor({
-      timeout: 10000 * ciTimeoutMultiplier,
-    });
+    await aboutTitleLocator.waitFor();
     try {
-      expect(aboutTitleLocator).toHaveCount(1, {
-        timeout: 10000 * ciTimeoutMultiplier,
-      });
+      expect(aboutTitleLocator).toHaveCount(1);
     } catch {}
-    expect(aboutTitleLocator).toContainText("MrBeast", {
-      timeout: 10000 * ciTimeoutMultiplier,
-    });
-    expect(aboutTitleLocator).not.toContainText("มิสเตอร์บีสต์", {
-      timeout: 10000 * ciTimeoutMultiplier,
-    });
-    await expect(aboutTitleLocator).toBeVisible({
-      timeout: 10000 * ciTimeoutMultiplier,
-    });
+    expect(aboutTitleLocator).toContainText("MrBeast");
+    expect(aboutTitleLocator).not.toContainText("มิสเตอร์บีสต์");
+    await expect(aboutTitleLocator).toBeVisible();
     // Log the about title
     const aboutTitle2 = await aboutTitleLocator.textContent();
     console.log("Channel about title:", aboutTitle2?.trim());
 
     // Check that the branding about description is in English and not in Thai
-    await aboutDescriptionLocator.waitFor({
-      timeout: 10000 * ciTimeoutMultiplier,
-    });
+    await aboutDescriptionLocator.waitFor();
     try {
-      expect(aboutDescriptionLocator).toHaveCount(1, {
-        timeout: 10000 * ciTimeoutMultiplier,
-      });
+      expect(aboutDescriptionLocator).toHaveCount(1);
     } catch {}
-    expect(aboutDescriptionLocator).toContainText("SUBSCRIBE FOR A COOKIE", {
-      timeout: 10000 * ciTimeoutMultiplier,
-    });
+    expect(aboutDescriptionLocator).toContainText("SUBSCRIBE FOR A COOKIE");
     expect(aboutDescriptionLocator).not.toContainText(
       "ไปดู Beast Games ได้แล้ว",
-      { timeout: 10000 * ciTimeoutMultiplier },
     );
-    await expect(aboutDescriptionLocator).toBeVisible({
-      timeout: 10000 * ciTimeoutMultiplier,
-    });
+    await expect(aboutDescriptionLocator).toBeVisible();
     // Log the about description
     const aboutDescription2 = await aboutDescriptionLocator.textContent();
     console.log("Channel about title:", aboutDescription2?.trim());
@@ -351,21 +278,20 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
 
     // --- Close Popup
     console.log("Clicking 'X' button to close Popup...");
-    await page
-      .locator(
-        `${aboutContainer} #visibility-button button.yt-spec-button-shape-next:visible`,
-      )
-      .click();
     try {
-      await page.waitForLoadState("networkidle", {
-        timeout: 5000 * ciTimeoutMultiplier,
-      });
+      await Promise.all([
+        page
+          .locator(
+            `${aboutContainer} #visibility-button button.yt-spec-button-shape-next:visible`,
+          )
+          .click(),
+        page.waitForLoadState("networkidle"),
+        page.waitForTimeout(500),
+      ]);
     } catch {}
 
     // Check that the document title is in English and not in Thai
-    await page.waitForFunction(() => document.title.includes("MrBeast"), null, {
-      timeout: 5000 * ciTimeoutMultiplier,
-    });
+    await page.waitForFunction(() => document.title.includes("MrBeast"), null);
     // Check page title
     const pageTitle = await page.title();
     console.log("Document title for the Video is:", pageTitle?.trim());
@@ -387,7 +313,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
   test("YouTube video player retain original author", async ({
     browserNameWithExtensions,
     localeString,
-    ciTimeoutMultiplier,
+    defaultTimeoutMs,
   }, testInfo) => {
     await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
 
@@ -402,6 +328,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
       context,
       browserNameWithExtensions,
       localeString,
+      defaultTimeoutMs,
     );
 
     await loadPageAndVerifyAuth(
@@ -411,47 +338,31 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
 
     // Wait for the video player to appear
     const videoPlayerSelector = "#movie_player:visible";
-    await page.locator(videoPlayerSelector).waitFor({
-      timeout: 10000 * ciTimeoutMultiplier,
-    });
+    await page.locator(videoPlayerSelector).waitFor();
 
     try {
       await Promise.all([
-        page.waitForLoadState("networkidle", {
-          timeout: 15000 * ciTimeoutMultiplier,
-        }),
-        page.waitForTimeout(5000 * ciTimeoutMultiplier),
+        page.waitForLoadState("networkidle"),
+        page.waitForTimeout(5000),
       ]);
     } catch {}
 
     try {
-      await page.waitForLoadState("networkidle", {
-        timeout: 5000 * ciTimeoutMultiplier,
-      });
+      await page.waitForLoadState("networkidle");
     } catch {}
 
     // --- Check Branding Title ---
     const videoAuthorSelector = `#upload-info.ytd-video-owner-renderer yt-formatted-string a:visible`;
     const videoAuthorLocator = page.locator(videoAuthorSelector);
-    await videoAuthorLocator.waitFor({
-      timeout: 10000 * ciTimeoutMultiplier,
-    });
+    await videoAuthorLocator.waitFor();
 
     console.log("Checking video author for original author...");
 
     // Check that the channel name is in English and not in Thai
-    expect(videoAuthorLocator).toHaveCount(1, {
-      timeout: 10000 * ciTimeoutMultiplier,
-    });
-    expect(videoAuthorLocator).toContainText("MrBeast", {
-      timeout: 10000 * ciTimeoutMultiplier,
-    });
-    expect(videoAuthorLocator).not.toContainText("มิสเตอร์บีสต์", {
-      timeout: 10000 * ciTimeoutMultiplier,
-    });
-    await expect(videoAuthorLocator).toBeVisible({
-      timeout: 10000 * ciTimeoutMultiplier,
-    });
+    expect(videoAuthorLocator).toHaveCount(1);
+    expect(videoAuthorLocator).toContainText("MrBeast");
+    expect(videoAuthorLocator).not.toContainText("มิสเตอร์บีสต์");
+    await expect(videoAuthorLocator).toBeVisible();
     // Log the channel branding header title
     const brandingTitle = await videoAuthorLocator.textContent();
     console.log("Video author:", brandingTitle?.trim());
@@ -459,9 +370,9 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     // Take a screenshot for visual verification
     const target = page.locator("ytd-video-owner-renderer yt-icon div");
     await expect(target).toHaveCount(1, {
-      timeout: 20000 * ciTimeoutMultiplier,
-    }); // Ensure it exists
-    await expect(target).toBeVisible({ timeout: 20000 * ciTimeoutMultiplier }); // Then check visibility
+      timeout: defaultTimeoutMs * 2, // Increased timeout cause YouTube takes a while to add the "verified" chackmark
+    });
+    await expect(target).toBeVisible({ timeout: defaultTimeoutMs * 2 }); // Increased timeout cause YouTube takes a while to add the "verified" chackmark
     await page.screenshot({
       path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-video-author-test.png`,
     });

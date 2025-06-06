@@ -76,6 +76,7 @@ export async function setupPageWithAuth(
   context: BrowserContext | Browser,
   browserNameWithExtensions: string,
   localeString: string,
+  ciTimeoutMultiplier: number,
 ): Promise<{ page: Page; consoleMessageCount: number }> {
   const result = await newPageWithStorageStateIfItExists(
     context,
@@ -89,6 +90,9 @@ export async function setupPageWithAuth(
     // Setup failed to create a matching locale so test will fail.
     expect(localeLoaded).toBe(true);
   }
+
+  page.setDefaultNavigationTimeout(15000 * ciTimeoutMultiplier);
+  page.setDefaultTimeout(15000 * ciTimeoutMultiplier);
 
   // Set up console message counting
   let consoleMessageCount = 0;
