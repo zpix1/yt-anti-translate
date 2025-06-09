@@ -754,6 +754,7 @@ test.describe("YouTube Anti-Translate extension", () => {
      */
     async function goToNextShort() {
       const buttonDown = page.locator("#navigation-button-down button").first();
+      await buttonDown.waitFor();
       if (await buttonDown.isVisible()) {
         await buttonDown.scrollIntoViewIfNeeded();
         try {
