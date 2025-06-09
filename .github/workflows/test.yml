@@ -3,6 +3,7 @@ on:
   push:
     branches: [main]
   pull_request_target:
+    types: [opened, reopened, ready_for_review, labeled, unlabeled, synchronize]
     branches: [main]
   schedule:
     - cron: "0 0 * * 0,2,4" # Run at midnight UTC every Sunday and Tuesday and Thursday
@@ -16,6 +17,9 @@ jobs:
     name: Tests YT Anti Translate Extension with xvfb-run Headed
     timeout-minutes: 60
     runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
 
     steps:
       - name: Require 'safe-to-test' label
@@ -23,8 +27,7 @@ jobs:
         with:
           mode: exactly
           count: 1
-          labels: safe-to-test
-          exit_type: failure
+          labels: "safe-to-test"
           add_comment: true
 
       - name: Checkout PR code or main
