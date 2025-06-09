@@ -368,7 +368,7 @@ export async function handleGoogleLogin(
 
     //If we get a "Simplify you sign-in" or "Confirm your details" page cligh on "Not now" button
     const notNowButton = page.getByRole("button", {
-      name: /Not now|Не сейчас|ยังไม่ใช่ตอนนี้/i,
+      name: /Not now|Не сейчас|ไม่ใช่ตอนนี้/i,
     });
     if (await notNowButton.isVisible()) {
       await notNowButton.click();
