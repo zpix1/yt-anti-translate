@@ -127,7 +127,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
 
     // Wait for the channel header to appear
     const channelHeaderSelector =
-      "#page-header-container #page-header .page-header-view-model-wiz__page-header-headline-info:visible";
+      "#page-header-container:visible #page-header .page-header-view-model-wiz__page-header-headline-info:visible";
     await page.locator(channelHeaderSelector).waitFor();
 
     try {
