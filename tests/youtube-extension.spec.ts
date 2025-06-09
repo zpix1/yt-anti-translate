@@ -689,20 +689,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     ).toContain("оригинал");
     expect(currentId).not.toBeNull();
 
-    // Go to next short
-    const buttonDown = page.locator("#navigation-button-down button").first();
-    if (await buttonDown.isVisible()) {
-      await buttonDown.scrollIntoViewIfNeeded();
-      try {
-        await Promise.all([
-          buttonDown.click(),
-          page.waitForLoadState("networkidle", {
-            timeout: defaultNetworkIdleTimeoutMs,
-          }),
-          page.waitForTimeout(2000),
-        ]);
-      } catch {}
-    }
+    await goToNextShort();
 
     let [currentTrack2, currentId2] = await page.evaluate(async () => {
       const video = document.querySelector(
@@ -729,19 +716,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     ).toContain("оригинал");
     expect(currentId2).not.toBe(currentId);
 
-    // Go to next short
-    if (await buttonDown.isVisible()) {
-      await buttonDown.scrollIntoViewIfNeeded();
-      try {
-        await Promise.all([
-          buttonDown.click(),
-          page.waitForLoadState("networkidle", {
-            timeout: defaultNetworkIdleTimeoutMs,
-          }),
-          page.waitForTimeout(2000),
-        ]);
-      } catch {}
-    }
+    await goToNextShort();
 
     let [currentTrack3, currentId3] = await page.evaluate(async () => {
       const video = document.querySelector(
@@ -775,6 +750,25 @@ test.describe("YouTube Anti-Translate extension", () => {
     await context.close();
 
     /**
+     * Finds the next short button and click
+     */
+    async function goToNextShort() {
+      const buttonDown = page.locator("#navigation-button-down button").first();
+      if (await buttonDown.isVisible()) {
+        await buttonDown.scrollIntoViewIfNeeded();
+        try {
+          await Promise.all([
+            buttonDown.click(),
+            page.waitForLoadState("networkidle", {
+              timeout: defaultNetworkIdleTimeoutMs,
+            }),
+            page.waitForTimeout(2000),
+          ]);
+        } catch {}
+      }
+    }
+
+    /**
      * If Track name is "Default" that is always an advert
      * @param currentTrack the audio track that could be of an advert
      * @returns a new short audio track and video id
@@ -784,21 +778,7 @@ test.describe("YouTube Anti-Translate extension", () => {
         currentTrack[getTrackLanguageFieldObjectName(currentTrack)!]?.name ===
         "Default"
       ) {
-        const buttonDown = page
-          .locator("#navigation-button-down button")
-          .first();
-        if (await buttonDown.isVisible()) {
-          await buttonDown.scrollIntoViewIfNeeded();
-          try {
-            await Promise.all([
-              buttonDown.click(),
-              page.waitForLoadState("networkidle", {
-                timeout: defaultNetworkIdleTimeoutMs,
-              }),
-              page.waitForTimeout(2000),
-            ]);
-          } catch {}
-        }
+        await goToNextShort();
 
         // Re-fetch currentTrack and currentVideoId from the page
         [currentTrack, currentVideoId] = await page.evaluate(async () => {
