@@ -19,6 +19,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     browserNameWithExtensions,
     localeString,
     defaultTimeoutMs,
+    defaultNetworkIdleTimeoutMs,
   }, testInfo) => {
     expect(process.env.YOUTUBE_API_KEY?.trim() || "").not.toBe("");
 
@@ -41,13 +42,15 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
       browserNameWithExtensions,
       localeString,
       defaultTimeoutMs,
+      defaultNetworkIdleTimeoutMs,
     );
   });
 
   test("YouTube channel branding header and about retain original content - WITHOUT Api Key (YouTubeI)", async ({
     browserNameWithExtensions,
     localeString,
-    defaultTimeoutMs: defaultTimeoutMs,
+    defaultTimeoutMs,
+    defaultNetworkIdleTimeoutMs,
   }, testInfo) => {
     await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
 
@@ -63,6 +66,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
       browserNameWithExtensions,
       localeString,
       defaultTimeoutMs,
+      defaultNetworkIdleTimeoutMs,
       "-youtubeI",
     );
   });
@@ -72,6 +76,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     browserNameWithExtensions: string,
     localeString: string,
     defaultTimeoutMs: number,
+    defaultNetworkIdleTimeoutMs: number,
     addToScreenshotName: string = "",
   ) {
     const { page, consoleMessageCount } = await setupPageWithAuth(
@@ -87,19 +92,25 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     );
 
     try {
-      await page.waitForLoadState("networkidle");
+      await page.waitForLoadState("networkidle", {
+        timeout: defaultNetworkIdleTimeoutMs,
+      });
     } catch {}
 
     try {
       await Promise.all([
         page.getByRole("link", { name: "MrBeast", exact: true }).click(),
-        page.waitForLoadState("networkidle"),
+        page.waitForLoadState("networkidle", {
+          timeout: defaultNetworkIdleTimeoutMs,
+        }),
         page.waitForTimeout(5000),
       ]);
     } catch {}
 
     try {
-      await page.waitForLoadState("networkidle");
+      await page.waitForLoadState("networkidle", {
+        timeout: defaultNetworkIdleTimeoutMs,
+      });
     } catch {}
 
     // Wait for the channel header to appear
@@ -109,7 +120,9 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
 
     try {
       await Promise.all([
-        page.waitForLoadState("networkidle"),
+        page.waitForLoadState("networkidle", {
+          timeout: defaultNetworkIdleTimeoutMs,
+        }),
         page.waitForTimeout(5000),
       ]);
     } catch {}
@@ -120,7 +133,9 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     await channelTitleLocator.waitFor();
 
     try {
-      await page.waitForLoadState("networkidle");
+      await page.waitForLoadState("networkidle", {
+        timeout: defaultNetworkIdleTimeoutMs,
+      });
     } catch {}
 
     console.log("Checking Channel header for original title...");
@@ -143,7 +158,9 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     const channelDescriptionLocator = page.locator(channelDescriptionSelector);
     await channelDescriptionLocator.waitFor();
     try {
-      await page.waitForLoadState("networkidle");
+      await page.waitForLoadState("networkidle", {
+        timeout: defaultNetworkIdleTimeoutMs,
+      });
     } catch {}
 
     console.log("Checking Channel header for original description...");
@@ -172,7 +189,9 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
             `${channelHeaderSelector} .truncated-text-wiz__absolute-button`,
           )
           .click(),
-        page.waitForLoadState("networkidle"),
+        page.waitForLoadState("networkidle", {
+          timeout: defaultNetworkIdleTimeoutMs,
+        }),
         page.waitForTimeout(1000),
       ]);
     } catch {}
@@ -222,7 +241,9 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
             `${aboutContainer} #visibility-button button.yt-spec-button-shape-next:visible`,
           )
           .click(),
-        page.waitForLoadState("networkidle"),
+        page.waitForLoadState("networkidle", {
+          timeout: defaultNetworkIdleTimeoutMs,
+        }),
         page.waitForTimeout(500),
       ]);
     } catch {}
@@ -238,7 +259,9 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
             `${channelHeaderSelector} span.yt-core-attributed-string>span>a.yt-core-attributed-string__link[role="button"]`,
           )
           .click(),
-        page.waitForLoadState("networkidle"),
+        page.waitForLoadState("networkidle", {
+          timeout: defaultNetworkIdleTimeoutMs,
+        }),
         page.waitForTimeout(1000),
       ]);
     } catch {}
@@ -285,7 +308,9 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
             `${aboutContainer} #visibility-button button.yt-spec-button-shape-next:visible`,
           )
           .click(),
-        page.waitForLoadState("networkidle"),
+        page.waitForLoadState("networkidle", {
+          timeout: defaultNetworkIdleTimeoutMs,
+        }),
         page.waitForTimeout(500),
       ]);
     } catch {}
@@ -314,6 +339,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     browserNameWithExtensions,
     localeString,
     defaultTimeoutMs,
+    defaultNetworkIdleTimeoutMs,
   }, testInfo) => {
     await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
 
@@ -342,13 +368,17 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
 
     try {
       await Promise.all([
-        page.waitForLoadState("networkidle"),
+        page.waitForLoadState("networkidle", {
+          timeout: defaultNetworkIdleTimeoutMs,
+        }),
         page.waitForTimeout(5000),
       ]);
     } catch {}
 
     try {
-      await page.waitForLoadState("networkidle");
+      await page.waitForLoadState("networkidle", {
+        timeout: defaultNetworkIdleTimeoutMs,
+      });
     } catch {}
 
     // --- Check Branding Title ---

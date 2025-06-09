@@ -12,6 +12,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     browserNameWithExtensions,
     localeString,
     defaultTimeoutMs,
+    defaultNetworkIdleTimeoutMs,
   }, testInfo) => {
     await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
 
@@ -36,7 +37,9 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     try {
       await Promise.all([
-        page.waitForLoadState("networkidle"),
+        page.waitForLoadState("networkidle", {
+          timeout: defaultNetworkIdleTimeoutMs,
+        }),
         page.waitForTimeout(5000),
       ]);
     } catch {}
@@ -70,7 +73,9 @@ test.describe("YouTube Anti-Translate extension", () => {
     try {
       await Promise.all([
         page.waitForTimeout(500),
-        page.waitForLoadState("networkidle"),
+        page.waitForLoadState("networkidle", {
+          timeout: defaultNetworkIdleTimeoutMs,
+        }),
       ]);
     } catch {}
 
@@ -121,7 +126,9 @@ test.describe("YouTube Anti-Translate extension", () => {
     try {
       await Promise.all([
         page.waitForTimeout(500),
-        page.waitForLoadState("networkidle"),
+        page.waitForLoadState("networkidle", {
+          timeout: defaultNetworkIdleTimeoutMs,
+        }),
       ]);
     } catch {}
 
@@ -138,7 +145,9 @@ test.describe("YouTube Anti-Translate extension", () => {
         // Wait for the description to expand
         await Promise.all([
           moreButton.click(),
-          page.waitForLoadState("networkidle"),
+          page.waitForLoadState("networkidle", {
+            timeout: defaultNetworkIdleTimeoutMs,
+          }),
           page.waitForTimeout(1000),
         ]);
       } catch {}
@@ -148,7 +157,9 @@ test.describe("YouTube Anti-Translate extension", () => {
     try {
       await Promise.all([
         page.waitForTimeout(500),
-        page.waitForLoadState("networkidle"),
+        page.waitForLoadState("networkidle", {
+          timeout: defaultNetworkIdleTimeoutMs,
+        }),
       ]);
     } catch {}
     try {
@@ -197,6 +208,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     browserNameWithExtensions,
     localeString,
     defaultTimeoutMs,
+    defaultNetworkIdleTimeoutMs,
   }, testInfo) => {
     await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
 
@@ -222,7 +234,9 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     try {
       await Promise.all([
-        page.waitForLoadState("networkidle"),
+        page.waitForLoadState("networkidle", {
+          timeout: defaultNetworkIdleTimeoutMs,
+        }),
         page.waitForTimeout(5000),
       ]);
     } catch {}
@@ -298,6 +312,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     browserNameWithExtensions,
     localeString,
     defaultTimeoutMs,
+    defaultNetworkIdleTimeoutMs,
   }, testInfo) => {
     await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
 
@@ -326,7 +341,9 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     try {
       await Promise.all([
-        page.waitForLoadState("networkidle"),
+        page.waitForLoadState("networkidle", {
+          timeout: defaultNetworkIdleTimeoutMs,
+        }),
         page.waitForTimeout(5000),
       ]);
     } catch {}
@@ -385,6 +402,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     browserNameWithExtensions,
     localeString,
     defaultTimeoutMs,
+    defaultNetworkIdleTimeoutMs,
   }, testInfo) => {
     await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
 
@@ -410,7 +428,9 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     try {
       await Promise.all([
-        page.waitForLoadState("networkidle"),
+        page.waitForLoadState("networkidle", {
+          timeout: defaultNetworkIdleTimeoutMs,
+        }),
         page.waitForTimeout(5000),
       ]);
     } catch {}
@@ -426,7 +446,9 @@ test.describe("YouTube Anti-Translate extension", () => {
       await page.mouse.wheel(0, 500);
       await originalVideo.scrollIntoViewIfNeeded();
       try {
-        await page.waitForLoadState("networkidle");
+        await page.waitForLoadState("networkidle", {
+          timeout: defaultNetworkIdleTimeoutMs,
+        });
       } catch {}
     }
     const translatedVideo = page.locator(translatedVideoSelector).first();
@@ -434,7 +456,9 @@ test.describe("YouTube Anti-Translate extension", () => {
       await page.mouse.wheel(0, 500);
       await translatedVideo.scrollIntoViewIfNeeded();
       try {
-        await page.waitForLoadState("networkidle");
+        await page.waitForLoadState("networkidle", {
+          timeout: defaultNetworkIdleTimeoutMs,
+        });
       } catch {}
     }
 
@@ -448,7 +472,9 @@ test.describe("YouTube Anti-Translate extension", () => {
     try {
       await Promise.all([
         page.locator("#tabsContent").getByText("Shorts").click(),
-        page.waitForLoadState("networkidle"),
+        page.waitForLoadState("networkidle", {
+          timeout: defaultNetworkIdleTimeoutMs,
+        }),
         page.waitForTimeout(1000),
       ]);
     } catch {}
@@ -467,7 +493,9 @@ test.describe("YouTube Anti-Translate extension", () => {
         await Promise.all([
           page.mouse.wheel(0, 500),
           originalShort.scrollIntoViewIfNeeded(),
-          page.waitForLoadState("networkidle"),
+          page.waitForLoadState("networkidle", {
+            timeout: defaultNetworkIdleTimeoutMs,
+          }),
           page.waitForTimeout(1000),
         ]);
       } catch {}
@@ -478,7 +506,9 @@ test.describe("YouTube Anti-Translate extension", () => {
         await Promise.all([
           page.mouse.wheel(0, 500),
           translatedShort.scrollIntoViewIfNeeded(),
-          page.waitForLoadState("networkidle"),
+          page.waitForLoadState("networkidle", {
+            timeout: defaultNetworkIdleTimeoutMs,
+          }),
           page.waitForTimeout(1000),
         ]);
       } catch {}
@@ -495,7 +525,9 @@ test.describe("YouTube Anti-Translate extension", () => {
     try {
       await Promise.all([
         page.locator("#tabsContent").getByText("Видео").click(),
-        page.waitForLoadState("networkidle"),
+        page.waitForLoadState("networkidle", {
+          timeout: defaultNetworkIdleTimeoutMs,
+        }),
         page.waitForTimeout(1000),
       ]);
     } catch {}
@@ -528,6 +560,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     browserNameWithExtensions,
     localeString,
     defaultTimeoutMs,
+    defaultNetworkIdleTimeoutMs,
   }, testInfo) => {
     await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
 
@@ -553,7 +586,9 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     try {
       await Promise.all([
-        page.waitForLoadState("networkidle"),
+        page.waitForLoadState("networkidle", {
+          timeout: defaultNetworkIdleTimeoutMs,
+        }),
         page.waitForTimeout(5000),
       ]);
     } catch {}
@@ -565,7 +600,9 @@ test.describe("YouTube Anti-Translate extension", () => {
       try {
         await Promise.all([
           firstShort.click(),
-          page.waitForLoadState("networkidle"),
+          page.waitForLoadState("networkidle", {
+            timeout: defaultNetworkIdleTimeoutMs,
+          }),
           page.waitForTimeout(5000),
         ]);
       } catch {}
@@ -575,7 +612,9 @@ test.describe("YouTube Anti-Translate extension", () => {
     await page.locator("#shorts-player:visible").waitFor();
 
     try {
-      await page.waitForLoadState("networkidle");
+      await page.waitForLoadState("networkidle", {
+        timeout: defaultNetworkIdleTimeoutMs,
+      });
     } catch {}
 
     function getTrackLanguageFieldObjectName(track: object) {
@@ -626,7 +665,9 @@ test.describe("YouTube Anti-Translate extension", () => {
       try {
         await Promise.all([
           buttonDown.click(),
-          page.waitForLoadState("networkidle"),
+          page.waitForLoadState("networkidle", {
+            timeout: defaultNetworkIdleTimeoutMs,
+          }),
           page.waitForTimeout(2000),
         ]);
       } catch {}
@@ -663,7 +704,9 @@ test.describe("YouTube Anti-Translate extension", () => {
       try {
         await Promise.all([
           buttonDown.click(),
-          page.waitForLoadState("networkidle"),
+          page.waitForLoadState("networkidle", {
+            timeout: defaultNetworkIdleTimeoutMs,
+          }),
           page.waitForTimeout(2000),
         ]);
       } catch {}
@@ -718,7 +761,9 @@ test.describe("YouTube Anti-Translate extension", () => {
           try {
             await Promise.all([
               buttonDown.click(),
-              page.waitForLoadState("networkidle"),
+              page.waitForLoadState("networkidle", {
+                timeout: defaultNetworkIdleTimeoutMs,
+              }),
               page.waitForTimeout(2000),
             ]);
           } catch {}
