@@ -3,7 +3,7 @@ on:
   push:
     branches: [main]
   pull_request_target:
-    branches: [main, master, release*]
+    branches: [main]
   schedule:
     - cron: "0 0 * * 0,2,4" # Run at midnight UTC every Sunday and Tuesday and Thursday
 
@@ -25,12 +25,13 @@ jobs:
           count: 1
           labels: safe-to-test
           exit_type: failure
+          add_comment: true
 
-      - name: Checkout PR code
+      - name: Checkout PR code or main
         uses: actions/checkout@v4
         with:
-          repository: ${{ github.event.pull_request.head.repo.full_name }}
-          ref: ${{ github.event.pull_request.head.ref }}
+          repository: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.full_name || github.repository }}
+          ref: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.ref || 'main' }}
 
       - uses: actions/setup-node@v4
         with:
