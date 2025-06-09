@@ -192,13 +192,16 @@ export async function handleGoogleLogin(
   page: Page,
   browserName: string,
   locale: string,
+  defaultNetworkIdleTimeoutMs: number,
 ) {
   console.log(
     `[AuthStorage] Starting Google login process for ${browserName} with locale ${locale}`,
   );
 
   try {
-    await page.waitForLoadState("networkidle", { timeout: 5000 });
+    await page.waitForLoadState("networkidle", {
+      timeout: defaultNetworkIdleTimeoutMs,
+    });
   } catch {
     console.log(`[AuthStorage] Network idle timeout during initial load`);
   }
@@ -225,7 +228,9 @@ export async function handleGoogleLogin(
     await avatarButton.click();
     await page.waitForTimeout(500);
     try {
-      await page.waitForLoadState("networkidle", { timeout: 5000 });
+      await page.waitForLoadState("networkidle", {
+        timeout: defaultNetworkIdleTimeoutMs,
+      });
     } catch {
       console.log(`[AuthStorage] Network idle timeout after avatar click`);
     }
@@ -239,7 +244,9 @@ export async function handleGoogleLogin(
       await locationButton.click();
       await page.waitForTimeout(500);
       try {
-        await page.waitForLoadState("networkidle", { timeout: 5000 });
+        await page.waitForLoadState("networkidle", {
+          timeout: defaultNetworkIdleTimeoutMs,
+        });
       } catch {
         console.log(
           `[AuthStorage] Network idle timeout after location button click`,
@@ -294,7 +301,9 @@ export async function handleGoogleLogin(
         });
       }
       try {
-        await page.waitForLoadState("networkidle", { timeout: 5000 });
+        await page.waitForLoadState("networkidle", {
+          timeout: defaultNetworkIdleTimeoutMs,
+        });
       } catch {
         console.log(`[AuthStorage] Network idle timeout after language change`);
       }
@@ -309,7 +318,9 @@ export async function handleGoogleLogin(
     console.log(`[AuthStorage] Continuing with Google login steps`);
 
     try {
-      await page.waitForLoadState("networkidle", { timeout: 5000 });
+      await page.waitForLoadState("networkidle", {
+        timeout: defaultNetworkIdleTimeoutMs,
+      });
     } catch {
       console.log(`[AuthStorage] Network idle timeout in login steps`);
     }
@@ -320,7 +331,9 @@ export async function handleGoogleLogin(
     await page.locator("#identifierId").fill(process.env.GOOGLE_USER);
     await page.getByRole("button", { name: nextText }).click();
     try {
-      await page.waitForLoadState("networkidle", { timeout: 5000 });
+      await page.waitForLoadState("networkidle", {
+        timeout: defaultNetworkIdleTimeoutMs,
+      });
     } catch {
       console.log(`[AuthStorage] Network idle timeout after email step`);
     }
@@ -329,7 +342,9 @@ export async function handleGoogleLogin(
     await page.locator("#password input").fill(process.env.GOOGLE_PWD);
     await page.getByRole("button", { name: nextText }).click();
     try {
-      await page.waitForLoadState("networkidle", { timeout: 5000 });
+      await page.waitForLoadState("networkidle", {
+        timeout: defaultNetworkIdleTimeoutMs,
+      });
     } catch {
       console.log(`[AuthStorage] Network idle timeout after password step`);
     }
@@ -351,9 +366,19 @@ export async function handleGoogleLogin(
       console.log(`[AuthStorage] No 2FA required`);
     }
 
+    //If we get a "Simplify you sign-in" or "Confirm your details" page cligh on "Not now" button
+    const notNowButton = page.getByRole("button", {
+      name: /Not now|Не сейчас|ยังไม่ใช่ตอนนี้/i,
+    });
+    if (await notNowButton.isVisible()) {
+      await notNowButton.click();
+    }
+
     await page.waitForTimeout(5000);
     try {
-      await page.waitForLoadState("networkidle", { timeout: 5000 });
+      await page.waitForLoadState("networkidle", {
+        timeout: defaultNetworkIdleTimeoutMs,
+      });
     } catch {
       console.log(`[AuthStorage] Network idle timeout after final login steps`);
     }

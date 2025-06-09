@@ -23,7 +23,12 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
   }, testInfo) => {
     expect(process.env.YOUTUBE_API_KEY?.trim() || "").not.toBe("");
 
-    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
+    await handleRetrySetup(
+      testInfo,
+      browserNameWithExtensions,
+      localeString,
+      defaultNetworkIdleTimeoutMs,
+    );
 
     // --- Update Extension Settings and distribute a test copy ---
     // The object to be passed and inserted into the start.js file
@@ -52,7 +57,12 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     defaultTimeoutMs,
     defaultNetworkIdleTimeoutMs,
   }, testInfo) => {
-    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
+    await handleRetrySetup(
+      testInfo,
+      browserNameWithExtensions,
+      localeString,
+      defaultNetworkIdleTimeoutMs,
+    );
 
     // Launch browser with the extension
     const context = await createBrowserContext(
@@ -89,6 +99,8 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     await loadPageAndVerifyAuth(
       page,
       "https://www.youtube.com/watch?v=l-nMKJ5J3Uc",
+      browserNameWithExtensions,
+      defaultNetworkIdleTimeoutMs,
     );
 
     try {
@@ -341,7 +353,12 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     defaultTimeoutMs,
     defaultNetworkIdleTimeoutMs,
   }, testInfo) => {
-    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
+    await handleRetrySetup(
+      testInfo,
+      browserNameWithExtensions,
+      localeString,
+      defaultNetworkIdleTimeoutMs,
+    );
 
     // Launch browser with the extension
     const context = await createBrowserContext(
@@ -360,6 +377,8 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     await loadPageAndVerifyAuth(
       page,
       "https://www.youtube.com/watch?v=l-nMKJ5J3Uc",
+      browserNameWithExtensions,
+      defaultNetworkIdleTimeoutMs,
     );
 
     // Wait for the video player to appear

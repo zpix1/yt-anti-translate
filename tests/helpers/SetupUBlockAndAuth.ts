@@ -13,6 +13,7 @@ import { handleYoutubeConsent } from "./YoutubeConsentHelper";
 export async function setupUBlockAndAuth(
   allBrowserNameWithExtensions: string[],
   allLocaleStrings: string[],
+  defaultNetworkIdleTimeoutMs: number,
 ) {
   try {
     for (let index = 0; index < allBrowserNameWithExtensions.length; index++) {
@@ -100,16 +101,20 @@ export async function setupUBlockAndAuth(
           await page.goto("https://www.youtube.com/@MrBeast");
 
           try {
-            await page.waitForLoadState("networkidle", { timeout: 5000 });
+            await page.waitForLoadState("networkidle", {
+              timeout: defaultNetworkIdleTimeoutMs,
+            });
           } catch {}
 
           // Sometimes youtube redirects to consent page so wait 2 seconds before proceeding
           await page.waitForTimeout(2000);
           try {
-            await page.waitForLoadState("networkidle", { timeout: 5000 });
+            await page.waitForLoadState("networkidle", {
+              timeout: defaultNetworkIdleTimeoutMs,
+            });
           } catch {}
 
-          await handleYoutubeConsent(page);
+          await handleYoutubeConsent(page, defaultNetworkIdleTimeoutMs);
 
           // If we did not load a locale storage state, login to test account and set locale
           // This will also create a new storage state with the locale already set
@@ -118,6 +123,7 @@ export async function setupUBlockAndAuth(
             page,
             browserNameWithExtensions,
             localeString,
+            defaultNetworkIdleTimeoutMs,
           );
 
           // If for whatever reason we are not logged in, then fail the setup

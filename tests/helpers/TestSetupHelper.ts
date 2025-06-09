@@ -24,12 +24,17 @@ export async function handleRetrySetup(
   testInfo: TestInfo,
   browserNameWithExtensions: string,
   localeString: string,
+  defaultNetworkIdleTimeoutMs: number,
 ) {
   if (testInfo.retry > 0) {
     console.log("retrying test", testInfo.title, "doing setup again");
     // If this test is retrying then check uBlock and Auth again
     expect(
-      await setupUBlockAndAuth([browserNameWithExtensions], [localeString]),
+      await setupUBlockAndAuth(
+        [browserNameWithExtensions],
+        [localeString],
+        defaultNetworkIdleTimeoutMs,
+      ),
     ).toBe(true);
   }
 }
@@ -115,14 +120,17 @@ export async function setupPageWithAuth(
 export async function loadPageAndVerifyAuth(
   page: Page,
   url: string,
-  browserNameWithExtensions?: string,
+  browserNameWithExtensions: string,
+  defaultNetworkIdleTimeoutMs: number,
 ) {
   // Navigate to the specified YouTube page
   await page.goto(url);
 
   // Wait for the page to load
   try {
-    await page.waitForLoadState("networkidle", { timeout: 5000 });
+    await page.waitForLoadState("networkidle", {
+      timeout: defaultNetworkIdleTimeoutMs,
+    });
   } catch {}
   // .waitForLoadState("networkidle" is not always right so wait 5 extra seconds
   await page.waitForTimeout(5000);

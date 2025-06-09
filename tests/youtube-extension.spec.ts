@@ -14,7 +14,12 @@ test.describe("YouTube Anti-Translate extension", () => {
     defaultTimeoutMs,
     defaultNetworkIdleTimeoutMs,
   }, testInfo) => {
-    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
+    await handleRetrySetup(
+      testInfo,
+      browserNameWithExtensions,
+      localeString,
+      defaultNetworkIdleTimeoutMs,
+    );
 
     // Launch browser with the extension
     const context = await createBrowserContext(browserNameWithExtensions);
@@ -31,6 +36,7 @@ test.describe("YouTube Anti-Translate extension", () => {
       page,
       "https://www.youtube.com/watch?v=l-nMKJ5J3Uc",
       browserNameWithExtensions,
+      defaultNetworkIdleTimeoutMs,
     );
     // Wait for the video page to fully load
     await page.locator("ytd-watch-metadata").waitFor();
@@ -210,7 +216,12 @@ test.describe("YouTube Anti-Translate extension", () => {
     defaultTimeoutMs,
     defaultNetworkIdleTimeoutMs,
   }, testInfo) => {
-    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
+    await handleRetrySetup(
+      testInfo,
+      browserNameWithExtensions,
+      localeString,
+      defaultNetworkIdleTimeoutMs,
+    );
 
     // Launch browser with the extension
     const context = await createBrowserContext(browserNameWithExtensions);
@@ -227,6 +238,7 @@ test.describe("YouTube Anti-Translate extension", () => {
       page,
       "https://www.youtube.com/watch?v=4PBPXbd4DkQ",
       browserNameWithExtensions,
+      defaultNetworkIdleTimeoutMs,
     );
 
     // Wait for the video page to fully load
@@ -279,6 +291,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     const secondTimecodeSelector = 'a[href*="t=336"]:visible'; // 5:36 = 336 seconds
     const secondTimecodeLocator = page.locator(secondTimecodeSelector).first();
     if (await secondTimecodeLocator.isVisible()) {
+      await secondTimecodeLocator.scrollIntoViewIfNeeded();
       await Promise.all([
         secondTimecodeLocator.click(),
         // Wait for video to update its playback position
@@ -314,7 +327,12 @@ test.describe("YouTube Anti-Translate extension", () => {
     defaultTimeoutMs,
     defaultNetworkIdleTimeoutMs,
   }, testInfo) => {
-    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
+    await handleRetrySetup(
+      testInfo,
+      browserNameWithExtensions,
+      localeString,
+      defaultNetworkIdleTimeoutMs,
+    );
 
     // Launch browser with the extension
     const context = await createBrowserContext(browserNameWithExtensions);
@@ -331,6 +349,7 @@ test.describe("YouTube Anti-Translate extension", () => {
       page,
       "https://www.youtube.com/shorts/PXevNM0awlI",
       browserNameWithExtensions,
+      defaultNetworkIdleTimeoutMs,
     );
 
     // Wait for the shorts title element to be present
@@ -404,7 +423,12 @@ test.describe("YouTube Anti-Translate extension", () => {
     defaultTimeoutMs,
     defaultNetworkIdleTimeoutMs,
   }, testInfo) => {
-    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
+    await handleRetrySetup(
+      testInfo,
+      browserNameWithExtensions,
+      localeString,
+      defaultNetworkIdleTimeoutMs,
+    );
 
     // Launch browser with the extension
     const context = await createBrowserContext(browserNameWithExtensions);
@@ -421,6 +445,7 @@ test.describe("YouTube Anti-Translate extension", () => {
       page,
       "https://www.youtube.com/@MrBeast/videos",
       browserNameWithExtensions,
+      defaultNetworkIdleTimeoutMs,
     );
 
     // Wait for the video grid to appear
@@ -562,7 +587,12 @@ test.describe("YouTube Anti-Translate extension", () => {
     defaultTimeoutMs,
     defaultNetworkIdleTimeoutMs,
   }, testInfo) => {
-    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
+    await handleRetrySetup(
+      testInfo,
+      browserNameWithExtensions,
+      localeString,
+      defaultNetworkIdleTimeoutMs,
+    );
 
     // Launch browser with the extension
     const context = await createBrowserContext(browserNameWithExtensions);
@@ -579,6 +609,7 @@ test.describe("YouTube Anti-Translate extension", () => {
       page,
       "https://www.youtube.com/@MrBeast/shorts",
       browserNameWithExtensions,
+      defaultNetworkIdleTimeoutMs,
     );
 
     // Wait for the shorts page to fully load
