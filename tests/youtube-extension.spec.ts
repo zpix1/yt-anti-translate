@@ -39,7 +39,7 @@ test.describe("YouTube Anti-Translate extension", () => {
       defaultNetworkIdleTimeoutMs,
     );
     // Wait for the video page to fully load
-    await page.locator("ytd-watch-metadata").waitFor();
+    await page.locator("ytd-watch-metadata:visible").waitFor();
 
     try {
       await Promise.all([
@@ -51,7 +51,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     } catch {}
 
     const videoTitleSelector =
-      "h1.ytd-watch-metadata #yt-anti-translate-fake-node-current-video:visible";
+      "h1.ytd-watch-metadata:visible #yt-anti-translate-fake-node-current-video:visible";
     const videoTitleLocator = page.locator(videoTitleSelector);
     await videoTitleLocator.waitFor();
 
@@ -242,7 +242,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     );
 
     // Wait for the video page to fully load
-    await page.locator("ytd-watch-metadata").waitFor();
+    await page.locator("ytd-watch-metadata:visible").waitFor();
 
     try {
       await Promise.all([
