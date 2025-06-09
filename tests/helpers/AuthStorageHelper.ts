@@ -41,6 +41,7 @@ export async function newPageWithStorageStateIfItExists(
   let authFile;
   switch (browserName) {
     case "chromium":
+    case "chromium-edge":
     case "firefox":
       authFile = path.join(authFileLocationBase, browserName, authFileName);
       console.log(`[AuthStorage] Auth file path: ${authFile}`);
@@ -104,7 +105,7 @@ export async function newPageWithStorageStateIfItExists(
       console.log(
         `[AuthStorage] Storage is fresh, loading for browser: ${browserName}`,
       );
-      if (browserName === "chromium") {
+      if (browserName === "chromium" || browserName === "chromium-edge") {
         // Chromium must be launched as persistentContext to load
         // So we can only load the cookies as the newPage does not accept a storage state
         await loadCookies(context, storageFile);
@@ -276,7 +277,7 @@ export async function handleGoogleLogin(
         `user_${locale}.json`,
       );
 
-      if (browserName === "chromium") {
+      if (browserName === "chromium" || browserName === "chromium-edge") {
         console.log(
           `[AuthStorage] Saving locale-specific storage state for Chromium: ${localeStoragePath}`,
         );
@@ -363,7 +364,7 @@ export async function handleGoogleLogin(
       authFileName,
     );
 
-    if (browserName === "chromium") {
+    if (browserName === "chromium" || browserName === "chromium-edge") {
       console.log(
         `[AuthStorage] Saving base storage state for Chromium: ${baseStoragePath}`,
       );

@@ -100,6 +100,7 @@ export async function downloadAndExtractUBlock(browserName) {
   let uBlockUri, expectedVersion, destDirUBlock;
   switch (browserName) {
     case "chromium":
+    case "chromium-edge":
       //To get the following url if it changes you can do a `curl 'https://clients2.google.com/service/update2/crx?response=redirect&os=win&arch=x86-64&os_arch=x86-64&nacl_arch=x86-64&prod=chromiumcrx&prodchannel=unknown&prodversion=9999.0.9999.0&acceptformat=crx2,crx3&x=id%3Dddkjiahejlhfcafbddmgiahcphecmpfh%26uc'`
       //and copy the redirect URL to the file
       uBlockUri = `https://clients2.googleusercontent.com/crx/blobs/AR5vvToUznjd4HPtq2Qf2ofykf5cygX6Wm7Q7cmg2zGc61WE49beD-vBuuew0okjXIj8lJ8TJMfGenI2Dg8DAJT_dNWWaFrSeW5UApwk5Nxh05G5vVNqQYKOcrQeYkJ2fxBgAMZSmuWEL6hqLeWkBX6RZY0yRQi9IjkaXg/DDKJIAHEJLHFCAFBDDMGIAHCPHECMPFH_2025_512_1008_0.crx`;

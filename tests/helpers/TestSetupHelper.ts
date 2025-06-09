@@ -41,13 +41,16 @@ export async function createBrowserContext(
 ): Promise<BrowserContext | Browser> {
   let context;
   switch (browserNameWithExtensions) {
-    case "chromium": {
+    case "chromium":
+    case "chromium-edge": {
       const browserTypeWithExtension = withExtension(chromium, [
         path.resolve(__dirname, extensionPath),
         path.resolve(__dirname, "..", "testUBlockOriginLite"),
       ]);
       context = await browserTypeWithExtension.launchPersistentContext("", {
         headless: false,
+        channel:
+          browserNameWithExtensions === "chromium-edge" ? "msedge" : undefined,
       });
       break;
     }
@@ -76,7 +79,7 @@ export async function setupPageWithAuth(
   context: BrowserContext | Browser,
   browserNameWithExtensions: string,
   localeString: string,
-  ciTimeoutMultiplier: number,
+  defaultTimeoutMs: number,
 ): Promise<{ page: Page; consoleMessageCount: number }> {
   const result = await newPageWithStorageStateIfItExists(
     context,
@@ -91,8 +94,13 @@ export async function setupPageWithAuth(
     expect(localeLoaded).toBe(true);
   }
 
-  page.setDefaultNavigationTimeout(15000 * ciTimeoutMultiplier);
-  page.setDefaultTimeout(15000 * ciTimeoutMultiplier);
+  if (context["_type"] === "BrowserContext") {
+    const browserContext = context as BrowserContext;
+    browserContext.setDefaultNavigationTimeout(defaultTimeoutMs);
+    browserContext.setDefaultTimeout(defaultTimeoutMs);
+  }
+  page.setDefaultNavigationTimeout(defaultTimeoutMs);
+  page.setDefaultTimeout(defaultTimeoutMs);
 
   // Set up console message counting
   let consoleMessageCount = 0;
@@ -124,7 +132,10 @@ export async function loadPageAndVerifyAuth(
 
   // When chromium we need to wait some extra time to allow adds to be removed by uBlock Origin Lite
   // Ads are allowed to load and removed after so it takes time
-  if (browserNameWithExtensions === "chromium") {
+  if (
+    browserNameWithExtensions === "chromium" ||
+    browserNameWithExtensions === "chromium-edge"
+  ) {
     await page.waitForTimeout(5000);
   }
 }

@@ -40,7 +40,8 @@ export async function setupUBlockAndAuth(
         // Launch browser with the extension
         let context;
         switch (browserNameWithExtensions) {
-          case "chromium": {
+          case "chromium":
+          case "chromium-edge": {
             const browserTypeWithExtension = withExtension(chromium, [
               path.resolve(
                 path.dirname(fileURLToPath(import.meta.url)),
@@ -55,6 +56,10 @@ export async function setupUBlockAndAuth(
               "",
               {
                 headless: false,
+                channel:
+                  browserNameWithExtensions === "chromium-edge"
+                    ? "msedge"
+                    : undefined,
               },
             );
             break;

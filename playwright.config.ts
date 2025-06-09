@@ -38,7 +38,7 @@ export default defineConfig<TestOptions>({
   /* Retry 3 times on CI, or once locally */
   retries: process.env.CI ? 3 : 0,
   /* Limit parallel workers on CI as they cause random failures some of the times */
-  workers: process.env.CI ? 2 : undefined,
+  workers: process.env.CI ? 4 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [["github"], ["html"]],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
@@ -56,7 +56,7 @@ export default defineConfig<TestOptions>({
       name: "setup-auth-and-ublock",
       testMatch: /.*setup\.spec\.ts/,
       use: {
-        allBrowserNameWithExtensions: ["chromium", "firefox"],
+        allBrowserNameWithExtensions: ["chromium", "chromium-edge", "firefox"],
         allLocaleStrings: ["ru-RU", "th-TH"],
       },
     },
@@ -67,6 +67,25 @@ export default defineConfig<TestOptions>({
         browserNameWithExtensions: "chromium",
         localeString: "ru-RU",
         ...devices["Desktop Chrome"],
+        contextOptions: {
+          // Load the extension from the app directory
+          permissions: ["clipboard-read", "clipboard-write"],
+        },
+        launchOptions: {
+          args: ["--headless=new"],
+        },
+        locale: "ru-RU",
+      },
+      dependencies: ["setup-auth-and-ublock"],
+    },
+    {
+      name: "edge-extension-ru-RU",
+      testMatch: /.*extension\.spec\.ts/,
+      use: {
+        browserNameWithExtensions: "chromium-edge",
+        localeString: "ru-RU",
+        ...devices["Desktop Edge"],
+        channel: "msedge",
         contextOptions: {
           // Load the extension from the app directory
           permissions: ["clipboard-read", "clipboard-write"],
@@ -100,6 +119,25 @@ export default defineConfig<TestOptions>({
         browserNameWithExtensions: "chromium",
         localeString: "th-TH",
         ...devices["Desktop Chrome"],
+        contextOptions: {
+          // Load the extension from the app directory
+          permissions: ["clipboard-read", "clipboard-write"],
+        },
+        launchOptions: {
+          args: ["--headless=new"],
+        },
+        locale: "th-TH",
+      },
+      dependencies: ["setup-auth-and-ublock"],
+    },
+    {
+      name: "edge-extension-extra-th-TH",
+      testMatch: /.*extension\.extra\.spec\.ts/,
+      use: {
+        browserNameWithExtensions: "chromium-edge",
+        localeString: "th-TH",
+        ...devices["Desktop Edge"],
+        channel: "msedge",
         contextOptions: {
           // Load the extension from the app directory
           permissions: ["clipboard-read", "clipboard-write"],
