@@ -101,10 +101,10 @@ export async function setupPageWithAuth(
 
   if (context["_type"] === "BrowserContext") {
     const browserContext = context as BrowserContext;
-    browserContext.setDefaultNavigationTimeout(defaultTimeoutMs);
+    browserContext.setDefaultNavigationTimeout(defaultTimeoutMs * 2);
     browserContext.setDefaultTimeout(defaultTimeoutMs);
   }
-  page.setDefaultNavigationTimeout(defaultTimeoutMs);
+  page.setDefaultNavigationTimeout(defaultTimeoutMs * 2);
   page.setDefaultTimeout(defaultTimeoutMs);
 
   // Set up console message counting

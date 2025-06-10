@@ -139,13 +139,13 @@ test.describe("YouTube Anti-Translate extension", () => {
     } catch {}
 
     const descriptionLocator = page.locator(
-      "#description-inline-expander:visible",
+      "ytd-text-inline-expander#description-inline-expander:visible",
     );
+    await descriptionLocator.waitFor();
 
     // Expand the description if it's collapsed
-    const moreButton = page.locator(
-      "#description-inline-expander ytd-text-inline-expander #expand",
-    );
+    const moreButton = descriptionLocator.locator("#expand:visible");
+    await moreButton.waitFor();
     if (await moreButton.isVisible()) {
       try {
         // Wait for the description to expand
@@ -260,8 +260,14 @@ test.describe("YouTube Anti-Translate extension", () => {
     });
     expect(initialTime).toBeGreaterThanOrEqual(0); // Video should be loaded
 
+    const descriptionLocator = page.locator(
+      "ytd-text-inline-expander#description-inline-expander:visible",
+    );
+    await descriptionLocator.waitFor();
+
     // Expand the description if it's collapsed
-    const moreButton = page.locator("#expand").first();
+    const moreButton = descriptionLocator.locator("#expand:visible");
+    await moreButton.waitFor();
     if (await moreButton.isVisible()) {
       await Promise.all([
         moreButton.click(),
@@ -270,10 +276,6 @@ test.describe("YouTube Anti-Translate extension", () => {
       ]);
     }
 
-    // Get the description text to verify it's in English (not translated)
-    const descriptionLocator = page.locator(
-      "#description-inline-expander:visible",
-    );
     // Verify description contains expected English text
     try {
       expect(descriptionLocator).toHaveCount(1);
@@ -558,7 +560,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     } catch {}
     await page
       .locator(
-        "ytd-rich-grid-media >> ytd-thumbnail-overlay-time-status-renderer:not([overlay-style='SHORTS']):visible",
+        "ytd-rich-grid-media:visible >> ytd-thumbnail-overlay-time-status-renderer:not([overlay-style='SHORTS']):visible",
       )
       .first()
       .waitFor(); // Wait for videos to load
