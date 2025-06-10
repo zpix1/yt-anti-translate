@@ -1,4 +1,4 @@
-import { chromium, firefox, expect } from "@playwright/test";
+import { chromium, firefox, expect, BrowserContext } from "@playwright/test";
 import path from "path";
 import { fileURLToPath } from "url";
 import { withExtension } from "playwright-webextext";
@@ -14,6 +14,7 @@ export async function setupUBlockAndAuth(
   allBrowserNameWithExtensions: string[],
   allLocaleStrings: string[],
   defaultNetworkIdleTimeoutMs: number,
+  defaultTimeoutMs: number,
 ) {
   try {
     for (let index = 0; index < allBrowserNameWithExtensions.length; index++) {
@@ -90,6 +91,14 @@ export async function setupUBlockAndAuth(
         );
         const page = result.page;
         const localeLoaded = result.localeLoaded;
+
+        if (context["_type"] === "BrowserContext") {
+          const browserContext = context as BrowserContext;
+          browserContext.setDefaultNavigationTimeout(defaultTimeoutMs * 2);
+          browserContext.setDefaultTimeout(defaultTimeoutMs);
+        }
+        page.setDefaultNavigationTimeout(defaultTimeoutMs * 2);
+        page.setDefaultTimeout(defaultTimeoutMs);
 
         // Set up console message counting
         let consoleMessageCount = 0;

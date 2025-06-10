@@ -28,6 +28,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
       browserNameWithExtensions,
       localeString,
       defaultNetworkIdleTimeoutMs,
+      defaultTimeoutMs,
     );
 
     // --- Update Extension Settings and distribute a test copy ---
@@ -62,6 +63,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
       browserNameWithExtensions,
       localeString,
       defaultNetworkIdleTimeoutMs,
+      defaultTimeoutMs,
     );
 
     // Launch browser with the extension
@@ -358,6 +360,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
       browserNameWithExtensions,
       localeString,
       defaultNetworkIdleTimeoutMs,
+      defaultTimeoutMs,
     );
 
     // Launch browser with the extension

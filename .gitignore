@@ -21,3 +21,6 @@ tests/testUBlockOrigin/
 tests/testUBlockOriginLite/
 /app/.amo-upload-uuid
 app/app.zip
+
+
+setup-auth-*.png

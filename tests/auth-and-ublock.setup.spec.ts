@@ -9,12 +9,14 @@ test.describe("Setup Auth And UBlock", () => {
     allBrowserNameWithExtensions,
     allLocaleStrings,
     defaultNetworkIdleTimeoutMs,
+    defaultTimeoutMs,
   }) => {
     expect(
       await setupUBlockAndAuth(
         allBrowserNameWithExtensions,
         allLocaleStrings,
         defaultNetworkIdleTimeoutMs,
+        defaultTimeoutMs,
       ),
     ).toBe(true);
   });

@@ -25,6 +25,7 @@ export async function handleRetrySetup(
   browserNameWithExtensions: string,
   localeString: string,
   defaultNetworkIdleTimeoutMs: number,
+  defaultTimeoutMs: number,
 ) {
   if (testInfo.retry > 0) {
     console.log("retrying test", testInfo.title, "doing setup again");
@@ -34,6 +35,7 @@ export async function handleRetrySetup(
         [browserNameWithExtensions],
         [localeString],
         defaultNetworkIdleTimeoutMs,
+        defaultTimeoutMs,
       ),
     ).toBe(true);
   }

@@ -19,6 +19,7 @@ test.describe("YouTube Anti-Translate extension", () => {
       browserNameWithExtensions,
       localeString,
       defaultNetworkIdleTimeoutMs,
+      defaultTimeoutMs,
     );
 
     // Launch browser with the extension
@@ -221,6 +222,7 @@ test.describe("YouTube Anti-Translate extension", () => {
       browserNameWithExtensions,
       localeString,
       defaultNetworkIdleTimeoutMs,
+      defaultTimeoutMs,
     );
 
     // Launch browser with the extension
@@ -334,6 +336,7 @@ test.describe("YouTube Anti-Translate extension", () => {
       browserNameWithExtensions,
       localeString,
       defaultNetworkIdleTimeoutMs,
+      defaultTimeoutMs,
     );
 
     // Launch browser with the extension
@@ -430,6 +433,7 @@ test.describe("YouTube Anti-Translate extension", () => {
       browserNameWithExtensions,
       localeString,
       defaultNetworkIdleTimeoutMs,
+      defaultTimeoutMs,
     );
 
     // Launch browser with the extension
@@ -594,6 +598,7 @@ test.describe("YouTube Anti-Translate extension", () => {
       browserNameWithExtensions,
       localeString,
       defaultNetworkIdleTimeoutMs,
+      defaultTimeoutMs,
     );
 
     // Launch browser with the extension

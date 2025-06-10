@@ -217,6 +217,11 @@ export async function handleGoogleLogin(
     console.log(`[AuthStorage] User appears to already be logged in`);
   }
 
+  // Take a screenshot for visual verification
+  await page.screenshot({
+    path: `images/tests/${browserName}/${locale}/setup-auth-login-done.png`,
+  });
+
   //Check youtube locale is set correctly
   console.log(`[AuthStorage] Checking and setting YouTube locale`);
   const avatarButton = page.locator("#masthead #avatar-btn");
@@ -378,6 +383,7 @@ export async function handleGoogleLogin(
     }
 
     await page.waitForTimeout(5000);
+
     try {
       await page.waitForLoadState("networkidle", {
         timeout: defaultNetworkIdleTimeoutMs,
