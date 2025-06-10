@@ -372,6 +372,9 @@ export async function handleGoogleLogin(
     });
     if (await notNowButton.isVisible()) {
       await notNowButton.click();
+      console.log(`[AuthStorage] 'Not now' button clicked`);
+    } else {
+      console.log(`[AuthStorage] 'Not now' button skipped as not detected`);
     }
 
     await page.waitForTimeout(5000);
