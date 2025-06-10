@@ -130,7 +130,8 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     // Wait for the channel header to appear
     const channelHeaderSelector =
       "#page-header-container:visible #page-header .page-header-view-model-wiz__page-header-headline-info:visible";
-    await page.locator(channelHeaderSelector).waitFor();
+    const channelHeaderLocator = page.locator(channelHeaderSelector);
+    await channelHeaderLocator.waitFor();
 
     try {
       await Promise.all([
@@ -142,8 +143,9 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     } catch {}
 
     // --- Check Branding Title ---
-    const channelTitleSelector = `${channelHeaderSelector} h1 .yt-core-attributed-string:visible`;
-    const channelTitleLocator = page.locator(channelTitleSelector);
+    const channelTitleSelector = `h1 .yt-core-attributed-string:visible`;
+    const channelTitleLocator =
+      channelHeaderLocator.locator(channelTitleSelector);
     await channelTitleLocator.waitFor();
 
     try {
@@ -168,8 +170,10 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     console.log("Channel header title:", brandingTitle?.trim());
 
     // --- Check Branding Description
-    const channelDescriptionSelector = `${channelHeaderSelector} yt-description-preview-view-model .truncated-text-wiz__truncated-text-content > .yt-core-attributed-string:nth-child(1):visible`;
-    const channelDescriptionLocator = page.locator(channelDescriptionSelector);
+    const channelDescriptionSelector = `yt-description-preview-view-model .truncated-text-wiz__truncated-text-content > .yt-core-attributed-string:nth-child(1):visible`;
+    const channelDescriptionLocator = channelHeaderLocator.locator(
+      channelDescriptionSelector,
+    );
     await channelDescriptionLocator.waitFor();
     try {
       await page.waitForLoadState("networkidle", {
@@ -198,10 +202,8 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     );
     try {
       await Promise.all([
-        page
-          .locator(
-            `${channelHeaderSelector} .truncated-text-wiz__absolute-button`,
-          )
+        channelHeaderLocator
+          .locator(`.truncated-text-wiz__absolute-button`)
           .click(),
         page.waitForLoadState("networkidle", {
           timeout: defaultNetworkIdleTimeoutMs,
@@ -211,10 +213,12 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     } catch {}
 
     // --- Check About Popup ---
-    const aboutContainer = "ytd-engagement-panel-section-list-renderer:visible";
+    const aboutContainerSelector =
+      "ytd-engagement-panel-section-list-renderer:visible";
+    const aboutContainerLocator = page.locator(aboutContainerSelector);
 
-    const aboutTitleSelector = `${aboutContainer} #title-text:visible`;
-    const aboutTitleLocator = page.locator(aboutTitleSelector);
+    const aboutTitleSelector = `#title-text:visible`;
+    const aboutTitleLocator = aboutContainerLocator.locator(aboutTitleSelector);
     await aboutTitleLocator.waitFor();
     console.log("Checking Channel header for original description...");
 
@@ -229,8 +233,10 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     const aboutTitle = await aboutTitleLocator.textContent();
     console.log("Channel about title:", aboutTitle?.trim());
 
-    const aboutDescriptionSelector = `${aboutContainer} #description-container > .yt-core-attributed-string:nth-child(1):visible`;
-    const aboutDescriptionLocator = page.locator(aboutDescriptionSelector);
+    const aboutDescriptionSelector = `#description-container > .yt-core-attributed-string:nth-child(1):visible`;
+    const aboutDescriptionLocator = aboutContainerLocator.locator(
+      aboutDescriptionSelector,
+    );
     await aboutDescriptionLocator.waitFor();
 
     // Check that the branding about description is in English and not in Thai
@@ -250,9 +256,9 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     console.log("Clicking 'X' button to close Popup...");
     try {
       await Promise.all([
-        page
+        aboutContainerLocator
           .locator(
-            `${aboutContainer} #visibility-button button.yt-spec-button-shape-next:visible`,
+            `#visibility-button button.yt-spec-button-shape-next:visible`,
           )
           .click(),
         page.waitForLoadState("networkidle", {
@@ -268,9 +274,9 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     );
     try {
       await Promise.all([
-        page
+        channelHeaderLocator
           .locator(
-            `${channelHeaderSelector} span.yt-core-attributed-string>span>a.yt-core-attributed-string__link[role="button"]`,
+            `span.yt-core-attributed-string>span>a.yt-core-attributed-string__link[role="button"]`,
           )
           .click(),
         page.waitForLoadState("networkidle", {
@@ -317,9 +323,9 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     console.log("Clicking 'X' button to close Popup...");
     try {
       await Promise.all([
-        page
+        aboutContainerLocator
           .locator(
-            `${aboutContainer} #visibility-button button.yt-spec-button-shape-next:visible`,
+            `#visibility-button button.yt-spec-button-shape-next:visible`,
           )
           .click(),
         page.waitForLoadState("networkidle", {
@@ -420,7 +426,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     console.log("Video author:", brandingTitle?.trim());
 
     // Take a screenshot for visual verification
-    const target = page.locator("ytd-video-owner-renderer yt-icon div");
+    const target = page.locator("ytd-video-owner-renderer yt-icon div:visible");
     await expect(target).toHaveCount(1, {
       timeout: defaultTimeoutMs * 2, // Increased timeout cause YouTube takes a while to add the "verified" chackmark
     });

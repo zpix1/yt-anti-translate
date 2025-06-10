@@ -293,7 +293,9 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Click on the second timecode (05:36)
     const secondTimecodeSelector = 'a[href*="t=336"]:visible'; // 5:36 = 336 seconds
-    const secondTimecodeLocator = page.locator(secondTimecodeSelector).first();
+    const secondTimecodeLocator = descriptionLocator
+      .locator(secondTimecodeSelector)
+      .first();
     if (await secondTimecodeLocator.isVisible()) {
       await secondTimecodeLocator.scrollIntoViewIfNeeded();
       await Promise.all([
