@@ -1,4 +1,10 @@
-import { chromium, firefox, expect, BrowserContext } from "@playwright/test";
+import {
+  chromium,
+  firefox,
+  expect,
+  BrowserContext,
+  TestInfo,
+} from "@playwright/test";
 import path from "path";
 import { fileURLToPath } from "url";
 import { withExtension } from "playwright-webextext";
@@ -11,6 +17,7 @@ import { downloadAndExtractUBlock } from "./ExtensionsFilesHelper";
 import { handleYoutubeConsent } from "./YoutubeConsentHelper";
 
 export async function setupUBlockAndAuth(
+  testIfo: TestInfo,
   allBrowserNameWithExtensions: string[],
   allLocaleStrings: string[],
   defaultNetworkIdleTimeoutMs: number,
@@ -128,6 +135,7 @@ export async function setupUBlockAndAuth(
           // If we did not load a locale storage state, login to test account and set locale
           // This will also create a new storage state with the locale already set
           await handleGoogleLogin(
+            testIfo,
             context,
             page,
             browserNameWithExtensions,

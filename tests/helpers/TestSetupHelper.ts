@@ -32,6 +32,7 @@ export async function handleRetrySetup(
     // If this test is retrying then check uBlock and Auth again
     expect(
       await setupUBlockAndAuth(
+        testInfo,
         [browserNameWithExtensions],
         [localeString],
         defaultNetworkIdleTimeoutMs,

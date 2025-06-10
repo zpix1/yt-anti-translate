@@ -72,7 +72,7 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Take a screenshot for visual verification
     await page.screenshot({
-      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-extension-test-title.png`,
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-extension-test-title${testInfo.retry > 0 ? `-${testInfo.retry}` : ""}.png`,
     });
 
     // Open full screen
@@ -125,7 +125,7 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Take a screenshot for visual verification
     await page.screenshot({
-      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-extension-test-fullscreen.png`,
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-extension-test-fullscreen${testInfo.retry > 0 ? `-${testInfo.retry}` : ""}.png`,
     });
 
     // Exit full screen
@@ -188,7 +188,7 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Take a screenshot for visual verification
     await page.screenshot({
-      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-extension-test-description.png`,
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-extension-test-description${testInfo.retry > 0 ? `-${testInfo.retry}` : ""}.png`,
     });
 
     await page.waitForFunction(
@@ -317,7 +317,7 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Take a screenshot for visual verification
     await page.screenshot({
-      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-timecode-test.png`,
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-timecode-test${testInfo.retry > 0 ? `-${testInfo.retry}` : ""}.png`,
     });
 
     // Check console message count
@@ -414,7 +414,7 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Take a screenshot for visual verification
     await page.screenshot({
-      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-shorts-test.png`,
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-shorts-test${testInfo.retry > 0 ? `-${testInfo.retry}` : ""}.png`,
     });
 
     // Check console message count
@@ -579,7 +579,7 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Take a screenshot for visual verification
     await page.screenshot({
-      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-channel-tabs-test.png`,
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-channel-tabs-test${testInfo.retry > 0 ? `-${testInfo.retry}` : ""}.png`,
     });
 
     // Check console message count

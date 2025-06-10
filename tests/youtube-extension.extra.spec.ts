@@ -1,4 +1,4 @@
-import { expect, BrowserContext, Browser } from "@playwright/test";
+import { expect, BrowserContext, Browser, TestInfo } from "@playwright/test";
 import { test } from "../playwright.config";
 import { handleTestDistribution } from "./helpers/ExtensionsFilesHelper";
 import {
@@ -44,6 +44,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
 
     // Create a new page
     await channelBrandingAboutTest(
+      testInfo,
       context,
       browserNameWithExtensions,
       localeString,
@@ -74,6 +75,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
 
     // Create a new page
     await channelBrandingAboutTest(
+      testInfo,
       context,
       browserNameWithExtensions,
       localeString,
@@ -84,6 +86,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
   });
 
   async function channelBrandingAboutTest(
+    testInfo: TestInfo,
     context: BrowserContext | Browser,
     browserNameWithExtensions: string,
     localeString: string,
@@ -316,7 +319,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
 
     // Take a screenshot for visual verification
     await page.screenshot({
-      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-channel-branding-about${addToScreenshotName}-test.png`,
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-channel-branding-about${addToScreenshotName}-test${testInfo.retry > 0 ? `-${testInfo.retry}` : ""}.png`,
     });
 
     // --- Close Popup
@@ -345,7 +348,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
 
     // Take a screenshot for visual verification
     await page.screenshot({
-      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-channel-branding-header${addToScreenshotName}-test.png`,
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-channel-branding-header${addToScreenshotName}-test${testInfo.retry > 0 ? `-${testInfo.retry}` : ""}.png`,
     });
 
     // Check console message count
@@ -432,7 +435,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     });
     await expect(target).toBeVisible({ timeout: defaultTimeoutMs * 2 }); // Increased timeout cause YouTube takes a while to add the "verified" chackmark
     await page.screenshot({
-      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-video-author-test.png`,
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-video-author-test${testInfo.retry > 0 ? `-${testInfo.retry}` : ""}.png`,
     });
 
     // Check console message count

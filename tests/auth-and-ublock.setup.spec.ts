@@ -10,9 +10,10 @@ test.describe("Setup Auth And UBlock", () => {
     allLocaleStrings,
     defaultNetworkIdleTimeoutMs,
     defaultTimeoutMs,
-  }) => {
+  }, testInfo) => {
     expect(
       await setupUBlockAndAuth(
+        testInfo,
         allBrowserNameWithExtensions,
         allLocaleStrings,
         defaultNetworkIdleTimeoutMs,

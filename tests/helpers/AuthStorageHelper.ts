@@ -11,7 +11,7 @@ const authFileLocationBase = path.join(__dirname, "../../playwright/.auth/");
 const authFileName = "user.json";
 
 import "dotenv/config";
-import { Page } from "@playwright/test";
+import { Browser, BrowserContext, Page, TestInfo } from "@playwright/test";
 
 /**
  * @param {BrowserContext} context
@@ -188,7 +188,8 @@ export async function findLoginButton(page) {
  * @param {string} locale
  */
 export async function handleGoogleLogin(
-  context,
+  testInfo: TestInfo,
+  context: Browser | BrowserContext,
   page: Page,
   browserName: string,
   locale: string,
@@ -219,7 +220,7 @@ export async function handleGoogleLogin(
 
   // Take a screenshot for visual verification
   await page.screenshot({
-    path: `images/tests/${browserName}/${locale}/setup-auth-login-done.png`,
+    path: `images/tests/${browserName}/${locale}/setup-auth-login-done${testInfo.retry > 0 ? `-${testInfo.retry}` : ""}.png`,
   });
 
   //Check youtube locale is set correctly
@@ -294,7 +295,7 @@ export async function handleGoogleLogin(
           `[AuthStorage] Saving locale-specific storage state for Chromium: ${localeStoragePath}`,
         );
         // for chromium we must use persistent context so save the storageState from the browserContext intead of pageContext
-        await context.storageState({
+        await (context as BrowserContext).storageState({
           path: localeStoragePath,
         });
       } else {
@@ -403,7 +404,7 @@ export async function handleGoogleLogin(
         `[AuthStorage] Saving base storage state for Chromium: ${baseStoragePath}`,
       );
       // for chromium we must use persistent context so save the storageState from the browserContext intead of pageContext
-      await context.storageState({
+      await (context as BrowserContext).storageState({
         path: baseStoragePath,
       });
     } else {
