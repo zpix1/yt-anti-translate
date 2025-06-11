@@ -224,12 +224,13 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     } catch {}
 
     // --- Check About Popup ---
-    const aboutContainerSelector =
-      "ytd-engagement-panel-section-list-renderer:visible";
-    const aboutContainerLocator = page.locator(aboutContainerSelector);
+    const aboutContainerLocator = page.locator(
+      "ytd-engagement-panel-section-list-renderer:visible",
+    );
+    await aboutContainerLocator.waitFor();
 
-    const aboutTitleSelector = `#title-text:visible`;
-    const aboutTitleLocator = aboutContainerLocator.locator(aboutTitleSelector);
+    const aboutTitleLocator =
+      aboutContainerLocator.locator(`#title-text:visible`);
     await aboutTitleLocator.waitFor();
     console.log("Checking Channel header for original description...");
 
@@ -421,8 +422,15 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     } catch {}
 
     // --- Check Branding Title ---
-    const videoAuthorSelector = `#upload-info.ytd-video-owner-renderer yt-formatted-string a:visible`;
-    const videoAuthorLocator = page.locator(videoAuthorSelector);
+    const uploadInfoLocator = page.locator(
+      `#upload-info.ytd-video-owner-renderer:visible`,
+    );
+    await uploadInfoLocator.waitFor();
+    const uploadInfoTextLocator = uploadInfoLocator.locator(
+      `yt-formatted-string#text`,
+    );
+    await uploadInfoTextLocator.waitFor();
+    const videoAuthorLocator = uploadInfoTextLocator.locator(`a:visible`);
     await videoAuthorLocator.waitFor();
 
     console.log("Checking video author for original author...");
