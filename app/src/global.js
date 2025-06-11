@@ -382,6 +382,25 @@ ytm-shorts-lockup-view-model`,
   },
 
   /**
+   * Strips all query params except "v" from "/watch" URL to:
+   *  - avoid 404 when passed to YT oembed API (see https://github.com/zpix1/yt-anti-translate/issues/45)
+   *  - improve cache lookups (different "t" params don't mean different vids, "v" is the only important one)
+   * @param {string} url "/watch?app=desktop&v=ghuLDyUEZmY&t=472s" or https://www.youtube.com/watch?app=desktop&v=ghuLDyUEZmY&t=472s)
+   * @returns {string} "/watch?v=ghuLDyUEZmY" or "https://www.youtube.com/watch?v=ghuLDyUEZmY"
+   */
+  stripNonEssentialParams: function (url) {
+    //shorts URLs don't have search parameters afaik, so don't call this on shorts only
+    //this return is here for background.js/createOrUpdateUntranslatedFakeNode, which is called for everything
+    if (!url.includes("/watch?")) {
+      return url;
+    }
+    const searchParamsText = url.split("?")[1];
+    const searchParams = new URLSearchParams(searchParamsText);
+    const videoId = searchParams.get("v");
+    return `${url.split("?")[0]}?v=${videoId}`;
+  },
+
+  /**
    * Gets the current video ID from the URL
    * @returns {string} - The YouTube video ID
    */

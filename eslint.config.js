@@ -26,7 +26,11 @@ export default tseslint.config([
       "app/dist/", // Common for browser extensions
       "*.log",
       ".DS_Store",
-      // Add other project-specific ignores if necessary
+      //mirror .gitignore, makes no sense to lint ublock installed during testing
+      //(that would take eslint considerable extra time (minutes))
+      "tests/testDist/",
+      "tests/testUBlockOrigin/",
+      "tests/testUBlockOriginLite/",
     ],
   },
 

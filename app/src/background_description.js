@@ -26,8 +26,8 @@ function fetchOriginalDescription() {
     if (response) {
       return response;
     } else {
-      const embededPlayerResponse = player.getEmbeddedPlayerResponse();
-      return embededPlayerResponse?.videoDetails?.shortDescription || null;
+      const embeddedPlayerResponse = player.getEmbeddedPlayerResponse();
+      return embeddedPlayerResponse?.videoDetails?.shortDescription || null;
     }
   } catch (error) {
     window.YoutubeAntiTranslate.logWarning(`Error: ${error.message || error}`);
@@ -54,8 +54,8 @@ function fetchOriginalAuthor() {
     if (response) {
       return response;
     } else {
-      const embededPlayerResponse = player.getEmbeddedPlayerResponse();
-      return embededPlayerResponse?.videoDetails?.author || null;
+      const embeddedPlayerResponse = player.getEmbeddedPlayerResponse();
+      return embeddedPlayerResponse?.videoDetails?.author || null;
     }
   } catch (error) {
     window.YoutubeAntiTranslate.logWarning(`Error: ${error.message || error}`);
@@ -89,7 +89,7 @@ function restoreOriginalDescriptionAndAuthor() {
   }
 
   if (originalAuthor) {
-    // We should skip this operation if the video player was embeded as it does not have the author above the desciption
+    // We should skip this operation if the video player was embedded as it does not have the author above the description
     const player = window.YoutubeAntiTranslate.getFirstVisible(
       document.querySelectorAll(
         window.YoutubeAntiTranslate.getPlayerSelector(),

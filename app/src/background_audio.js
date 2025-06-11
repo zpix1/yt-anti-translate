@@ -61,6 +61,9 @@ function getOriginalTrack(tracks) {
     }
 
     const trackName = track[languageFieldName].name.toLowerCase();
+    /*Looks for the word "original" in the track names list,
+    in various languages - to fit the user's locale - to get the original track
+      => will fail to get it if the user's language is not in the ORIGINAL_TRANSLATIONS list*/
     for (const originalWord of ORIGINAL_TRANSLATIONS) {
       if (trackName.includes(originalWord.toLowerCase())) {
         window.YoutubeAntiTranslate.logInfo(
@@ -70,6 +73,10 @@ function getOriginalTrack(tracks) {
       }
     }
   }
+  window.YoutubeAntiTranslate.logError(`
+    The language you set YouTube to is not yet supported by YoutubeAntiTranslate. 
+    Please reach out to its authors on GitHub. Listing all audio tracks: ${tracks}
+  `);
 }
 
 async function untranslateAudioTrack() {
