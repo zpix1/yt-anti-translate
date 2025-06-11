@@ -41,6 +41,9 @@ test.describe("YouTube Anti-Translate extension", () => {
       defaultNetworkIdleTimeoutMs,
     );
     // Wait for the video page to fully load
+    await page.locator("#primary-inner:visible").waitFor();
+    await page.locator("#player:visible").waitFor();
+    await page.locator("#below:visible").waitFor();
     await page.locator("ytd-watch-metadata:visible").waitFor();
 
     try {
@@ -307,6 +310,9 @@ test.describe("YouTube Anti-Translate extension", () => {
     );
 
     // Wait for the video page to fully load
+    await page.locator("#primary-inner:visible").waitFor();
+    await page.locator("#player:visible").waitFor();
+    await page.locator("#below:visible").waitFor();
     await page.locator("ytd-watch-metadata:visible").waitFor();
 
     try {
@@ -367,12 +373,17 @@ test.describe("YouTube Anti-Translate extension", () => {
       .first();
     await secondTimecodeLocator.waitFor();
     if (await secondTimecodeLocator.isVisible()) {
-      await secondTimecodeLocator.scrollIntoViewIfNeeded();
-      await Promise.all([
-        secondTimecodeLocator.click(),
-        // Wait for video to update its playback position
-        page.waitForTimeout(2000),
-      ]);
+      try {
+        await Promise.all([
+          page.mouse.wheel(0, 500),
+          secondTimecodeLocator.scrollIntoViewIfNeeded(),
+        ]);
+        await Promise.all([
+          secondTimecodeLocator.click(),
+          // Wait for video to update its playback position
+          page.waitForTimeout(2000),
+        ]);
+      } catch {}
     }
 
     // Verify the video time has changed to be near the clicked timecode
@@ -550,22 +561,26 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     const originalVideo = page.locator(videoSelector);
     if (await originalVideo.isVisible()) {
-      await page.mouse.wheel(0, 500);
-      await originalVideo.scrollIntoViewIfNeeded();
       try {
-        await page.waitForLoadState("networkidle", {
-          timeout: defaultNetworkIdleTimeoutMs,
-        });
+        await Promise.all([
+          page.mouse.wheel(0, 500),
+          originalVideo.scrollIntoViewIfNeeded(),
+          page.waitForLoadState("networkidle", {
+            timeout: defaultNetworkIdleTimeoutMs,
+          }),
+        ]);
       } catch {}
     }
     const translatedVideo = page.locator(translatedVideoSelector).first();
     if (await translatedVideo.isVisible()) {
-      await page.mouse.wheel(0, 500);
-      await translatedVideo.scrollIntoViewIfNeeded();
       try {
-        await page.waitForLoadState("networkidle", {
-          timeout: defaultNetworkIdleTimeoutMs,
-        });
+        await Promise.all([
+          page.mouse.wheel(0, 500),
+          translatedVideo.scrollIntoViewIfNeeded(),
+          page.waitForLoadState("networkidle", {
+            timeout: defaultNetworkIdleTimeoutMs,
+          }),
+        ]);
       } catch {}
     }
 
@@ -699,16 +714,22 @@ test.describe("YouTube Anti-Translate extension", () => {
     );
 
     // Wait for the shorts page to fully load and get the first one
-    const firstShort = page.locator("ytd-rich-item-renderer:visible").first();
-    await firstShort.waitFor();
+    const firstShortLocator = page
+      .locator("ytd-rich-item-renderer:visible")
+      .first();
+    await firstShortLocator.waitFor();
+    const ytcoreImgLocator = firstShortLocator.locator("img").first();
+    await ytcoreImgLocator.waitFor();
 
     // Click the first short to open
-    if (await firstShort.isVisible()) {
-      await page.mouse.wheel(0, 500);
-      await firstShort.scrollIntoViewIfNeeded();
+    if (await firstShortLocator.isVisible()) {
       try {
         await Promise.all([
-          firstShort.click(),
+          page.mouse.wheel(0, 500),
+          firstShortLocator.scrollIntoViewIfNeeded(),
+        ]);
+        await Promise.all([
+          firstShortLocator.click(),
           page.waitForLoadState("networkidle", {
             timeout: defaultNetworkIdleTimeoutMs,
           }),
