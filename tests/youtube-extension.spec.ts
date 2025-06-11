@@ -331,6 +331,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     const secondTimecodeLocator = descriptionLocator
       .locator(secondTimecodeSelector)
       .first();
+    await secondTimecodeLocator.waitFor();
     if (await secondTimecodeLocator.isVisible()) {
       await secondTimecodeLocator.scrollIntoViewIfNeeded();
       await Promise.all([
