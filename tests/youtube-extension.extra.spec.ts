@@ -131,10 +131,20 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     } catch {}
 
     // Wait for the channel header to appear
-    const channelHeaderSelector =
-      "#page-header-container:visible #page-header .page-header-view-model-wiz__page-header-headline-info:visible";
-    const channelHeaderLocator = page.locator(channelHeaderSelector);
+    const pageHeaderContainerLocator = page.locator(
+      "#page-header-container:visible",
+    );
+    await pageHeaderContainerLocator.waitFor();
+    const pageHeaderLocator = pageHeaderContainerLocator.locator(
+      "#page-header:visible",
+    );
+    await pageHeaderLocator.waitFor();
+    const channelHeaderLocator = pageHeaderLocator.locator(
+      ".page-header-view-model-wiz__page-header-headline-info:visible",
+    );
     await channelHeaderLocator.waitFor();
+    const channelH1Locator = channelHeaderLocator.locator(`h1`);
+    await channelH1Locator.waitFor();
 
     try {
       await Promise.all([
@@ -146,9 +156,9 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     } catch {}
 
     // --- Check Branding Title ---
-    const channelTitleSelector = `h1 .yt-core-attributed-string:visible`;
-    const channelTitleLocator =
-      channelHeaderLocator.locator(channelTitleSelector);
+    const channelTitleLocator = channelH1Locator.locator(
+      `.yt-core-attributed-string:visible`,
+    );
     await channelTitleLocator.waitFor();
 
     try {
@@ -167,9 +177,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     expect(channelTitleLocator).not.toContainText("มิสเตอร์บีสต์");
     await expect(channelTitleLocator).toBeVisible();
     // Log the channel branding header title
-    const brandingTitle = await page
-      .locator(channelTitleSelector)
-      .textContent();
+    const brandingTitle = await channelTitleLocator.textContent();
     console.log("Channel header title:", brandingTitle?.trim());
 
     // --- Check Branding Description

@@ -21,6 +21,7 @@ test.describe("YouTube Anti-Translate extension", () => {
       defaultNetworkIdleTimeoutMs,
       defaultTimeoutMs,
     );
+    let shouldMoveMouse = false;
 
     // Launch browser with the extension
     const context = await createBrowserContext(browserNameWithExtensions);
@@ -86,9 +87,21 @@ test.describe("YouTube Anti-Translate extension", () => {
       ]);
     } catch {}
 
-    const headLinkVideoTitleLocator = page.locator(
-      "ytd-player .html5-video-player a.ytp-title-link#yt-anti-translate-fake-node-video-head-link",
+    //Move mouse to make sure the elements are visible (not awaited as mouse should move while we check)
+    startMouseMovement();
+
+    const ytdPlayerLocator = page.locator("ytd-player:visible");
+    await ytdPlayerLocator.waitFor();
+    const html5PlayerLocator = ytdPlayerLocator.locator(".html5-video-player");
+    await html5PlayerLocator.waitFor();
+    const ytdTitleLinkLocator = html5PlayerLocator.locator(
+      "a.ytp-title-link:visible",
     );
+    await ytdTitleLinkLocator.waitFor();
+    const headLinkVideoTitleLocator = html5PlayerLocator.locator(
+      "a#yt-anti-translate-fake-node-video-head-link:visible",
+    );
+    await headLinkVideoTitleLocator.waitFor();
 
     // Check that the title is in English and not in Russian
     try {
@@ -104,9 +117,14 @@ test.describe("YouTube Anti-Translate extension", () => {
     const headLinkVideoTitle = await headLinkVideoTitleLocator.textContent();
     console.log("Head Link Video title:", headLinkVideoTitle?.trim());
 
-    const fullStreenVideoTitleFooterLocator = page.locator(
-      "ytd-player .html5-video-player div.ytp-fullerscreen-edu-text#yt-anti-translate-fake-node-fullscreen-edu",
+    const ytpFullerscreenTextLocator = html5PlayerLocator.locator(
+      "div.ytp-fullerscreen-edu-text:visible",
     );
+    await ytpFullerscreenTextLocator.waitFor();
+    const fullStreenVideoTitleFooterLocator = html5PlayerLocator.locator(
+      "div#yt-anti-translate-fake-node-fullscreen-edu:visible",
+    );
+    await fullStreenVideoTitleFooterLocator.waitFor();
 
     // Check that the title is in English and not in Russian
     try {
@@ -127,6 +145,8 @@ test.describe("YouTube Anti-Translate extension", () => {
     await page.screenshot({
       path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-extension-test-fullscreen${testInfo.retry > 0 ? `-${testInfo.retry}` : ""}.png`,
     });
+
+    stopMouseMovement();
 
     // Exit full screen
     await page.keyboard.press("F");
@@ -209,6 +229,21 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Close the browser context
     await context.close();
+
+    async function startMouseMovement() {
+      shouldMoveMouse = true;
+
+      while (shouldMoveMouse) {
+        await page.mouse.move(40, 40);
+        await page.mouse.move(40, 140);
+        await page.mouse.move(140, 140);
+        await page.mouse.move(140, 40);
+        await page.mouse.move(40, 40);
+      }
+    }
+    function stopMouseMovement() {
+      shouldMoveMouse = false;
+    }
   });
 
   test("YouTube timecode links in description work correctly with Anti-Translate extension", async ({
@@ -471,10 +506,10 @@ test.describe("YouTube Anti-Translate extension", () => {
     // --- Check Videos Tab ---
     const originalVideoTitle = "I Survived The 5 Deadliest Places On Earth";
     const translatedVideoTitle = "Я Выжил В 5 Самых Опасных Местах На Земле";
-    const videoSelector = `ytd-rich-item-renderer:has-text("${originalVideoTitle}")`;
+    const videoSelector = `ytd-rich-item-renderer:has-text("${originalVideoTitle}"):visible`;
     const translatedVideoSelector = `ytd-rich-item-renderer:has-text("${translatedVideoTitle}")`;
 
-    const originalVideo = page.locator(videoSelector).first();
+    const originalVideo = page.locator(videoSelector);
     if (await originalVideo.isVisible()) {
       await page.mouse.wheel(0, 500);
       await originalVideo.scrollIntoViewIfNeeded();
@@ -496,6 +531,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     }
 
     console.log("Checking Videos tab for original title...");
+    await originalVideo.waitFor();
     await expect(originalVideo).toBeVisible();
     await expect(translatedVideo).not.toBeVisible();
     console.log("Original video title found, translated title not found.");
@@ -515,12 +551,12 @@ test.describe("YouTube Anti-Translate extension", () => {
     // --- Check Shorts Tab ---
     const originalShortTitle = "$10,000 Human Shuffleboard";
     const translatedShortTitle = "Человеческий Шаффлборд за $10,000"; // Adjust if needed
-    const shortSelector = `ytd-rich-item-renderer:has-text("${originalShortTitle}")`;
+    const shortSelector = `ytd-rich-item-renderer:has-text("${originalShortTitle}"):visible`;
     const translatedShortSelector = `ytd-rich-item-renderer:has-text("${translatedShortTitle}")`;
 
     console.log("Checking Shorts tab for original title...");
     // Shorts might load dynamically, scroll into view to ensure it's loaded
-    const originalShort = page.locator(shortSelector).first();
+    const originalShort = page.locator(shortSelector);
     if (await originalShort.isVisible()) {
       try {
         await Promise.all([
@@ -547,8 +583,9 @@ test.describe("YouTube Anti-Translate extension", () => {
       } catch {}
     }
 
-    await expect(page.locator(shortSelector)).toBeVisible(); // Increased timeout for dynamic loading
-    await expect(page.locator(translatedShortSelector)).not.toBeVisible();
+    await originalShort.waitFor({ timeout: defaultTimeoutMs * 2 }); // Increased timeout for dynamic loading
+    await expect(originalShort).toBeVisible();
+    await expect(translatedShort).not.toBeVisible();
     console.log(
       "Original short title found, translated short title not found.",
     );
@@ -573,8 +610,9 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // --- Re-check Videos Tab ---
     console.log("Re-checking Videos tab for original title...");
-    await expect(page.locator(videoSelector)).toBeVisible();
-    await expect(page.locator(translatedVideoSelector)).not.toBeVisible();
+    await originalVideo.waitFor();
+    await expect(originalVideo).toBeVisible();
+    await expect(translatedVideo).not.toBeVisible();
     console.log("Original video title confirmed on Videos tab again.");
 
     // Take a screenshot for visual verification
@@ -621,20 +659,11 @@ test.describe("YouTube Anti-Translate extension", () => {
       defaultNetworkIdleTimeoutMs,
     );
 
-    // Wait for the shorts page to fully load
-    await page.locator("ytd-rich-item-renderer:visible").first().waitFor();
+    // Wait for the shorts page to fully load and get the first one
+    const firstShort = page.locator("ytd-rich-item-renderer:visible").first();
+    await firstShort.waitFor();
 
-    try {
-      await Promise.all([
-        page.waitForLoadState("networkidle", {
-          timeout: defaultNetworkIdleTimeoutMs,
-        }),
-        page.waitForTimeout(5000),
-      ]);
-    } catch {}
-
-    // Find the first short and click to open
-    const firstShort = page.locator("ytd-rich-item-renderer").first();
+    // Click the first short to open
     if (await firstShort.isVisible()) {
       await firstShort.scrollIntoViewIfNeeded();
       try {
@@ -656,22 +685,6 @@ test.describe("YouTube Anti-Translate extension", () => {
         timeout: defaultNetworkIdleTimeoutMs,
       });
     } catch {}
-
-    function getTrackLanguageFieldObjectName(track: object) {
-      let languageFieldName: string;
-
-      for (const [fieldName, field] of Object.entries(track)) {
-        if (field && typeof field === "object" && field.name) {
-          languageFieldName = fieldName;
-          break;
-        }
-      }
-      if (!languageFieldName!) {
-        return;
-      } else {
-        return languageFieldName;
-      }
-    }
 
     let [currentTrack, currentId] = await page.evaluate(async () => {
       const video = document.querySelector(
@@ -778,6 +791,26 @@ test.describe("YouTube Anti-Translate extension", () => {
       }
     }
 
+    /**
+     * Function that retun the property name for the Language field
+     * @param track
+     * @returns {string | undefined}
+     */
+    function getTrackLanguageFieldObjectName(track: object) {
+      let languageFieldName: string;
+
+      for (const [fieldName, field] of Object.entries(track)) {
+        if (field && typeof field === "object" && field.name) {
+          languageFieldName = fieldName;
+          break;
+        }
+      }
+      if (!languageFieldName!) {
+        return;
+      } else {
+        return languageFieldName;
+      }
+    }
     /**
      * If Track name is "Default" that is always an advert
      * @param currentTrack the audio track that could be of an advert
