@@ -1,4 +1,4 @@
-import { expect } from "@playwright/test";
+import { Browser, BrowserContext, expect } from "@playwright/test";
 import { test } from "../playwright.config";
 import {
   handleRetrySetup,
@@ -76,6 +76,8 @@ test.describe("YouTube Anti-Translate extension", () => {
       path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-extension-test-title${testInfo.retry > 0 ? `-${testInfo.retry}` : ""}.png`,
     });
 
+    //Move mouse to make sure the elements are visible (not awaited as mouse should move while we check)
+    startMouseMovement();
     // Open full screen
     await page.keyboard.press("F");
     try {
@@ -86,9 +88,6 @@ test.describe("YouTube Anti-Translate extension", () => {
         }),
       ]);
     } catch {}
-
-    //Move mouse to make sure the elements are visible (not awaited as mouse should move while we check)
-    startMouseMovement();
 
     const ytdPlayerLocator = page.locator("ytd-player:visible");
     await ytdPlayerLocator.waitFor();
@@ -168,6 +167,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     const moreButton = descriptionLocator.locator("#expand:visible");
     await moreButton.waitFor();
     if (await moreButton.isVisible()) {
+      await moreButton.scrollIntoViewIfNeeded();
       try {
         // Wait for the description to expand
         await Promise.all([
@@ -231,14 +231,42 @@ test.describe("YouTube Anti-Translate extension", () => {
     await context.close();
 
     async function startMouseMovement() {
+      async function isStillAlive(context: BrowserContext | Browser) {
+        try {
+          if (context["_type"] === "BrowserContext") {
+            await (context as BrowserContext).pages();
+            return true;
+          } else if (context["_type"] === "Browser") {
+            await (context as Browser).contexts()[0].pages();
+            return true;
+          }
+        } catch {
+          return false;
+        }
+        return false;
+      }
+      async function shouldMove(): Promise<boolean> {
+        return shouldMoveMouse && (await isStillAlive(context));
+      }
+
       shouldMoveMouse = true;
 
-      while (shouldMoveMouse) {
-        await page.mouse.move(40, 40);
-        await page.mouse.move(40, 140);
-        await page.mouse.move(140, 140);
-        await page.mouse.move(140, 40);
-        await page.mouse.move(40, 40);
+      while (await shouldMove()) {
+        if (await shouldMove()) {
+          await page.mouse.move(50, 50);
+        }
+        if (await shouldMove()) {
+          await page.mouse.move(50, 150);
+        }
+        if (await shouldMove()) {
+          await page.mouse.move(150, 150);
+        }
+        if (await shouldMove()) {
+          await page.mouse.move(150, 50);
+        }
+        if (await shouldMove()) {
+          await page.mouse.move(50, 50);
+        }
       }
     }
     function stopMouseMovement() {
@@ -306,11 +334,17 @@ test.describe("YouTube Anti-Translate extension", () => {
     const moreButton = descriptionLocator.locator("#expand:visible");
     await moreButton.waitFor();
     if (await moreButton.isVisible()) {
-      await Promise.all([
-        moreButton.click(),
+      await moreButton.scrollIntoViewIfNeeded();
+      try {
         // Wait for the description to expand
-        await page.waitForTimeout(1000),
-      ]);
+        await Promise.all([
+          moreButton.click(),
+          page.waitForLoadState("networkidle", {
+            timeout: defaultNetworkIdleTimeoutMs,
+          }),
+          page.waitForTimeout(1000),
+        ]);
+      } catch {}
     }
 
     // Verify description contains expected English text
@@ -670,6 +704,7 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Click the first short to open
     if (await firstShort.isVisible()) {
+      await page.mouse.wheel(0, 500);
       await firstShort.scrollIntoViewIfNeeded();
       try {
         await Promise.all([
