@@ -131,12 +131,13 @@ export async function loadPageAndVerifyAuth(
 
   // Wait for the page to load
   try {
-    await page.waitForLoadState("networkidle", {
-      timeout: defaultNetworkIdleTimeoutMs,
-    });
+    await Promise.all([
+      page.waitForLoadState("networkidle", {
+        timeout: defaultNetworkIdleTimeoutMs * 2, // Increased timeout for navigation
+      }),
+      page.waitForTimeout(10000), // Increased timeout for navigation
+    ]);
   } catch {}
-  // .waitForLoadState("networkidle" is not always right so wait 5 extra seconds
-  await page.waitForTimeout(5000);
 
   // If for whatever reason we are not logged in, then fail the test
   expect(await findLoginButton(page)).toBe(null);

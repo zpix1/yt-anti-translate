@@ -396,10 +396,14 @@ test.describe("YouTube Anti-Translate extension", () => {
     );
 
     // Wait for the shorts title element to be present
-    const shortsTitleSelector =
-      "yt-shorts-video-title-view-model > h2 > span:visible";
-    const titleLocator = page.locator(shortsTitleSelector);
+    const titleLocator = page.locator(
+      "yt-shorts-video-title-view-model:visible",
+    );
     await titleLocator.waitFor();
+    const titleH1Locator = titleLocator.locator("h2:visible");
+    await titleH1Locator.waitFor();
+    const titleSpanLocator = titleH1Locator.locator("span:visible");
+    await titleSpanLocator.waitFor();
 
     try {
       await Promise.all([
@@ -422,9 +426,9 @@ test.describe("YouTube Anti-Translate extension", () => {
     console.log("Shorts title:", shortsTitle?.trim());
 
     // Wait for the shorts video link element to be present
-    const shortsVideoLinkSelector =
-      ".ytReelMultiFormatLinkViewModelEndpoint span.yt-core-attributed-string>span:visible";
-    const titleLinkLocator = page.locator(shortsVideoLinkSelector);
+    const titleLinkLocator = page.locator(
+      ".ytReelMultiFormatLinkViewModelEndpoint span.yt-core-attributed-string>span:visible",
+    );
     await titleLinkLocator.waitFor();
 
     // Verify the title is the has English characters and not russian
