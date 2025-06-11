@@ -1,0 +1,30 @@
+name: Remove Safe-to-Test Label
+
+on:
+  pull_request_target:
+    types: [synchronize]
+    branches: [main]
+
+jobs:
+  remove-safe-to-test:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      issues: write
+
+    steps:
+      - name: Require 'safe-to-test' label
+        id: require-label
+        uses: mheap/github-action-required-labels@v5
+        with:
+          mode: minimum
+          count: 1
+          labels: "safe-to-test"
+          exit_type: success
+
+      - name: Remove "safe-to-test" label
+        if: contains(steps.require-label.outputs.labels, 'safe-to-test')
+        uses: actions-ecosystem/action-remove-labels@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          labels: "safe-to-test"
