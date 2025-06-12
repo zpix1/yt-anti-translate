@@ -12,13 +12,13 @@ test.describe("YouTube Anti-Translate extension", () => {
     browserNameWithExtensions,
     localeString,
     defaultTimeoutMs,
-    defaultNetworkIdleTimeoutMs,
+    defaultTryCatchTimeoutMs,
   }, testInfo) => {
     await handleRetrySetup(
       testInfo,
       browserNameWithExtensions,
       localeString,
-      defaultNetworkIdleTimeoutMs,
+      defaultTryCatchTimeoutMs,
       defaultTimeoutMs,
     );
     let shouldMoveMouse = false;
@@ -38,32 +38,35 @@ test.describe("YouTube Anti-Translate extension", () => {
       page,
       "https://www.youtube.com/watch?v=l-nMKJ5J3Uc",
       browserNameWithExtensions,
-      defaultNetworkIdleTimeoutMs,
+      defaultTryCatchTimeoutMs,
     );
     // Wait for the video page to fully load
     await page.locator("#primary-inner:visible").waitFor();
     await page.locator("#player:visible").waitFor();
     await page.locator("#below:visible").waitFor();
-    await page.locator("ytd-watch-metadata:visible").waitFor();
+    const ytdWatchMetadataLocatot = page.locator("ytd-watch-metadata:visible");
+    await ytdWatchMetadataLocatot.waitFor();
 
     try {
       await Promise.all([
         page.waitForLoadState("networkidle", {
-          timeout: defaultNetworkIdleTimeoutMs,
+          timeout: defaultTryCatchTimeoutMs,
         }),
         page.waitForTimeout(5000),
       ]);
     } catch {}
 
-    const videoTitleSelector =
-      "h1.ytd-watch-metadata:visible #yt-anti-translate-fake-node-current-video:visible";
-    const videoTitleLocator = page.locator(videoTitleSelector);
+    const ytdFormayyedStringLocator = ytdWatchMetadataLocatot.locator(
+      "yt-formatted-string#text:visible",
+    );
+    await ytdFormayyedStringLocator.waitFor();
+    const videoTitleLocator = ytdWatchMetadataLocatot.locator(
+      "#yt-anti-translate-fake-node-current-video:visible",
+    );
     await videoTitleLocator.waitFor();
 
     // Check that the title is in English and not in Russian
-    try {
-      expect(videoTitleLocator).toHaveCount(1);
-    } catch {}
+    expect(videoTitleLocator).toHaveCount(1);
     expect(videoTitleLocator).toContainText(
       "Ages 1 - 100 Decide Who Wins $250,000",
     );
@@ -87,7 +90,7 @@ test.describe("YouTube Anti-Translate extension", () => {
       await Promise.all([
         page.waitForTimeout(500),
         page.waitForLoadState("networkidle", {
-          timeout: defaultNetworkIdleTimeoutMs,
+          timeout: defaultTryCatchTimeoutMs,
         }),
       ]);
     } catch {}
@@ -106,9 +109,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     await headLinkVideoTitleLocator.waitFor();
 
     // Check that the title is in English and not in Russian
-    try {
-      expect(headLinkVideoTitleLocator).toHaveCount(1);
-    } catch {}
+    expect(headLinkVideoTitleLocator).toHaveCount(1);
     expect(headLinkVideoTitleLocator).toContainText(
       "Ages 1 - 100 Decide Who Wins $250,000",
     );
@@ -129,9 +130,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     await fullStreenVideoTitleFooterLocator.waitFor();
 
     // Check that the title is in English and not in Russian
-    try {
-      expect(fullStreenVideoTitleFooterLocator).toHaveCount(1);
-    } catch {}
+    expect(fullStreenVideoTitleFooterLocator).toHaveCount(1);
     expect(fullStreenVideoTitleFooterLocator).toContainText(
       "Ages 1 - 100 Decide Who Wins $250,000",
     );
@@ -156,7 +155,7 @@ test.describe("YouTube Anti-Translate extension", () => {
       await Promise.all([
         page.waitForTimeout(500),
         page.waitForLoadState("networkidle", {
-          timeout: defaultNetworkIdleTimeoutMs,
+          timeout: defaultTryCatchTimeoutMs,
         }),
       ]);
     } catch {}
@@ -170,31 +169,37 @@ test.describe("YouTube Anti-Translate extension", () => {
     const moreButton = descriptionLocator.locator("#expand:visible");
     await moreButton.waitFor();
     if (await moreButton.isVisible()) {
-      await moreButton.scrollIntoViewIfNeeded();
+      try {
+        await moreButton.scrollIntoViewIfNeeded({
+          timeout: defaultTryCatchTimeoutMs,
+        });
+      } catch {}
+      moreButton.click();
       try {
         // Wait for the description to expand
         await Promise.all([
-          moreButton.click(),
           page.waitForLoadState("networkidle", {
-            timeout: defaultNetworkIdleTimeoutMs,
+            timeout: defaultTryCatchTimeoutMs,
           }),
           page.waitForTimeout(1000),
         ]);
       } catch {}
     }
 
-    await descriptionLocator.scrollIntoViewIfNeeded();
+    try {
+      await descriptionLocator.scrollIntoViewIfNeeded({
+        timeout: defaultTryCatchTimeoutMs,
+      });
+    } catch {}
     try {
       await Promise.all([
         page.waitForTimeout(500),
         page.waitForLoadState("networkidle", {
-          timeout: defaultNetworkIdleTimeoutMs,
+          timeout: defaultTryCatchTimeoutMs,
         }),
       ]);
     } catch {}
-    try {
-      expect(descriptionLocator).toHaveCount(1);
-    } catch {}
+    expect(descriptionLocator).toHaveCount(1);
     // Check that the description contains the original English text and not the Russian translation
     expect(descriptionLocator).toContainText("believe who they picked");
     expect(descriptionLocator).toContainText(
@@ -281,13 +286,13 @@ test.describe("YouTube Anti-Translate extension", () => {
     browserNameWithExtensions,
     localeString,
     defaultTimeoutMs,
-    defaultNetworkIdleTimeoutMs,
+    defaultTryCatchTimeoutMs,
   }, testInfo) => {
     await handleRetrySetup(
       testInfo,
       browserNameWithExtensions,
       localeString,
-      defaultNetworkIdleTimeoutMs,
+      defaultTryCatchTimeoutMs,
       defaultTimeoutMs,
     );
 
@@ -306,7 +311,7 @@ test.describe("YouTube Anti-Translate extension", () => {
       page,
       "https://www.youtube.com/watch?v=4PBPXbd4DkQ",
       browserNameWithExtensions,
-      defaultNetworkIdleTimeoutMs,
+      defaultTryCatchTimeoutMs,
     );
 
     // Wait for the video page to fully load
@@ -318,7 +323,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     try {
       await Promise.all([
         page.waitForLoadState("networkidle", {
-          timeout: defaultNetworkIdleTimeoutMs,
+          timeout: defaultTryCatchTimeoutMs,
         }),
         page.waitForTimeout(5000),
       ]);
@@ -340,13 +345,17 @@ test.describe("YouTube Anti-Translate extension", () => {
     const moreButton = descriptionLocator.locator("#expand:visible");
     await moreButton.waitFor();
     if (await moreButton.isVisible()) {
-      await moreButton.scrollIntoViewIfNeeded();
+      try {
+        await moreButton.scrollIntoViewIfNeeded({
+          timeout: defaultTryCatchTimeoutMs,
+        });
+      } catch {}
+      moreButton.click();
       try {
         // Wait for the description to expand
         await Promise.all([
-          moreButton.click(),
           page.waitForLoadState("networkidle", {
-            timeout: defaultNetworkIdleTimeoutMs,
+            timeout: defaultTryCatchTimeoutMs,
           }),
           page.waitForTimeout(1000),
         ]);
@@ -354,9 +363,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     }
 
     // Verify description contains expected English text
-    try {
-      expect(descriptionLocator).toHaveCount(1);
-    } catch {}
+    expect(descriptionLocator).toHaveCount(1);
     expect(descriptionLocator).toContainText(
       "Toy Rockets Challenge - Fun Outdoor Activities for kids!",
     );
@@ -376,10 +383,14 @@ test.describe("YouTube Anti-Translate extension", () => {
       try {
         await Promise.all([
           page.mouse.wheel(0, 500),
-          secondTimecodeLocator.scrollIntoViewIfNeeded(),
+          secondTimecodeLocator.scrollIntoViewIfNeeded({
+            timeout: defaultTryCatchTimeoutMs,
+          }),
         ]);
+      } catch {}
+      secondTimecodeLocator.click();
+      try {
         await Promise.all([
-          secondTimecodeLocator.click(),
           // Wait for video to update its playback position
           page.waitForTimeout(2000),
         ]);
@@ -412,13 +423,13 @@ test.describe("YouTube Anti-Translate extension", () => {
     browserNameWithExtensions,
     localeString,
     defaultTimeoutMs,
-    defaultNetworkIdleTimeoutMs,
+    defaultTryCatchTimeoutMs,
   }, testInfo) => {
     await handleRetrySetup(
       testInfo,
       browserNameWithExtensions,
       localeString,
-      defaultNetworkIdleTimeoutMs,
+      defaultTryCatchTimeoutMs,
       defaultTimeoutMs,
     );
 
@@ -437,7 +448,7 @@ test.describe("YouTube Anti-Translate extension", () => {
       page,
       "https://www.youtube.com/shorts/PXevNM0awlI",
       browserNameWithExtensions,
-      defaultNetworkIdleTimeoutMs,
+      defaultTryCatchTimeoutMs,
     );
 
     // Wait for the shorts title element to be present
@@ -453,16 +464,14 @@ test.describe("YouTube Anti-Translate extension", () => {
     try {
       await Promise.all([
         page.waitForLoadState("networkidle", {
-          timeout: defaultNetworkIdleTimeoutMs,
+          timeout: defaultTryCatchTimeoutMs,
         }),
         page.waitForTimeout(5000),
       ]);
     } catch {}
 
     // Verify the title is the original English one and not the Russian translation
-    try {
-      expect(titleLocator).toHaveCount(1);
-    } catch {}
+    expect(titleLocator).toHaveCount(1);
     expect(titleLocator).toHaveText("Highest Away From Me Wins $10,000");
     expect(titleLocator).not.toHaveText("Достигни Вершины И Выиграй $10,000");
     expect(titleLocator).toBeVisible();
@@ -477,9 +486,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     await titleLinkLocator.waitFor();
 
     // Verify the title is the has English characters and not russian
-    try {
-      expect(titleLinkLocator).toHaveCount(1);
-    } catch {}
+    expect(titleLinkLocator).toHaveCount(1);
     expect(titleLinkLocator).toHaveText(/[A-Za-z]/); // Checks for any English letters
     expect(titleLinkLocator).not.toHaveText(/[А-Яа-яЁё]/); // Ensures no Russian letters
     // Log the title text
@@ -513,13 +520,13 @@ test.describe("YouTube Anti-Translate extension", () => {
     browserNameWithExtensions,
     localeString,
     defaultTimeoutMs,
-    defaultNetworkIdleTimeoutMs,
+    defaultTryCatchTimeoutMs,
   }, testInfo) => {
     await handleRetrySetup(
       testInfo,
       browserNameWithExtensions,
       localeString,
-      defaultNetworkIdleTimeoutMs,
+      defaultTryCatchTimeoutMs,
       defaultTimeoutMs,
     );
 
@@ -538,7 +545,7 @@ test.describe("YouTube Anti-Translate extension", () => {
       page,
       "https://www.youtube.com/@MrBeast/videos",
       browserNameWithExtensions,
-      defaultNetworkIdleTimeoutMs,
+      defaultTryCatchTimeoutMs,
     );
 
     // Wait for the video grid to appear
@@ -547,7 +554,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     try {
       await Promise.all([
         page.waitForLoadState("networkidle", {
-          timeout: defaultNetworkIdleTimeoutMs,
+          timeout: defaultTryCatchTimeoutMs,
         }),
         page.waitForTimeout(5000),
       ]);
@@ -564,9 +571,11 @@ test.describe("YouTube Anti-Translate extension", () => {
       try {
         await Promise.all([
           page.mouse.wheel(0, 500),
-          originalVideo.scrollIntoViewIfNeeded(),
+          originalVideo.scrollIntoViewIfNeeded({
+            timeout: defaultTryCatchTimeoutMs,
+          }),
           page.waitForLoadState("networkidle", {
-            timeout: defaultNetworkIdleTimeoutMs,
+            timeout: defaultTryCatchTimeoutMs,
           }),
         ]);
       } catch {}
@@ -576,9 +585,11 @@ test.describe("YouTube Anti-Translate extension", () => {
       try {
         await Promise.all([
           page.mouse.wheel(0, 500),
-          translatedVideo.scrollIntoViewIfNeeded(),
+          translatedVideo.scrollIntoViewIfNeeded({
+            timeout: defaultTryCatchTimeoutMs,
+          }),
           page.waitForLoadState("networkidle", {
-            timeout: defaultNetworkIdleTimeoutMs,
+            timeout: defaultTryCatchTimeoutMs,
           }),
         ]);
       } catch {}
@@ -592,11 +603,11 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // --- Switch to Shorts Tab ---
     console.log("Clicking Shorts tab...");
+    page.locator("#tabsContent").getByText("Shorts").click();
     try {
       await Promise.all([
-        page.locator("#tabsContent").getByText("Shorts").click(),
         page.waitForLoadState("networkidle", {
-          timeout: defaultNetworkIdleTimeoutMs,
+          timeout: defaultTryCatchTimeoutMs,
         }),
         page.waitForTimeout(1000),
       ]);
@@ -615,9 +626,11 @@ test.describe("YouTube Anti-Translate extension", () => {
       try {
         await Promise.all([
           page.mouse.wheel(0, 500),
-          originalShort.scrollIntoViewIfNeeded(),
+          originalShort.scrollIntoViewIfNeeded({
+            timeout: defaultTryCatchTimeoutMs,
+          }),
           page.waitForLoadState("networkidle", {
-            timeout: defaultNetworkIdleTimeoutMs,
+            timeout: defaultTryCatchTimeoutMs,
           }),
           page.waitForTimeout(1000),
         ]);
@@ -628,9 +641,11 @@ test.describe("YouTube Anti-Translate extension", () => {
       try {
         await Promise.all([
           page.mouse.wheel(0, 500),
-          translatedShort.scrollIntoViewIfNeeded(),
+          translatedShort.scrollIntoViewIfNeeded({
+            timeout: defaultTryCatchTimeoutMs,
+          }),
           page.waitForLoadState("networkidle", {
-            timeout: defaultNetworkIdleTimeoutMs,
+            timeout: defaultTryCatchTimeoutMs,
           }),
           page.waitForTimeout(1000),
         ]);
@@ -646,11 +661,11 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // --- Switch back to Videos Tab ---
     console.log("Clicking Videos tab...");
+    page.locator("#tabsContent").getByText("Видео").click();
     try {
       await Promise.all([
-        page.locator("#tabsContent").getByText("Видео").click(),
         page.waitForLoadState("networkidle", {
-          timeout: defaultNetworkIdleTimeoutMs,
+          timeout: defaultTryCatchTimeoutMs,
         }),
         page.waitForTimeout(1000),
       ]);
@@ -685,13 +700,13 @@ test.describe("YouTube Anti-Translate extension", () => {
     browserNameWithExtensions,
     localeString,
     defaultTimeoutMs,
-    defaultNetworkIdleTimeoutMs,
+    defaultTryCatchTimeoutMs,
   }, testInfo) => {
     await handleRetrySetup(
       testInfo,
       browserNameWithExtensions,
       localeString,
-      defaultNetworkIdleTimeoutMs,
+      defaultTryCatchTimeoutMs,
       defaultTimeoutMs,
     );
 
@@ -710,7 +725,7 @@ test.describe("YouTube Anti-Translate extension", () => {
       page,
       "https://www.youtube.com/@MrBeast/shorts",
       browserNameWithExtensions,
-      defaultNetworkIdleTimeoutMs,
+      defaultTryCatchTimeoutMs,
     );
 
     // Wait for the shorts page to fully load and get the first one
@@ -726,12 +741,16 @@ test.describe("YouTube Anti-Translate extension", () => {
       try {
         await Promise.all([
           page.mouse.wheel(0, 500),
-          firstShortLocator.scrollIntoViewIfNeeded(),
+          firstShortLocator.scrollIntoViewIfNeeded({
+            timeout: defaultTryCatchTimeoutMs,
+          }),
         ]);
+      } catch {}
+      firstShortLocator.click();
+      try {
         await Promise.all([
-          firstShortLocator.click(),
           page.waitForLoadState("networkidle", {
-            timeout: defaultNetworkIdleTimeoutMs,
+            timeout: defaultTryCatchTimeoutMs,
           }),
           page.waitForTimeout(5000),
         ]);
@@ -743,7 +762,7 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     try {
       await page.waitForLoadState("networkidle", {
-        timeout: defaultNetworkIdleTimeoutMs,
+        timeout: defaultTryCatchTimeoutMs,
       });
     } catch {}
 
@@ -839,12 +858,16 @@ test.describe("YouTube Anti-Translate extension", () => {
       const buttonDown = page.locator("#navigation-button-down button").first();
       await buttonDown.waitFor();
       if (await buttonDown.isVisible()) {
-        await buttonDown.scrollIntoViewIfNeeded();
+        try {
+          await buttonDown.scrollIntoViewIfNeeded({
+            timeout: defaultTryCatchTimeoutMs,
+          });
+        } catch {}
+        buttonDown.click();
         try {
           await Promise.all([
-            buttonDown.click(),
             page.waitForLoadState("networkidle", {
-              timeout: defaultNetworkIdleTimeoutMs,
+              timeout: defaultTryCatchTimeoutMs,
             }),
             page.waitForTimeout(2000),
           ]);

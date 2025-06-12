@@ -20,7 +20,7 @@ export async function setupUBlockAndAuth(
   testIfo: TestInfo,
   allBrowserNameWithExtensions: string[],
   allLocaleStrings: string[],
-  defaultNetworkIdleTimeoutMs: number,
+  defaultTryCatchTimeoutMs: number,
   defaultTimeoutMs: number,
 ) {
   try {
@@ -118,7 +118,7 @@ export async function setupUBlockAndAuth(
 
           try {
             await page.waitForLoadState("networkidle", {
-              timeout: defaultNetworkIdleTimeoutMs,
+              timeout: defaultTryCatchTimeoutMs,
             });
           } catch {}
 
@@ -126,11 +126,11 @@ export async function setupUBlockAndAuth(
           await page.waitForTimeout(2000);
           try {
             await page.waitForLoadState("networkidle", {
-              timeout: defaultNetworkIdleTimeoutMs,
+              timeout: defaultTryCatchTimeoutMs,
             });
           } catch {}
 
-          await handleYoutubeConsent(page, defaultNetworkIdleTimeoutMs);
+          await handleYoutubeConsent(page, defaultTryCatchTimeoutMs);
 
           // If we did not load a locale storage state, login to test account and set locale
           // This will also create a new storage state with the locale already set
@@ -140,7 +140,7 @@ export async function setupUBlockAndAuth(
             page,
             browserNameWithExtensions,
             localeString,
-            defaultNetworkIdleTimeoutMs,
+            defaultTryCatchTimeoutMs,
           );
 
           // If for whatever reason we are not logged in, then fail the setup

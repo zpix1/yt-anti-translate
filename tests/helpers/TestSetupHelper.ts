@@ -24,7 +24,7 @@ export async function handleRetrySetup(
   testInfo: TestInfo,
   browserNameWithExtensions: string,
   localeString: string,
-  defaultNetworkIdleTimeoutMs: number,
+  defaultTryCatchTimeoutMs: number,
   defaultTimeoutMs: number,
 ) {
   if (testInfo.retry > 0) {
@@ -35,7 +35,7 @@ export async function handleRetrySetup(
         testInfo,
         [browserNameWithExtensions],
         [localeString],
-        defaultNetworkIdleTimeoutMs,
+        defaultTryCatchTimeoutMs,
         defaultTimeoutMs,
       ),
     ).toBe(true);
@@ -124,20 +124,19 @@ export async function loadPageAndVerifyAuth(
   page: Page,
   url: string,
   browserNameWithExtensions: string,
-  defaultNetworkIdleTimeoutMs: number,
+  defaultTryCatchTimeoutMs: number,
 ) {
   // Navigate to the specified YouTube page
-  await page.goto(url);
+  await goToUrl();
 
-  // Wait for the page to load
-  try {
-    await Promise.all([
-      page.waitForLoadState("networkidle", {
-        timeout: defaultNetworkIdleTimeoutMs * 2, // Increased timeout for navigation
-      }),
-      page.waitForTimeout(10000), // Increased timeout for navigation
-    ]);
-  } catch {}
+  if (page.url() !== url) {
+    // Retry once
+    await goToUrl();
+  }
+  if (page.url() !== url) {
+    // Fail test early cause playwright did not navigate to page
+    expect(false).toBeTruthy();
+  }
 
   // If for whatever reason we are not logged in, then fail the test
   expect(await findLoginButton(page)).toBe(null);
@@ -148,6 +147,20 @@ export async function loadPageAndVerifyAuth(
     browserNameWithExtensions === "chromium" ||
     browserNameWithExtensions === "chromium-edge"
   ) {
-    await page.waitForTimeout(5000);
+    await page.waitForTimeout(7000);
+  }
+
+  async function goToUrl() {
+    await page.goto(url);
+
+    // Wait for the page to load
+    try {
+      await Promise.all([
+        page.waitForLoadState("networkidle", {
+          timeout: defaultTryCatchTimeoutMs * 2, // Increased timeout for navigation
+        }),
+        page.waitForTimeout(5000),
+      ]);
+    } catch {}
   }
 }

@@ -8,7 +8,7 @@ test.describe("Setup Auth And UBlock", () => {
   test("Create storage states if missing and download uBlock for both Chromium and Firefox", async ({
     allBrowserNameWithExtensions,
     allLocaleStrings,
-    defaultNetworkIdleTimeoutMs,
+    defaultTryCatchTimeoutMs,
     defaultTimeoutMs,
   }, testInfo) => {
     expect(
@@ -16,7 +16,7 @@ test.describe("Setup Auth And UBlock", () => {
         testInfo,
         allBrowserNameWithExtensions,
         allLocaleStrings,
-        defaultNetworkIdleTimeoutMs,
+        defaultTryCatchTimeoutMs,
         defaultTimeoutMs,
       ),
     ).toBe(true);

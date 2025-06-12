@@ -193,7 +193,7 @@ export async function handleGoogleLogin(
   page: Page,
   browserName: string,
   locale: string,
-  defaultNetworkIdleTimeoutMs: number,
+  defaultTryCatchTimeoutMs: number,
 ) {
   console.log(
     `[AuthStorage] Starting Google login process for ${browserName} with locale ${locale}`,
@@ -201,7 +201,7 @@ export async function handleGoogleLogin(
 
   try {
     await page.waitForLoadState("networkidle", {
-      timeout: defaultNetworkIdleTimeoutMs,
+      timeout: defaultTryCatchTimeoutMs,
     });
   } catch {
     console.log(`[AuthStorage] Network idle timeout during initial load`);
@@ -235,7 +235,7 @@ export async function handleGoogleLogin(
     await page.waitForTimeout(500);
     try {
       await page.waitForLoadState("networkidle", {
-        timeout: defaultNetworkIdleTimeoutMs,
+        timeout: defaultTryCatchTimeoutMs,
       });
     } catch {
       console.log(`[AuthStorage] Network idle timeout after avatar click`);
@@ -251,7 +251,7 @@ export async function handleGoogleLogin(
       await page.waitForTimeout(500);
       try {
         await page.waitForLoadState("networkidle", {
-          timeout: defaultNetworkIdleTimeoutMs,
+          timeout: defaultTryCatchTimeoutMs,
         });
       } catch {
         console.log(
@@ -308,7 +308,7 @@ export async function handleGoogleLogin(
       }
       try {
         await page.waitForLoadState("networkidle", {
-          timeout: defaultNetworkIdleTimeoutMs,
+          timeout: defaultTryCatchTimeoutMs,
         });
       } catch {
         console.log(`[AuthStorage] Network idle timeout after language change`);
@@ -325,7 +325,7 @@ export async function handleGoogleLogin(
 
     try {
       await page.waitForLoadState("networkidle", {
-        timeout: defaultNetworkIdleTimeoutMs,
+        timeout: defaultTryCatchTimeoutMs,
       });
     } catch {
       console.log(`[AuthStorage] Network idle timeout in login steps`);
@@ -338,7 +338,7 @@ export async function handleGoogleLogin(
     await page.getByRole("button", { name: nextText }).click();
     try {
       await page.waitForLoadState("networkidle", {
-        timeout: defaultNetworkIdleTimeoutMs,
+        timeout: defaultTryCatchTimeoutMs,
       });
     } catch {
       console.log(`[AuthStorage] Network idle timeout after email step`);
@@ -349,7 +349,7 @@ export async function handleGoogleLogin(
     await page.getByRole("button", { name: nextText }).click();
     try {
       await page.waitForLoadState("networkidle", {
-        timeout: defaultNetworkIdleTimeoutMs,
+        timeout: defaultTryCatchTimeoutMs,
       });
     } catch {
       console.log(`[AuthStorage] Network idle timeout after password step`);
@@ -387,7 +387,7 @@ export async function handleGoogleLogin(
 
     try {
       await page.waitForLoadState("networkidle", {
-        timeout: defaultNetworkIdleTimeoutMs,
+        timeout: defaultTryCatchTimeoutMs,
       });
     } catch {
       console.log(`[AuthStorage] Network idle timeout after final login steps`);

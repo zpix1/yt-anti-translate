@@ -4,7 +4,7 @@ import { defineConfig, devices, test as base } from "@playwright/test";
 const defaultTimeoutMultiplier: number = 1;
 const ciTimeoutMultiplier: number = 2;
 const basePageTimeoutMs: number = 15000;
-const networkIdleTimeoutMs: number = 5000;
+const tryCatchTimeoutMs: number = 5000;
 const defaultPageTimeoutMs: number = process.env.CI
   ? basePageTimeoutMs * ciTimeoutMultiplier
   : basePageTimeoutMs * defaultTimeoutMultiplier;
@@ -15,7 +15,7 @@ export type TestOptions = {
   localeString: string;
   allLocaleStrings: string[];
   defaultTimeoutMs: number;
-  defaultNetworkIdleTimeoutMs: number;
+  defaultTryCatchTimeoutMs: number;
 };
 
 export const test = base.extend<TestOptions>({
@@ -25,7 +25,7 @@ export const test = base.extend<TestOptions>({
   localeString: ["John", { option: true }],
   allLocaleStrings: [["John"], { option: true }],
   defaultTimeoutMs: [defaultPageTimeoutMs, { option: true }],
-  defaultNetworkIdleTimeoutMs: [networkIdleTimeoutMs, { option: true }],
+  defaultTryCatchTimeoutMs: [tryCatchTimeoutMs, { option: true }],
 });
 
 export default defineConfig<TestOptions>({

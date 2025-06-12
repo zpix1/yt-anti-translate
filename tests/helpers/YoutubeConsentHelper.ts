@@ -2,12 +2,12 @@ import { Page } from "@playwright/test";
 
 export async function handleYoutubeConsent(
   page: Page,
-  defaultNetworkIdleTimeoutMs: number,
+  defaultTryCatchTimeoutMs: number,
 ) {
   await page.waitForTimeout(1000);
   try {
     await page.waitForLoadState("networkidle", {
-      timeout: defaultNetworkIdleTimeoutMs,
+      timeout: defaultTryCatchTimeoutMs,
     });
   } catch {}
 
@@ -22,7 +22,7 @@ export async function handleYoutubeConsent(
   }
   try {
     await page.waitForLoadState("networkidle", {
-      timeout: defaultNetworkIdleTimeoutMs,
+      timeout: defaultTryCatchTimeoutMs,
     });
   } catch {}
 
@@ -42,7 +42,7 @@ export async function handleYoutubeConsent(
   await page.waitForTimeout(1000);
   try {
     await page.waitForLoadState("networkidle", {
-      timeout: defaultNetworkIdleTimeoutMs,
+      timeout: defaultTryCatchTimeoutMs,
     });
   } catch {}
 }
