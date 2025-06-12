@@ -135,7 +135,7 @@ export async function loadPageAndVerifyAuth(
   }
   if (page.url() !== url) {
     // Fail test early cause playwright did not navigate to page
-    expect(false).toBeTruthy();
+    expect(page.url()).toBe(url);
   }
 
   // If for whatever reason we are not logged in, then fail the test
