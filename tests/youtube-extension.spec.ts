@@ -603,7 +603,9 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // --- Switch to Shorts Tab ---
     console.log("Clicking Shorts tab...");
-    await page.locator("#tabsContent").getByText("Shorts").click();
+    const shortsTab = page.locator("#tabsContent").getByText("Shorts");
+    await shortsTab.waitFor();
+    await shortsTab.click();
     try {
       await Promise.all([
         page.waitForLoadState("networkidle", {
@@ -661,7 +663,9 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // --- Switch back to Videos Tab ---
     console.log("Clicking Videos tab...");
-    await page.locator("#tabsContent").getByText("Видео").click();
+    const videoTab = page.locator("#tabsContent").getByText("Видео");
+    await videoTab.waitFor();
+    await videoTab.click();
     try {
       await Promise.all([
         page.waitForLoadState("networkidle", {

@@ -114,7 +114,15 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
       });
     } catch {}
 
-    await page.getByRole("link", { name: "MrBeast", exact: true }).click();
+    const channel = page.getByRole("link", {
+      name: "MrBeast",
+      exact: true,
+      includeHidden: false,
+      disabled: false,
+    });
+    await channel.waitFor();
+    await channel.isVisible();
+    await channel.click();
     try {
       await Promise.all([
         page.waitForLoadState("networkidle", {
@@ -217,9 +225,11 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     console.log(
       "Clicking '..more' button on description to open About Popup...",
     );
-    await channelHeaderLocator
-      .locator(`.truncated-text-wiz__absolute-button`)
-      .click();
+    const moreButton = channelHeaderLocator.locator(
+      `.truncated-text-wiz__absolute-button`,
+    );
+    await moreButton.waitFor();
+    await moreButton.click();
     try {
       await Promise.all([
         page.waitForLoadState("networkidle", {
@@ -278,9 +288,11 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
 
     // --- Close Popup
     console.log("Clicking 'X' button to close Popup...");
-    await aboutContainerLocator
-      .locator(`#visibility-button button.yt-spec-button-shape-next:visible`)
-      .click();
+    const closeButton = aboutContainerLocator.locator(
+      `#visibility-button button.yt-spec-button-shape-next:visible`,
+    );
+    await closeButton.waitFor();
+    await closeButton.click();
     try {
       await Promise.all([
         page.waitForLoadState("networkidle", {
@@ -294,11 +306,11 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     console.log(
       "Clicking '..more links' button on description to open About Popup...",
     );
-    await channelHeaderLocator
-      .locator(
-        `span.yt-core-attributed-string>span>a.yt-core-attributed-string__link[role="button"]`,
-      )
-      .click();
+    const moreLinksButton = channelHeaderLocator.locator(
+      `span.yt-core-attributed-string>span>a.yt-core-attributed-string__link[role="button"]`,
+    );
+    await moreLinksButton.waitFor();
+    await moreButton.click();
     try {
       await Promise.all([
         page.waitForLoadState("networkidle", {
@@ -342,9 +354,8 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
 
     // --- Close Popup
     console.log("Clicking 'X' button to close Popup...");
-    await aboutContainerLocator
-      .locator(`#visibility-button button.yt-spec-button-shape-next:visible`)
-      .click();
+    await closeButton.waitFor();
+    await closeButton.click();
     try {
       await Promise.all([
         page.waitForLoadState("networkidle", {
