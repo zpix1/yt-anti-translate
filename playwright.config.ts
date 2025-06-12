@@ -3,8 +3,8 @@ import { defineConfig, devices, test as base } from "@playwright/test";
 // Timeout Settings
 const defaultTimeoutMultiplier: number = 1;
 const ciTimeoutMultiplier: number = 2;
-const basePageTimeoutMs: number = 15000;
-const tryCatchTimeoutMs: number = 5000;
+const basePageTimeoutMs: number = 10000;
+const tryCatchTimeoutMs: number = 2500;
 const defaultPageTimeoutMs: number = process.env.CI
   ? basePageTimeoutMs * ciTimeoutMultiplier
   : basePageTimeoutMs * defaultTimeoutMultiplier;
@@ -38,7 +38,7 @@ export default defineConfig<TestOptions>({
   /* Retry 3 times on CI, or once locally */
   retries: process.env.CI ? 3 : 0,
   /* Limit parallel workers on CI as they cause random failures some of the times */
-  workers: process.env.CI ? 4 : undefined,
+  workers: process.env.CI ? 2 : 6,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [["github"], ["html"]],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
