@@ -174,7 +174,7 @@ test.describe("YouTube Anti-Translate extension", () => {
           timeout: defaultTryCatchTimeoutMs,
         });
       } catch {}
-      moreButton.click();
+      await moreButton.click();
       try {
         // Wait for the description to expand
         await Promise.all([
@@ -350,7 +350,7 @@ test.describe("YouTube Anti-Translate extension", () => {
           timeout: defaultTryCatchTimeoutMs,
         });
       } catch {}
-      moreButton.click();
+      await moreButton.click();
       try {
         // Wait for the description to expand
         await Promise.all([
@@ -388,7 +388,7 @@ test.describe("YouTube Anti-Translate extension", () => {
           }),
         ]);
       } catch {}
-      secondTimecodeLocator.click();
+      await secondTimecodeLocator.click();
       try {
         await Promise.all([
           // Wait for video to update its playback position
@@ -603,7 +603,7 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // --- Switch to Shorts Tab ---
     console.log("Clicking Shorts tab...");
-    page.locator("#tabsContent").getByText("Shorts").click();
+    await page.locator("#tabsContent").getByText("Shorts").click();
     try {
       await Promise.all([
         page.waitForLoadState("networkidle", {
@@ -661,7 +661,7 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // --- Switch back to Videos Tab ---
     console.log("Clicking Videos tab...");
-    page.locator("#tabsContent").getByText("Видео").click();
+    await page.locator("#tabsContent").getByText("Видео").click();
     try {
       await Promise.all([
         page.waitForLoadState("networkidle", {
@@ -746,7 +746,7 @@ test.describe("YouTube Anti-Translate extension", () => {
           }),
         ]);
       } catch {}
-      firstShortLocator.click();
+      await firstShortLocator.click();
       try {
         await Promise.all([
           page.waitForLoadState("networkidle", {
@@ -863,7 +863,7 @@ test.describe("YouTube Anti-Translate extension", () => {
             timeout: defaultTryCatchTimeoutMs,
           });
         } catch {}
-        buttonDown.click();
+        await buttonDown.click();
         try {
           await Promise.all([
             page.waitForLoadState("networkidle", {

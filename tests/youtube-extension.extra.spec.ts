@@ -114,7 +114,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
       });
     } catch {}
 
-    page.getByRole("link", { name: "MrBeast", exact: true }).click();
+    await page.getByRole("link", { name: "MrBeast", exact: true }).click();
     try {
       await Promise.all([
         page.waitForLoadState("networkidle", {
@@ -217,7 +217,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     console.log(
       "Clicking '..more' button on description to open About Popup...",
     );
-    channelHeaderLocator
+    await channelHeaderLocator
       .locator(`.truncated-text-wiz__absolute-button`)
       .click();
     try {
@@ -278,7 +278,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
 
     // --- Close Popup
     console.log("Clicking 'X' button to close Popup...");
-    aboutContainerLocator
+    await aboutContainerLocator
       .locator(`#visibility-button button.yt-spec-button-shape-next:visible`)
       .click();
     try {
@@ -294,7 +294,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     console.log(
       "Clicking '..more links' button on description to open About Popup...",
     );
-    channelHeaderLocator
+    await channelHeaderLocator
       .locator(
         `span.yt-core-attributed-string>span>a.yt-core-attributed-string__link[role="button"]`,
       )
@@ -342,13 +342,11 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
 
     // --- Close Popup
     console.log("Clicking 'X' button to close Popup...");
+    await aboutContainerLocator
+      .locator(`#visibility-button button.yt-spec-button-shape-next:visible`)
+      .click();
     try {
       await Promise.all([
-        aboutContainerLocator
-          .locator(
-            `#visibility-button button.yt-spec-button-shape-next:visible`,
-          )
-          .click(),
         page.waitForLoadState("networkidle", {
           timeout: defaultTryCatchTimeoutMs,
         }),
