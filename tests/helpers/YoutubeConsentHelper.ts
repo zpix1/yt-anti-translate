@@ -9,14 +9,22 @@ export async function handleYoutubeConsent(
     await page.waitForLoadState("networkidle", {
       timeout: defaultTryCatchTimeoutMs,
     });
-  } catch {}
+  } catch {
+    console.log(`[YoutubeConsentHelper] networkidle timeout`);
+  }
 
   // Sometimes YouTube shows a consent dialog, handle it if it appears
   const consentButton = page.getByRole("button", {
     name: /I agree|Принимаю|Я согласен|ฉันยอมรับ/i,
   });
-  if (await consentButton.isVisible()) {
-    await consentButton.scrollIntoViewIfNeeded();
+  if ((await consentButton.isVisible()) && (await consentButton.isEnabled())) {
+    try {
+      await consentButton.scrollIntoViewIfNeeded({
+        timeout: defaultTryCatchTimeoutMs,
+      });
+    } catch {
+      console.log(`[YoutubeConsentHelper] scrollIntoViewIfNeeded timeout`);
+    }
     await consentButton.click();
     await page.waitForTimeout(1500);
   }
@@ -24,14 +32,22 @@ export async function handleYoutubeConsent(
     await page.waitForLoadState("networkidle", {
       timeout: defaultTryCatchTimeoutMs,
     });
-  } catch {}
+  } catch {
+    console.log(`[YoutubeConsentHelper] networkidle timeout`);
+  }
 
   // Sometimes YouTube shows a cookies dialog, handle it if it appears
   const possibleLabels = ["Accept all", "Принять все", "ยอมรับทั้งหมด"];
   for (const label of possibleLabels) {
     const button = page.locator(`button:has-text("${label}")`).first();
-    if (await button.isVisible()) {
-      await button.scrollIntoViewIfNeeded();
+    if ((await button.isVisible()) && (await button.isEnabled())) {
+      try {
+        await button.scrollIntoViewIfNeeded({
+          timeout: defaultTryCatchTimeoutMs,
+        });
+      } catch {
+        console.log(`[YoutubeConsentHelper] scrollIntoViewIfNeeded timeout`);
+      }
       await button.click();
       // Most of the time we are redirected after the cookies dialog so allow extra time for load
       await page.waitForTimeout(5000);
@@ -44,5 +60,7 @@ export async function handleYoutubeConsent(
     await page.waitForLoadState("networkidle", {
       timeout: defaultTryCatchTimeoutMs,
     });
-  } catch {}
+  } catch {
+    console.log(`[YoutubeConsentHelper] networkidle timeout`);
+  }
 }

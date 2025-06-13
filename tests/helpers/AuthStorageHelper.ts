@@ -172,7 +172,7 @@ export async function findLoginButton(page) {
       `[AuthStorage] Checking for login button with label: "${label}"`,
     );
     const button = page.locator(`#masthead a:has-text("${label}")`).first();
-    if (await button.isVisible()) {
+    if ((await button.isVisible()) && (await button.isEnabled())) {
       console.log(`[AuthStorage] Found login button with label: "${label}"`);
       return button;
     }
@@ -209,9 +209,15 @@ export async function handleGoogleLogin(
 
   //Check if we need to login
   const button = await findLoginButton(page);
-  if (button && (await button.isVisible())) {
+  if (button && (await button.isVisible()) && (await button.isEnabled())) {
     console.log(`[AuthStorage] Login required, clicking login button`);
-    await button.scrollIntoViewIfNeeded();
+    try {
+      await button.scrollIntoViewIfNeeded({
+        timeout: defaultTryCatchTimeoutMs,
+      });
+    } catch {
+      console.log(`[AuthStorage] scrollIntoViewIfNeeded timeout`);
+    }
     await button.click();
     await continueLoginSteps(page);
   } else {
@@ -226,11 +232,18 @@ export async function handleGoogleLogin(
   //Check youtube locale is set correctly
   console.log(`[AuthStorage] Checking and setting YouTube locale`);
   const avatarButton = page.locator("#masthead #avatar-btn");
-  if (await avatarButton.isVisible()) {
+  await avatarButton.waitFor();
+  if ((await avatarButton.isVisible()) && (await avatarButton.isEnabled())) {
     console.log(
       `[AuthStorage] Avatar button found, clicking to access settings`,
     );
-    await avatarButton.scrollIntoViewIfNeeded();
+    try {
+      await avatarButton.scrollIntoViewIfNeeded({
+        timeout: defaultTryCatchTimeoutMs,
+      });
+    } catch {
+      console.log(`[AuthStorage] scrollIntoViewIfNeeded timeout`);
+    }
     await avatarButton.click();
     await page.waitForTimeout(500);
     try {
@@ -244,9 +257,19 @@ export async function handleGoogleLogin(
     const locationButton = page.locator(
       "yt-multi-page-menu-section-renderer:nth-child(3) > #items > ytd-compact-link-renderer:nth-child(3) > a#endpoint",
     );
-    if (await locationButton.isVisible()) {
+    await locationButton.waitFor();
+    if (
+      (await locationButton.isVisible()) &&
+      (await locationButton.isEnabled())
+    ) {
       console.log(`[AuthStorage] Location/Language button found, clicking`);
-      await locationButton.scrollIntoViewIfNeeded();
+      try {
+        await locationButton.scrollIntoViewIfNeeded({
+          timeout: defaultTryCatchTimeoutMs,
+        });
+      } catch {
+        console.log(`[AuthStorage] scrollIntoViewIfNeeded timeout`);
+      }
       await locationButton.click();
       await page.waitForTimeout(500);
       try {
@@ -277,7 +300,13 @@ export async function handleGoogleLogin(
           throw "handleGoogleLogin: Unsupported locale";
       }
 
-      await languageOption.scrollIntoViewIfNeeded();
+      try {
+        await languageOption.scrollIntoViewIfNeeded({
+          timeout: defaultTryCatchTimeoutMs,
+        });
+      } catch {
+        console.log(`[AuthStorage] scrollIntoViewIfNeeded timeout`);
+      }
       await languageOption.click();
       console.log(
         `[AuthStorage] Language option clicked, waiting for page to update`,
@@ -356,7 +385,7 @@ export async function handleGoogleLogin(
     }
 
     const totpInput = page.locator("#totpPin");
-    if (await totpInput.isVisible()) {
+    if ((await totpInput.isVisible()) && (await totpInput.isEnabled())) {
       console.log(`[AuthStorage] 2FA required, generating OTP`);
       if (!process.env.GOOGLE_OTP_SECRET) {
         console.error(
@@ -376,7 +405,7 @@ export async function handleGoogleLogin(
     const notNowButton = page.getByRole("button", {
       name: /Not now|Не сейчас|ไม่ใช่ตอนนี้/i,
     });
-    if (await notNowButton.isVisible()) {
+    if ((await notNowButton.isVisible()) && (await notNowButton.isEnabled())) {
       await notNowButton.click();
       console.log(`[AuthStorage] 'Not now' button clicked`);
     } else {

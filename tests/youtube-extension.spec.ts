@@ -40,12 +40,14 @@ test.describe("YouTube Anti-Translate extension", () => {
       browserNameWithExtensions,
       defaultTryCatchTimeoutMs,
     );
+
     // Wait for the video page to fully load
     await page.locator("#primary-inner:visible").waitFor();
     await page.locator("#player:visible").waitFor();
+    await page.locator("#movie_player:visible").waitFor();
     await page.locator("#below:visible").waitFor();
-    const ytdWatchMetadataLocatot = page.locator("ytd-watch-metadata:visible");
-    await ytdWatchMetadataLocatot.waitFor();
+    const ytdWatchMetadataLocator = page.locator("ytd-watch-metadata:visible");
+    await ytdWatchMetadataLocator.waitFor();
 
     try {
       await Promise.all([
@@ -56,11 +58,11 @@ test.describe("YouTube Anti-Translate extension", () => {
       ]);
     } catch {}
 
-    const ytdFormayyedStringLocator = ytdWatchMetadataLocatot.locator(
+    const ytdFormayyedStringLocator = ytdWatchMetadataLocator.locator(
       "yt-formatted-string#text:visible",
     );
     await ytdFormayyedStringLocator.waitFor();
-    const videoTitleLocator = ytdWatchMetadataLocatot.locator(
+    const videoTitleLocator = ytdWatchMetadataLocator.locator(
       "#yt-anti-translate-fake-node-current-video:visible",
     );
     await videoTitleLocator.waitFor();
@@ -168,7 +170,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     // Expand the description if it's collapsed
     const moreButton = descriptionLocator.locator("#expand:visible");
     await moreButton.waitFor();
-    if (await moreButton.isVisible()) {
+    if ((await moreButton.isVisible()) && (await moreButton.isEnabled())) {
       try {
         await moreButton.scrollIntoViewIfNeeded({
           timeout: defaultTryCatchTimeoutMs,
@@ -259,23 +261,25 @@ test.describe("YouTube Anti-Translate extension", () => {
 
       shouldMoveMouse = true;
 
-      while (await shouldMove()) {
-        if (await shouldMove()) {
-          await page.mouse.move(50, 50);
+      try {
+        while (await shouldMove()) {
+          if (await shouldMove()) {
+            await page.mouse.move(50, 50);
+          }
+          if (await shouldMove()) {
+            await page.mouse.move(50, 150);
+          }
+          if (await shouldMove()) {
+            await page.mouse.move(150, 150);
+          }
+          if (await shouldMove()) {
+            await page.mouse.move(150, 50);
+          }
+          if (await shouldMove()) {
+            await page.mouse.move(50, 50);
+          }
         }
-        if (await shouldMove()) {
-          await page.mouse.move(50, 150);
-        }
-        if (await shouldMove()) {
-          await page.mouse.move(150, 150);
-        }
-        if (await shouldMove()) {
-          await page.mouse.move(150, 50);
-        }
-        if (await shouldMove()) {
-          await page.mouse.move(50, 50);
-        }
-      }
+      } catch {}
     }
     function stopMouseMovement() {
       shouldMoveMouse = false;
@@ -317,8 +321,10 @@ test.describe("YouTube Anti-Translate extension", () => {
     // Wait for the video page to fully load
     await page.locator("#primary-inner:visible").waitFor();
     await page.locator("#player:visible").waitFor();
+    await page.locator("#movie_player:visible").waitFor();
     await page.locator("#below:visible").waitFor();
-    await page.locator("ytd-watch-metadata:visible").waitFor();
+    const ytdWatchMetadataLocator = page.locator("ytd-watch-metadata:visible");
+    await ytdWatchMetadataLocator.waitFor();
 
     try {
       await Promise.all([
@@ -336,7 +342,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     });
     expect(initialTime).toBeGreaterThanOrEqual(0); // Video should be loaded
 
-    const descriptionLocator = page.locator(
+    const descriptionLocator = ytdWatchMetadataLocator.locator(
       "ytd-text-inline-expander#description-inline-expander:visible",
     );
     await descriptionLocator.waitFor();
@@ -344,7 +350,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     // Expand the description if it's collapsed
     const moreButton = descriptionLocator.locator("#expand:visible");
     await moreButton.waitFor();
-    if (await moreButton.isVisible()) {
+    if ((await moreButton.isVisible()) && (await moreButton.isEnabled())) {
       try {
         await moreButton.scrollIntoViewIfNeeded({
           timeout: defaultTryCatchTimeoutMs,
@@ -379,7 +385,10 @@ test.describe("YouTube Anti-Translate extension", () => {
       .locator(secondTimecodeSelector)
       .first();
     await secondTimecodeLocator.waitFor();
-    if (await secondTimecodeLocator.isVisible()) {
+    if (
+      (await secondTimecodeLocator.isVisible()) &&
+      (await secondTimecodeLocator.isEnabled())
+    ) {
       try {
         await Promise.all([
           page.mouse.wheel(0, 500),
@@ -549,6 +558,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     );
 
     // Wait for the video grid to appear
+    await page.locator("ytd-rich-grid-renderer:visible").first().waitFor();
     await page.locator("ytd-rich-grid-media:visible").first().waitFor();
 
     try {
@@ -567,7 +577,10 @@ test.describe("YouTube Anti-Translate extension", () => {
     const translatedVideoSelector = `ytd-rich-item-renderer:has-text("${translatedVideoTitle}")`;
 
     const originalVideo = page.locator(videoSelector);
-    if (await originalVideo.isVisible()) {
+    if (
+      (await originalVideo.isVisible()) &&
+      (await originalVideo.isEnabled())
+    ) {
       try {
         await Promise.all([
           page.mouse.wheel(0, 500),
@@ -581,7 +594,10 @@ test.describe("YouTube Anti-Translate extension", () => {
       } catch {}
     }
     const translatedVideo = page.locator(translatedVideoSelector).first();
-    if (await translatedVideo.isVisible()) {
+    if (
+      (await translatedVideo.isVisible()) &&
+      (await translatedVideo.isEnabled())
+    ) {
       try {
         await Promise.all([
           page.mouse.wheel(0, 500),
@@ -615,6 +631,13 @@ test.describe("YouTube Anti-Translate extension", () => {
       ]);
     } catch {}
 
+    // Wait for the short grid to appear
+    await page.locator("ytd-rich-grid-renderer:visible").first().waitFor();
+    await page
+      .locator("ytd-rich-grid-renderer:visible img.yt-core-image")
+      .first()
+      .waitFor();
+
     // --- Check Shorts Tab ---
     const originalShortTitle = "$10,000 Human Shuffleboard";
     const translatedShortTitle = "Человеческий Шаффлборд за $10,000"; // Adjust if needed
@@ -624,7 +647,10 @@ test.describe("YouTube Anti-Translate extension", () => {
     console.log("Checking Shorts tab for original title...");
     // Shorts might load dynamically, scroll into view to ensure it's loaded
     const originalShort = page.locator(shortSelector);
-    if (await originalShort.isVisible()) {
+    if (
+      (await originalShort.isVisible()) &&
+      (await originalShort.isEnabled())
+    ) {
       try {
         await Promise.all([
           page.mouse.wheel(0, 500),
@@ -639,7 +665,10 @@ test.describe("YouTube Anti-Translate extension", () => {
       } catch {}
     }
     const translatedShort = page.locator(translatedShortSelector).first();
-    if (await translatedShort.isVisible()) {
+    if (
+      (await translatedShort.isVisible()) &&
+      (await translatedShort.isEnabled())
+    ) {
       try {
         await Promise.all([
           page.mouse.wheel(0, 500),
@@ -741,7 +770,10 @@ test.describe("YouTube Anti-Translate extension", () => {
     await ytcoreImgLocator.waitFor();
 
     // Click the first short to open
-    if (await firstShortLocator.isVisible()) {
+    if (
+      (await firstShortLocator.isVisible()) &&
+      (await firstShortLocator.isEnabled())
+    ) {
       try {
         await Promise.all([
           page.mouse.wheel(0, 500),
@@ -861,7 +893,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     async function goToNextShort() {
       const buttonDown = page.locator("#navigation-button-down button").first();
       await buttonDown.waitFor();
-      if (await buttonDown.isVisible()) {
+      if ((await buttonDown.isVisible()) && (await buttonDown.isEnabled())) {
         try {
           await buttonDown.scrollIntoViewIfNeeded({
             timeout: defaultTryCatchTimeoutMs,

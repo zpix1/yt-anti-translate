@@ -127,11 +127,19 @@ export async function loadPageAndVerifyAuth(
   defaultTryCatchTimeoutMs: number,
 ) {
   // Navigate to the specified YouTube page
-  await goToUrl();
+  try {
+    await goToUrl();
+  } catch {
+    console.warn("Page navigation failed once");
+  }
 
   if (page.url() !== url) {
     // Retry once
-    await goToUrl();
+    try {
+      await goToUrl();
+    } catch {
+      console.warn("Page navigation failed twice");
+    }
   }
   if (page.url() !== url) {
     // Fail test early cause playwright did not navigate to page
@@ -161,6 +169,8 @@ export async function loadPageAndVerifyAuth(
         }),
         page.waitForTimeout(5000),
       ]);
-    } catch {}
+    } catch {
+      console.log(`[TestSetupHelper] networkidle timeout`);
+    }
   }
 }

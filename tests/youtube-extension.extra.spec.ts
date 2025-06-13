@@ -121,7 +121,8 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
       disabled: false,
     });
     await channel.waitFor();
-    await channel.isVisible();
+    await expect(channel).toBeVisible();
+    await expect(channel).toBeEnabled();
     await channel.click();
     try {
       await Promise.all([
@@ -229,6 +230,8 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
       `.truncated-text-wiz__absolute-button`,
     );
     await moreButton.waitFor();
+    await expect(moreButton).toBeVisible();
+    await expect(moreButton).toBeEnabled();
     await moreButton.click();
     try {
       await Promise.all([
@@ -292,6 +295,8 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
       `#visibility-button button.yt-spec-button-shape-next:visible`,
     );
     await closeButton.waitFor();
+    await expect(closeButton).toBeVisible();
+    await expect(closeButton).toBeEnabled();
     await closeButton.click();
     try {
       await Promise.all([
@@ -310,7 +315,9 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
       `span.yt-core-attributed-string>span>a.yt-core-attributed-string__link[role="button"]`,
     );
     await moreLinksButton.waitFor();
-    await moreButton.click();
+    await expect(moreLinksButton).toBeVisible();
+    await expect(moreLinksButton).toBeEnabled();
+    await moreLinksButton.click();
     try {
       await Promise.all([
         page.waitForLoadState("networkidle", {
@@ -355,6 +362,8 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     // --- Close Popup
     console.log("Clicking 'X' button to close Popup...");
     await closeButton.waitFor();
+    await expect(closeButton).toBeVisible();
+    await expect(closeButton).toBeEnabled();
     await closeButton.click();
     try {
       await Promise.all([
@@ -420,9 +429,13 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
       defaultTryCatchTimeoutMs,
     );
 
-    // Wait for the video player to appear
-    const videoPlayerSelector = "#movie_player:visible";
-    await page.locator(videoPlayerSelector).waitFor();
+    // Wait for the video page to fully load
+    await page.locator("#primary-inner:visible").waitFor();
+    await page.locator("#player:visible").waitFor();
+    await page.locator("#movie_player:visible").waitFor();
+    await page.locator("#below:visible").waitFor();
+    const ytdWatchMetadataLocator = page.locator("ytd-watch-metadata:visible");
+    await ytdWatchMetadataLocator.waitFor();
 
     try {
       await Promise.all([
@@ -440,7 +453,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     } catch {}
 
     // --- Check Branding Title ---
-    const uploadInfoLocator = page.locator(
+    const uploadInfoLocator = ytdWatchMetadataLocator.locator(
       `#upload-info.ytd-video-owner-renderer:visible`,
     );
     await uploadInfoLocator.waitFor();
