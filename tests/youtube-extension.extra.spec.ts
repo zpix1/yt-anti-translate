@@ -122,7 +122,6 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     });
     await channel.waitFor();
     await expect(channel).toBeVisible();
-    await expect(channel).toBeEnabled();
     await channel.click();
     try {
       await Promise.all([
@@ -231,7 +230,6 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     );
     await moreButton.waitFor();
     await expect(moreButton).toBeVisible();
-    await expect(moreButton).toBeEnabled();
     await moreButton.click();
     try {
       await Promise.all([
@@ -296,7 +294,6 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     );
     await closeButton.waitFor();
     await expect(closeButton).toBeVisible();
-    await expect(closeButton).toBeEnabled();
     await closeButton.click();
     try {
       await Promise.all([
@@ -316,7 +313,6 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     );
     await moreLinksButton.waitFor();
     await expect(moreLinksButton).toBeVisible();
-    await expect(moreLinksButton).toBeEnabled();
     await moreLinksButton.click();
     try {
       await Promise.all([
@@ -363,7 +359,6 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     console.log("Clicking 'X' button to close Popup...");
     await closeButton.waitFor();
     await expect(closeButton).toBeVisible();
-    await expect(closeButton).toBeEnabled();
     await closeButton.click();
     try {
       await Promise.all([

@@ -172,7 +172,7 @@ export async function findLoginButton(page) {
       `[AuthStorage] Checking for login button with label: "${label}"`,
     );
     const button = page.locator(`#masthead a:has-text("${label}")`).first();
-    if ((await button.isVisible()) && (await button.isEnabled())) {
+    if (await button.isVisible()) {
       console.log(`[AuthStorage] Found login button with label: "${label}"`);
       return button;
     }
@@ -209,7 +209,7 @@ export async function handleGoogleLogin(
 
   //Check if we need to login
   const button = await findLoginButton(page);
-  if (button && (await button.isVisible()) && (await button.isEnabled())) {
+  if (button && (await button.isVisible())) {
     console.log(`[AuthStorage] Login required, clicking login button`);
     try {
       await button.scrollIntoViewIfNeeded({
@@ -233,7 +233,7 @@ export async function handleGoogleLogin(
   console.log(`[AuthStorage] Checking and setting YouTube locale`);
   const avatarButton = page.locator("#masthead #avatar-btn");
   await avatarButton.waitFor();
-  if ((await avatarButton.isVisible()) && (await avatarButton.isEnabled())) {
+  if (await avatarButton.isVisible()) {
     console.log(
       `[AuthStorage] Avatar button found, clicking to access settings`,
     );
@@ -258,10 +258,7 @@ export async function handleGoogleLogin(
       "yt-multi-page-menu-section-renderer:nth-child(3) > #items > ytd-compact-link-renderer:nth-child(3) > a#endpoint",
     );
     await locationButton.waitFor();
-    if (
-      (await locationButton.isVisible()) &&
-      (await locationButton.isEnabled())
-    ) {
+    if (await locationButton.isVisible()) {
       console.log(`[AuthStorage] Location/Language button found, clicking`);
       try {
         await locationButton.scrollIntoViewIfNeeded({
@@ -385,7 +382,7 @@ export async function handleGoogleLogin(
     }
 
     const totpInput = page.locator("#totpPin");
-    if ((await totpInput.isVisible()) && (await totpInput.isEnabled())) {
+    if (await totpInput.isVisible()) {
       console.log(`[AuthStorage] 2FA required, generating OTP`);
       if (!process.env.GOOGLE_OTP_SECRET) {
         console.error(
@@ -405,7 +402,7 @@ export async function handleGoogleLogin(
     const notNowButton = page.getByRole("button", {
       name: /Not now|Не сейчас|ไม่ใช่ตอนนี้/i,
     });
-    if ((await notNowButton.isVisible()) && (await notNowButton.isEnabled())) {
+    if (await notNowButton.isVisible()) {
       await notNowButton.click();
       console.log(`[AuthStorage] 'Not now' button clicked`);
     } else {

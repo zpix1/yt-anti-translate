@@ -17,7 +17,7 @@ export async function handleYoutubeConsent(
   const consentButton = page.getByRole("button", {
     name: /I agree|Принимаю|Я согласен|ฉันยอมรับ/i,
   });
-  if ((await consentButton.isVisible()) && (await consentButton.isEnabled())) {
+  if (await consentButton.isVisible()) {
     try {
       await consentButton.scrollIntoViewIfNeeded({
         timeout: defaultTryCatchTimeoutMs,
@@ -40,7 +40,7 @@ export async function handleYoutubeConsent(
   const possibleLabels = ["Accept all", "Принять все", "ยอมรับทั้งหมด"];
   for (const label of possibleLabels) {
     const button = page.locator(`button:has-text("${label}")`).first();
-    if ((await button.isVisible()) && (await button.isEnabled())) {
+    if (await button.isVisible()) {
       try {
         await button.scrollIntoViewIfNeeded({
           timeout: defaultTryCatchTimeoutMs,
