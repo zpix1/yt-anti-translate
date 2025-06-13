@@ -1,8 +1,7 @@
 const CHANNELBRANDING_HEADER_SELECTOR =
-  "#page-header-container #page-header .page-header-view-model-wiz__page-header-headline-info";
+  "#page-header-container #page-header .page-header-view-model-wiz__page-header-headline > .page-header-view-model-wiz__page-header-headline-info";
 const CHANNELBRANDING_ABOUT_SELECTOR =
-  "ytd-engagement-panel-section-list-renderer";
-const CHANNELBRANDING_MUTATION_UPDATE_FREQUENCY = 1;
+  "ytd-engagement-panel-section-list-renderer > #header, ytd-engagement-panel-section-list-renderer > #content #contents #contents";
 const CHANNEL_LOCATION_REGEXES = [
   /:\/\/(?:www\.)?youtube\.com\/channel\//,
   /:\/\/(?:www\.)?youtube\.com\/c\//,
@@ -678,23 +677,134 @@ function updateBrandingAboutDescriptionContent(
   }
 }
 
-let mutationBrandingIdx = 0;
-async function untranslateBranding() {
-  if (mutationBrandingIdx % CHANNELBRANDING_MUTATION_UPDATE_FREQUENCY === 0) {
-    const url = document.location.href;
-    const isChannelPage = CHANNEL_LOCATION_REGEXES.some((regex) =>
-      regex.test(url),
-    );
+//let mutationBrandingIdx = 0;
+async function untranslateBranding(
+  /** @type {MutationRecord[]} */ mutationList,
+) {
+  const url = document.location.href;
+  const isChannelPage = CHANNEL_LOCATION_REGEXES.some((regex) =>
+    regex.test(url),
+  );
 
-    if (isChannelPage) {
-      const brandingHeaderPromise = restoreOriginalBrandingHeader();
-      const brandingAboutPromise = restoreOriginalBrandingAbout();
+  if (!isChannelPage) {
+    return;
+  }
 
-      // Wait for all promises to resolve concurrently
-      await Promise.all([brandingHeaderPromise, brandingAboutPromise]);
+  let brandingHeaderPromise = null;
+  let brandingAboutPromise = null;
+  for (const mutationRecord of mutationList) {
+    if (mutationRecord.type !== "childList") {
+      continue;
+    }
+
+    if (
+      !mutationRecord.target ||
+      mutationRecord.target.nodeType !== Node.ELEMENT_NODE
+    ) {
+      continue;
+    }
+
+    const /** @type {Element} */ element = mutationRecord.target;
+
+    // Checks on mutation target
+    if (element.matches(CHANNELBRANDING_HEADER_SELECTOR)) {
+      brandingHeaderPromise = restoreOriginalBrandingHeader();
+      continue;
+    }
+    if (element.matches(CHANNELBRANDING_ABOUT_SELECTOR)) {
+      brandingAboutPromise = restoreOriginalBrandingAbout();
+      continue;
+    }
+
+    if (brandingHeaderPromise && brandingAboutPromise) {
+      break;
+    }
+
+    for (const addedNode of mutationRecord.addedNodes) {
+      if (addedNode !== Node.ELEMENT_NODE) {
+        continue;
+      }
+      const /** @type {Element} */ addedElement = addedNode;
+
+      // Checks on mutation added nodes
+      if (
+        !brandingHeaderPromise &&
+        addedElement.matches(CHANNELBRANDING_HEADER_SELECTOR)
+      ) {
+        brandingHeaderPromise = restoreOriginalBrandingHeader();
+        continue;
+      }
+      if (
+        !brandingAboutPromise &&
+        addedElement.matches(CHANNELBRANDING_ABOUT_SELECTOR)
+      ) {
+        brandingAboutPromise = restoreOriginalBrandingAbout();
+        continue;
+      }
+
+      if (brandingHeaderPromise && brandingAboutPromise) {
+        break;
+      }
+
+      // Search inside added nodes for matching elements
+      if (
+        !brandingHeaderPromise &&
+        window.YoutubeAntiTranslate.getFirstVisible(
+          addedElement.querySelectorAll(CHANNELBRANDING_HEADER_SELECTOR),
+        )
+      ) {
+        brandingHeaderPromise = restoreOriginalBrandingHeader();
+      }
+      if (
+        !brandingAboutPromise &&
+        window.YoutubeAntiTranslate.getFirstVisible(
+          addedElement.querySelectorAll(CHANNELBRANDING_ABOUT_SELECTOR),
+        )
+      ) {
+        brandingAboutPromise = restoreOriginalBrandingAbout();
+      }
+    }
+
+    if (brandingHeaderPromise && brandingAboutPromise) {
+      break;
+    }
+
+    // Only do this last check when target is not 'body'
+    if (element.matches("body")) {
+      continue;
+    }
+
+    // Search inside mutation target for matching elements
+    if (
+      !brandingHeaderPromise &&
+      window.YoutubeAntiTranslate.getFirstVisible(
+        element.querySelectorAll(CHANNELBRANDING_HEADER_SELECTOR),
+      )
+    ) {
+      brandingHeaderPromise = restoreOriginalBrandingHeader();
+    }
+    if (
+      !brandingAboutPromise &&
+      window.YoutubeAntiTranslate.getFirstVisible(
+        element.querySelectorAll(CHANNELBRANDING_ABOUT_SELECTOR),
+      )
+    ) {
+      brandingAboutPromise = restoreOriginalBrandingAbout();
+    }
+
+    if (brandingHeaderPromise && brandingAboutPromise) {
+      break;
     }
   }
-  mutationBrandingIdx++;
+
+  if (!brandingHeaderPromise && !brandingAboutPromise) {
+    return;
+  }
+  // Wait for all promises to resolve concurrently
+  await Promise.all([
+    brandingHeaderPromise ?? new Promise(() => {}),
+    brandingAboutPromise ?? new Promise(() => {}),
+  ]);
 }
 
 // Initialize the mutation observer for branding
@@ -709,6 +819,19 @@ chrome.storage.sync.get(
       const observerConfig = { childList: true, subtree: true };
       const brandingObserver = new MutationObserver(untranslateBranding);
       brandingObserver.observe(targetNode, observerConfig);
+
+      // Title only observer
+      const targetTitle = document.querySelector("title");
+      const titleObserver = new MutationObserver(async function () {
+        // TODO: call a document.title specific function instead
+        await restoreOriginalBrandingHeader();
+      });
+      const titleObserverConfig = {
+        subtree: true,
+        characterData: true,
+        childList: true,
+      };
+      titleObserver.observe(targetTitle, titleObserverConfig);
     }
   },
 );
