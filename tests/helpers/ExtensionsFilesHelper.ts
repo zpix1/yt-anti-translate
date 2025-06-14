@@ -20,7 +20,7 @@ const destDirExtension = path.join(__dirname, "../testDist");
 /** Function to copy files and directories recursively
  * @param {JSON} configObject - The object to be passed and inserted into the start.js file to set the chome.storage settings
  **/
-export function handleTestDistribution(configObject) {
+export async function handleTestDistribution(configObject) {
   //Function to copy files and directories recursively
   function copyFiles(src: string, dest: string) {
     const stats = fs.statSync(src);
@@ -38,8 +38,29 @@ export function handleTestDistribution(configObject) {
     }
   }
 
+  // Helper to safely write file with retries on EBUSY errors
+  async function safeWriteFileSync(
+    filePath: string,
+    data: string,
+    retries = 5,
+    delayMs = 100,
+  ) {
+    for (let i = 0; i < retries; i++) {
+      try {
+        fs.writeFileSync(filePath, data, "utf-8");
+        return; // success
+      } catch (err) {
+        if (err.code === "EBUSY" && i < retries - 1) {
+          await new Promise((res) => setTimeout(res, delayMs));
+          continue; // retry
+        }
+        throw err; // rethrow other errors or after max retries
+      }
+    }
+  }
+
   // Function to modify the start.js file in testDist/src
-  const modifyStartJs = (filePath: string, storageObject: object) => {
+  const modifyStartJs = async (filePath: string, storageObject: object) => {
     if (fs.existsSync(filePath)) {
       const data = fs.readFileSync(filePath, "utf-8");
 
@@ -49,7 +70,7 @@ export function handleTestDistribution(configObject) {
       const newLine = `chrome.storage.sync.set(${storageObjectString});\n`;
 
       const modifiedData = newLine + data;
-      fs.writeFileSync(filePath, modifiedData, "utf-8");
+      await safeWriteFileSync(filePath, modifiedData);
       console.log("content_start modified successfully!");
     } else {
       console.log("content_start not found!");
@@ -67,7 +88,7 @@ export function handleTestDistribution(configObject) {
   // Modify the start.js file after copying
   if (configObject) {
     const startJsPath = path.join(destDirExtension, "src", "content_start.js");
-    modifyStartJs(startJsPath, configObject);
+    await modifyStartJs(startJsPath, configObject);
   }
 }
 
@@ -79,6 +100,7 @@ export async function downloadAndExtractUBlock(browserName) {
   let uBlockUri, expectedVersion, destDirUBlock;
   switch (browserName) {
     case "chromium":
+    case "chromium-edge":
       //To get the following url if it changes you can do a `curl 'https://clients2.google.com/service/update2/crx?response=redirect&os=win&arch=x86-64&os_arch=x86-64&nacl_arch=x86-64&prod=chromiumcrx&prodchannel=unknown&prodversion=9999.0.9999.0&acceptformat=crx2,crx3&x=id%3Dddkjiahejlhfcafbddmgiahcphecmpfh%26uc'`
       //and copy the redirect URL to the file
       uBlockUri = `https://clients2.googleusercontent.com/crx/blobs/AR5vvToUznjd4HPtq2Qf2ofykf5cygX6Wm7Q7cmg2zGc61WE49beD-vBuuew0okjXIj8lJ8TJMfGenI2Dg8DAJT_dNWWaFrSeW5UApwk5Nxh05G5vVNqQYKOcrQeYkJ2fxBgAMZSmuWEL6hqLeWkBX6RZY0yRQi9IjkaXg/DDKJIAHEJLHFCAFBDDMGIAHCPHECMPFH_2025_512_1008_0.crx`;

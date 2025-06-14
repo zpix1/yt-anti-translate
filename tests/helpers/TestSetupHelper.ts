@@ -24,12 +24,20 @@ export async function handleRetrySetup(
   testInfo: TestInfo,
   browserNameWithExtensions: string,
   localeString: string,
+  defaultTryCatchTimeoutMs: number,
+  defaultTimeoutMs: number,
 ) {
   if (testInfo.retry > 0) {
     console.log("retrying test", testInfo.title, "doing setup again");
     // If this test is retrying then check uBlock and Auth again
     expect(
-      await setupUBlockAndAuth([browserNameWithExtensions], [localeString]),
+      await setupUBlockAndAuth(
+        testInfo,
+        [browserNameWithExtensions],
+        [localeString],
+        defaultTryCatchTimeoutMs,
+        defaultTimeoutMs,
+      ),
     ).toBe(true);
   }
 }
@@ -41,13 +49,16 @@ export async function createBrowserContext(
 ): Promise<BrowserContext | Browser> {
   let context;
   switch (browserNameWithExtensions) {
-    case "chromium": {
+    case "chromium":
+    case "chromium-edge": {
       const browserTypeWithExtension = withExtension(chromium, [
         path.resolve(__dirname, extensionPath),
         path.resolve(__dirname, "..", "testUBlockOriginLite"),
       ]);
       context = await browserTypeWithExtension.launchPersistentContext("", {
         headless: false,
+        channel:
+          browserNameWithExtensions === "chromium-edge" ? "msedge" : undefined,
       });
       break;
     }
@@ -76,19 +87,28 @@ export async function setupPageWithAuth(
   context: BrowserContext | Browser,
   browserNameWithExtensions: string,
   localeString: string,
-) {
+  defaultTimeoutMs: number,
+): Promise<{ page: Page; consoleMessageCount: number }> {
   const result = await newPageWithStorageStateIfItExists(
     context,
     browserNameWithExtensions,
     localeString,
   );
-  const page = result.page;
-  const localeLoaded = result.localeLoaded;
+  const page: Page = result.page;
+  const localeLoaded: boolean = result.localeLoaded;
 
   if (!localeLoaded) {
     // Setup failed to create a matching locale so test will fail.
     expect(localeLoaded).toBe(true);
   }
+
+  if (context["_type"] === "BrowserContext") {
+    const browserContext = context as BrowserContext;
+    browserContext.setDefaultNavigationTimeout(defaultTimeoutMs * 2);
+    browserContext.setDefaultTimeout(defaultTimeoutMs);
+  }
+  page.setDefaultNavigationTimeout(defaultTimeoutMs * 2);
+  page.setDefaultTimeout(defaultTimeoutMs);
 
   // Set up console message counting
   let consoleMessageCount = 0;
@@ -103,24 +123,54 @@ export async function setupPageWithAuth(
 export async function loadPageAndVerifyAuth(
   page: Page,
   url: string,
-  browserNameWithExtensions?: string,
+  browserNameWithExtensions: string,
+  defaultTryCatchTimeoutMs: number,
 ) {
   // Navigate to the specified YouTube page
-  await page.goto(url);
-
-  // Wait for the page to load
   try {
-    await page.waitForLoadState("networkidle", { timeout: 5000 });
-  } catch {}
-  // .waitForLoadState("networkidle" is not always right so wait 5 extra seconds
-  await page.waitForTimeout(5000);
+    await goToUrl();
+  } catch {
+    console.warn("Page navigation failed once");
+  }
+
+  if (page.url() !== url) {
+    // Retry once
+    try {
+      await goToUrl();
+    } catch {
+      console.warn("Page navigation failed twice");
+    }
+  }
+  if (page.url() !== url) {
+    // Fail test early cause playwright did not navigate to page
+    expect(page.url()).toBe(url);
+  }
 
   // If for whatever reason we are not logged in, then fail the test
   expect(await findLoginButton(page)).toBe(null);
 
   // When chromium we need to wait some extra time to allow adds to be removed by uBlock Origin Lite
   // Ads are allowed to load and removed after so it takes time
-  if (browserNameWithExtensions === "chromium") {
-    await page.waitForTimeout(5000);
+  if (
+    browserNameWithExtensions === "chromium" ||
+    browserNameWithExtensions === "chromium-edge"
+  ) {
+    await page.waitForTimeout(7000);
+  }
+
+  async function goToUrl() {
+    await page.goto(url);
+
+    // Wait for the page to load
+    try {
+      await Promise.all([
+        page.waitForLoadState("networkidle", {
+          timeout: defaultTryCatchTimeoutMs * 2, // Increased timeout for navigation
+        }),
+        page.waitForTimeout(5000),
+      ]);
+    } catch {
+      console.log(`[TestSetupHelper] networkidle timeout`);
+    }
   }
 }

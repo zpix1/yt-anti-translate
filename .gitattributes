@@ -1,0 +1,15 @@
+# Enforce LF for all text files
+* text eol=lf
+
+# Treat common binary/image files as binary (no line ending normalization)
+*.jpg   binary
+*.jpeg  binary
+*.png   binary
+*.gif   binary
+*.svg   binary
+*.ico   binary
+*.webp  binary
+*.bmp   binary
+*.tiff  binary
+*.psd   binary
+*.heic  binary
