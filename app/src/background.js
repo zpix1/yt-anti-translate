@@ -150,6 +150,7 @@ async function untranslateCurrentShortVideo() {
   }
 }
 
+//Changes main short title on "/shorts/shortid" pages
 async function untranslateCurrentShortVideoLinks() {
   const fakeNodeID = "yt-anti-translate-fake-node-current-short-video-links";
   const originalNodeSelector = `.ytReelMultiFormatLinkViewModelEndpoint span${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}>span:not(#${fakeNodeID})`;
@@ -163,6 +164,7 @@ async function untranslateCurrentShortVideoLinks() {
   );
 }
 
+//Changes main video title on "/watch?v=videoid" pages
 async function untranslateCurrentVideo() {
   const fakeNodeID = "yt-anti-translate-fake-node-current-video";
   const originalNodeSelector = `#title > h1 > yt-formatted-string:not(#${fakeNodeID})`;
@@ -176,6 +178,8 @@ async function untranslateCurrentVideo() {
   );
 }
 
+//For channel ("/@MrBeast") pages, for the pinned video's title **in** the video player
+//See "docs/Figure 2.png"
 async function untranslateCurrentVideoHeadLink() {
   const fakeNodeID = "yt-anti-translate-fake-node-video-head-link";
   const originalNodeSelector = `${window.YoutubeAntiTranslate.getPlayerSelector()} a.ytp-title-link:not(#${fakeNodeID})`;
@@ -213,8 +217,10 @@ async function untranslateCurrentVideoFullScreenEdu() {
   );
 }
 
-async function untranslateCurrentChannelEmbededVideoTitle() {
-  const fakeNodeID = "yt-anti-translate-fake-node-channel-embeded-title";
+//For channel ("/@MrBeast") pages, for the pinned video's title **under** the video player
+//See "docs/Figure 1.png"
+async function untranslateCurrentChannelEmbeddedVideoTitle() {
+  const fakeNodeID = "yt-anti-translate-fake-node-channel-embedded-title";
   const originalNodeSelector = `div.ytd-channel-video-player-renderer #metadata-container.ytd-channel-video-player-renderer a:not(#${fakeNodeID})`;
 
   await createOrUpdateUntranslatedFakeNode(
@@ -270,7 +276,10 @@ async function createOrUpdateUntranslatedFakeNode(
       return;
     }
 
-    const getUrlForElement = getUrl(translatedElement ?? fakeNode);
+    const getUrlForElement =
+      window.YoutubeAntiTranslate.stripNonEssentialParams(
+        getUrl(translatedElement ?? fakeNode),
+      );
     const response = await get(
       "https://www.youtube.com/oembed?url=" + getUrlForElement,
     );
@@ -392,12 +401,16 @@ async function untranslateOtherVideos(intersectElements = null) {
         }
       }
 
-      const videoHref = linkElement.href; // Use the link's href for oEmbed and as the key
+      // Use the link's href for oEmbed and as the key
+      // These afaik always conform to "/watch?v=id", and don't have any extra parameters, but just to be safe
+      const videoHref = window.YoutubeAntiTranslate.stripNonEssentialParams(
+        linkElement.href,
+      );
 
       try {
         // console.debug(`Fetching oEmbed for video:`, videoHref);
         const response = await get(
-          "https://www.youtube.com/oembed?url=" + encodeURIComponent(videoHref),
+          "https://www.youtube.com/oembed?url=" + videoHref,
         );
         if (!response || !response.title) {
           // console.debug(`No oEmbed data for video:`, videoHref);
@@ -559,8 +572,8 @@ async function untranslate() {
     const currentVideoFullScreenLinkPromise = untranslateCurrentVideoHeadLink();
     const currentVideoFullScreenEduPromise =
       untranslateCurrentVideoFullScreenEdu();
-    const channelEmbededVideoPromise =
-      untranslateCurrentChannelEmbededVideoTitle();
+    const channelEmbeddedVideoPromise =
+      untranslateCurrentChannelEmbeddedVideoTitle();
     const otherVideosPromise = untranslateOtherVideos();
     const currentShortPromise = untranslateCurrentShortVideo();
     const currentShortVideoLinksPromise = untranslateCurrentShortVideoLinks();
@@ -571,7 +584,7 @@ async function untranslate() {
       currentVideoPromise,
       currentVideoFullScreenLinkPromise,
       currentVideoFullScreenEduPromise,
-      channelEmbededVideoPromise,
+      channelEmbeddedVideoPromise,
       otherVideosPromise,
       currentShortPromise,
       currentShortVideoLinksPromise,
