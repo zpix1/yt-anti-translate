@@ -62,11 +62,10 @@ function renderFooterLinks() {
 
 function saveOptions() {
   if (document.getElementById("reload-checkbox").checked) {
-    chrome.tabs.query({}, function (tabs) {
-      for (const tab of tabs) {
-        if (tab.url && tab.url.match(/^.*youtube\.com\/.{0,}$/)) {
-          chrome.tabs.reload(tab.id);
-        }
+    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+      const tab = tabs[0];
+      if (tab && tab.url && tab.url.match(/^.*youtube\.com\/.{0,}$/)) {
+        chrome.tabs.reload(tab.id);
       }
     });
   }
