@@ -3,8 +3,8 @@ import { defineConfig, devices, test as base } from "@playwright/test";
 // Timeout Settings
 const defaultTimeoutMultiplier: number = 1;
 const ciTimeoutMultiplier: number = 2;
-const basePageTimeoutMs: number = 10000;
-const tryCatchTimeoutMs: number = 2500;
+const basePageTimeoutMs: number = 25000;
+const tryCatchTimeoutMs: number = 2000;
 const defaultPageTimeoutMs: number = process.env.CI
   ? basePageTimeoutMs * ciTimeoutMultiplier
   : basePageTimeoutMs * defaultTimeoutMultiplier;
@@ -38,7 +38,7 @@ export default defineConfig<TestOptions>({
   /* Retry 3 times on CI, or once locally */
   retries: process.env.CI ? 3 : 0,
   /* Limit parallel workers on CI as they cause random failures some of the times */
-  workers: process.env.CI ? 2 : 6,
+  workers: process.env.CI ? 3 : 6,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [["github"], ["html"]],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
@@ -46,8 +46,14 @@ export default defineConfig<TestOptions>({
     /* Base URL to use in actions like `await page.goto('/')`. */
     // baseURL: 'http://127.0.0.1:3000',
 
-    /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    trace: "on-first-retry",
+    /* Retain trace of any failed test. See https://playwright.dev/docs/trace-viewer */
+    trace: "retain-on-failure",
+
+    //Videos
+    video: {
+      mode: "retain-on-failure",
+      size: { width: 640, height: 480 },
+    },
   },
 
   /* Configure projects for major browsers */

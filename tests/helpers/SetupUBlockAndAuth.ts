@@ -114,7 +114,7 @@ export async function setupUBlockAndAuth(
         });
 
         if (!localeLoaded) {
-          await page.goto("https://www.youtube.com/@MrBeast");
+          await page.goto("https://www.youtube.com/feed/you");
 
           try {
             await page.waitForLoadState("networkidle", {
