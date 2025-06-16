@@ -3,7 +3,7 @@ on:
   push:
     branches: [main]
   pull_request_target:
-    types: [labeled, unlabeled]
+    types: [opened, labeled, unlabeled]
     branches: [main]
   schedule:
     - cron: "0 0 * * 0,2,4" # Run at midnight UTC every Sunday and Tuesday and Thursday
@@ -23,6 +23,7 @@ jobs:
 
     steps:
       - name: Require 'safe-to-test' label
+        if: github.event_name == 'pull_request_target'
         uses: mheap/github-action-required-labels@v5
         with:
           mode: minimum
