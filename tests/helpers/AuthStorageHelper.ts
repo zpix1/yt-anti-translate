@@ -11,7 +11,7 @@ const authFileLocationBase = path.join(__dirname, "../../playwright/.auth/");
 const authFileName = "user.json";
 
 import "dotenv/config";
-import { Page } from "@playwright/test";
+import { Browser, BrowserContext, Page, TestInfo } from "@playwright/test";
 
 /**
  * @param {BrowserContext} context
@@ -41,6 +41,7 @@ export async function newPageWithStorageStateIfItExists(
   let authFile;
   switch (browserName) {
     case "chromium":
+    case "chromium-edge":
     case "firefox":
       authFile = path.join(authFileLocationBase, browserName, authFileName);
       console.log(`[AuthStorage] Auth file path: ${authFile}`);
@@ -104,7 +105,7 @@ export async function newPageWithStorageStateIfItExists(
       console.log(
         `[AuthStorage] Storage is fresh, loading for browser: ${browserName}`,
       );
-      if (browserName === "chromium") {
+      if (browserName === "chromium" || browserName === "chromium-edge") {
         // Chromium must be launched as persistentContext to load
         // So we can only load the cookies as the newPage does not accept a storage state
         await loadCookies(context, storageFile);
@@ -187,17 +188,21 @@ export async function findLoginButton(page) {
  * @param {string} locale
  */
 export async function handleGoogleLogin(
-  context,
+  testInfo: TestInfo,
+  context: Browser | BrowserContext,
   page: Page,
   browserName: string,
   locale: string,
+  defaultTryCatchTimeoutMs: number,
 ) {
   console.log(
     `[AuthStorage] Starting Google login process for ${browserName} with locale ${locale}`,
   );
 
   try {
-    await page.waitForLoadState("networkidle", { timeout: 5000 });
+    await page.waitForLoadState("networkidle", {
+      timeout: defaultTryCatchTimeoutMs,
+    });
   } catch {
     console.log(`[AuthStorage] Network idle timeout during initial load`);
   }
@@ -206,25 +211,45 @@ export async function handleGoogleLogin(
   const button = await findLoginButton(page);
   if (button && (await button.isVisible())) {
     console.log(`[AuthStorage] Login required, clicking login button`);
-    await button.scrollIntoViewIfNeeded();
+    try {
+      await button.scrollIntoViewIfNeeded({
+        timeout: defaultTryCatchTimeoutMs,
+      });
+    } catch {
+      console.log(`[AuthStorage] scrollIntoViewIfNeeded timeout`);
+    }
     await button.click();
     await continueLoginSteps(page);
   } else {
     console.log(`[AuthStorage] User appears to already be logged in`);
   }
 
+  // Take a screenshot for visual verification
+  await page.screenshot({
+    path: `images/tests/${browserName}/${locale}/setup-auth-login-done${testInfo.retry > 0 ? `-${testInfo.retry}` : ""}.png`,
+  });
+
   //Check youtube locale is set correctly
   console.log(`[AuthStorage] Checking and setting YouTube locale`);
   const avatarButton = page.locator("#masthead #avatar-btn");
+  await avatarButton.waitFor();
   if (await avatarButton.isVisible()) {
     console.log(
       `[AuthStorage] Avatar button found, clicking to access settings`,
     );
-    await avatarButton.scrollIntoViewIfNeeded();
+    try {
+      await avatarButton.scrollIntoViewIfNeeded({
+        timeout: defaultTryCatchTimeoutMs,
+      });
+    } catch {
+      console.log(`[AuthStorage] scrollIntoViewIfNeeded timeout`);
+    }
     await avatarButton.click();
     await page.waitForTimeout(500);
     try {
-      await page.waitForLoadState("networkidle", { timeout: 5000 });
+      await page.waitForLoadState("networkidle", {
+        timeout: defaultTryCatchTimeoutMs,
+      });
     } catch {
       console.log(`[AuthStorage] Network idle timeout after avatar click`);
     }
@@ -232,13 +257,22 @@ export async function handleGoogleLogin(
     const locationButton = page.locator(
       "yt-multi-page-menu-section-renderer:nth-child(3) > #items > ytd-compact-link-renderer:nth-child(3) > a#endpoint",
     );
+    await locationButton.waitFor();
     if (await locationButton.isVisible()) {
       console.log(`[AuthStorage] Location/Language button found, clicking`);
-      await locationButton.scrollIntoViewIfNeeded();
+      try {
+        await locationButton.scrollIntoViewIfNeeded({
+          timeout: defaultTryCatchTimeoutMs,
+        });
+      } catch {
+        console.log(`[AuthStorage] scrollIntoViewIfNeeded timeout`);
+      }
       await locationButton.click();
       await page.waitForTimeout(500);
       try {
-        await page.waitForLoadState("networkidle", { timeout: 5000 });
+        await page.waitForLoadState("networkidle", {
+          timeout: defaultTryCatchTimeoutMs,
+        });
       } catch {
         console.log(
           `[AuthStorage] Network idle timeout after location button click`,
@@ -263,7 +297,13 @@ export async function handleGoogleLogin(
           throw "handleGoogleLogin: Unsupported locale";
       }
 
-      await languageOption.scrollIntoViewIfNeeded();
+      try {
+        await languageOption.scrollIntoViewIfNeeded({
+          timeout: defaultTryCatchTimeoutMs,
+        });
+      } catch {
+        console.log(`[AuthStorage] scrollIntoViewIfNeeded timeout`);
+      }
       await languageOption.click();
       console.log(
         `[AuthStorage] Language option clicked, waiting for page to update`,
@@ -276,12 +316,12 @@ export async function handleGoogleLogin(
         `user_${locale}.json`,
       );
 
-      if (browserName === "chromium") {
+      if (browserName === "chromium" || browserName === "chromium-edge") {
         console.log(
           `[AuthStorage] Saving locale-specific storage state for Chromium: ${localeStoragePath}`,
         );
         // for chromium we must use persistent context so save the storageState from the browserContext intead of pageContext
-        await context.storageState({
+        await (context as BrowserContext).storageState({
           path: localeStoragePath,
         });
       } else {
@@ -293,7 +333,9 @@ export async function handleGoogleLogin(
         });
       }
       try {
-        await page.waitForLoadState("networkidle", { timeout: 5000 });
+        await page.waitForLoadState("networkidle", {
+          timeout: defaultTryCatchTimeoutMs,
+        });
       } catch {
         console.log(`[AuthStorage] Network idle timeout after language change`);
       }
@@ -308,7 +350,9 @@ export async function handleGoogleLogin(
     console.log(`[AuthStorage] Continuing with Google login steps`);
 
     try {
-      await page.waitForLoadState("networkidle", { timeout: 5000 });
+      await page.waitForLoadState("networkidle", {
+        timeout: defaultTryCatchTimeoutMs,
+      });
     } catch {
       console.log(`[AuthStorage] Network idle timeout in login steps`);
     }
@@ -319,7 +363,9 @@ export async function handleGoogleLogin(
     await page.locator("#identifierId").fill(process.env.GOOGLE_USER);
     await page.getByRole("button", { name: nextText }).click();
     try {
-      await page.waitForLoadState("networkidle", { timeout: 5000 });
+      await page.waitForLoadState("networkidle", {
+        timeout: defaultTryCatchTimeoutMs,
+      });
     } catch {
       console.log(`[AuthStorage] Network idle timeout after email step`);
     }
@@ -328,7 +374,9 @@ export async function handleGoogleLogin(
     await page.locator("#password input").fill(process.env.GOOGLE_PWD);
     await page.getByRole("button", { name: nextText }).click();
     try {
-      await page.waitForLoadState("networkidle", { timeout: 5000 });
+      await page.waitForLoadState("networkidle", {
+        timeout: defaultTryCatchTimeoutMs,
+      });
     } catch {
       console.log(`[AuthStorage] Network idle timeout after password step`);
     }
@@ -350,9 +398,23 @@ export async function handleGoogleLogin(
       console.log(`[AuthStorage] No 2FA required`);
     }
 
+    //If we get a "Simplify you sign-in" or "Confirm your details" page cligh on "Not now" button
+    const notNowButton = page.getByRole("button", {
+      name: /Not now|Не сейчас|ไม่ใช่ตอนนี้/i,
+    });
+    if (await notNowButton.isVisible()) {
+      await notNowButton.click();
+      console.log(`[AuthStorage] 'Not now' button clicked`);
+    } else {
+      console.log(`[AuthStorage] 'Not now' button skipped as not detected`);
+    }
+
     await page.waitForTimeout(5000);
+
     try {
-      await page.waitForLoadState("networkidle", { timeout: 5000 });
+      await page.waitForLoadState("networkidle", {
+        timeout: defaultTryCatchTimeoutMs,
+      });
     } catch {
       console.log(`[AuthStorage] Network idle timeout after final login steps`);
     }
@@ -363,12 +425,12 @@ export async function handleGoogleLogin(
       authFileName,
     );
 
-    if (browserName === "chromium") {
+    if (browserName === "chromium" || browserName === "chromium-edge") {
       console.log(
         `[AuthStorage] Saving base storage state for Chromium: ${baseStoragePath}`,
       );
       // for chromium we must use persistent context so save the storageState from the browserContext intead of pageContext
-      await context.storageState({
+      await (context as BrowserContext).storageState({
         path: baseStoragePath,
       });
     } else {

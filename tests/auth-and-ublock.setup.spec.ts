@@ -8,9 +8,17 @@ test.describe("Setup Auth And UBlock", () => {
   test("Create storage states if missing and download uBlock for both Chromium and Firefox", async ({
     allBrowserNameWithExtensions,
     allLocaleStrings,
-  }) => {
+    defaultTryCatchTimeoutMs,
+    defaultTimeoutMs,
+  }, testInfo) => {
     expect(
-      await setupUBlockAndAuth(allBrowserNameWithExtensions, allLocaleStrings),
+      await setupUBlockAndAuth(
+        testInfo,
+        allBrowserNameWithExtensions,
+        allLocaleStrings,
+        defaultTryCatchTimeoutMs,
+        defaultTimeoutMs,
+      ),
     ).toBe(true);
   });
 });
