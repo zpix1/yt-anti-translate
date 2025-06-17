@@ -373,6 +373,64 @@ async function getChannelBrandingWithYoutubeDataAPI(youtubeDataApiKey) {
 }
 
 /**
+ * Processes the page title
+ */
+async function restoreOriginalPageTitle() {
+  await chrome.storage.sync.get(
+    {
+      youtubeDataApiKey: null,
+    },
+    async (items) => {
+      let originalBrandingData;
+      if (items.youtubeDataApiKey && items.youtubeDataApiKey.trim !== "") {
+        originalBrandingData = await getChannelBrandingWithYoutubeDataAPI(
+          items.youtubeDataApiKey,
+        );
+      }
+      if (!originalBrandingData) {
+        // Fallback to YouTubeI+i18n if YoutubeDataAPI Key was not set OR if it failed
+        originalBrandingData = await getChannelBrandingWithYoutubeI();
+      }
+
+      if (!originalBrandingData) {
+        window.YoutubeAntiTranslate.logWarning(
+          "No original branding data found",
+        );
+      } else if (!originalBrandingData.title) {
+        window.YoutubeAntiTranslate.logWarning(
+          "No original branding data found for title",
+        );
+      } else {
+        const ucid = await getChannelUCID();
+        const cachedOldTitle = window.YoutubeAntiTranslate.getSessionCache(
+          `pageTitle_channel_${ucid}`,
+        );
+        // This is cached by `updateBrandingHeaderTitleContent()`
+
+        if (cachedOldTitle && document.title.includes(cachedOldTitle)) {
+          // document tile is sometimes not a perfect match to the oldTile due to spacing, so normalize all
+          const normalizedDocumentTitle =
+            window.YoutubeAntiTranslate.normalizeSpaces(document.title);
+          const normalizedOldTitle =
+            window.YoutubeAntiTranslate.normalizeSpaces(cachedOldTitle);
+          const normalizeRealTitle =
+            window.YoutubeAntiTranslate.normalizeSpaces(
+              originalBrandingData.title,
+            );
+          const realDocumentTitle = normalizedDocumentTitle.replace(
+            normalizedOldTitle,
+            normalizeRealTitle,
+          );
+          if (normalizedDocumentTitle !== realDocumentTitle) {
+            document.title = realDocumentTitle;
+          }
+        }
+      }
+    },
+  );
+}
+
+/**
  * Processes the branding header and restores it to its original form
  */
 async function restoreOriginalBrandingHeader() {
@@ -414,7 +472,7 @@ async function restoreOriginalBrandingHeader() {
               document.querySelectorAll(CHANNELBRANDING_HEADER_SELECTOR),
             );
           if (brandingHeaderContainer) {
-            updateBrandingHeaderTitleContent(
+            await updateBrandingHeaderTitleContent(
               brandingHeaderContainer,
               originalBrandingData,
             );
@@ -438,7 +496,10 @@ async function restoreOriginalBrandingHeader() {
  * @param {HTMLElement} container - The branding header container element
  * @param {JSON} originalBrandingData - The original branding title and description
  */
-function updateBrandingHeaderTitleContent(container, originalBrandingData) {
+async function updateBrandingHeaderTitleContent(
+  container,
+  originalBrandingData,
+) {
   if (originalBrandingData.title) {
     // Find the title text containers
     const titleTextContainer = container.querySelector(
@@ -450,35 +511,17 @@ function updateBrandingHeaderTitleContent(container, originalBrandingData) {
         `No branding header title text containers found`,
       );
     } else {
-      const cachedOldTitle = window.YoutubeAntiTranslate.getSessionCache(
-        `pageTitle_${document.location.href}`,
-      );
-
-      if (cachedOldTitle && document.title.includes(cachedOldTitle)) {
-        // This is sometimes skipped on first update as youtube translate the document title late; so we use a cached oldTitle
-
-        // document tile is sometimes not a perfect match to the oldTile due to spacing, so normalize all
-        const normalizedDocumentTitle =
-          window.YoutubeAntiTranslate.normalizeSpaces(document.title);
-        const normalizedOldTitle =
-          window.YoutubeAntiTranslate.normalizeSpaces(cachedOldTitle);
-        const normalizeRealTitle = window.YoutubeAntiTranslate.normalizeSpaces(
-          originalBrandingData.title,
-        );
-        const realDocumentTitle = normalizedDocumentTitle.replace(
-          normalizedOldTitle,
-          normalizeRealTitle,
-        );
-        if (normalizedDocumentTitle !== realDocumentTitle) {
-          document.title = realDocumentTitle;
-        }
-      }
-      if (titleTextContainer.textContent !== originalBrandingData.title) {
-        // cache old title for future reference
+      if (
+        `${titleTextContainer.textContent}` !== `${originalBrandingData.title}`
+      ) {
+        const ucid = await getChannelUCID();
+        // cache old title for future use by `restoreOriginalPageTitle()`
         window.YoutubeAntiTranslate.setSessionCache(
-          `pageTitle_${document.location.href}`,
+          `pageTitle_channel_${ucid}`,
           titleTextContainer.textContent,
         );
+
+        await restoreOriginalPageTitle();
 
         window.YoutubeAntiTranslate.replaceTextOnly(
           titleTextContainer,
@@ -823,8 +866,7 @@ chrome.storage.sync.get(
       // Title only observer
       const targetTitle = document.querySelector("title");
       const titleObserver = new MutationObserver(async function () {
-        // TODO: call a document.title specific function instead
-        await restoreOriginalBrandingHeader();
+        await restoreOriginalPageTitle();
       });
       const titleObserverConfig = {
         subtree: true,
