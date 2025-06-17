@@ -27,9 +27,6 @@ const ORIGINAL_TRANSLATIONS = [
   "ต้นฉบับ", // Thai (th_TH)
 ];
 
-let mutationIdx = 0;
-const MUTATION_UPDATE_STEP = 5;
-
 function getOriginalTrack(tracks) {
   if (!tracks || !Array.isArray(tracks)) {
     return null;
@@ -113,11 +110,71 @@ async function untranslateAudioTrack() {
   }
 }
 
-async function untranslate() {
-  if (mutationIdx % MUTATION_UPDATE_STEP === 0) {
-    await untranslateAudioTrack();
+async function untranslate(/** @type {MutationRecord[]} */ mutationList) {
+  for (const mutationRecord of mutationList) {
+    if (mutationRecord.type !== "childList") {
+      continue;
+    }
+
+    if (
+      !mutationRecord.target ||
+      mutationRecord.target.nodeType !== Node.ELEMENT_NODE
+    ) {
+      continue;
+    }
+
+    const /** @type {Element} */ element = mutationRecord.target;
+
+    // Checks on mutation target
+    if (element.matches(window.YoutubeAntiTranslate.getPlayerSelector())) {
+      await untranslateAudioTrack();
+      break;
+    }
+
+    for (const addedNode of mutationRecord.addedNodes) {
+      if (addedNode !== Node.ELEMENT_NODE) {
+        continue;
+      }
+      const /** @type {Element} */ addedElement = addedNode;
+
+      // Checks on mutation added nodes
+      if (
+        addedElement.matches(window.YoutubeAntiTranslate.getPlayerSelector())
+      ) {
+        await untranslateAudioTrack();
+        break;
+      }
+
+      // Search inside added nodes for matching elements
+      if (
+        window.YoutubeAntiTranslate.getFirstVisible(
+          addedElement.querySelectorAll(
+            window.YoutubeAntiTranslate.getPlayerSelector(),
+          ),
+        )
+      ) {
+        await untranslateAudioTrack();
+        break;
+      }
+    }
+
+    // Only do this last check when target is not 'body'
+    if (element.matches("body")) {
+      continue;
+    }
+
+    // Search inside mutation target for matching elements
+    if (
+      window.YoutubeAntiTranslate.getFirstVisible(
+        element.querySelectorAll(
+          window.YoutubeAntiTranslate.getPlayerSelector(),
+        ),
+      )
+    ) {
+      await untranslateAudioTrack();
+      break;
+    }
   }
-  mutationIdx++;
 }
 
 // Initialize the extension

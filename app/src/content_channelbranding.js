@@ -720,7 +720,6 @@ function updateBrandingAboutDescriptionContent(
   }
 }
 
-//let mutationBrandingIdx = 0;
 async function untranslateBranding(
   /** @type {MutationRecord[]} */ mutationList,
 ) {
