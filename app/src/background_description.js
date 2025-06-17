@@ -269,6 +269,7 @@ document.addEventListener("click", (event) => {
   // Use YouTube's API to seek to the timestamp
   const player = window.YoutubeAntiTranslate.getFirstVisible(
     document.querySelectorAll(window.YoutubeAntiTranslate.getPlayerSelector()),
+    false, // Description might be long enough to take player outside of viewport. So in this case `shouldBeInsideViewport` is set to false
   );
   if (player && typeof player.seekTo === "function") {
     try {
