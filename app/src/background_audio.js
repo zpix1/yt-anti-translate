@@ -118,7 +118,9 @@ async function untranslate(/** @type {MutationRecord[]} */ mutationList) {
 
     if (
       !mutationRecord.target ||
-      mutationRecord.target.nodeType !== Node.ELEMENT_NODE
+      !window.YoutubeAntiTranslate.castNodeToElementOrNull(
+        mutationRecord.target,
+      )
     ) {
       continue;
     }
@@ -132,7 +134,7 @@ async function untranslate(/** @type {MutationRecord[]} */ mutationList) {
     }
 
     for (const addedNode of mutationRecord.addedNodes) {
-      if (addedNode !== Node.ELEMENT_NODE) {
+      if (!window.YoutubeAntiTranslate.castNodeToElementOrNull(addedNode)) {
         continue;
       }
       const /** @type {Element} */ addedElement = addedNode;
@@ -156,23 +158,6 @@ async function untranslate(/** @type {MutationRecord[]} */ mutationList) {
         await untranslateAudioTrack();
         break;
       }
-    }
-
-    // Only do this last check when target is not 'body'
-    if (element.matches("body")) {
-      continue;
-    }
-
-    // Search inside mutation target for matching elements
-    if (
-      window.YoutubeAntiTranslate.getFirstVisible(
-        element.querySelectorAll(
-          window.YoutubeAntiTranslate.getPlayerSelector(),
-        ),
-      )
-    ) {
-      await untranslateAudioTrack();
-      break;
     }
   }
 }

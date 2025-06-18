@@ -150,6 +150,26 @@ ytm-shorts-lockup-view-model`,
   },
 
   /**
+   * Try to cast a node to Element or return null
+   * @param {Node} node
+   * @returns {Element | null}
+   */
+  castNodeToElementOrNull: function (node) {
+    try {
+      if (node && node.nodeType === Number(Node.ELEMENT_NODE)) {
+        return /** @type {Element} */ node;
+      }
+      return null;
+    } catch {
+      this.logError(
+        `Cast from Node to Element failed unexpectedly.`,
+        window.location.href,
+      );
+      return null;
+    }
+  },
+
+  /**
    * Given a Node it uses computed style to determine if it is visible
    * @param {Node} node - A Node of type ELEMENT_NODE
    * @param {boolean} shouldCheckViewport - Optional. If true the element position is checked to be inside or outside the viewport. Viewport is extended based on
@@ -166,11 +186,7 @@ ytm-shorts-lockup-view-model`,
     onlyOutsideViewport = false,
     useOutsideLimit = false,
   ) {
-    if (!node || node.nodeType !== Node.ELEMENT_NODE) {
-      this.logError(
-        `Provided node is not a valid Element.`,
-        window.location.href,
-      );
+    if (!node || !this.castNodeToElementOrNull(node)) {
       return false;
     }
 

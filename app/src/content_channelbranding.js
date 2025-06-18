@@ -382,7 +382,7 @@ async function restoreOriginalPageTitle() {
     },
     async (items) => {
       let originalBrandingData;
-      if (items.youtubeDataApiKey && items.youtubeDataApiKey.trim !== "") {
+      if (items.youtubeDataApiKey && items.youtubeDataApiKey.trim() !== "") {
         originalBrandingData = await getChannelBrandingWithYoutubeDataAPI(
           items.youtubeDataApiKey,
         );
@@ -511,14 +511,19 @@ async function updateBrandingHeaderTitleContent(
         `No branding header title text containers found`,
       );
     } else {
+      const oldText = `${titleTextContainer.textContent}`
+        .normalize("NFKC")
+        .trim()
+        .toLowerCase();
       if (
-        `${titleTextContainer.textContent}` !== `${originalBrandingData.title}`
+        oldText !==
+        `${originalBrandingData.title}`.normalize("NFKC").trim().toLowerCase()
       ) {
         const ucid = await getChannelUCID();
         // cache old title for future use by `restoreOriginalPageTitle()`
         window.YoutubeAntiTranslate.setSessionCache(
           `pageTitle_channel_${ucid}`,
-          titleTextContainer.textContent,
+          oldText,
         );
 
         await restoreOriginalPageTitle();
@@ -741,7 +746,9 @@ async function untranslateBranding(
 
     if (
       !mutationRecord.target ||
-      mutationRecord.target.nodeType !== Node.ELEMENT_NODE
+      !window.YoutubeAntiTranslate.castNodeToElementOrNull(
+        mutationRecord.target,
+      )
     ) {
       continue;
     }
@@ -763,7 +770,7 @@ async function untranslateBranding(
     }
 
     for (const addedNode of mutationRecord.addedNodes) {
-      if (addedNode !== Node.ELEMENT_NODE) {
+      if (!window.YoutubeAntiTranslate.castNodeToElementOrNull(addedNode)) {
         continue;
       }
       const /** @type {Element} */ addedElement = addedNode;
@@ -805,33 +812,6 @@ async function untranslateBranding(
       ) {
         brandingAboutPromise = restoreOriginalBrandingAbout();
       }
-    }
-
-    if (brandingHeaderPromise && brandingAboutPromise) {
-      break;
-    }
-
-    // Only do this last check when target is not 'body'
-    if (element.matches("body")) {
-      continue;
-    }
-
-    // Search inside mutation target for matching elements
-    if (
-      !brandingHeaderPromise &&
-      window.YoutubeAntiTranslate.getFirstVisible(
-        element.querySelectorAll(CHANNELBRANDING_HEADER_SELECTOR),
-      )
-    ) {
-      brandingHeaderPromise = restoreOriginalBrandingHeader();
-    }
-    if (
-      !brandingAboutPromise &&
-      window.YoutubeAntiTranslate.getFirstVisible(
-        element.querySelectorAll(CHANNELBRANDING_ABOUT_SELECTOR),
-      )
-    ) {
-      brandingAboutPromise = restoreOriginalBrandingAbout();
     }
 
     if (brandingHeaderPromise && brandingAboutPromise) {
