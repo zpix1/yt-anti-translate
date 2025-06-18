@@ -257,6 +257,8 @@ async function handleDescriptionMutation(
       break;
     }
 
+    // On mutationRecord.target we never search inside as that is too broad
+
     for (const addedNode of mutationRecord.addedNodes) {
       if (!window.YoutubeAntiTranslate.castNodeToElementOrNull(addedNode)) {
         continue;
