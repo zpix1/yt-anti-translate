@@ -356,6 +356,25 @@ ytm-shorts-lockup-view-model`,
   },
 
   /**
+   * Wait for the player to exist and be ready respond
+   */
+  waitForPlayerReady: async function () {
+    while (
+      !this.getFirstVisible(
+        document.querySelectorAll(this.getPlayerSelector()),
+      ) ||
+      (!this.getFirstVisible(
+        document.querySelectorAll(this.getPlayerSelector()),
+      ).getPlayerResponse() &&
+        !this.getFirstVisible(
+          document.querySelectorAll(this.getPlayerSelector()),
+        ).getEmbeddedPlayerResponse())
+    ) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+  },
+
+  /**
    * Creates a link element with proper YouTube styling
    * @param {string} url - URL to create a link for
    * @returns {HTMLElement} - Anchor element

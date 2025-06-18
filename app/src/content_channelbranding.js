@@ -688,7 +688,7 @@ function updateBrandingAboutDescriptionContent(
       const originalTextFirstLine =
         originalBrandingData.truncatedDescription ||
         originalBrandingData.description.split("\n")[0];
-      // Compare text first span>span against first line first to avaoid waisting resources on formatting content
+      // Compare text first span>span against first line first to avoid waisting resources on formatting content
       if (
         descriptionTextContainer.hasChildNodes() &&
         descriptionTextContainer.firstChild.hasChildNodes() &&
@@ -769,6 +769,20 @@ async function untranslateBranding(
       break;
     }
 
+    // Checks on mutation closest target
+    if (element.closest(CHANNELBRANDING_HEADER_SELECTOR)) {
+      brandingHeaderPromise = restoreOriginalBrandingHeader();
+      continue;
+    }
+    if (element.closest(CHANNELBRANDING_ABOUT_SELECTOR)) {
+      brandingAboutPromise = restoreOriginalBrandingAbout();
+      continue;
+    }
+
+    if (brandingHeaderPromise && brandingAboutPromise) {
+      break;
+    }
+
     for (const addedNode of mutationRecord.addedNodes) {
       if (!window.YoutubeAntiTranslate.castNodeToElementOrNull(addedNode)) {
         continue;
@@ -786,6 +800,26 @@ async function untranslateBranding(
       if (
         !brandingAboutPromise &&
         addedElement.matches(CHANNELBRANDING_ABOUT_SELECTOR)
+      ) {
+        brandingAboutPromise = restoreOriginalBrandingAbout();
+        continue;
+      }
+
+      if (brandingHeaderPromise && brandingAboutPromise) {
+        break;
+      }
+
+      // Checks on mutation closest added nodes
+      if (
+        !brandingHeaderPromise &&
+        addedElement.closest(CHANNELBRANDING_HEADER_SELECTOR)
+      ) {
+        brandingHeaderPromise = restoreOriginalBrandingHeader();
+        continue;
+      }
+      if (
+        !brandingAboutPromise &&
+        addedElement.closest(CHANNELBRANDING_ABOUT_SELECTOR)
       ) {
         brandingAboutPromise = restoreOriginalBrandingAbout();
         continue;

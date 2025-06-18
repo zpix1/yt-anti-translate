@@ -1,11 +1,10 @@
 // Constants
 const DESCRIPTION_SELECTOR =
-  "#description-inline-expander, ytd-expander#description";
+  "#description-inline-expander, ytd-expander#description, #description-inline-expander > .ytd-text-inline-expander";
 const AUTHOR_SELECTOR = "#upload-info.ytd-video-owner-renderer";
 const ATTRIBUTED_STRING_SELECTOR = "yt-attributed-string";
 const FORMATTED_STRING_SELECTOR = "yt-formatted-string";
 const SNIPPET_TEXT_SELECTOR = "#attributed-snippet-text";
-const MUTATION_UPDATE_FREQUENCY = 2;
 
 /**
  * Retrieves the original description from YouTube player
@@ -138,7 +137,7 @@ function updateDescriptionContent(container, originalText) {
 
   let formattedContent;
   const originalTextFirstLine = originalText.split("\n")[0];
-  // Compare text first span>span against first line first to avaoid waisting resources on formatting content
+  // Compare text first span>span against first line first to avoid waisting resources on formatting content
   if (
     mainTextContainer.hasChildNodes() &&
     mainTextContainer.firstChild.hasChildNodes() &&
@@ -225,26 +224,71 @@ function updateAuthorContent(container, originalText) {
   }
 }
 
-/**
- * Handles description updates when mutations are detected
- */
-let mutationCounter = 0;
+async function handleDescriptionMutation(
+  /** @type {MutationRecord[]} */ mutationList,
+) {
+  for (const mutationRecord of mutationList) {
+    if (mutationRecord.type !== "childList") {
+      continue;
+    }
 
-async function handleDescriptionMutation() {
-  if (mutationCounter % MUTATION_UPDATE_FREQUENCY === 0) {
-    const descriptionElement = window.YoutubeAntiTranslate.getFirstVisible(
-      document.querySelectorAll(DESCRIPTION_SELECTOR),
-    );
-    const player = window.YoutubeAntiTranslate.getFirstVisible(
-      document.querySelectorAll(
-        window.YoutubeAntiTranslate.getPlayerSelector(),
-      ),
-    );
-    if (descriptionElement && player) {
-      restoreOriginalDescriptionAndAuthor();
+    if (
+      !mutationRecord.target ||
+      !window.YoutubeAntiTranslate.castNodeToElementOrNull(
+        mutationRecord.target,
+      )
+    ) {
+      continue;
+    }
+
+    const /** @type {Element} */ element = mutationRecord.target;
+
+    // Checks on mutation target
+    if (element.matches(DESCRIPTION_SELECTOR)) {
+      await window.YoutubeAntiTranslate.waitForPlayerReady();
+      await restoreOriginalDescriptionAndAuthor();
+      break;
+    }
+
+    // Checks on mutation closest target
+    if (element.closest(DESCRIPTION_SELECTOR)) {
+      await window.YoutubeAntiTranslate.waitForPlayerReady();
+      await restoreOriginalDescriptionAndAuthor();
+      break;
+    }
+
+    for (const addedNode of mutationRecord.addedNodes) {
+      if (!window.YoutubeAntiTranslate.castNodeToElementOrNull(addedNode)) {
+        continue;
+      }
+      const /** @type {Element} */ addedElement = addedNode;
+
+      // Checks on mutation added nodes
+      if (addedElement.matches(DESCRIPTION_SELECTOR)) {
+        await window.YoutubeAntiTranslate.waitForPlayerReady();
+        await restoreOriginalDescriptionAndAuthor();
+        break;
+      }
+
+      // Checks on mutation added nodes
+      if (addedElement.closest(DESCRIPTION_SELECTOR)) {
+        await window.YoutubeAntiTranslate.waitForPlayerReady();
+        await restoreOriginalDescriptionAndAuthor();
+        break;
+      }
+
+      // Search inside added nodes for matching elements
+      if (
+        window.YoutubeAntiTranslate.getFirstVisible(
+          addedElement.querySelectorAll(DESCRIPTION_SELECTOR),
+        )
+      ) {
+        await window.YoutubeAntiTranslate.waitForPlayerReady();
+        await restoreOriginalDescriptionAndAuthor();
+        break;
+      }
     }
   }
-  mutationCounter++;
 }
 
 // Initialize the mutation observer for description

@@ -129,6 +129,14 @@ async function untranslate(/** @type {MutationRecord[]} */ mutationList) {
 
     // Checks on mutation target
     if (element.matches(window.YoutubeAntiTranslate.getPlayerSelector())) {
+      await window.YoutubeAntiTranslate.waitForPlayerReady();
+      await untranslateAudioTrack();
+      break;
+    }
+
+    // Checks on mutation closest target
+    if (element.closest(window.YoutubeAntiTranslate.getPlayerSelector())) {
+      await window.YoutubeAntiTranslate.waitForPlayerReady();
       await untranslateAudioTrack();
       break;
     }
@@ -143,6 +151,16 @@ async function untranslate(/** @type {MutationRecord[]} */ mutationList) {
       if (
         addedElement.matches(window.YoutubeAntiTranslate.getPlayerSelector())
       ) {
+        await window.YoutubeAntiTranslate.waitForPlayerReady();
+        await untranslateAudioTrack();
+        break;
+      }
+
+      // Checks on mutation closest added nodes
+      if (
+        addedElement.closest(window.YoutubeAntiTranslate.getPlayerSelector())
+      ) {
+        await window.YoutubeAntiTranslate.waitForPlayerReady();
         await untranslateAudioTrack();
         break;
       }
@@ -155,6 +173,7 @@ async function untranslate(/** @type {MutationRecord[]} */ mutationList) {
           ),
         )
       ) {
+        await window.YoutubeAntiTranslate.waitForPlayerReady();
         await untranslateAudioTrack();
         break;
       }
