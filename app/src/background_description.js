@@ -224,6 +224,7 @@ function updateAuthorContent(container, originalText) {
   }
 }
 
+// --- Mutation conditional processor ---
 async function handleDescriptionMutation(
   /** @type {MutationRecord[]} */ mutationList,
 ) {

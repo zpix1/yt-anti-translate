@@ -1,6 +1,3 @@
-const MUTATION_UPDATE_STEP = 2;
-
-const INTERSECTION_UPDATE_STEP_VIDEOS = 2;
 let allIntersectVideoElements = null;
 const intersectionObserverOtherVideos = new IntersectionObserver(
   untranslateOtherVideosOnIntersect,
@@ -11,7 +8,6 @@ const intersectionObserverOtherVideos = new IntersectionObserver(
   },
 );
 
-const INTERSECTION_UPDATE_STEP_SHORTS = 2;
 let allIntersectShortElements = null;
 const intersectionObserverOtherShorts = new IntersectionObserver(
   untranslateOtherShortsOnIntersect,
@@ -151,8 +147,8 @@ async function untranslateCurrentShortVideo() {
 }
 
 async function untranslateCurrentShortVideoLinks() {
-  const fakeNodeID = "yt-anti-translate-fake-node-current-short-video-links";
-  const originalNodeSelector = `.ytReelMultiFormatLinkViewModelEndpoint span${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}>span:not(#${fakeNodeID})`;
+  const { fakeNodeID, originalNodeSelector } =
+    getUntranslateCurrentShortVideoLinksParams();
 
   await createOrUpdateUntranslatedFakeNode(
     fakeNodeID,
@@ -163,9 +159,15 @@ async function untranslateCurrentShortVideoLinks() {
   );
 }
 
+function getUntranslateCurrentShortVideoLinksParams() {
+  const fakeNodeID = "yt-anti-translate-fake-node-current-short-video-links";
+  const originalNodeSelector = `.ytReelMultiFormatLinkViewModelEndpoint span${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}>span:not(#${fakeNodeID})`;
+  return { fakeNodeID, originalNodeSelector };
+}
+
 async function untranslateCurrentVideo() {
-  const fakeNodeID = "yt-anti-translate-fake-node-current-video";
-  const originalNodeSelector = `#title > h1 > yt-formatted-string:not(#${fakeNodeID})`;
+  const { fakeNodeID, originalNodeSelector } =
+    getUntranslateCurrentVideoParams();
 
   await createOrUpdateUntranslatedFakeNode(
     fakeNodeID,
@@ -176,9 +178,15 @@ async function untranslateCurrentVideo() {
   );
 }
 
+function getUntranslateCurrentVideoParams() {
+  const fakeNodeID = "yt-anti-translate-fake-node-current-video";
+  const originalNodeSelector = `#title > h1 > yt-formatted-string:not(#${fakeNodeID})`;
+  return { fakeNodeID, originalNodeSelector };
+}
+
 async function untranslateCurrentVideoHeadLink() {
-  const fakeNodeID = "yt-anti-translate-fake-node-video-head-link";
-  const originalNodeSelector = `${window.YoutubeAntiTranslate.getPlayerSelector()} a.ytp-title-link:not(#${fakeNodeID})`;
+  const { fakeNodeID, originalNodeSelector } =
+    getUntranslateCurrentVideoHeadLinkParams();
 
   await createOrUpdateUntranslatedFakeNode(
     fakeNodeID,
@@ -195,9 +203,15 @@ async function untranslateCurrentVideoHeadLink() {
   );
 }
 
+function getUntranslateCurrentVideoHeadLinkParams() {
+  const fakeNodeID = "yt-anti-translate-fake-node-video-head-link";
+  const originalNodeSelector = `${window.YoutubeAntiTranslate.getPlayerSelector()} a.ytp-title-link:not(#${fakeNodeID})`;
+  return { fakeNodeID, originalNodeSelector };
+}
+
 async function untranslateCurrentVideoFullScreenEdu() {
-  const fakeNodeID = "yt-anti-translate-fake-node-fullscreen-edu";
-  const originalNodeSelector = `${window.YoutubeAntiTranslate.getPlayerSelector()} div.ytp-fullerscreen-edu-text:not(#${fakeNodeID})`;
+  const { fakeNodeID, originalNodeSelector } =
+    getUntranslateCurrentVideoFullScreenEduParams();
 
   // Skip if on a channel page
   if (document.location.pathname.startsWith("@")) {
@@ -213,9 +227,15 @@ async function untranslateCurrentVideoFullScreenEdu() {
   );
 }
 
+function getUntranslateCurrentVideoFullScreenEduParams() {
+  const fakeNodeID = "yt-anti-translate-fake-node-fullscreen-edu";
+  const originalNodeSelector = `${window.YoutubeAntiTranslate.getPlayerSelector()} div.ytp-fullerscreen-edu-text:not(#${fakeNodeID})`;
+  return { fakeNodeID, originalNodeSelector };
+}
+
 async function untranslateCurrentChannelEmbededVideoTitle() {
-  const fakeNodeID = "yt-anti-translate-fake-node-channel-embeded-title";
-  const originalNodeSelector = `div.ytd-channel-video-player-renderer #metadata-container.ytd-channel-video-player-renderer a:not(#${fakeNodeID})`;
+  const { fakeNodeID, originalNodeSelector } =
+    getUntranslateCurrentChannelEmbededVideoTitleParams();
 
   await createOrUpdateUntranslatedFakeNode(
     fakeNodeID,
@@ -224,6 +244,12 @@ async function untranslateCurrentChannelEmbededVideoTitle() {
     "a",
     false,
   );
+}
+
+function getUntranslateCurrentChannelEmbededVideoTitleParams() {
+  const fakeNodeID = "yt-anti-translate-fake-node-channel-embeded-title";
+  const originalNodeSelector = `div.ytd-channel-video-player-renderer #metadata-container.ytd-channel-video-player-renderer a:not(#${fakeNodeID})`;
+  return { fakeNodeID, originalNodeSelector };
 }
 
 /**
@@ -440,6 +466,7 @@ async function untranslateOtherVideos(intersectElements = null) {
   if (intersectElements) {
     // If this was called from the intersect obesrver only check the newly intersecting items
     await untranslateOtherVideosArray(intersectElements);
+    updateObserverOtherVideosOnIntersect();
     return;
   }
   // Selectors for all video containers
@@ -450,6 +477,7 @@ async function untranslateOtherVideos(intersectElements = null) {
       ),
     ),
   );
+  updateObserverOtherVideosOnIntersect();
 }
 
 async function untranslateOtherShortsVideos(intersectElements = null) {
@@ -539,6 +567,7 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
   if (intersectElements) {
     // If this was called from the intersect obesrver only check the newly intersecting items
     await untranslateOtherShortsArray(intersectElements);
+    updateObserverOtherShortsOnIntersect();
     return;
   }
   // Run for all shorts items
@@ -549,40 +578,503 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
       ),
     ),
   );
+  updateObserverOtherShortsOnIntersect();
 }
 
-let mutationIdx = 0;
+// --- Mutation conditional processor ---
+async function untranslate(/** @type {MutationRecord[]} */ mutationList) {
+  let currentVideoPromise = null;
+  let currentVideoHeadLinkPromise = null;
+  let currentVideoFullScreenEduPromise = null;
+  let channelEmbededVideoPromise = null;
+  let otherVideosPromise = null;
+  let currentShortPromise = null;
+  let currentShortVideoLinksPromise = null;
+  let otherShortsPromise = null;
 
-async function untranslate() {
-  if (mutationIdx % MUTATION_UPDATE_STEP === 0) {
-    const currentVideoPromise = untranslateCurrentVideo();
-    const currentVideoFullScreenLinkPromise = untranslateCurrentVideoHeadLink();
-    const currentVideoFullScreenEduPromise =
-      untranslateCurrentVideoFullScreenEdu();
-    const channelEmbededVideoPromise =
-      untranslateCurrentChannelEmbededVideoTitle();
-    const otherVideosPromise = untranslateOtherVideos();
-    const currentShortPromise = untranslateCurrentShortVideo();
-    const currentShortVideoLinksPromise = untranslateCurrentShortVideoLinks();
-    const otherShortsPromise = untranslateOtherShortsVideos(); // Call the new function
+  for (const mutationRecord of mutationList) {
+    if (mutationRecord.type !== "childList") {
+      continue;
+    }
 
-    // Wait for all promises to resolve concurrently
-    await Promise.all([
-      currentVideoPromise,
-      currentVideoFullScreenLinkPromise,
-      currentVideoFullScreenEduPromise,
-      channelEmbededVideoPromise,
-      otherVideosPromise,
-      currentShortPromise,
-      currentShortVideoLinksPromise,
-      otherShortsPromise,
-    ]);
+    if (
+      !mutationRecord.target ||
+      !window.YoutubeAntiTranslate.castNodeToElementOrNull(
+        mutationRecord.target,
+      )
+    ) {
+      continue;
+    }
 
-    // update intersect observers
-    updateObserverOtherVideosOnIntersect();
-    updateObserverOtherShortsOnIntersect();
+    const /** @type {Element} */ element = mutationRecord.target;
+
+    // Checks on mutation target
+    if (
+      element.matches(getUntranslateCurrentVideoParams().originalNodeSelector)
+    ) {
+      currentVideoPromise = untranslateCurrentVideo();
+      continue;
+    }
+    if (
+      element.matches(
+        getUntranslateCurrentVideoHeadLinkParams().originalNodeSelector,
+      )
+    ) {
+      currentVideoHeadLinkPromise = untranslateCurrentVideoHeadLink();
+      continue;
+    }
+    if (
+      element.matches(
+        getUntranslateCurrentVideoFullScreenEduParams().originalNodeSelector,
+      )
+    ) {
+      currentVideoFullScreenEduPromise = untranslateCurrentVideoFullScreenEdu();
+      continue;
+    }
+    if (
+      element.matches(
+        getUntranslateCurrentChannelEmbededVideoTitleParams()
+          .originalNodeSelector,
+      )
+    ) {
+      channelEmbededVideoPromise = untranslateCurrentChannelEmbededVideoTitle();
+      continue;
+    }
+    if (
+      element.matches(window.YoutubeAntiTranslate.ALL_ARRAYS_VIDEOS_SELECTOR)
+    ) {
+      otherVideosPromise = untranslateOtherVideos();
+      continue;
+    }
+    if (element.matches("yt-shorts-video-title-view-model > h2 > span")) {
+      currentShortPromise = untranslateCurrentShortVideo();
+      continue;
+    }
+    if (
+      element.matches(
+        getUntranslateCurrentShortVideoLinksParams().originalNodeSelector,
+      )
+    ) {
+      currentShortVideoLinksPromise = untranslateCurrentShortVideoLinks();
+      continue;
+    }
+    if (
+      element.matches(window.YoutubeAntiTranslate.ALL_ARRAYS_SHORTS_SELECTOR)
+    ) {
+      otherShortsPromise = untranslateOtherShortsVideos();
+      continue;
+    }
+
+    if (
+      currentVideoPromise &&
+      currentVideoHeadLinkPromise &&
+      currentVideoFullScreenEduPromise &&
+      channelEmbededVideoPromise &&
+      otherVideosPromise &&
+      currentShortPromise &&
+      currentShortVideoLinksPromise &&
+      otherShortsPromise
+    ) {
+      break;
+    }
+
+    // Checks on mutation closest target
+    if (
+      !currentVideoPromise &&
+      element.closest(getUntranslateCurrentVideoParams().originalNodeSelector)
+    ) {
+      currentVideoPromise = untranslateCurrentVideo();
+      continue;
+    }
+    if (
+      !currentVideoHeadLinkPromise &&
+      element.closest(
+        getUntranslateCurrentVideoHeadLinkParams().originalNodeSelector,
+      )
+    ) {
+      currentVideoHeadLinkPromise = untranslateCurrentVideoHeadLink();
+      continue;
+    }
+    if (
+      !currentVideoFullScreenEduPromise &&
+      element.closest(
+        getUntranslateCurrentVideoFullScreenEduParams().originalNodeSelector,
+      )
+    ) {
+      currentVideoFullScreenEduPromise = untranslateCurrentVideoFullScreenEdu();
+      continue;
+    }
+    if (
+      !channelEmbededVideoPromise &&
+      element.closest(
+        getUntranslateCurrentChannelEmbededVideoTitleParams()
+          .originalNodeSelector,
+      )
+    ) {
+      channelEmbededVideoPromise = untranslateCurrentChannelEmbededVideoTitle();
+      continue;
+    }
+    if (
+      !otherVideosPromise &&
+      element.closest(window.YoutubeAntiTranslate.ALL_ARRAYS_VIDEOS_SELECTOR)
+    ) {
+      otherVideosPromise = untranslateOtherVideos();
+      continue;
+    }
+    if (
+      !currentShortPromise &&
+      element.closest("yt-shorts-video-title-view-model > h2 > span")
+    ) {
+      currentShortPromise = untranslateCurrentShortVideo();
+      continue;
+    }
+    if (
+      !currentShortVideoLinksPromise &&
+      element.closest(
+        getUntranslateCurrentShortVideoLinksParams().originalNodeSelector,
+      )
+    ) {
+      currentShortVideoLinksPromise = untranslateCurrentShortVideoLinks();
+      continue;
+    }
+    if (
+      !otherShortsPromise &&
+      element.closest(window.YoutubeAntiTranslate.ALL_ARRAYS_SHORTS_SELECTOR)
+    ) {
+      otherShortsPromise = untranslateOtherShortsVideos();
+      continue;
+    }
+
+    if (
+      currentVideoPromise &&
+      currentVideoHeadLinkPromise &&
+      currentVideoFullScreenEduPromise &&
+      channelEmbededVideoPromise &&
+      otherVideosPromise &&
+      currentShortPromise &&
+      currentShortVideoLinksPromise &&
+      otherShortsPromise
+    ) {
+      break;
+    }
+
+    // On mutationRecord.target we never search inside as that is too broad
+
+    for (const addedNode of mutationRecord.addedNodes) {
+      if (!window.YoutubeAntiTranslate.castNodeToElementOrNull(addedNode)) {
+        continue;
+      }
+      const /** @type {Element} */ addedElement = addedNode;
+
+      // Checks on mutation added nodes
+      if (
+        !currentVideoPromise &&
+        addedElement.matches(
+          getUntranslateCurrentVideoParams().originalNodeSelector,
+        )
+      ) {
+        currentVideoPromise = untranslateCurrentVideo();
+        continue;
+      }
+      if (
+        !currentVideoHeadLinkPromise &&
+        addedElement.matches(
+          getUntranslateCurrentVideoHeadLinkParams().originalNodeSelector,
+        )
+      ) {
+        currentVideoHeadLinkPromise = untranslateCurrentVideoHeadLink();
+        continue;
+      }
+      if (
+        !currentVideoFullScreenEduPromise &&
+        addedElement.matches(
+          getUntranslateCurrentVideoFullScreenEduParams().originalNodeSelector,
+        )
+      ) {
+        currentVideoFullScreenEduPromise =
+          untranslateCurrentVideoFullScreenEdu();
+        continue;
+      }
+      if (
+        !channelEmbededVideoPromise &&
+        addedElement.matches(
+          getUntranslateCurrentChannelEmbededVideoTitleParams()
+            .originalNodeSelector,
+        )
+      ) {
+        channelEmbededVideoPromise =
+          untranslateCurrentChannelEmbededVideoTitle();
+        continue;
+      }
+      if (
+        !otherVideosPromise &&
+        addedElement.matches(
+          window.YoutubeAntiTranslate.ALL_ARRAYS_VIDEOS_SELECTOR,
+        )
+      ) {
+        otherVideosPromise = untranslateOtherVideos();
+        continue;
+      }
+      if (
+        !currentShortPromise &&
+        addedElement.matches("yt-shorts-video-title-view-model > h2 > span")
+      ) {
+        currentShortPromise = untranslateCurrentShortVideo();
+        continue;
+      }
+      if (
+        !currentShortVideoLinksPromise &&
+        addedElement.matches(
+          getUntranslateCurrentShortVideoLinksParams().originalNodeSelector,
+        )
+      ) {
+        currentShortVideoLinksPromise = untranslateCurrentShortVideoLinks();
+        continue;
+      }
+      if (
+        !otherShortsPromise &&
+        addedElement.matches(
+          window.YoutubeAntiTranslate.ALL_ARRAYS_SHORTS_SELECTOR,
+        )
+      ) {
+        otherShortsPromise = untranslateOtherShortsVideos();
+        continue;
+      }
+
+      if (
+        currentVideoPromise &&
+        currentVideoHeadLinkPromise &&
+        currentVideoFullScreenEduPromise &&
+        channelEmbededVideoPromise &&
+        otherVideosPromise &&
+        currentShortPromise &&
+        currentShortVideoLinksPromise &&
+        otherShortsPromise
+      ) {
+        break;
+      }
+
+      // Checks on mutation closest added nodes
+      if (
+        !currentVideoPromise &&
+        addedElement.closest(
+          getUntranslateCurrentVideoParams().originalNodeSelector,
+        )
+      ) {
+        currentVideoPromise = untranslateCurrentVideo();
+        continue;
+      }
+      if (
+        !currentVideoHeadLinkPromise &&
+        addedElement.closest(
+          getUntranslateCurrentVideoHeadLinkParams().originalNodeSelector,
+        )
+      ) {
+        currentVideoHeadLinkPromise = untranslateCurrentVideoHeadLink();
+        continue;
+      }
+      if (
+        !currentVideoFullScreenEduPromise &&
+        addedElement.closest(
+          getUntranslateCurrentVideoFullScreenEduParams().originalNodeSelector,
+        )
+      ) {
+        currentVideoFullScreenEduPromise =
+          untranslateCurrentVideoFullScreenEdu();
+        continue;
+      }
+      if (
+        !channelEmbededVideoPromise &&
+        addedElement.closest(
+          getUntranslateCurrentChannelEmbededVideoTitleParams()
+            .originalNodeSelector,
+        )
+      ) {
+        channelEmbededVideoPromise =
+          untranslateCurrentChannelEmbededVideoTitle();
+        continue;
+      }
+      if (
+        !otherVideosPromise &&
+        addedElement.closest(
+          window.YoutubeAntiTranslate.ALL_ARRAYS_VIDEOS_SELECTOR,
+        )
+      ) {
+        otherVideosPromise = untranslateOtherVideos();
+        continue;
+      }
+      if (
+        !currentShortPromise &&
+        addedElement.closest("yt-shorts-video-title-view-model > h2 > span")
+      ) {
+        currentShortPromise = untranslateCurrentShortVideo();
+        continue;
+      }
+      if (
+        !currentShortVideoLinksPromise &&
+        addedElement.closest(
+          getUntranslateCurrentShortVideoLinksParams().originalNodeSelector,
+        )
+      ) {
+        currentShortVideoLinksPromise = untranslateCurrentShortVideoLinks();
+        continue;
+      }
+      if (
+        !otherShortsPromise &&
+        addedElement.closest(
+          window.YoutubeAntiTranslate.ALL_ARRAYS_SHORTS_SELECTOR,
+        )
+      ) {
+        otherShortsPromise = untranslateOtherShortsVideos();
+        continue;
+      }
+
+      if (
+        currentVideoPromise &&
+        currentVideoHeadLinkPromise &&
+        currentVideoFullScreenEduPromise &&
+        channelEmbededVideoPromise &&
+        otherVideosPromise &&
+        currentShortPromise &&
+        currentShortVideoLinksPromise &&
+        otherShortsPromise
+      ) {
+        break;
+      }
+
+      // Search inside added nodes for matching elements
+      if (
+        !currentVideoPromise &&
+        window.YoutubeAntiTranslate.getFirstVisible(
+          addedElement.querySelectorAll(
+            getUntranslateCurrentVideoParams().originalNodeSelector,
+          ),
+        )
+      ) {
+        currentVideoPromise = untranslateCurrentVideo();
+        continue;
+      }
+      if (
+        !currentVideoHeadLinkPromise &&
+        window.YoutubeAntiTranslate.getFirstVisible(
+          addedElement.querySelectorAll(
+            getUntranslateCurrentVideoHeadLinkParams().originalNodeSelector,
+          ),
+        )
+      ) {
+        currentVideoHeadLinkPromise = untranslateCurrentVideoHeadLink();
+        continue;
+      }
+      if (
+        !currentVideoFullScreenEduPromise &&
+        window.YoutubeAntiTranslate.getFirstVisible(
+          addedElement.querySelectorAll(
+            getUntranslateCurrentVideoFullScreenEduParams()
+              .originalNodeSelector,
+          ),
+        )
+      ) {
+        currentVideoFullScreenEduPromise =
+          untranslateCurrentVideoFullScreenEdu();
+        continue;
+      }
+      if (
+        !channelEmbededVideoPromise &&
+        window.YoutubeAntiTranslate.getFirstVisible(
+          addedElement.querySelectorAll(
+            getUntranslateCurrentChannelEmbededVideoTitleParams()
+              .originalNodeSelector,
+          ),
+        )
+      ) {
+        channelEmbededVideoPromise =
+          untranslateCurrentChannelEmbededVideoTitle();
+        continue;
+      }
+      if (
+        !otherVideosPromise &&
+        window.YoutubeAntiTranslate.getFirstVisible(
+          addedElement.querySelectorAll(
+            window.YoutubeAntiTranslate.ALL_ARRAYS_VIDEOS_SELECTOR,
+          ),
+        )
+      ) {
+        otherVideosPromise = untranslateOtherVideos();
+        continue;
+      }
+      if (
+        !currentShortPromise &&
+        window.YoutubeAntiTranslate.getFirstVisible(
+          addedElement.querySelectorAll(
+            "yt-shorts-video-title-view-model > h2 > span",
+          ),
+        )
+      ) {
+        currentShortPromise = untranslateCurrentShortVideo();
+        continue;
+      }
+      if (
+        !currentShortVideoLinksPromise &&
+        window.YoutubeAntiTranslate.getFirstVisible(
+          addedElement.querySelectorAll(
+            getUntranslateCurrentShortVideoLinksParams().originalNodeSelector,
+          ),
+        )
+      ) {
+        currentShortVideoLinksPromise = untranslateCurrentShortVideoLinks();
+        continue;
+      }
+      if (
+        !otherShortsPromise &&
+        window.YoutubeAntiTranslate.getFirstVisible(
+          addedElement.querySelectorAll(
+            window.YoutubeAntiTranslate.ALL_ARRAYS_SHORTS_SELECTOR,
+          ),
+        )
+      ) {
+        otherShortsPromise = untranslateOtherShortsVideos();
+        continue;
+      }
+    }
+
+    if (
+      currentVideoPromise &&
+      currentVideoHeadLinkPromise &&
+      currentVideoFullScreenEduPromise &&
+      channelEmbededVideoPromise &&
+      otherVideosPromise &&
+      currentShortPromise &&
+      currentShortVideoLinksPromise &&
+      otherShortsPromise
+    ) {
+      break;
+    }
   }
-  mutationIdx++;
+
+  if (
+    !currentVideoPromise &&
+    !currentVideoHeadLinkPromise &&
+    !currentVideoFullScreenEduPromise &&
+    !channelEmbededVideoPromise &&
+    !otherVideosPromise &&
+    !currentShortPromise &&
+    !currentShortVideoLinksPromise &&
+    !otherShortsPromise
+  ) {
+    return;
+  }
+
+  // Wait for all promises to resolve concurrently
+  await Promise.all([
+    currentVideoPromise ?? new Promise(() => {}),
+    currentVideoHeadLinkPromise ?? new Promise(() => {}),
+    currentVideoFullScreenEduPromise ?? new Promise(() => {}),
+    channelEmbededVideoPromise ?? new Promise(() => {}),
+    otherVideosPromise ?? new Promise(() => {}),
+    currentShortPromise ?? new Promise(() => {}),
+    currentShortVideoLinksPromise ?? new Promise(() => {}),
+    otherShortsPromise ?? new Promise(() => {}),
+  ]);
 }
 
 // Initialize the extension
@@ -592,33 +1084,26 @@ const observer = new MutationObserver(untranslate);
 observer.observe(target, config);
 
 // --- Observe all Other Videos outside viewport for intersect ---
-let mutationIdxVideos = 0;
-async function untranslateOtherVideosOnIntersect(entries) {
-  if (mutationIdxVideos % INTERSECTION_UPDATE_STEP_VIDEOS === 0) {
-    if (!entries) {
-      return;
-    }
-
-    const /** @type {Node[]} */ intersectElements = [];
-    for (const entry of entries) {
-      if (entry.isIntersecting) {
-        intersectElements.push(entry.target);
-      }
-    }
-
-    await untranslateOtherVideos(intersectElements);
-
-    // update intersect observer
-    updateObserverOtherVideosOnIntersect();
+async function untranslateOtherVideosOnIntersect(entries, observer) {
+  if (!entries) {
+    return;
   }
-  mutationIdxVideos++;
+
+  const /** @type {Node[]} */ intersectElements = [];
+  for (const entry of entries) {
+    if (entry.isIntersecting) {
+      intersectElements.push(entry.target);
+      observer.unobserve(entry.target);
+    }
+  }
+
+  await untranslateOtherVideos(intersectElements);
+
+  // update intersect observer
+  updateObserverOtherVideosOnIntersect();
 }
 
-updateObserverOtherVideosOnIntersect();
 function updateObserverOtherVideosOnIntersect() {
-  for (const el of allIntersectVideoElements ?? []) {
-    intersectionObserverOtherVideos.unobserve(el);
-  }
   allIntersectVideoElements =
     window.YoutubeAntiTranslate.getAllVisibleNodesOutsideViewport(
       document.querySelectorAll(
@@ -632,33 +1117,26 @@ function updateObserverOtherVideosOnIntersect() {
 }
 
 // --- Observe all Other Shorts outside viewport for intersect ---
-let mutationIdxShorts = 0;
-async function untranslateOtherShortsOnIntersect(entries) {
-  if (mutationIdxShorts % INTERSECTION_UPDATE_STEP_SHORTS === 0) {
-    if (!entries) {
-      return;
-    }
-
-    const /** @type {Node[]} */ intersectElements = [];
-    for (const entry of entries) {
-      if (entry.isIntersecting) {
-        intersectElements.push(entry.target);
-      }
-    }
-
-    await untranslateOtherShortsVideos(intersectElements);
-
-    // update intersect observer
-    updateObserverOtherShortsOnIntersect();
+async function untranslateOtherShortsOnIntersect(entries, observer) {
+  if (!entries) {
+    return;
   }
-  mutationIdxShorts++;
+
+  const /** @type {Node[]} */ intersectElements = [];
+  for (const entry of entries) {
+    if (entry.isIntersecting) {
+      intersectElements.push(entry.target);
+      observer.unobserve(entry.target);
+    }
+  }
+
+  await untranslateOtherShortsVideos(intersectElements);
+
+  // update intersect observer
+  updateObserverOtherShortsOnIntersect();
 }
 
-updateObserverOtherShortsOnIntersect();
 function updateObserverOtherShortsOnIntersect() {
-  for (const el of allIntersectShortElements ?? []) {
-    intersectionObserverOtherShorts.unobserve(el);
-  }
   allIntersectShortElements =
     window.YoutubeAntiTranslate.getAllVisibleNodesOutsideViewport(
       document.querySelectorAll(

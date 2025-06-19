@@ -110,6 +110,7 @@ async function untranslateAudioTrack() {
   }
 }
 
+// --- Mutation conditional processor ---
 async function untranslate(/** @type {MutationRecord[]} */ mutationList) {
   for (const mutationRecord of mutationList) {
     if (mutationRecord.type !== "childList") {

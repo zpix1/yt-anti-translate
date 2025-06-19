@@ -1,6 +1,6 @@
 window.YoutubeAntiTranslate = {
   VIEWPORT_EXTENSION_PERCENTAGE_FRACTION: 0.5,
-  VIEWPORT_OUTSIDE_LIMIT_FRACTION: 0.5,
+  VIEWPORT_OUTSIDE_LIMIT_FRACTION: 0.1,
   LOG_PREFIX: "[YoutubeAntiTranslate]",
   LOG_LEVELS: {
     NONE: 0,
@@ -198,9 +198,7 @@ ytm-shorts-lockup-view-model`,
       style.display === "none" ||
       style.visibility === "hidden" ||
       style.visibility === "collapse" ||
-      parseFloat(style.opacity) === 0 ||
-      element.offsetWidth === 0 ||
-      element.offsetHeight === 0
+      parseFloat(style.opacity) === 0
     ) {
       return false;
     }
@@ -245,20 +243,20 @@ ytm-shorts-lockup-view-model`,
 
         // Check if ANY part of the element is within the outer limit extended viewport
         const intersectsOuterLimitViewport =
-          rect.bottom > outerTopBoundary &&
-          rect.top < outerBottomBoundary &&
-          rect.right > outerLeftBoundary &&
-          rect.left < outerRightBoundary;
+          rect.bottom >= outerTopBoundary &&
+          rect.top <= outerBottomBoundary &&
+          rect.right >= outerLeftBoundary &&
+          rect.left <= outerRightBoundary;
 
         const result = !fullyContained && intersectsOuterLimitViewport;
         return result;
       } else {
         // Return true if ANY part of the element is INSIDE the extended viewport
         const intersectsExtendedViewport =
-          rect.top < bottomBoundary &&
-          rect.bottom > topBoundary &&
-          rect.left < rightBoundary &&
-          rect.right > leftBoundary;
+          rect.top <= bottomBoundary &&
+          rect.bottom >= topBoundary &&
+          rect.left <= rightBoundary &&
+          rect.right >= leftBoundary;
 
         return intersectsExtendedViewport;
       }

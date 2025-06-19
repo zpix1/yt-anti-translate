@@ -725,6 +725,7 @@ function updateBrandingAboutDescriptionContent(
   }
 }
 
+// --- Mutation conditional processor ---
 async function untranslateBranding(
   /** @type {MutationRecord[]} */ mutationList,
 ) {
@@ -770,11 +771,17 @@ async function untranslateBranding(
     }
 
     // Checks on mutation closest target
-    if (element.closest(CHANNELBRANDING_HEADER_SELECTOR)) {
+    if (
+      !brandingHeaderPromise &&
+      element.closest(CHANNELBRANDING_HEADER_SELECTOR)
+    ) {
       brandingHeaderPromise = restoreOriginalBrandingHeader();
       continue;
     }
-    if (element.closest(CHANNELBRANDING_ABOUT_SELECTOR)) {
+    if (
+      !brandingAboutPromise &&
+      element.closest(CHANNELBRANDING_ABOUT_SELECTOR)
+    ) {
       brandingAboutPromise = restoreOriginalBrandingAbout();
       continue;
     }
