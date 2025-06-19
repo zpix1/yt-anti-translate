@@ -198,7 +198,9 @@ ytm-shorts-lockup-view-model`,
       style.display === "none" ||
       style.visibility === "hidden" ||
       style.visibility === "collapse" ||
-      parseFloat(style.opacity) === 0
+      parseFloat(style.opacity) === 0 ||
+      style.offsetWidth === 0 ||
+      style.offsetHeight === 0
     ) {
       return false;
     }
@@ -354,7 +356,18 @@ ytm-shorts-lockup-view-model`,
   },
 
   /**
-   * Wait for the player to exist and be ready respond
+   * Wait for the player to exist
+   */
+  waitForPlayerExist: async function () {
+    while (
+      !this.getFirstVisible(document.querySelectorAll(this.getPlayerSelector()))
+    ) {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+  },
+
+  /**
+   * Wait for the player to exist and be ready to respond to function calls
    */
   waitForPlayerReady: async function () {
     while (
@@ -368,7 +381,7 @@ ytm-shorts-lockup-view-model`,
           document.querySelectorAll(this.getPlayerSelector()),
         ).getEmbeddedPlayerResponse())
     ) {
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 50));
     }
   },
 
