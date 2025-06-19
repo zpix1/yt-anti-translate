@@ -376,6 +376,15 @@ async function getChannelBrandingWithYoutubeDataAPI(youtubeDataApiKey) {
  * Processes the page title
  */
 async function restoreOriginalPageTitle() {
+  const url = document.location.href;
+  const isChannelPage = CHANNEL_LOCATION_REGEXES.some((regex) =>
+    regex.test(url),
+  );
+
+  if (!isChannelPage) {
+    return;
+  }
+
   await chrome.storage.sync.get(
     {
       youtubeDataApiKey: null,
@@ -846,6 +855,7 @@ async function untranslateBranding(
         )
       ) {
         brandingHeaderPromise = restoreOriginalBrandingHeader();
+        // Search Inside can overlap so we do not do `continue;`
       }
       if (
         !brandingAboutPromise &&
@@ -854,6 +864,7 @@ async function untranslateBranding(
         )
       ) {
         brandingAboutPromise = restoreOriginalBrandingAbout();
+        // Search Inside can overlap so we do not do `continue;`
       }
     }
 

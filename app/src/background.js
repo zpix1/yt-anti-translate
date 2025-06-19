@@ -952,7 +952,7 @@ async function untranslate(/** @type {MutationRecord[]} */ mutationList) {
         )
       ) {
         currentVideoPromise = untranslateCurrentVideo();
-        continue;
+        // Search Inside can overlap so we do not do `continue;`
       }
       if (
         !currentVideoHeadLinkPromise &&
@@ -963,7 +963,7 @@ async function untranslate(/** @type {MutationRecord[]} */ mutationList) {
         )
       ) {
         currentVideoHeadLinkPromise = untranslateCurrentVideoHeadLink();
-        continue;
+        // Search Inside can overlap so we do not do `continue;`
       }
       if (
         !currentVideoFullScreenEduPromise &&
@@ -976,7 +976,7 @@ async function untranslate(/** @type {MutationRecord[]} */ mutationList) {
       ) {
         currentVideoFullScreenEduPromise =
           untranslateCurrentVideoFullScreenEdu();
-        continue;
+        // Search Inside can overlap so we do not do `continue;`
       }
       if (
         !channelEmbededVideoPromise &&
@@ -989,7 +989,7 @@ async function untranslate(/** @type {MutationRecord[]} */ mutationList) {
       ) {
         channelEmbededVideoPromise =
           untranslateCurrentChannelEmbededVideoTitle();
-        continue;
+        // Search Inside can overlap so we do not do `continue;`
       }
       if (
         !otherVideosPromise &&
@@ -1000,7 +1000,7 @@ async function untranslate(/** @type {MutationRecord[]} */ mutationList) {
         )
       ) {
         otherVideosPromise = untranslateOtherVideos();
-        continue;
+        // Search Inside can overlap so we do not do `continue;`
       }
       if (
         !currentShortPromise &&
@@ -1011,7 +1011,7 @@ async function untranslate(/** @type {MutationRecord[]} */ mutationList) {
         )
       ) {
         currentShortPromise = untranslateCurrentShortVideo();
-        continue;
+        // Search Inside can overlap so we do not do `continue;`
       }
       if (
         !currentShortVideoLinksPromise &&
@@ -1022,7 +1022,7 @@ async function untranslate(/** @type {MutationRecord[]} */ mutationList) {
         )
       ) {
         currentShortVideoLinksPromise = untranslateCurrentShortVideoLinks();
-        continue;
+        // Search Inside can overlap so we do not do `continue;`
       }
       if (
         !otherShortsPromise &&
@@ -1033,7 +1033,7 @@ async function untranslate(/** @type {MutationRecord[]} */ mutationList) {
         )
       ) {
         otherShortsPromise = untranslateOtherShortsVideos();
-        continue;
+        // Search Inside can overlap so we do not do `continue;`
       }
     }
 
