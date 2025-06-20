@@ -385,12 +385,37 @@ ytm-shorts-lockup-view-model`,
     }
   },
 
+  /**
+   * Wait for the title element to return
+   * @returns {HTMLTimeElement} title element
+   */
   waitForTitleElement: function () {
     return new Promise((resolve) => {
       function check() {
         const titleElement = document.querySelector("title");
         if (titleElement) {
           resolve(titleElement);
+        } else {
+          requestAnimationFrame(check);
+        }
+      }
+      check();
+    });
+  },
+
+  /**
+   * Wait for querySelectorAll() to return a NodeList with the provided selector
+   * @param {string} selector - a valid query selector
+   * @returns {NodeList}
+   */
+  waitForQuerySelectorAllElements: function (selector) {
+    return new Promise((resolve) => {
+      function check() {
+        const nodeListResult = window.YoutubeAntiTranslate.getAllVisibleNodes(
+          document.querySelectorAll(selector),
+        );
+        if (nodeListResult && nodeListResult.length > 0) {
+          resolve(nodeListResult);
         } else {
           requestAnimationFrame(check);
         }
