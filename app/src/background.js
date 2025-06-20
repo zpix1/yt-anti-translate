@@ -101,6 +101,10 @@ function getUntranslateCurrentShortVideoLinksParams() {
 }
 
 async function untranslateCurrentVideo() {
+  if (!window.location.pathname.startsWith("/watch")) {
+    return; // Should not happen if called correctly, but safety first
+  }
+
   const { fakeNodeID, originalNodeSelector } =
     getUntranslateCurrentVideoParams();
 
@@ -238,30 +242,6 @@ async function createOrUpdateUntranslatedFakeNode(
 
   const oldTitle = translatedElement?.textContent ?? fakeNode?.textContent;
 
-  // if (shouldSetDocumentTitle) {
-  //   // This is sometimes skipped on first update as youtube translate the document title late; so we use a cached oldTitle
-  //   const cachedOldTitle =
-  //     window.YoutubeAntiTranslate.getSessionCache(
-  //       `${fakeNodeID}_${getUrlForElement}`,
-  //     ) ?? oldTitle;
-
-  //   // document tile is sometimes not a perfect match to the oldTile due to spacing, so normalize all
-  //   const normalizedDocumentTitle = window.YoutubeAntiTranslate.normalizeSpaces(
-  //     document.title,
-  //   );
-  //   const normalizedOldTitle =
-  //     window.YoutubeAntiTranslate.normalizeSpaces(cachedOldTitle);
-  //   const normalizeRealTitle =
-  //     window.YoutubeAntiTranslate.normalizeSpaces(realTitle);
-  //   const realDocumentTitle = normalizedDocumentTitle.replace(
-  //     normalizedOldTitle,
-  //     normalizeRealTitle,
-  //   );
-  //   if (normalizedDocumentTitle !== realDocumentTitle) {
-  //     document.title = realDocumentTitle;
-  //   }
-  // }
-
   if (realTitle === oldTitle || fakeNode?.textContent === realTitle) {
     return;
   } else {
@@ -281,7 +261,7 @@ async function createOrUpdateUntranslatedFakeNode(
   );
 
   if (!fakeNode && translatedElement) {
-    // Not sure why, but even tho we checked already 'fakeNode', 'existingFakeNode' still return a value of initialization
+    // Not sure why, but even tho we checked already 'fakeNode', 'existingFakeNode' still return a value on initialization
     const existingFakeNode = translatedElement.parentElement.querySelector(
       `#${fakeNodeID}`,
     );
@@ -1171,17 +1151,19 @@ const target = document.body;
 const config = { childList: true, subtree: true };
 const observer = new MutationObserver(untranslate);
 observer.observe(target, config);
+
 // Title only observer
-const targetTitle = document.querySelector("title");
-const titleObserver = new MutationObserver(async function () {
-  await restoreOriginalPageTitle();
+window.YoutubeAntiTranslate.waitForTitleElement().then((titleElement) => {
+  const titleObserver = new MutationObserver(async function () {
+    await restoreOriginalPageTitle();
+  });
+  const titleObserverConfig = {
+    subtree: true,
+    characterData: true,
+    childList: true,
+  };
+  titleObserver.observe(titleElement, titleObserverConfig);
 });
-const titleObserverConfig = {
-  subtree: true,
-  characterData: true,
-  childList: true,
-};
-titleObserver.observe(targetTitle, titleObserverConfig);
 
 // --- Observe all Other Videos outside viewport for intersect ---
 async function untranslateOtherVideosOnIntersect(entries, observer) {

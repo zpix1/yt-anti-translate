@@ -385,6 +385,20 @@ ytm-shorts-lockup-view-model`,
     }
   },
 
+  waitForTitleElement: function () {
+    return new Promise((resolve) => {
+      function check() {
+        const titleElement = document.querySelector("title");
+        if (titleElement) {
+          resolve(titleElement);
+        } else {
+          requestAnimationFrame(check);
+        }
+      }
+      check();
+    });
+  },
+
   /**
    * Creates a link element with proper YouTube styling
    * @param {string} url - URL to create a link for

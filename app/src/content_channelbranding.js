@@ -889,16 +889,17 @@ chrome.storage.sync.get(
       brandingObserver.observe(targetNode, observerConfig);
 
       // Title only observer
-      const targetTitle = document.querySelector("title");
-      const titleObserver = new MutationObserver(async function () {
-        await restoreOriginalPageTitle();
+      window.YoutubeAntiTranslate.waitForTitleElement().then((titleElement) => {
+        const titleObserver = new MutationObserver(async function () {
+          await restoreOriginalPageTitle();
+        });
+        const titleObserverConfig = {
+          subtree: true,
+          characterData: true,
+          childList: true,
+        };
+        titleObserver.observe(titleElement, titleObserverConfig);
       });
-      const titleObserverConfig = {
-        subtree: true,
-        characterData: true,
-        childList: true,
-      };
-      titleObserver.observe(targetTitle, titleObserverConfig);
     }
   },
 );
