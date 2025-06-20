@@ -251,7 +251,8 @@ test.describe("YouTube Anti-Translate extension", () => {
     );
 
     // Wait for the shorts title element to be present
-    const shortsTitleSelector = "yt-shorts-video-title-view-model > h2 > span";
+    const shortsTitleSelector =
+      "yt-shorts-video-title-view-model > h2 > span:visible";
     await page.waitForSelector(shortsTitleSelector);
 
     // Get the title text

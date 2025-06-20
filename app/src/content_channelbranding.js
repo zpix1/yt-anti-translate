@@ -768,11 +768,8 @@ async function untranslateBranding(
     // Checks on mutation target
     if (element.matches(CHANNELBRANDING_HEADER_SELECTOR)) {
       brandingHeaderPromise = restoreOriginalBrandingHeader();
-      continue;
-    }
-    if (element.matches(CHANNELBRANDING_ABOUT_SELECTOR)) {
+    } else if (element.matches(CHANNELBRANDING_ABOUT_SELECTOR)) {
       brandingAboutPromise = restoreOriginalBrandingAbout();
-      continue;
     }
 
     if (brandingHeaderPromise && brandingAboutPromise) {
@@ -780,6 +777,7 @@ async function untranslateBranding(
     }
 
     // Checks on mutation closest target
+    // `closest` conditions can overlap so we do not use `else if`
     if (
       !brandingHeaderPromise &&
       element.closest(CHANNELBRANDING_HEADER_SELECTOR)
@@ -792,7 +790,6 @@ async function untranslateBranding(
       element.closest(CHANNELBRANDING_ABOUT_SELECTOR)
     ) {
       brandingAboutPromise = restoreOriginalBrandingAbout();
-      continue;
     }
 
     if (brandingHeaderPromise && brandingAboutPromise) {
@@ -813,14 +810,11 @@ async function untranslateBranding(
         addedElement.matches(CHANNELBRANDING_HEADER_SELECTOR)
       ) {
         brandingHeaderPromise = restoreOriginalBrandingHeader();
-        continue;
-      }
-      if (
+      } else if (
         !brandingAboutPromise &&
         addedElement.matches(CHANNELBRANDING_ABOUT_SELECTOR)
       ) {
         brandingAboutPromise = restoreOriginalBrandingAbout();
-        continue;
       }
 
       if (brandingHeaderPromise && brandingAboutPromise) {
@@ -828,19 +822,18 @@ async function untranslateBranding(
       }
 
       // Checks on mutation closest added nodes
+      // `closest` conditions can overlap so we do not use `else if`
       if (
         !brandingHeaderPromise &&
         addedElement.closest(CHANNELBRANDING_HEADER_SELECTOR)
       ) {
         brandingHeaderPromise = restoreOriginalBrandingHeader();
-        continue;
       }
       if (
         !brandingAboutPromise &&
         addedElement.closest(CHANNELBRANDING_ABOUT_SELECTOR)
       ) {
         brandingAboutPromise = restoreOriginalBrandingAbout();
-        continue;
       }
 
       if (brandingHeaderPromise && brandingAboutPromise) {
@@ -848,6 +841,7 @@ async function untranslateBranding(
       }
 
       // Search inside added nodes for matching elements
+      // Search inside conditions can overlap so we do not use `else if`
       if (
         !brandingHeaderPromise &&
         window.YoutubeAntiTranslate.getFirstVisible(
@@ -855,7 +849,6 @@ async function untranslateBranding(
         )
       ) {
         brandingHeaderPromise = restoreOriginalBrandingHeader();
-        // Search Inside can overlap so we do not do `continue;`
       }
       if (
         !brandingAboutPromise &&
@@ -864,7 +857,6 @@ async function untranslateBranding(
         )
       ) {
         brandingAboutPromise = restoreOriginalBrandingAbout();
-        // Search Inside can overlap so we do not do `continue;`
       }
     }
 
