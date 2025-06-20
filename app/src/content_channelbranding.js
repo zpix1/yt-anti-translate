@@ -890,9 +890,7 @@ chrome.storage.sync.get(
 
       // Title only observer
       window.YoutubeAntiTranslate.waitForTitleElement().then((titleElement) => {
-        const titleObserver = new MutationObserver(async function () {
-          await restoreOriginalPageTitle();
-        });
+        const titleObserver = new MutationObserver(restoreOriginalPageTitle);
         const titleObserverConfig = {
           subtree: true,
           characterData: true,

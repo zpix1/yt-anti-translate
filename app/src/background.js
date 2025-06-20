@@ -124,6 +124,10 @@ function getUntranslateCurrentVideoParams() {
 }
 
 async function untranslateCurrentVideoHeadLink() {
+  if (!window.location.pathname.startsWith("/watch")) {
+    return;
+  }
+
   const { fakeNodeID, originalNodeSelector } =
     getUntranslateCurrentVideoHeadLinkParams();
 
@@ -149,6 +153,10 @@ function getUntranslateCurrentVideoHeadLinkParams() {
 }
 
 async function untranslateCurrentVideoFullScreenEdu() {
+  if (!window.location.pathname.startsWith("/watch")) {
+    return;
+  }
+
   const { fakeNodeID, originalNodeSelector } =
     getUntranslateCurrentVideoFullScreenEduParams();
 
@@ -493,7 +501,11 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
 }
 
 // --- Mutation conditional processor ---
+let untranslateInvocationCount = 0;
 async function untranslate(/** @type {MutationRecord[]} */ mutationList) {
+  const startTime = performance.now();
+  untranslateInvocationCount++;
+
   let waitForPlayerExistPromise = null;
 
   let currentVideoPromise = null;
@@ -1075,6 +1087,14 @@ async function untranslate(/** @type {MutationRecord[]} */ mutationList) {
     otherVideosPromise ?? new Promise(() => {}),
     otherShortsPromise ?? new Promise(() => {}),
   ]);
+
+  const endTime = performance.now();
+  const durationMicroseconds = endTime - startTime;
+
+  console.warn(
+    `untranslate() called ${untranslateInvocationCount} times`,
+    `${durationMicroseconds} ms`,
+  );
 }
 
 /**
@@ -1154,9 +1174,7 @@ observer.observe(target, config);
 
 // Title only observer
 window.YoutubeAntiTranslate.waitForTitleElement().then((titleElement) => {
-  const titleObserver = new MutationObserver(async function () {
-    await restoreOriginalPageTitle();
-  });
+  const titleObserver = new MutationObserver(restoreOriginalPageTitle);
   const titleObserverConfig = {
     subtree: true,
     characterData: true,

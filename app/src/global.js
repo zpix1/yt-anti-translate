@@ -357,34 +357,59 @@ ytm-shorts-lockup-view-model`,
 
   /**
    * Wait for the player to exist
+   * @returns {void}
    */
-  waitForPlayerExist: async function () {
-    while (
-      !this.getFirstVisible(document.querySelectorAll(this.getPlayerSelector()))
-    ) {
-      await new Promise((resolve) => setTimeout(resolve, 50));
-    }
+  waitForPlayerExist: function () {
+    return new Promise((resolve) => {
+      function check() {
+        const player = window.YoutubeAntiTranslate.getFirstVisible(
+          document.querySelectorAll(
+            window.YoutubeAntiTranslate.getPlayerSelector(),
+          ),
+        );
+
+        if (player) {
+          resolve();
+        } else {
+          requestAnimationFrame(check);
+        }
+      }
+
+      check();
+    });
   },
 
   /**
    * Wait for the player to exist and be ready to respond to function calls
+   * @returns {void}
    */
-  waitForPlayerReady: async function () {
-    while (
-      !this.getFirstVisible(
-        document.querySelectorAll(this.getPlayerSelector()),
-      ) ||
-      (!this.getFirstVisible(
-        document.querySelectorAll(this.getPlayerSelector()),
-      ).getPlayerResponse() &&
-        !this.getFirstVisible(
-          document.querySelectorAll(this.getPlayerSelector()),
-        ).getEmbeddedPlayerResponse())
-    ) {
-      await new Promise((resolve) => setTimeout(resolve, 50));
-    }
+  waitForPlayerReady: function () {
+    return new Promise((resolve) => {
+      function check() {
+        const player = window.YoutubeAntiTranslate.getFirstVisible(
+          document.querySelectorAll(
+            window.YoutubeAntiTranslate.getPlayerSelector(),
+          ),
+        );
+
+        if (
+          player &&
+          (player.getPlayerResponse?.() || player.getEmbeddedPlayerResponse?.())
+        ) {
+          resolve();
+        } else {
+          requestAnimationFrame(check);
+        }
+      }
+
+      check();
+    });
   },
 
+  /**
+   * Wait for the title element to return
+   * @returns {HTMLTimeElement} title element
+   */
   waitForTitleElement: function () {
     return new Promise((resolve) => {
       function check() {
