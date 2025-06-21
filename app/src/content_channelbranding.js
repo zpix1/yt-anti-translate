@@ -55,6 +55,7 @@ async function detectChannelOriginalLanguage() {
       href = `https://www.youtube.com/shorts/${match[1]}`;
     }
 
+    href = window.YoutubeAntiTranslate.stripNonEssentialParams(href);
     const oembedUrl = `https://www.youtube.com/oembed?url=${href}`;
 
     let titleFromEmbed;
@@ -206,7 +207,7 @@ async function getChannelBrandingWithYoutubeI(ucid = null, locale = null) {
     locale = window.YoutubeAntiTranslate.getSessionCache(ucid);
   }
   if (!locale) {
-    // detect original language based on oembeded data for videos or shorts on the current channel page
+    // detect original language based on oembedded data for videos or shorts on the current channel page
     locale = await detectChannelOriginalLanguage();
   }
   if (!locale) {
