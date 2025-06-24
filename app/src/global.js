@@ -27,6 +27,7 @@ window.YoutubeAntiTranslate = {
     }
   },
 
+  PROCESSED_CLASS: "untranslate-processed",
   CORE_ATTRIBUTED_STRING_SELECTOR: ".yt-core-attributed-string",
   ALL_ARRAYS_VIDEOS_SELECTOR: `ytd-video-renderer,
 ytd-rich-item-renderer,
@@ -535,11 +536,12 @@ ytm-shorts-lockup-view-model`,
     });
 
     this.logDebug(`createFormattedContent: created formatted content element`);
+    contentElement.className += ` ${this.PROCESSED_CLASS}`;
     return contentElement;
   },
 
   /**
-   * Replace the first text note of the element
+   * Replace the first text node of the element
    * Any other node is retained as is
    * @param {HTMLElement} element - The element to update
    * @param {string} replaceText - The new text to insert
@@ -556,6 +558,7 @@ ytm-shorts-lockup-view-model`,
         break; // stop after updating the first text node
       }
     }
+    element.className += ` ${this.PROCESSED_CLASS}`;
   },
 
   /**

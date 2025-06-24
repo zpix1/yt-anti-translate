@@ -1,4 +1,10 @@
-import { chromium, firefox, expect } from "@playwright/test";
+import {
+  chromium,
+  firefox,
+  expect,
+  BrowserContext,
+  TestInfo,
+} from "@playwright/test";
 import path from "path";
 import { fileURLToPath } from "url";
 import { withExtension } from "playwright-webextext";
@@ -11,8 +17,11 @@ import { downloadAndExtractUBlock } from "./ExtensionsFilesHelper";
 import { handleYoutubeConsent } from "./YoutubeConsentHelper";
 
 export async function setupUBlockAndAuth(
+  testIfo: TestInfo,
   allBrowserNameWithExtensions: string[],
   allLocaleStrings: string[],
+  defaultTryCatchTimeoutMs: number,
+  defaultTimeoutMs: number,
 ) {
   try {
     for (let index = 0; index < allBrowserNameWithExtensions.length; index++) {
@@ -40,7 +49,8 @@ export async function setupUBlockAndAuth(
         // Launch browser with the extension
         let context;
         switch (browserNameWithExtensions) {
-          case "chromium": {
+          case "chromium":
+          case "chromium-edge": {
             const browserTypeWithExtension = withExtension(chromium, [
               path.resolve(
                 path.dirname(fileURLToPath(import.meta.url)),
@@ -55,6 +65,10 @@ export async function setupUBlockAndAuth(
               "",
               {
                 headless: false,
+                channel:
+                  browserNameWithExtensions === "chromium-edge"
+                    ? "msedge"
+                    : undefined,
               },
             );
             break;
@@ -85,6 +99,14 @@ export async function setupUBlockAndAuth(
         const page = result.page;
         const localeLoaded = result.localeLoaded;
 
+        if (context["_type"] === "BrowserContext") {
+          const browserContext = context as BrowserContext;
+          browserContext.setDefaultNavigationTimeout(defaultTimeoutMs * 2);
+          browserContext.setDefaultTimeout(defaultTimeoutMs);
+        }
+        page.setDefaultNavigationTimeout(defaultTimeoutMs * 2);
+        page.setDefaultTimeout(defaultTimeoutMs);
+
         // Set up console message counting
         let consoleMessageCount = 0;
         page.on("console", () => {
@@ -92,27 +114,33 @@ export async function setupUBlockAndAuth(
         });
 
         if (!localeLoaded) {
-          await page.goto("https://www.youtube.com/@MrBeast");
+          await page.goto("https://www.youtube.com/feed/you");
 
           try {
-            await page.waitForLoadState("networkidle", { timeout: 5000 });
+            await page.waitForLoadState("networkidle", {
+              timeout: defaultTryCatchTimeoutMs,
+            });
           } catch {}
 
           // Sometimes youtube redirects to consent page so wait 2 seconds before proceeding
           await page.waitForTimeout(2000);
           try {
-            await page.waitForLoadState("networkidle", { timeout: 5000 });
+            await page.waitForLoadState("networkidle", {
+              timeout: defaultTryCatchTimeoutMs,
+            });
           } catch {}
 
-          await handleYoutubeConsent(page);
+          await handleYoutubeConsent(page, defaultTryCatchTimeoutMs);
 
           // If we did not load a locale storage state, login to test account and set locale
           // This will also create a new storage state with the locale already set
           await handleGoogleLogin(
+            testIfo,
             context,
             page,
             browserNameWithExtensions,
             localeString,
+            defaultTryCatchTimeoutMs,
           );
 
           // If for whatever reason we are not logged in, then fail the setup
