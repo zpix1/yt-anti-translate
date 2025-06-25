@@ -152,7 +152,7 @@ function updateDescriptionContent(container, originalText) {
     if (
       mainTextContainer.hasChildNodes() &&
       mainTextContainer.firstChild.textContent === formattedContent.textContent
-      /* as we are always doing both the comparision on mainTextContainer is sufficient*/
+      /* as we are always doing both actions, the comparision on mainTextContainer is sufficient*/
     ) {
       // No changes are needed
       return;

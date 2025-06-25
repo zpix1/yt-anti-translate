@@ -150,6 +150,138 @@ ytm-shorts-lockup-view-model`,
   },
 
   /**
+   * Advanced string equality comparison with optional normalization and trimming.
+   * @param {string} str1 - First string to compare.
+   * @param {string} str2 - Second string to compare.
+   * @param {object} [options] - Configuration options for comparison.
+   * @param {boolean} [options.ignoreCase=false] - If true, comparison is case-insensitive.
+   * @param {boolean} [options.normalizeSpaces=false] - If true, replaces consecutive whitespace with a single space.
+   * @param {boolean} [options.normalizeNFKC=false] - If true, applies Unicode Normalization Form Compatibility Composition (NFKC).
+   * @param {boolean} [options.trim=false] - If true, trims both leading and trailing whitespace.
+   * @param {boolean} [options.trimLeft=false] - If true, trims leading whitespace. Ignored if `trim` is true.
+   * @param {boolean} [options.trimRight=false] - If true, trims trailing whitespace. Ignored if `trim` is true.
+   * @returns {boolean} Whether the two processed strings are equal.
+   */
+  isStringEqual: function (str1, str2, options = {}) {
+    const {
+      ignoreCase = false,
+      normalizeSpaces = false,
+      normalizeNFKC = false,
+      trim = false,
+      trimLeft = false,
+      trimRight = false,
+    } = options;
+
+    function process(str) {
+      if (!str) {
+        return str;
+      }
+
+      if (normalizeNFKC) {
+        str = str.normalize("NFKC");
+      }
+
+      if (normalizeSpaces) {
+        str = str.replace(/\s+/g, " ");
+      }
+
+      if (trim) {
+        str = str.trim();
+      } else {
+        if (trimLeft) {
+          str = str.trimStart();
+        }
+        if (trimRight) {
+          str = str.trimEnd();
+        }
+      }
+
+      if (ignoreCase) {
+        str = str.toLowerCase();
+      }
+
+      return str;
+    }
+
+    return process(str1) === process(str2);
+  },
+
+  /**
+   * Advanced string replace with optional normalization and trimming.
+   * @param {string} input - The original string to operate on.
+   * @param {string|RegExp} pattern - The pattern to replace. If a string, treated as a literal substring.
+   * @param {string} replacement - The replacement string.
+   * @param {object} [options] - Configuration options.
+   * @param {boolean} [options.ignoreCase=false] - If true, performs case-insensitive replacement.
+   * @param {boolean} [options.normalizeSpaces=false] - If true, replaces all whitespace sequences with a single space before matching.
+   * @param {boolean} [options.normalizeNFKC=false] - If true, applies Unicode Normalization Form Compatibility Composition (NFKC).
+   * @param {boolean} [options.trim=false] - If true, trims leading and trailing whitespace before processing.
+   * @param {boolean} [options.trimLeft=false] - If true, trims leading whitespace (ignored if `trim` is true).
+   * @param {boolean} [options.trimRight=false] - If true, trims trailing whitespace (ignored if `trim` is true).
+   * @returns {string} The resulting string after replacement.
+   */
+  stringReplaceWithOptions: function (
+    input,
+    pattern,
+    replacement,
+    options = {},
+  ) {
+    const {
+      ignoreCase = false,
+      normalizeSpaces = false,
+      normalizeNFKC = false,
+      trim = false,
+      trimLeft = false,
+      trimRight = false,
+    } = options;
+
+    function preprocess(str) {
+      if (!str) {
+        return str;
+      }
+
+      if (normalizeNFKC) {
+        str = str.normalize("NFKC");
+      }
+
+      if (normalizeSpaces) {
+        str = str.replace(/\s+/g, " ");
+      }
+
+      if (trim) {
+        str = str.trim();
+      } else {
+        if (trimLeft) {
+          str = str.trimStart();
+        }
+        if (trimRight) {
+          str = str.trimEnd();
+        }
+      }
+
+      return str;
+    }
+
+    const processedInput = preprocess(input);
+    if (!processedInput || !replacement) {
+      return processedInput;
+    }
+
+    let regex;
+    if (typeof pattern === "string") {
+      const escapedPattern = pattern.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // Escape string
+      regex = new RegExp(escapedPattern, ignoreCase ? "gi" : "g");
+    } else if (pattern instanceof RegExp) {
+      const flags = pattern.flags.replace(/i?/, ignoreCase ? "i" : "");
+      regex = new RegExp(pattern.source, flags);
+    } else {
+      throw new TypeError("pattern must be a string or RegExp");
+    }
+
+    return processedInput.replace(regex, replacement);
+  },
+
+  /**
    * Given a Node it uses computed style to determine if it is visible
    * @param {Node} node - A Node of type ELEMENT_NODE
    * @param {boolean} shouldCheckViewport - Optional. If true the element position is checked to be inside or outside the viewport. Viewport is extended based on

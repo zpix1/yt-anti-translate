@@ -119,8 +119,12 @@ async function untranslateCurrentShortVideo() {
       if (
         realTitle &&
         currentTitle &&
-        window.YoutubeAntiTranslate.normalizeSpaces(realTitle) !==
-          window.YoutubeAntiTranslate.normalizeSpaces(currentTitle)
+        !window.YoutubeAntiTranslate.isStringEqual(realTitle, currentTitle, {
+          ignoreCase: true,
+          normalizeNFKC: true,
+          normalizeSpaces: true,
+          trim: true,
+        })
       ) {
         window.YoutubeAntiTranslate.logInfo(
           `Untranslating Short title: "${currentTitle}" -> "${realTitle}"`,
@@ -130,7 +134,17 @@ async function untranslateCurrentShortVideo() {
 
         // Update page title too
         if (document.title.includes(currentTitle)) {
-          document.title = document.title.replace(currentTitle, realTitle);
+          document.title = window.YoutubeAntiTranslate.stringReplaceWithOptions(
+            document.title,
+            currentTitle,
+            realTitle,
+            {
+              ignoreCase: true,
+              normalizeNFKC: true,
+              normalizeSpaces: true,
+              trim: true,
+            },
+          );
         } else {
           // Fallback if exact match fails (e.g. " Shorts" suffix)
           document.title = `${realTitle} #shorts`; // Adjust format as needed
@@ -302,23 +316,46 @@ async function createOrUpdateUntranslatedFakeNode(
           `${fakeNodeID}_${getUrlForElement}`,
         ) ?? oldTitle;
 
-      // document tile is sometimes not a perfect match to the oldTile due to spacing, so normalize all
-      const normalizedDocumentTitle =
-        window.YoutubeAntiTranslate.normalizeSpaces(document.title);
-      const normalizedOldTitle =
-        window.YoutubeAntiTranslate.normalizeSpaces(cachedOldTitle);
-      const normalizeRealTitle =
-        window.YoutubeAntiTranslate.normalizeSpaces(realTitle);
-      const realDocumentTitle = normalizedDocumentTitle.replace(
-        normalizedOldTitle,
-        normalizeRealTitle,
-      );
-      if (normalizedDocumentTitle !== realDocumentTitle) {
-        document.title = realDocumentTitle;
+      if (
+        !window.YoutubeAntiTranslate.isStringEqual(realTitle, cachedOldTitle, {
+          ignoreCase: true,
+          normalizeNFKC: true,
+          normalizeSpaces: true,
+          trim: true,
+        })
+      ) {
+        document.title = window.YoutubeAntiTranslate.stringReplaceWithOptions(
+          document.title,
+          cachedOldTitle,
+          realTitle,
+          {
+            ignoreCase: true,
+            normalizeNFKC: true,
+            normalizeSpaces: true,
+            trim: true,
+          },
+        );
       }
     }
 
-    if (realTitle === oldTitle || fakeNode?.textContent === realTitle) {
+    if (
+      window.YoutubeAntiTranslate.isStringEqual(realTitle, oldTitle, {
+        ignoreCase: true,
+        normalizeNFKC: true,
+        normalizeSpaces: true,
+        trim: true,
+      }) ||
+      window.YoutubeAntiTranslate.isStringEqual(
+        fakeNode?.textContent,
+        realTitle,
+        {
+          ignoreCase: true,
+          normalizeNFKC: true,
+          normalizeSpaces: true,
+          trim: true,
+        },
+      )
+    ) {
       return;
     } else {
       // cache old title for future reference
@@ -424,8 +461,16 @@ async function untranslateOtherVideos(intersectElements = null) {
         if (
           originalTitle &&
           currentTitle &&
-          window.YoutubeAntiTranslate.normalizeSpaces(originalTitle) !==
-            window.YoutubeAntiTranslate.normalizeSpaces(currentTitle)
+          !window.YoutubeAntiTranslate.isStringEqual(
+            originalTitle,
+            currentTitle,
+            {
+              ignoreCase: true,
+              normalizeNFKC: true,
+              normalizeSpaces: true,
+              trim: true,
+            },
+          )
         ) {
           window.YoutubeAntiTranslate.logInfo(
             `Untranslating Video: "${currentTitle}" -> "${originalTitle}"`,
@@ -521,7 +566,16 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
         const realTitle = response.title;
         const currentTitle = titleElement.textContent?.trim(); // Use textContent for typical title spans
 
-        if (realTitle && currentTitle && realTitle !== currentTitle) {
+        if (
+          realTitle &&
+          currentTitle &&
+          !window.YoutubeAntiTranslate.isStringEqual(realTitle, currentTitle, {
+            ignoreCase: true,
+            normalizeNFKC: true,
+            normalizeSpaces: true,
+            trim: true,
+          })
+        ) {
           titleElement.textContent = realTitle;
           // Update title attribute if it exists (for tooltips)
           if (titleElement.hasAttribute("title")) {
