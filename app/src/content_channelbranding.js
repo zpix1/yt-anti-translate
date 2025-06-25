@@ -55,6 +55,11 @@ async function detectChannelOriginalLanguage() {
       href = `https://www.youtube.com/shorts/${match[1]}`;
     }
 
+    // Ignore advertisement video
+    if (href.includes("www.googleadservices.com")) {
+      continue;
+    }
+
     href = window.YoutubeAntiTranslate.stripNonEssentialParams(href);
     const oembedUrl = `https://www.youtube.com/oembed?url=${href}`;
 

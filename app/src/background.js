@@ -294,6 +294,11 @@ async function createOrUpdateUntranslatedFakeNode(
       window.YoutubeAntiTranslate.stripNonEssentialParams(
         getUrl(translatedElement ?? fakeNode),
       );
+
+    // Ignore advertisement video
+    if (getUrlForElement.includes("www.googleadservices.com")) {
+      return;
+    }
     const response = await get(
       "https://www.youtube.com/oembed?url=" + getUrlForElement,
     );
@@ -436,6 +441,11 @@ async function untranslateOtherVideos(intersectElements = null) {
           // console.debug(`Skipping video item, missing link or title:`, video);
           continue; // Skip if essential elements aren't found
         }
+      }
+
+      // Ignore advertisement video
+      if (linkElement.href.includes("www.googleadservices.com")) {
+        continue;
       }
 
       // Use the link's href for oEmbed and as the key
