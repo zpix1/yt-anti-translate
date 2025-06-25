@@ -439,64 +439,75 @@ async function restoreOriginalPageTitle() {
   );
 }
 
+let /** @type {Boolean} */ restoreOriginalBrandingHeader_running = false;
 /**
  * Processes the branding header and restores it to its original form
  */
 async function restoreOriginalBrandingHeader() {
-  if (
-    window.YoutubeAntiTranslate.getFirstVisible(
-      document.querySelectorAll(CHANNELBRANDING_HEADER_SELECTOR),
-    )
-  ) {
-    await chrome.storage.sync.get(
-      {
-        youtubeDataApiKey: null,
-      },
-      async (items) => {
-        let originalBrandingData;
-        if (items.youtubeDataApiKey && items.youtubeDataApiKey.trim !== "") {
-          originalBrandingData = await getChannelBrandingWithYoutubeDataAPI(
-            items.youtubeDataApiKey,
-          );
-        }
-        if (!originalBrandingData) {
-          // Fallback to YouTubeI+i18n if YoutubeDataAPI Key was not set OR if it failed
-          originalBrandingData = await getChannelBrandingWithYoutubeI();
-        }
+  if (restoreOriginalBrandingHeader_running) {
+    return;
+  }
+  restoreOriginalBrandingHeader_running = true;
 
-        if (!originalBrandingData) {
-          window.YoutubeAntiTranslate.logWarning(
-            "No original branding data found",
-          );
-        } else if (
-          !originalBrandingData.title &&
-          !originalBrandingData.description
-        ) {
-          window.YoutubeAntiTranslate.logWarning(
-            "No original branding data found for title and description",
-          );
-        } else {
-          const brandingHeaderContainer =
-            window.YoutubeAntiTranslate.getFirstVisible(
-              document.querySelectorAll(CHANNELBRANDING_HEADER_SELECTOR),
-            );
-          if (brandingHeaderContainer) {
-            await updateBrandingHeaderTitleContent(
-              brandingHeaderContainer,
-              originalBrandingData,
-            );
-            updateBrandingHeaderDescriptionContent(
-              brandingHeaderContainer,
-              originalBrandingData,
-            );
-          } else {
-            window.YoutubeAntiTranslate.logWarning(
-              "Channel Branding Header container not found",
+  try {
+    if (
+      window.YoutubeAntiTranslate.getFirstVisible(
+        document.querySelectorAll(CHANNELBRANDING_HEADER_SELECTOR),
+      )
+    ) {
+      await chrome.storage.sync.get(
+        {
+          youtubeDataApiKey: null,
+        },
+        async (items) => {
+          let originalBrandingData;
+          if (items.youtubeDataApiKey && items.youtubeDataApiKey.trim !== "") {
+            originalBrandingData = await getChannelBrandingWithYoutubeDataAPI(
+              items.youtubeDataApiKey,
             );
           }
-        }
-      },
-    );
+          if (!originalBrandingData) {
+            // Fallback to YouTubeI+i18n if YoutubeDataAPI Key was not set OR if it failed
+            originalBrandingData = await getChannelBrandingWithYoutubeI();
+          }
+
+          if (!originalBrandingData) {
+            window.YoutubeAntiTranslate.logWarning(
+              "No original branding data found",
+            );
+          } else if (
+            !originalBrandingData.title &&
+            !originalBrandingData.description
+          ) {
+            window.YoutubeAntiTranslate.logWarning(
+              "No original branding data found for title and description",
+            );
+          } else {
+            const brandingHeaderContainer =
+              window.YoutubeAntiTranslate.getFirstVisible(
+                document.querySelectorAll(CHANNELBRANDING_HEADER_SELECTOR),
+              );
+            if (brandingHeaderContainer) {
+              await updateBrandingHeaderTitleContent(
+                brandingHeaderContainer,
+                originalBrandingData,
+              );
+              updateBrandingHeaderDescriptionContent(
+                brandingHeaderContainer,
+                originalBrandingData,
+              );
+            } else {
+              window.YoutubeAntiTranslate.logWarning(
+                "Channel Branding Header container not found",
+              );
+            }
+          }
+        },
+      );
+    }
+    restoreOriginalBrandingHeader_running = false;
+  } catch {
+    restoreOriginalBrandingHeader_running = false;
   }
 }
 
@@ -589,62 +600,74 @@ function updateBrandingHeaderDescriptionContent(
   }
 }
 
+let /** @type {Boolean} */ restoreOriginalBrandingAbout_running = false;
 /**
  * Processes the about and restores it to its original form
  */
 async function restoreOriginalBrandingAbout() {
-  if (
-    window.YoutubeAntiTranslate.getFirstVisible(
-      document.querySelectorAll(CHANNELBRANDING_ABOUT_SELECTOR),
-    )
-  ) {
-    await chrome.storage.sync.get(
-      {
-        youtubeDataApiKey: null,
-      },
-      async (items) => {
-        let originalBrandingData;
-        if (items.youtubeDataApiKey && items.youtubeDataApiKey.trim !== "") {
-          originalBrandingData = await getChannelBrandingWithYoutubeDataAPI(
-            items.youtubeDataApiKey,
-          );
-        }
-        if (!originalBrandingData) {
-          // Fallback to YouTubeI+i18n if YoutubeDataAPI Key was not set OR if it failed
-          originalBrandingData = await getChannelBrandingWithYoutubeI();
-        }
+  if (restoreOriginalBrandingAbout_running) {
+    return;
+  }
+  restoreOriginalBrandingAbout_running = true;
 
-        if (!originalBrandingData) {
-          window.YoutubeAntiTranslate.logWarning(
-            "No original branding data found",
-          );
-        } else if (
-          !originalBrandingData.title &&
-          !originalBrandingData.description
-        ) {
-          window.YoutubeAntiTranslate.logWarning(
-            "No original branding data found for title and description",
-          );
-        } else {
-          const aboutContainer = window.YoutubeAntiTranslate.getAllVisibleNodes(
-            document.querySelectorAll(CHANNELBRANDING_ABOUT_SELECTOR),
-          );
-          if (aboutContainer || aboutContainer.length > 0) {
-            aboutContainer.forEach((element) => {
-              updateBrandingAboutDescriptionContent(
-                element,
-                originalBrandingData,
-              );
-              updateBrandingAboutTitleContent(element, originalBrandingData);
-            });
-          } else {
-            window.YoutubeAntiTranslate.logInfo(
-              `Channel About container not found`,
+  try {
+    if (
+      window.YoutubeAntiTranslate.getFirstVisible(
+        document.querySelectorAll(CHANNELBRANDING_ABOUT_SELECTOR),
+      )
+    ) {
+      await chrome.storage.sync.get(
+        {
+          youtubeDataApiKey: null,
+        },
+        async (items) => {
+          let originalBrandingData;
+          if (items.youtubeDataApiKey && items.youtubeDataApiKey.trim !== "") {
+            originalBrandingData = await getChannelBrandingWithYoutubeDataAPI(
+              items.youtubeDataApiKey,
             );
           }
-        }
-      },
-    );
+          if (!originalBrandingData) {
+            // Fallback to YouTubeI+i18n if YoutubeDataAPI Key was not set OR if it failed
+            originalBrandingData = await getChannelBrandingWithYoutubeI();
+          }
+
+          if (!originalBrandingData) {
+            window.YoutubeAntiTranslate.logWarning(
+              "No original branding data found",
+            );
+          } else if (
+            !originalBrandingData.title &&
+            !originalBrandingData.description
+          ) {
+            window.YoutubeAntiTranslate.logWarning(
+              "No original branding data found for title and description",
+            );
+          } else {
+            const aboutContainer =
+              window.YoutubeAntiTranslate.getAllVisibleNodes(
+                document.querySelectorAll(CHANNELBRANDING_ABOUT_SELECTOR),
+              );
+            if (aboutContainer || aboutContainer.length > 0) {
+              aboutContainer.forEach((element) => {
+                updateBrandingAboutDescriptionContent(
+                  element,
+                  originalBrandingData,
+                );
+                updateBrandingAboutTitleContent(element, originalBrandingData);
+              });
+            } else {
+              window.YoutubeAntiTranslate.logInfo(
+                `Channel About container not found`,
+              );
+            }
+          }
+        },
+      );
+    }
+    restoreOriginalBrandingAbout_running = false;
+  } catch {
+    restoreOriginalBrandingAbout_running = false;
   }
 }
 

@@ -57,22 +57,32 @@ async function get(url) {
   return requestPromise;
 }
 
+let /** @type {Boolean} */ untranslateCurrentShortVideo_running = false;
 async function untranslateCurrentShortVideo() {
-  if (!window.location.pathname.startsWith("/shorts/")) {
-    return; // Should not happen if called correctly, but safety first
+  if (
+    untranslateCurrentShortVideo_running ||
+    !window.location.pathname.startsWith("/shorts/") // Should not happen if called correctly, but safety first
+  ) {
+    return;
   }
+  untranslateCurrentShortVideo_running = true;
 
-  const { fakeNodeID, originalNodeSelector } =
-    getUntranslateCurrentShortVideoParams();
+  try {
+    const { fakeNodeID, originalNodeSelector } =
+      getUntranslateCurrentShortVideoParams();
 
-  await createOrUpdateUntranslatedFakeNode(
-    fakeNodeID,
-    originalNodeSelector,
-    () =>
-      `https://www.youtube.com/shorts/${window.location.pathname.split("/")[2]}`,
-    "span",
-    true,
-  );
+    await createOrUpdateUntranslatedFakeNode(
+      fakeNodeID,
+      originalNodeSelector,
+      () =>
+        `https://www.youtube.com/shorts/${window.location.pathname.split("/")[2]}`,
+      "span",
+      true,
+    );
+    untranslateCurrentShortVideo_running = false;
+  } catch {
+    untranslateCurrentShortVideo_running = false;
+  }
 }
 
 function getUntranslateCurrentShortVideoParams() {
@@ -81,17 +91,31 @@ function getUntranslateCurrentShortVideoParams() {
   return { fakeNodeID, originalNodeSelector };
 }
 
+let /** @type {Boolean} */ untranslateCurrentShortVideoLinks_running = false;
 async function untranslateCurrentShortVideoLinks() {
-  const { fakeNodeID, originalNodeSelector } =
-    getUntranslateCurrentShortVideoLinksParams();
+  if (
+    untranslateCurrentShortVideoLinks_running ||
+    !window.location.pathname.startsWith("/shorts/") // Should not happen if called correctly, but safety first
+  ) {
+    return;
+  }
+  untranslateCurrentShortVideoLinks_running = true;
 
-  await createOrUpdateUntranslatedFakeNode(
-    fakeNodeID,
-    originalNodeSelector,
-    (el) => el?.parentElement?.parentElement?.parentElement?.href,
-    "span",
-    false,
-  );
+  try {
+    const { fakeNodeID, originalNodeSelector } =
+      getUntranslateCurrentShortVideoLinksParams();
+
+    await createOrUpdateUntranslatedFakeNode(
+      fakeNodeID,
+      originalNodeSelector,
+      (el) => el?.parentElement?.parentElement?.parentElement?.href,
+      "span",
+      false,
+    );
+    untranslateCurrentShortVideoLinks_running = false;
+  } catch {
+    untranslateCurrentShortVideoLinks_running = false;
+  }
 }
 
 function getUntranslateCurrentShortVideoLinksParams() {
@@ -100,21 +124,31 @@ function getUntranslateCurrentShortVideoLinksParams() {
   return { fakeNodeID, originalNodeSelector };
 }
 
+let /** @type {Boolean} */ untranslateCurrentVideo_running = false;
 async function untranslateCurrentVideo() {
-  if (!window.location.pathname.startsWith("/watch")) {
-    return; // Should not happen if called correctly, but safety first
+  if (
+    untranslateCurrentVideo_running ||
+    !window.location.pathname.startsWith("/watch") // Should not happen if called correctly, but safety first
+  ) {
+    return;
   }
+  untranslateCurrentVideo_running = true;
 
-  const { fakeNodeID, originalNodeSelector } =
-    getUntranslateCurrentVideoParams();
+  try {
+    const { fakeNodeID, originalNodeSelector } =
+      getUntranslateCurrentVideoParams();
 
-  await createOrUpdateUntranslatedFakeNode(
-    fakeNodeID,
-    originalNodeSelector,
-    () => document.location.href,
-    "div",
-    true,
-  );
+    await createOrUpdateUntranslatedFakeNode(
+      fakeNodeID,
+      originalNodeSelector,
+      () => document.location.href,
+      "div",
+      true,
+    );
+    untranslateCurrentVideo_running = false;
+  } catch {
+    untranslateCurrentVideo_running = false;
+  }
 }
 
 function getUntranslateCurrentVideoParams() {
@@ -123,27 +157,37 @@ function getUntranslateCurrentVideoParams() {
   return { fakeNodeID, originalNodeSelector };
 }
 
+let /** @type {Boolean} */ untranslateCurrentVideoHeadLink_running = false;
 async function untranslateCurrentVideoHeadLink() {
-  if (!window.location.pathname.startsWith("/watch")) {
+  if (
+    untranslateCurrentVideoHeadLink_running ||
+    !window.location.pathname.startsWith("/watch") // Should not happen if called correctly, but safety first
+  ) {
     return;
   }
+  untranslateCurrentVideoHeadLink_running = true;
 
-  const { fakeNodeID, originalNodeSelector } =
-    getUntranslateCurrentVideoHeadLinkParams();
+  try {
+    const { fakeNodeID, originalNodeSelector } =
+      getUntranslateCurrentVideoHeadLinkParams();
 
-  await createOrUpdateUntranslatedFakeNode(
-    fakeNodeID,
-    originalNodeSelector,
-    (el) => {
-      const videoLinkHead = el.href;
-      if (!videoLinkHead || videoLinkHead.trim() === "") {
-        return document.location.href;
-      }
-      return videoLinkHead;
-    },
-    "a",
-    false,
-  );
+    await createOrUpdateUntranslatedFakeNode(
+      fakeNodeID,
+      originalNodeSelector,
+      (el) => {
+        const videoLinkHead = el.href;
+        if (!videoLinkHead || videoLinkHead.trim() === "") {
+          return document.location.href;
+        }
+        return videoLinkHead;
+      },
+      "a",
+      false,
+    );
+    untranslateCurrentVideoHeadLink_running = false;
+  } catch {
+    untranslateCurrentVideoHeadLink_running = false;
+  }
 }
 
 function getUntranslateCurrentVideoHeadLinkParams() {
@@ -152,26 +196,36 @@ function getUntranslateCurrentVideoHeadLinkParams() {
   return { fakeNodeID, originalNodeSelector };
 }
 
+let /** @type {Boolean} */ untranslateCurrentVideoFullScreenEdu_running = false;
 async function untranslateCurrentVideoFullScreenEdu() {
-  if (!window.location.pathname.startsWith("/watch")) {
+  if (
+    untranslateCurrentVideoFullScreenEdu_running ||
+    !window.location.pathname.startsWith("/watch") // Should not happen if called correctly, but safety first
+  ) {
     return;
   }
+  untranslateCurrentVideoFullScreenEdu_running = true;
 
-  const { fakeNodeID, originalNodeSelector } =
-    getUntranslateCurrentVideoFullScreenEduParams();
+  try {
+    const { fakeNodeID, originalNodeSelector } =
+      getUntranslateCurrentVideoFullScreenEduParams();
 
-  // Skip if on a channel page
-  if (document.location.pathname.startsWith("@")) {
-    return;
+    // Skip if on a channel page
+    if (document.location.pathname.startsWith("@")) {
+      return;
+    }
+
+    await createOrUpdateUntranslatedFakeNode(
+      fakeNodeID,
+      originalNodeSelector,
+      () => document.location.href,
+      "div",
+      false,
+    );
+    untranslateCurrentVideoFullScreenEdu_running = false;
+  } catch {
+    untranslateCurrentVideoFullScreenEdu_running = false;
   }
-
-  await createOrUpdateUntranslatedFakeNode(
-    fakeNodeID,
-    originalNodeSelector,
-    () => document.location.href,
-    "div",
-    false,
-  );
 }
 
 function getUntranslateCurrentVideoFullScreenEduParams() {
@@ -180,17 +234,28 @@ function getUntranslateCurrentVideoFullScreenEduParams() {
   return { fakeNodeID, originalNodeSelector };
 }
 
+let /** @type {Boolean} */ untranslateCurrentChannelEmbededVideoTitle_running = false;
 async function untranslateCurrentChannelEmbededVideoTitle() {
-  const { fakeNodeID, originalNodeSelector } =
-    getUntranslateCurrentChannelEmbededVideoTitleParams();
+  if (untranslateCurrentChannelEmbededVideoTitle_running) {
+    return;
+  }
+  untranslateCurrentChannelEmbededVideoTitle_running = true;
 
-  await createOrUpdateUntranslatedFakeNode(
-    fakeNodeID,
-    originalNodeSelector,
-    (el) => el.href,
-    "a",
-    false,
-  );
+  try {
+    const { fakeNodeID, originalNodeSelector } =
+      getUntranslateCurrentChannelEmbededVideoTitleParams();
+
+    await createOrUpdateUntranslatedFakeNode(
+      fakeNodeID,
+      originalNodeSelector,
+      (el) => el.href,
+      "a",
+      false,
+    );
+    untranslateCurrentChannelEmbededVideoTitle_running = false;
+  } catch {
+    untranslateCurrentChannelEmbededVideoTitle_running = false;
+  }
 }
 
 function getUntranslateCurrentChannelEmbededVideoTitleParams() {
@@ -299,6 +364,7 @@ async function createOrUpdateUntranslatedFakeNode(
   //}
 }
 
+let /** @type {Boolean} */ untranslateOtherVideos_running = false;
 async function untranslateOtherVideos(intersectElements = null) {
   async function untranslateOtherVideosArray(otherVideos) {
     if (!otherVideos) {
@@ -382,23 +448,36 @@ async function untranslateOtherVideos(intersectElements = null) {
     }
   }
 
+  // For Intersect concurrency is allowed as the intersectElements will be different each time
   if (intersectElements) {
     // If this was called from the intersect obesrver only check the newly intersecting items
     await untranslateOtherVideosArray(intersectElements);
     updateObserverOtherVideosOnIntersect();
     return;
   }
-  // Selectors for all video containers
-  await untranslateOtherVideosArray(
-    window.YoutubeAntiTranslate.getAllVisibleNodes(
-      document.querySelectorAll(
-        window.YoutubeAntiTranslate.ALL_ARRAYS_VIDEOS_SELECTOR,
+
+  if (untranslateOtherVideos_running) {
+    return;
+  }
+  untranslateOtherVideos_running = true;
+
+  try {
+    // Selectors for all video containers
+    await untranslateOtherVideosArray(
+      window.YoutubeAntiTranslate.getAllVisibleNodes(
+        document.querySelectorAll(
+          window.YoutubeAntiTranslate.ALL_ARRAYS_VIDEOS_SELECTOR,
+        ),
       ),
-    ),
-  );
-  updateObserverOtherVideosOnIntersect();
+    );
+    updateObserverOtherVideosOnIntersect();
+    untranslateOtherVideos_running = false;
+  } catch {
+    untranslateOtherVideos_running = false;
+  }
 }
 
+let /** @type {Boolean} */ untranslateOtherShortsVideos_running = false;
 async function untranslateOtherShortsVideos(intersectElements = null) {
   async function untranslateOtherShortsArray(shortsItems) {
     if (!shortsItems) {
@@ -483,21 +562,33 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
     }
   }
 
+  // For Intersect concurrency is allowed as the intersectElements will be different each time
   if (intersectElements) {
     // If this was called from the intersect obesrver only check the newly intersecting items
     await untranslateOtherShortsArray(intersectElements);
     updateObserverOtherShortsOnIntersect();
     return;
   }
-  // Run for all shorts items
-  await untranslateOtherShortsArray(
-    window.YoutubeAntiTranslate.getAllVisibleNodes(
-      document.querySelectorAll(
-        window.YoutubeAntiTranslate.ALL_ARRAYS_SHORTS_SELECTOR,
+
+  if (untranslateOtherShortsVideos_running) {
+    return;
+  }
+  untranslateOtherShortsVideos_running = true;
+
+  try {
+    // Run for all shorts items
+    await untranslateOtherShortsArray(
+      window.YoutubeAntiTranslate.getAllVisibleNodes(
+        document.querySelectorAll(
+          window.YoutubeAntiTranslate.ALL_ARRAYS_SHORTS_SELECTOR,
+        ),
       ),
-    ),
-  );
-  updateObserverOtherShortsOnIntersect();
+    );
+    updateObserverOtherShortsOnIntersect();
+    untranslateOtherShortsVideos_running = false;
+  } catch {
+    untranslateOtherShortsVideos_running = false;
+  }
 }
 
 // --- Mutation conditional processor ---
