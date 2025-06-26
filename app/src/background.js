@@ -630,80 +630,80 @@ async function untranslate(/** @type {MutationRecord[]} */ mutationList) {
         continue;
       }
 
-      // Checks on mutation target
-      if (
-        element.matches(getUntranslateCurrentVideoParams().originalNodeSelector)
-      ) {
-        waitForPlayerExistPromise ??=
-          window.YoutubeAntiTranslate.waitForPlayerExist();
-        currentVideoPromise = untranslateCurrentVideo();
-      } else if (
-        element.matches(
-          getUntranslateCurrentShortVideoParams().originalNodeSelector,
-        )
-      ) {
-        waitForPlayerExistPromise ??=
-          window.YoutubeAntiTranslate.waitForPlayerExist();
-        currentShortPromise = untranslateCurrentShortVideo();
-      } else if (
-        element.matches(
-          getUntranslateCurrentVideoHeadLinkParams().originalNodeSelector,
-        )
-      ) {
-        waitForPlayerExistPromise ??=
-          window.YoutubeAntiTranslate.waitForPlayerExist();
-        currentVideoHeadLinkPromise = untranslateCurrentVideoHeadLink();
-      } else if (
-        element.matches(
-          getUntranslateCurrentVideoFullScreenEduParams().originalNodeSelector,
-        )
-      ) {
-        waitForPlayerExistPromise ??=
-          window.YoutubeAntiTranslate.waitForPlayerExist();
-        currentVideoFullScreenEduPromise =
-          untranslateCurrentVideoFullScreenEdu();
-      } else if (
-        element.matches(
-          getUntranslateCurrentChannelEmbededVideoTitleParams()
-            .originalNodeSelector,
-        )
-      ) {
-        waitForPlayerExistPromise ??=
-          window.YoutubeAntiTranslate.waitForPlayerExist();
-        channelEmbededVideoPromise =
-          untranslateCurrentChannelEmbededVideoTitle();
-      } else if (
-        element.matches(
-          getUntranslateCurrentShortVideoLinksParams().originalNodeSelector,
-        )
-      ) {
-        waitForPlayerExistPromise ??=
-          window.YoutubeAntiTranslate.waitForPlayerExist();
-        currentShortVideoLinksPromise = untranslateCurrentShortVideoLinks();
-      } else if (
-        element.matches(window.YoutubeAntiTranslate.ALL_ARRAYS_VIDEOS_SELECTOR)
-      ) {
-        otherVideosPromise = untranslateOtherVideos();
-      }
-      // other videos and other shorts can overlap so this is intentionally not an `else if`
-      if (
-        element.matches(window.YoutubeAntiTranslate.ALL_ARRAYS_SHORTS_SELECTOR)
-      ) {
-        otherShortsPromise = untranslateOtherShortsVideos();
-      }
+      // // Checks on mutation target
+      // if (
+      //   element.matches(getUntranslateCurrentVideoParams().originalNodeSelector)
+      // ) {
+      //   waitForPlayerExistPromise ??=
+      //     window.YoutubeAntiTranslate.waitForPlayerExist();
+      //   currentVideoPromise = untranslateCurrentVideo();
+      // } else if (
+      //   element.matches(
+      //     getUntranslateCurrentShortVideoParams().originalNodeSelector,
+      //   )
+      // ) {
+      //   waitForPlayerExistPromise ??=
+      //     window.YoutubeAntiTranslate.waitForPlayerExist();
+      //   currentShortPromise = untranslateCurrentShortVideo();
+      // } else if (
+      //   element.matches(
+      //     getUntranslateCurrentVideoHeadLinkParams().originalNodeSelector,
+      //   )
+      // ) {
+      //   waitForPlayerExistPromise ??=
+      //     window.YoutubeAntiTranslate.waitForPlayerExist();
+      //   currentVideoHeadLinkPromise = untranslateCurrentVideoHeadLink();
+      // } else if (
+      //   element.matches(
+      //     getUntranslateCurrentVideoFullScreenEduParams().originalNodeSelector,
+      //   )
+      // ) {
+      //   waitForPlayerExistPromise ??=
+      //     window.YoutubeAntiTranslate.waitForPlayerExist();
+      //   currentVideoFullScreenEduPromise =
+      //     untranslateCurrentVideoFullScreenEdu();
+      // } else if (
+      //   element.matches(
+      //     getUntranslateCurrentChannelEmbededVideoTitleParams()
+      //       .originalNodeSelector,
+      //   )
+      // ) {
+      //   waitForPlayerExistPromise ??=
+      //     window.YoutubeAntiTranslate.waitForPlayerExist();
+      //   channelEmbededVideoPromise =
+      //     untranslateCurrentChannelEmbededVideoTitle();
+      // } else if (
+      //   element.matches(
+      //     getUntranslateCurrentShortVideoLinksParams().originalNodeSelector,
+      //   )
+      // ) {
+      //   waitForPlayerExistPromise ??=
+      //     window.YoutubeAntiTranslate.waitForPlayerExist();
+      //   currentShortVideoLinksPromise = untranslateCurrentShortVideoLinks();
+      // } else if (
+      //   element.matches(window.YoutubeAntiTranslate.ALL_ARRAYS_VIDEOS_SELECTOR)
+      // ) {
+      //   otherVideosPromise = untranslateOtherVideos();
+      // }
+      // // other videos and other shorts can overlap so this is intentionally not an `else if`
+      // if (
+      //   element.matches(window.YoutubeAntiTranslate.ALL_ARRAYS_SHORTS_SELECTOR)
+      // ) {
+      //   otherShortsPromise = untranslateOtherShortsVideos();
+      // }
 
-      if (
-        currentVideoPromise &&
-        currentShortPromise &&
-        currentVideoHeadLinkPromise &&
-        currentVideoFullScreenEduPromise &&
-        channelEmbededVideoPromise &&
-        currentShortVideoLinksPromise &&
-        otherVideosPromise &&
-        otherShortsPromise
-      ) {
-        break;
-      }
+      // if (
+      //   currentVideoPromise &&
+      //   currentShortPromise &&
+      //   currentVideoHeadLinkPromise &&
+      //   currentVideoFullScreenEduPromise &&
+      //   channelEmbededVideoPromise &&
+      //   currentShortVideoLinksPromise &&
+      //   otherVideosPromise &&
+      //   otherShortsPromise
+      // ) {
+      //   break;
+      // }
 
       // Checks on mutation closest target
       // `closest` conditions can overlap so we do not use `else if`
@@ -807,94 +807,94 @@ async function untranslate(/** @type {MutationRecord[]} */ mutationList) {
         continue;
       }
 
-      if (
-        !currentVideoPromise &&
-        addedElement.matches(
-          getUntranslateCurrentVideoParams().originalNodeSelector,
-        )
-      ) {
-        waitForPlayerExistPromise ??=
-          window.YoutubeAntiTranslate.waitForPlayerExist();
-        currentVideoPromise = untranslateCurrentVideo();
-      } else if (
-        !currentShortPromise &&
-        addedElement.matches(
-          getUntranslateCurrentShortVideoParams().originalNodeSelector,
-        )
-      ) {
-        waitForPlayerExistPromise ??=
-          window.YoutubeAntiTranslate.waitForPlayerExist();
-        currentShortPromise = untranslateCurrentShortVideo();
-      } else if (
-        !currentVideoHeadLinkPromise &&
-        addedElement.matches(
-          getUntranslateCurrentVideoHeadLinkParams().originalNodeSelector,
-        )
-      ) {
-        waitForPlayerExistPromise ??=
-          window.YoutubeAntiTranslate.waitForPlayerExist();
-        currentVideoHeadLinkPromise = untranslateCurrentVideoHeadLink();
-      } else if (
-        !currentVideoFullScreenEduPromise &&
-        addedElement.matches(
-          getUntranslateCurrentVideoFullScreenEduParams().originalNodeSelector,
-        )
-      ) {
-        waitForPlayerExistPromise ??=
-          window.YoutubeAntiTranslate.waitForPlayerExist();
-        currentVideoFullScreenEduPromise =
-          untranslateCurrentVideoFullScreenEdu();
-      } else if (
-        !channelEmbededVideoPromise &&
-        addedElement.matches(
-          getUntranslateCurrentChannelEmbededVideoTitleParams()
-            .originalNodeSelector,
-        )
-      ) {
-        waitForPlayerExistPromise ??=
-          window.YoutubeAntiTranslate.waitForPlayerExist();
-        channelEmbededVideoPromise =
-          untranslateCurrentChannelEmbededVideoTitle();
-      } else if (
-        !currentShortVideoLinksPromise &&
-        addedElement.matches(
-          getUntranslateCurrentShortVideoLinksParams().originalNodeSelector,
-        )
-      ) {
-        waitForPlayerExistPromise ??=
-          window.YoutubeAntiTranslate.waitForPlayerExist();
-        currentShortVideoLinksPromise = untranslateCurrentShortVideoLinks();
-      } else if (
-        !otherVideosPromise &&
-        addedElement.matches(
-          window.YoutubeAntiTranslate.ALL_ARRAYS_VIDEOS_SELECTOR,
-        )
-      ) {
-        otherVideosPromise = untranslateOtherVideos();
-      }
-      // other videos and other shorts can overlap so this is intentionally not an `else if`
-      if (
-        !otherShortsPromise &&
-        addedElement.matches(
-          window.YoutubeAntiTranslate.ALL_ARRAYS_SHORTS_SELECTOR,
-        )
-      ) {
-        otherShortsPromise = untranslateOtherShortsVideos();
-        continue;
-      }
+      // if (
+      //   !currentVideoPromise &&
+      //   addedElement.matches(
+      //     getUntranslateCurrentVideoParams().originalNodeSelector,
+      //   )
+      // ) {
+      //   waitForPlayerExistPromise ??=
+      //     window.YoutubeAntiTranslate.waitForPlayerExist();
+      //   currentVideoPromise = untranslateCurrentVideo();
+      // } else if (
+      //   !currentShortPromise &&
+      //   addedElement.matches(
+      //     getUntranslateCurrentShortVideoParams().originalNodeSelector,
+      //   )
+      // ) {
+      //   waitForPlayerExistPromise ??=
+      //     window.YoutubeAntiTranslate.waitForPlayerExist();
+      //   currentShortPromise = untranslateCurrentShortVideo();
+      // } else if (
+      //   !currentVideoHeadLinkPromise &&
+      //   addedElement.matches(
+      //     getUntranslateCurrentVideoHeadLinkParams().originalNodeSelector,
+      //   )
+      // ) {
+      //   waitForPlayerExistPromise ??=
+      //     window.YoutubeAntiTranslate.waitForPlayerExist();
+      //   currentVideoHeadLinkPromise = untranslateCurrentVideoHeadLink();
+      // } else if (
+      //   !currentVideoFullScreenEduPromise &&
+      //   addedElement.matches(
+      //     getUntranslateCurrentVideoFullScreenEduParams().originalNodeSelector,
+      //   )
+      // ) {
+      //   waitForPlayerExistPromise ??=
+      //     window.YoutubeAntiTranslate.waitForPlayerExist();
+      //   currentVideoFullScreenEduPromise =
+      //     untranslateCurrentVideoFullScreenEdu();
+      // } else if (
+      //   !channelEmbededVideoPromise &&
+      //   addedElement.matches(
+      //     getUntranslateCurrentChannelEmbededVideoTitleParams()
+      //       .originalNodeSelector,
+      //   )
+      // ) {
+      //   waitForPlayerExistPromise ??=
+      //     window.YoutubeAntiTranslate.waitForPlayerExist();
+      //   channelEmbededVideoPromise =
+      //     untranslateCurrentChannelEmbededVideoTitle();
+      // } else if (
+      //   !currentShortVideoLinksPromise &&
+      //   addedElement.matches(
+      //     getUntranslateCurrentShortVideoLinksParams().originalNodeSelector,
+      //   )
+      // ) {
+      //   waitForPlayerExistPromise ??=
+      //     window.YoutubeAntiTranslate.waitForPlayerExist();
+      //   currentShortVideoLinksPromise = untranslateCurrentShortVideoLinks();
+      // } else if (
+      //   !otherVideosPromise &&
+      //   addedElement.matches(
+      //     window.YoutubeAntiTranslate.ALL_ARRAYS_VIDEOS_SELECTOR,
+      //   )
+      // ) {
+      //   otherVideosPromise = untranslateOtherVideos();
+      // }
+      // // other videos and other shorts can overlap so this is intentionally not an `else if`
+      // if (
+      //   !otherShortsPromise &&
+      //   addedElement.matches(
+      //     window.YoutubeAntiTranslate.ALL_ARRAYS_SHORTS_SELECTOR,
+      //   )
+      // ) {
+      //   otherShortsPromise = untranslateOtherShortsVideos();
+      //   continue;
+      // }
 
-      if (
-        currentVideoPromise &&
-        currentShortPromise &&
-        currentVideoHeadLinkPromise &&
-        currentVideoFullScreenEduPromise &&
-        channelEmbededVideoPromise &&
-        currentShortVideoLinksPromise &&
-        otherVideosPromise &&
-        otherShortsPromise
-      ) {
-        break;
-      }
+      // if (
+      //   currentVideoPromise &&
+      //   currentShortPromise &&
+      //   currentVideoHeadLinkPromise &&
+      //   currentVideoFullScreenEduPromise &&
+      //   channelEmbededVideoPromise &&
+      //   currentShortVideoLinksPromise &&
+      //   otherVideosPromise &&
+      //   otherShortsPromise
+      // ) {
+      //   break;
+      // }
 
       // Checks on mutation closest added nodes
       // `closest` conditions can overlap so we do not use `else if`

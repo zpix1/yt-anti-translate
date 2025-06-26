@@ -788,23 +788,6 @@ async function untranslateBranding(
         continue;
       }
 
-      // Checks on mutation added nodes
-      if (
-        !brandingHeaderPromise &&
-        addedElement.matches(CHANNELBRANDING_HEADER_SELECTOR)
-      ) {
-        brandingHeaderPromise = restoreOriginalBrandingHeader();
-      } else if (
-        !brandingAboutPromise &&
-        addedElement.matches(CHANNELBRANDING_ABOUT_SELECTOR)
-      ) {
-        brandingAboutPromise = restoreOriginalBrandingAbout();
-      }
-
-      if (brandingHeaderPromise && brandingAboutPromise) {
-        break;
-      }
-
       // Checks on mutation closest added nodes
       // `closest` conditions can overlap so we do not use `else if`
       if (
@@ -847,52 +830,6 @@ async function untranslateBranding(
     if (brandingHeaderPromise && brandingAboutPromise) {
       break;
     }
-
-    // if (
-    //   !mutationRecord.target ||
-    //   !window.YoutubeAntiTranslate.castNodeToElementOrNull(
-    //     mutationRecord.target,
-    //   )
-    // ) {
-    //   continue;
-    // }
-
-    // const /** @type {Element} */ element = mutationRecord.target;
-
-    // if (!window.YoutubeAntiTranslate.isVisible(element)) {
-    //   continue;
-    // }
-
-    // // Checks on mutation target
-    // if (element.matches(CHANNELBRANDING_HEADER_SELECTOR)) {
-    //   brandingHeaderPromise = restoreOriginalBrandingHeader();
-    // } else if (element.matches(CHANNELBRANDING_ABOUT_SELECTOR)) {
-    //   brandingAboutPromise = restoreOriginalBrandingAbout();
-    // }
-
-    // if (brandingHeaderPromise && brandingAboutPromise) {
-    //   break;
-    // }
-
-    // // Checks on mutation closest target
-    // // `closest` conditions can overlap so we do not use `else if`
-    // if (
-    //   !brandingHeaderPromise &&
-    //   element.closest(CHANNELBRANDING_HEADER_SELECTOR)
-    // ) {
-    //   brandingHeaderPromise = restoreOriginalBrandingHeader();
-    //   continue;
-    // }
-    // if (
-    //   !brandingAboutPromise &&
-    //   element.closest(CHANNELBRANDING_ABOUT_SELECTOR)
-    // ) {
-    //   brandingAboutPromise = restoreOriginalBrandingAbout();
-    // }
-
-    // if (brandingHeaderPromise && brandingAboutPromise) {
-    //   break;
-    // }
   }
 
   if (!brandingHeaderPromise && !brandingAboutPromise) {

@@ -144,15 +144,6 @@ async function untranslate(/** @type {MutationRecord[]} */ mutationList) {
         continue;
       }
 
-      // Checks on mutation added nodes
-      if (
-        addedElement.matches(window.YoutubeAntiTranslate.getPlayerSelector())
-      ) {
-        await window.YoutubeAntiTranslate.waitForPlayerReady();
-        await untranslateAudioTrack();
-        break;
-      }
-
       // Checks on mutation closest added nodes
       if (
         addedElement.closest(window.YoutubeAntiTranslate.getPlayerSelector())
@@ -175,37 +166,6 @@ async function untranslate(/** @type {MutationRecord[]} */ mutationList) {
         break;
       }
     }
-
-    // if (
-    //   !mutationRecord.target ||
-    //   !window.YoutubeAntiTranslate.castNodeToElementOrNull(
-    //     mutationRecord.target,
-    //   )
-    // ) {
-    //   continue;
-    // }
-
-    // const /** @type {Element} */ element = mutationRecord.target;
-
-    // if (!window.YoutubeAntiTranslate.isVisible(element)) {
-    //   continue;
-    // }
-
-    // // Checks on mutation target
-    // if (element.matches(window.YoutubeAntiTranslate.getPlayerSelector())) {
-    //   await window.YoutubeAntiTranslate.waitForPlayerReady();
-    //   await untranslateAudioTrack();
-    //   break;
-    // }
-
-    // // Checks on mutation closest target
-    // if (element.closest(window.YoutubeAntiTranslate.getPlayerSelector())) {
-    //   await window.YoutubeAntiTranslate.waitForPlayerReady();
-    //   await untranslateAudioTrack();
-    //   break;
-    // }
-
-    // On mutationRecord.target we never search inside as that is too broad
   }
 }
 
