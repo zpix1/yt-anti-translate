@@ -246,38 +246,15 @@ async function handleDescriptionMutation(
       continue;
     }
 
-    if (
-      !mutationRecord.target ||
-      !window.YoutubeAntiTranslate.castNodeToElementOrNull(
-        mutationRecord.target,
-      )
-    ) {
-      continue;
-    }
-
-    const /** @type {Element} */ element = mutationRecord.target;
-
-    // Checks on mutation target
-    if (element.matches(DESCRIPTION_SELECTOR)) {
-      await window.YoutubeAntiTranslate.waitForPlayerReady();
-      await restoreOriginalDescriptionAndAuthor();
-      break;
-    }
-
-    // Checks on mutation closest target
-    if (element.closest(DESCRIPTION_SELECTOR)) {
-      await window.YoutubeAntiTranslate.waitForPlayerReady();
-      await restoreOriginalDescriptionAndAuthor();
-      break;
-    }
-
-    // On mutationRecord.target we never search inside as that is too broad
-
     for (const addedNode of mutationRecord.addedNodes) {
       if (!window.YoutubeAntiTranslate.castNodeToElementOrNull(addedNode)) {
         continue;
       }
       const /** @type {Element} */ addedElement = addedNode;
+
+      if (!window.YoutubeAntiTranslate.isVisible(addedElement)) {
+        continue;
+      }
 
       // Checks on mutation added nodes
       if (addedElement.matches(DESCRIPTION_SELECTOR)) {
@@ -304,6 +281,37 @@ async function handleDescriptionMutation(
         break;
       }
     }
+
+    // if (
+    //   !mutationRecord.target ||
+    //   !window.YoutubeAntiTranslate.castNodeToElementOrNull(
+    //     mutationRecord.target,
+    //   )
+    // ) {
+    //   continue;
+    // }
+
+    // const /** @type {Element} */ element = mutationRecord.target;
+
+    // if (!window.YoutubeAntiTranslate.isVisible(element)) {
+    //   continue;
+    // }
+
+    // // Checks on mutation target
+    // if (element.matches(DESCRIPTION_SELECTOR)) {
+    //   await window.YoutubeAntiTranslate.waitForPlayerReady();
+    //   await restoreOriginalDescriptionAndAuthor();
+    //   break;
+    // }
+
+    // // Checks on mutation closest target
+    // if (element.closest(DESCRIPTION_SELECTOR)) {
+    //   await window.YoutubeAntiTranslate.waitForPlayerReady();
+    //   await restoreOriginalDescriptionAndAuthor();
+    //   break;
+    // }
+
+    // On mutationRecord.target we never search inside as that is too broad
   }
 }
 

@@ -776,49 +776,6 @@ async function untranslateBranding(
     if (mutationRecord.type !== "childList") {
       continue;
     }
-
-    if (
-      !mutationRecord.target ||
-      !window.YoutubeAntiTranslate.castNodeToElementOrNull(
-        mutationRecord.target,
-      )
-    ) {
-      continue;
-    }
-
-    const /** @type {Element} */ element = mutationRecord.target;
-
-    // Checks on mutation target
-    if (element.matches(CHANNELBRANDING_HEADER_SELECTOR)) {
-      brandingHeaderPromise = restoreOriginalBrandingHeader();
-    } else if (element.matches(CHANNELBRANDING_ABOUT_SELECTOR)) {
-      brandingAboutPromise = restoreOriginalBrandingAbout();
-    }
-
-    if (brandingHeaderPromise && brandingAboutPromise) {
-      break;
-    }
-
-    // Checks on mutation closest target
-    // `closest` conditions can overlap so we do not use `else if`
-    if (
-      !brandingHeaderPromise &&
-      element.closest(CHANNELBRANDING_HEADER_SELECTOR)
-    ) {
-      brandingHeaderPromise = restoreOriginalBrandingHeader();
-      continue;
-    }
-    if (
-      !brandingAboutPromise &&
-      element.closest(CHANNELBRANDING_ABOUT_SELECTOR)
-    ) {
-      brandingAboutPromise = restoreOriginalBrandingAbout();
-    }
-
-    if (brandingHeaderPromise && brandingAboutPromise) {
-      break;
-    }
-
     // On mutationRecord.target we never search inside as that is too broad
 
     for (const addedNode of mutationRecord.addedNodes) {
@@ -826,6 +783,10 @@ async function untranslateBranding(
         continue;
       }
       const /** @type {Element} */ addedElement = addedNode;
+
+      if (!window.YoutubeAntiTranslate.isVisible(addedElement)) {
+        continue;
+      }
 
       // Checks on mutation added nodes
       if (
@@ -886,6 +847,52 @@ async function untranslateBranding(
     if (brandingHeaderPromise && brandingAboutPromise) {
       break;
     }
+
+    // if (
+    //   !mutationRecord.target ||
+    //   !window.YoutubeAntiTranslate.castNodeToElementOrNull(
+    //     mutationRecord.target,
+    //   )
+    // ) {
+    //   continue;
+    // }
+
+    // const /** @type {Element} */ element = mutationRecord.target;
+
+    // if (!window.YoutubeAntiTranslate.isVisible(element)) {
+    //   continue;
+    // }
+
+    // // Checks on mutation target
+    // if (element.matches(CHANNELBRANDING_HEADER_SELECTOR)) {
+    //   brandingHeaderPromise = restoreOriginalBrandingHeader();
+    // } else if (element.matches(CHANNELBRANDING_ABOUT_SELECTOR)) {
+    //   brandingAboutPromise = restoreOriginalBrandingAbout();
+    // }
+
+    // if (brandingHeaderPromise && brandingAboutPromise) {
+    //   break;
+    // }
+
+    // // Checks on mutation closest target
+    // // `closest` conditions can overlap so we do not use `else if`
+    // if (
+    //   !brandingHeaderPromise &&
+    //   element.closest(CHANNELBRANDING_HEADER_SELECTOR)
+    // ) {
+    //   brandingHeaderPromise = restoreOriginalBrandingHeader();
+    //   continue;
+    // }
+    // if (
+    //   !brandingAboutPromise &&
+    //   element.closest(CHANNELBRANDING_ABOUT_SELECTOR)
+    // ) {
+    //   brandingAboutPromise = restoreOriginalBrandingAbout();
+    // }
+
+    // if (brandingHeaderPromise && brandingAboutPromise) {
+    //   break;
+    // }
   }
 
   if (!brandingHeaderPromise && !brandingAboutPromise) {
