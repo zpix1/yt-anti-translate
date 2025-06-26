@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Fix compatibility with Clickbait Remover for YouTube for their "How to format titles" feature ([#41](https://github.com/zpix1/yt-anti-translate/issues/41))
+- Fix compatibility with "Clickbait Remover for YouTube" for their "How to format titles" feature ([#41](https://github.com/zpix1/yt-anti-translate/issues/41))
 - Fix main video title not being translated when navigating to YouTube from Google search results ([#45](https://github.com/zpix1/yt-anti-translate/issues/45))
 - Fix 404 on advertisement videos ([#48](https://github.com/zpix1/yt-anti-translate/issues/48))
 

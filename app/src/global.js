@@ -269,7 +269,11 @@ ytm-shorts-lockup-view-model`,
 
     let regex;
     if (typeof pattern === "string") {
-      const escapedPattern = pattern.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // Escape string
+      const processedPattern = preprocess(pattern);
+      const escapedPattern = processedPattern.replace(
+        /[.*+?^${}()|[\]\\]/g,
+        "\\$&",
+      ); // Escape string
       regex = new RegExp(escapedPattern, ignoreCase ? "gi" : "g");
     } else if (pattern instanceof RegExp) {
       const flags = pattern.flags.replace(/i?/, ignoreCase ? "i" : "");
