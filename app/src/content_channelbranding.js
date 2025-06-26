@@ -507,9 +507,20 @@ function updateBrandingHeaderDescriptionContent(
 ) {
   if (originalBrandingData.description) {
     // Find the description text container
-    const descriptionTextContainer = container.querySelector(
+
+    let descriptionTextContainer = container.querySelector(
       `yt-description-preview-view-model .truncated-text-wiz__truncated-text-content > ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}:nth-child(1)`,
     );
+
+    // When width is lower than 528px the text container is outside the main container
+    if (!descriptionTextContainer) {
+      descriptionTextContainer = window.YoutubeAntiTranslate.getFirstVisible(
+        document.querySelector(
+          `yt-description-preview-view-model .truncated-text-wiz__truncated-text-content > ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}:nth-child(1)`,
+        ),
+      );
+    }
+
     if (!descriptionTextContainer) {
       window.YoutubeAntiTranslate.logInfo(
         `No branding header description text containers found`,

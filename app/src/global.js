@@ -290,7 +290,7 @@ ytm-shorts-lockup-view-model`,
    * @param {Node} node - A Node of type ELEMENT_NODE
    * @param {boolean} shouldCheckViewport - Optional. If true the element position is checked to be inside or outside the viewport. Viewport is extended based on
    *                                        VIEWPORT_EXTENSION_PERCENTAGE_FRACTION. Defaults true
-   * @param {boolean} onlyOutsideViewport - Optional. only relevant when `shouldCheckViewport` is true. When this is also true the element is returned only if outside
+   * @param {boolean} onlyOutsideViewport - Optional. only relevant when `shouldCheckViewport` is true. When this is also true the element is returned only if fully outside
    *                                        the viewport. By default the element is returned only if inside the viewport. Defaults false
    * @param {boolean} useOutsideLimit - Optional. when true, outside elements are limited to those contained inside the frame between the extended viewport and the
    *                                    limit based on VIEWPORT_OUTSIDE_LIMIT_FRACTION. Defaults false
@@ -318,9 +318,7 @@ ytm-shorts-lockup-view-model`,
       style.display === "none" ||
       style.visibility === "hidden" ||
       style.visibility === "collapse" ||
-      parseFloat(style.opacity) === 0 ||
-      element.offsetWidth === 0 ||
-      element.offsetHeight === 0
+      parseFloat(style.opacity) === 0
     ) {
       return false;
     }
@@ -340,23 +338,27 @@ ytm-shorts-lockup-view-model`,
       const rightBoundary = window.innerWidth + extendedWidth;
 
       if (onlyOutsideViewport) {
-        // Return true if ANY part of the element is OUTSIDE the extended viewport
-        const fullyContained =
-          rect.top >= topBoundary &&
-          rect.bottom <= bottomBoundary &&
-          rect.left >= leftBoundary &&
-          rect.right <= rightBoundary;
+        // Return true if ALL part of the element is OUTSIDE the extended viewport
+        const fullyOutside =
+          rect.top > bottomBoundary ||
+          rect.bottom < topBoundary ||
+          rect.left > rightBoundary ||
+          rect.right < leftBoundary;
 
         if (!useOutsideLimit) {
-          const result = !fullyContained;
-          return result;
+          return fullyOutside;
         }
 
         // Further extend the extended viewport by VIEWPORT_OUTSIDE_LIMIT_FRACTION to set the maximum outside limit
+        // Use 500px as the miniimum extension, as some element such as shorts are quite big
         const extraHeight =
-          window.innerHeight * this.VIEWPORT_OUTSIDE_LIMIT_FRACTION;
+          window.innerHeight * this.VIEWPORT_OUTSIDE_LIMIT_FRACTION > 500
+            ? window.innerHeight * this.VIEWPORT_OUTSIDE_LIMIT_FRACTION
+            : 500;
         const extraWidth =
-          window.innerWidth * this.VIEWPORT_OUTSIDE_LIMIT_FRACTION;
+          window.innerWidth * this.VIEWPORT_OUTSIDE_LIMIT_FRACTION > 500
+            ? window.innerWidth * this.VIEWPORT_OUTSIDE_LIMIT_FRACTION
+            : 500;
 
         const outerTopBoundary = topBoundary - extraHeight;
         const outerBottomBoundary = bottomBoundary + extraHeight;
@@ -365,20 +367,20 @@ ytm-shorts-lockup-view-model`,
 
         // Check if ANY part of the element is within the outer limit extended viewport
         const intersectsOuterLimitViewport =
-          rect.bottom > outerTopBoundary &&
-          rect.top < outerBottomBoundary &&
-          rect.right > outerLeftBoundary &&
-          rect.left < outerRightBoundary;
+          rect.top <= outerBottomBoundary &&
+          rect.bottom >= outerTopBoundary &&
+          rect.left <= outerRightBoundary &&
+          rect.right >= outerLeftBoundary;
 
-        const result = !fullyContained && intersectsOuterLimitViewport;
+        const result = fullyOutside && intersectsOuterLimitViewport;
         return result;
       } else {
         // Return true if ANY part of the element is INSIDE the extended viewport
         const intersectsExtendedViewport =
-          rect.top < bottomBoundary &&
-          rect.bottom > topBoundary &&
-          rect.left < rightBoundary &&
-          rect.right > leftBoundary;
+          rect.top <= bottomBoundary &&
+          rect.bottom >= topBoundary &&
+          rect.left <= rightBoundary &&
+          rect.right >= leftBoundary;
 
         return intersectsExtendedViewport;
       }
@@ -395,6 +397,10 @@ ytm-shorts-lockup-view-model`,
   getFirstVisible: function (nodes, shouldBeInsideViewport = true) {
     if (!nodes) {
       return null;
+    }
+
+    if (nodes instanceof Node) {
+      nodes = [nodes];
     } else {
       nodes = Array.from(nodes);
     }
@@ -423,6 +429,10 @@ ytm-shorts-lockup-view-model`,
   ) {
     if (!nodes) {
       return null;
+    }
+
+    if (nodes instanceof Node) {
+      nodes = [nodes];
     } else {
       nodes = Array.from(nodes);
     }
@@ -456,6 +466,10 @@ ytm-shorts-lockup-view-model`,
   getAllVisibleNodesOutsideViewport: function (nodes, useOutsideLimit = false) {
     if (!nodes) {
       return null;
+    }
+
+    if (nodes instanceof Node) {
+      nodes = [nodes];
     } else {
       nodes = Array.from(nodes);
     }
