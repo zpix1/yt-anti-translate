@@ -5,11 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+
+
 ## [1.18.3] - 2025-06-20
 
 ### Fixed
 
 - Fix main video title not being translated when navigating to YouTube from Google search results ([#45](https://github.com/zpix1/yt-anti-translate/issues/45))
+- Fix bug #49 - reload current page only is youtube.com
 
 ## [1.18.2] - 2025-05-27
 
