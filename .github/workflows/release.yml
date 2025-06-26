@@ -7,7 +7,7 @@ name: Create Release with tag
 # CHANGELOG.md is used to populate the body of the release before any auto generated notes
 
 on:
-  pull_request:
+  pull_request_target:
     types:
       - closed
     branches:
@@ -16,7 +16,7 @@ on:
 
 jobs:
   release:
-    if: github.event.pull_request.merged == true
+    if: github.event.pull_request_target.merged == true
     runs-on: ubuntu-latest
 
     steps:
