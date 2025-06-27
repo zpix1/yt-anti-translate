@@ -632,92 +632,92 @@ async function untranslate(/** @type {MutationRecord[]} */ mutationList) {
 
       // Checks on mutation closest target
       // `closest` conditions can overlap so we do not use `else if`
-      // if (
-      //   !currentVideoPromise &&
-      //   element.closest(getUntranslateCurrentVideoParams().originalNodeSelector)
-      // ) {
-      //   waitForPlayerExistPromise ??=
-      //     window.YoutubeAntiTranslate.waitForPlayerExist();
-      //   currentVideoPromise = untranslateCurrentVideo();
-      // }
-      // if (
-      //   !currentShortPromise &&
-      //   element.closest(
-      //     getUntranslateCurrentShortVideoParams().originalNodeSelector,
-      //   )
-      // ) {
-      //   waitForPlayerExistPromise ??=
-      //     window.YoutubeAntiTranslate.waitForPlayerExist();
-      //   currentShortPromise = untranslateCurrentShortVideo();
-      // }
-      // if (
-      //   !currentVideoHeadLinkPromise &&
-      //   element.closest(
-      //     getUntranslateCurrentVideoHeadLinkParams().originalNodeSelector,
-      //   )
-      // ) {
-      //   waitForPlayerExistPromise ??=
-      //     window.YoutubeAntiTranslate.waitForPlayerExist();
-      //   currentVideoHeadLinkPromise = untranslateCurrentVideoHeadLink();
-      // }
-      // if (
-      //   !currentVideoFullScreenEduPromise &&
-      //   element.closest(
-      //     getUntranslateCurrentVideoFullScreenEduParams().originalNodeSelector,
-      //   )
-      // ) {
-      //   waitForPlayerExistPromise ??=
-      //     window.YoutubeAntiTranslate.waitForPlayerExist();
-      //   currentVideoFullScreenEduPromise =
-      //     untranslateCurrentVideoFullScreenEdu();
-      // }
-      // if (
-      //   !channelEmbededVideoPromise &&
-      //   element.closest(
-      //     getUntranslateCurrentChannelEmbededVideoTitleParams()
-      //       .originalNodeSelector,
-      //   )
-      // ) {
-      //   waitForPlayerExistPromise ??=
-      //     window.YoutubeAntiTranslate.waitForPlayerExist();
-      //   channelEmbededVideoPromise =
-      //     untranslateCurrentChannelEmbededVideoTitle();
-      // }
-      // if (
-      //   !currentShortVideoLinksPromise &&
-      //   element.closest(
-      //     getUntranslateCurrentShortVideoLinksParams().originalNodeSelector,
-      //   )
-      // ) {
-      //   waitForPlayerExistPromise ??=
-      //     window.YoutubeAntiTranslate.waitForPlayerExist();
-      //   currentShortVideoLinksPromise = untranslateCurrentShortVideoLinks();
-      // }
-      // if (
-      //   !otherVideosPromise &&
-      //   element.closest(window.YoutubeAntiTranslate.ALL_ARRAYS_VIDEOS_SELECTOR)
-      // ) {
-      //   otherVideosPromise = untranslateOtherVideos();
-      // }
-      // if (
-      //   !otherShortsPromise &&
-      //   element.closest(window.YoutubeAntiTranslate.ALL_ARRAYS_SHORTS_SELECTOR)
-      // ) {
-      //   otherShortsPromise = untranslateOtherShortsVideos();
-      // }
+      if (
+        !currentVideoPromise &&
+        element.closest(getUntranslateCurrentVideoParams().originalNodeSelector)
+      ) {
+        waitForPlayerExistPromise ??=
+          window.YoutubeAntiTranslate.waitForPlayerExist();
+        currentVideoPromise = untranslateCurrentVideo();
+      }
+      if (
+        !currentShortPromise &&
+        element.closest(
+          getUntranslateCurrentShortVideoParams().originalNodeSelector,
+        )
+      ) {
+        waitForPlayerExistPromise ??=
+          window.YoutubeAntiTranslate.waitForPlayerExist();
+        currentShortPromise = untranslateCurrentShortVideo();
+      }
+      if (
+        !currentVideoHeadLinkPromise &&
+        element.closest(
+          getUntranslateCurrentVideoHeadLinkParams().originalNodeSelector,
+        )
+      ) {
+        waitForPlayerExistPromise ??=
+          window.YoutubeAntiTranslate.waitForPlayerExist();
+        currentVideoHeadLinkPromise = untranslateCurrentVideoHeadLink();
+      }
+      if (
+        !currentVideoFullScreenEduPromise &&
+        element.closest(
+          getUntranslateCurrentVideoFullScreenEduParams().originalNodeSelector,
+        )
+      ) {
+        waitForPlayerExistPromise ??=
+          window.YoutubeAntiTranslate.waitForPlayerExist();
+        currentVideoFullScreenEduPromise =
+          untranslateCurrentVideoFullScreenEdu();
+      }
+      if (
+        !channelEmbededVideoPromise &&
+        element.closest(
+          getUntranslateCurrentChannelEmbededVideoTitleParams()
+            .originalNodeSelector,
+        )
+      ) {
+        waitForPlayerExistPromise ??=
+          window.YoutubeAntiTranslate.waitForPlayerExist();
+        channelEmbededVideoPromise =
+          untranslateCurrentChannelEmbededVideoTitle();
+      }
+      if (
+        !currentShortVideoLinksPromise &&
+        element.closest(
+          getUntranslateCurrentShortVideoLinksParams().originalNodeSelector,
+        )
+      ) {
+        waitForPlayerExistPromise ??=
+          window.YoutubeAntiTranslate.waitForPlayerExist();
+        currentShortVideoLinksPromise = untranslateCurrentShortVideoLinks();
+      }
+      if (
+        !otherVideosPromise &&
+        element.closest(window.YoutubeAntiTranslate.ALL_ARRAYS_VIDEOS_SELECTOR)
+      ) {
+        otherVideosPromise = untranslateOtherVideos();
+      }
+      if (
+        !otherShortsPromise &&
+        element.closest(window.YoutubeAntiTranslate.ALL_ARRAYS_SHORTS_SELECTOR)
+      ) {
+        otherShortsPromise = untranslateOtherShortsVideos();
+      }
 
-      // if (
-      //   currentVideoPromise &&
-      //   currentShortPromise &&
-      //   currentVideoHeadLinkPromise &&
-      //   currentVideoFullScreenEduPromise &&
-      //   channelEmbededVideoPromise &&
-      //   currentShortVideoLinksPromise &&
-      //   otherVideosPromise &&
-      //   otherShortsPromise
-      // ) {
-      //   break;
-      // }
+      if (
+        currentVideoPromise &&
+        currentShortPromise &&
+        currentVideoHeadLinkPromise &&
+        currentVideoFullScreenEduPromise &&
+        channelEmbededVideoPromise &&
+        currentShortVideoLinksPromise &&
+        otherVideosPromise &&
+        otherShortsPromise
+      ) {
+        break;
+      }
 
       // On mutationRecord.target we never search inside as that is too broad
     }
@@ -940,63 +940,63 @@ async function untranslate(/** @type {MutationRecord[]} */ mutationList) {
       break;
     }
 
-    // if (mutationRecord.target.matches("body")) {
-    //   continue;
-    // }
+    if (mutationRecord.target.matches("body")) {
+      continue;
+    }
 
-    // // Not ideal but for current video title and current short title/link we need to search inside as on first load sometimes race conditions prevent the other matches
-    // if (
-    //   !currentVideoPromise &&
-    //   window.location.pathname.startsWith("/watch") &&
-    //   window.YoutubeAntiTranslate.getFirstVisible(
-    //     mutationRecord.target.querySelectorAll(
-    //       getUntranslateCurrentVideoParams().originalNodeSelector,
-    //     ),
-    //   )
-    // ) {
-    //   waitForPlayerExistPromise ??=
-    //     window.YoutubeAntiTranslate.waitForPlayerExist();
-    //   currentVideoPromise = untranslateCurrentVideo();
-    // }
-    // if (
-    //   !currentShortPromise &&
-    //   window.location.pathname.startsWith("/shorts/") &&
-    //   window.YoutubeAntiTranslate.getFirstVisible(
-    //     mutationRecord.target.querySelectorAll(
-    //       getUntranslateCurrentShortVideoParams().originalNodeSelector,
-    //     ),
-    //   )
-    // ) {
-    //   waitForPlayerExistPromise ??=
-    //     window.YoutubeAntiTranslate.waitForPlayerExist();
-    //   currentShortPromise = untranslateCurrentShortVideo();
-    // }
-    // if (
-    //   !currentShortVideoLinksPromise &&
-    //   window.location.pathname.startsWith("/shorts/") &&
-    //   window.YoutubeAntiTranslate.getFirstVisible(
-    //     mutationRecord.target.querySelectorAll(
-    //       getUntranslateCurrentShortVideoLinksParams().originalNodeSelector,
-    //     ),
-    //   )
-    // ) {
-    //   waitForPlayerExistPromise ??=
-    //     window.YoutubeAntiTranslate.waitForPlayerExist();
-    //   currentShortVideoLinksPromise = untranslateCurrentShortVideoLinks();
-    // }
+    // Not ideal but for current video title and current short title/link we need to search inside as on first load sometimes race conditions prevent the other matches
+    if (
+      !currentVideoPromise &&
+      window.location.pathname.startsWith("/watch") &&
+      window.YoutubeAntiTranslate.getFirstVisible(
+        mutationRecord.target.querySelectorAll(
+          getUntranslateCurrentVideoParams().originalNodeSelector,
+        ),
+      )
+    ) {
+      waitForPlayerExistPromise ??=
+        window.YoutubeAntiTranslate.waitForPlayerExist();
+      currentVideoPromise = untranslateCurrentVideo();
+    }
+    if (
+      !currentShortPromise &&
+      window.location.pathname.startsWith("/shorts/") &&
+      window.YoutubeAntiTranslate.getFirstVisible(
+        mutationRecord.target.querySelectorAll(
+          getUntranslateCurrentShortVideoParams().originalNodeSelector,
+        ),
+      )
+    ) {
+      waitForPlayerExistPromise ??=
+        window.YoutubeAntiTranslate.waitForPlayerExist();
+      currentShortPromise = untranslateCurrentShortVideo();
+    }
+    if (
+      !currentShortVideoLinksPromise &&
+      window.location.pathname.startsWith("/shorts/") &&
+      window.YoutubeAntiTranslate.getFirstVisible(
+        mutationRecord.target.querySelectorAll(
+          getUntranslateCurrentShortVideoLinksParams().originalNodeSelector,
+        ),
+      )
+    ) {
+      waitForPlayerExistPromise ??=
+        window.YoutubeAntiTranslate.waitForPlayerExist();
+      currentShortVideoLinksPromise = untranslateCurrentShortVideoLinks();
+    }
 
-    // if (
-    //   currentVideoPromise &&
-    //   currentShortPromise &&
-    //   currentVideoHeadLinkPromise &&
-    //   currentVideoFullScreenEduPromise &&
-    //   channelEmbededVideoPromise &&
-    //   currentShortVideoLinksPromise &&
-    //   otherVideosPromise &&
-    //   otherShortsPromise
-    // ) {
-    //   break;
-    // }
+    if (
+      currentVideoPromise &&
+      currentShortPromise &&
+      currentVideoHeadLinkPromise &&
+      currentVideoFullScreenEduPromise &&
+      channelEmbededVideoPromise &&
+      currentShortVideoLinksPromise &&
+      otherVideosPromise &&
+      otherShortsPromise
+    ) {
+      break;
+    }
   }
 
   if (
