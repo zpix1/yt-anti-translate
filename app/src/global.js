@@ -457,6 +457,33 @@ ytm-shorts-lockup-view-model`,
   },
 
   /**
+   * Wait for the title element to return
+   * @param {string} querySelector - query selector to wait for
+   * @param {number} maxAttempts - Optional limit the maximum number of frames to wait the selector. Default is Number.MAX_SAFE_INTEGER
+   * @returns {Promise<HTMLTimeElement>} title element
+   */
+  waitForQuerySelectorAll: function (
+    querySelector,
+    maxAttempts = Number.MAX_SAFE_INTEGER,
+  ) {
+    return new Promise((resolve, reject) => {
+      let attempts = 0;
+
+      function check() {
+        const nodeListResult = document.querySelectorAll(querySelector);
+        if (nodeListResult) {
+          resolve(nodeListResult);
+        } else if (attempts++ < maxAttempts) {
+          requestAnimationFrame(check);
+        } else {
+          reject(new Error("Title element not found within frame limit"));
+        }
+      }
+      check();
+    });
+  },
+
+  /**
    * Creates a link element with proper YouTube styling
    * @param {string} url - URL to create a link for
    * @returns {HTMLElement} - Anchor element
