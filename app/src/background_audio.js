@@ -69,44 +69,61 @@ function getOriginalTrack(tracks) {
   }
 }
 
+let /** @type {Boolean} */ untranslateAudioTrack_running = false;
 async function untranslateAudioTrack() {
-  const player = window.YoutubeAntiTranslate.getFirstVisible(
-    document.querySelectorAll(window.YoutubeAntiTranslate.getPlayerSelector()),
-  );
-
-  if (!player) {
+  if (untranslateAudioTrack_running) {
     return;
   }
-  const playerResponse = await player.getPlayerResponse();
-  const tracks = await player.getAvailableAudioTracks();
-  const currentTrack = await player.getAudioTrack();
+  untranslateAudioTrack_running = true;
 
-  if (!playerResponse || !tracks || !currentTrack) {
-    return;
-  }
-  const currentVideoId = playerResponse.videoDetails.videoId;
-  if (
-    !currentVideoId ||
-    player.lastUntranslated === `${currentVideoId}+${currentTrack}`
-  ) {
-    return;
-  }
+  try {
+    const player = window.YoutubeAntiTranslate.getFirstVisible(
+      document.querySelectorAll(
+        window.YoutubeAntiTranslate.getPlayerSelector(),
+      ),
+    );
 
-  const originalTrack = getOriginalTrack(tracks);
-
-  if (originalTrack) {
-    // skip set if we alerady have the right track
-    if (`${originalTrack}` === `${currentTrack}`) {
-      if (player.lastUntranslated !== `${currentVideoId}+${currentTrack}`) {
-        // video id changed so still update the value
-        player.lastUntranslated = `${currentVideoId}+${originalTrack}`;
-      }
+    if (!player) {
+      untranslateAudioTrack_running = false;
       return;
     }
-    const isAudioTrackSet = await player.setAudioTrack(originalTrack);
-    if (isAudioTrackSet) {
-      player.lastUntranslated = `${currentVideoId}+${originalTrack}`;
+    const playerResponse = await player.getPlayerResponse();
+    const tracks = await player.getAvailableAudioTracks();
+    const currentTrack = await player.getAudioTrack();
+
+    if (!playerResponse || !tracks || !currentTrack) {
+      untranslateAudioTrack_running = false;
+      return;
     }
+    const currentVideoId = playerResponse.videoDetails.videoId;
+    if (
+      !currentVideoId ||
+      player.lastUntranslated === `${currentVideoId}+${currentTrack}`
+    ) {
+      untranslateAudioTrack_running = false;
+      return;
+    }
+
+    const originalTrack = getOriginalTrack(tracks);
+
+    if (originalTrack) {
+      // skip set if we alerady have the right track
+      if (`${originalTrack}` === `${currentTrack}`) {
+        if (player.lastUntranslated !== `${currentVideoId}+${currentTrack}`) {
+          // video id changed so still update the value
+          player.lastUntranslated = `${currentVideoId}+${originalTrack}`;
+        }
+        untranslateAudioTrack_running = false;
+        return;
+      }
+      const isAudioTrackSet = await player.setAudioTrack(originalTrack);
+      if (isAudioTrackSet) {
+        player.lastUntranslated = `${currentVideoId}+${originalTrack}`;
+      }
+    }
+    untranslateAudioTrack_running = false;
+  } catch {
+    untranslateAudioTrack_running = false;
   }
 }
 
@@ -117,46 +134,14 @@ async function untranslate(/** @type {MutationRecord[]} */ mutationList) {
       continue;
     }
 
-    if (
-      !mutationRecord.target ||
-      !window.YoutubeAntiTranslate.castNodeToElementOrNull(
-        mutationRecord.target,
-      )
-    ) {
-      continue;
-    }
-
-    const /** @type {Element} */ element = mutationRecord.target;
-
-    // Checks on mutation target
-    if (element.matches(window.YoutubeAntiTranslate.getPlayerSelector())) {
-      await window.YoutubeAntiTranslate.waitForPlayerReady();
-      await untranslateAudioTrack();
-      break;
-    }
-
-    // Checks on mutation closest target
-    if (element.closest(window.YoutubeAntiTranslate.getPlayerSelector())) {
-      await window.YoutubeAntiTranslate.waitForPlayerReady();
-      await untranslateAudioTrack();
-      break;
-    }
-
-    // On mutationRecord.target we never search inside as that is too broad
-
     for (const addedNode of mutationRecord.addedNodes) {
       if (!window.YoutubeAntiTranslate.castNodeToElementOrNull(addedNode)) {
         continue;
       }
       const /** @type {Element} */ addedElement = addedNode;
 
-      // Checks on mutation added nodes
-      if (
-        addedElement.matches(window.YoutubeAntiTranslate.getPlayerSelector())
-      ) {
-        await window.YoutubeAntiTranslate.waitForPlayerReady();
-        await untranslateAudioTrack();
-        break;
+      if (!window.YoutubeAntiTranslate.isVisible(addedElement)) {
+        continue;
       }
 
       // Checks on mutation closest added nodes

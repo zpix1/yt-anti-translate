@@ -1,6 +1,6 @@
 window.YoutubeAntiTranslate = {
   VIEWPORT_EXTENSION_PERCENTAGE_FRACTION: 0.5,
-  VIEWPORT_OUTSIDE_LIMIT_FRACTION: 0.1,
+  VIEWPORT_OUTSIDE_LIMIT_FRACTION: 0.5,
   LOG_PREFIX: "[YoutubeAntiTranslate]",
   LOG_LEVELS: {
     NONE: 0,
@@ -9,7 +9,7 @@ window.YoutubeAntiTranslate = {
     INFO: 3,
     DEBUG: 4,
   },
-  currentLogLevel: 2, // Default to WARN
+  currentLogLevel: 4, // Default to WARN
 
   /**
    * Sets the current log level.
@@ -174,7 +174,7 @@ ytm-shorts-lockup-view-model`,
    * @param {Node} node - A Node of type ELEMENT_NODE
    * @param {boolean} shouldCheckViewport - Optional. If true the element position is checked to be inside or outside the viewport. Viewport is extended based on
    *                                        VIEWPORT_EXTENSION_PERCENTAGE_FRACTION. Defaults true
-   * @param {boolean} onlyOutsideViewport - Optional. only relevant when `shouldCheckViewport` is true. When this is also true the element is returned only if outside
+   * @param {boolean} onlyOutsideViewport - Optional. only relevant when `shouldCheckViewport` is true. When this is also true the element is returned only if Fully outside
    *                                        the viewport. By default the element is returned only if inside the viewport. Defaults false
    * @param {boolean} useOutsideLimit - Optional. when true, outside elements are limited to those contained inside the frame between the extended viewport and the
    *                                    limit based on VIEWPORT_OUTSIDE_LIMIT_FRACTION. Defaults false
@@ -198,9 +198,7 @@ ytm-shorts-lockup-view-model`,
       style.display === "none" ||
       style.visibility === "hidden" ||
       style.visibility === "collapse" ||
-      parseFloat(style.opacity) === 0 ||
-      style.offsetWidth === 0 ||
-      style.offsetHeight === 0
+      parseFloat(style.opacity) === 0
     ) {
       return false;
     }
@@ -220,23 +218,27 @@ ytm-shorts-lockup-view-model`,
       const rightBoundary = window.innerWidth + extendedWidth;
 
       if (onlyOutsideViewport) {
-        // Return true if ANY part of the element is OUTSIDE the extended viewport
-        const fullyContained =
-          rect.top >= topBoundary &&
-          rect.bottom <= bottomBoundary &&
-          rect.left >= leftBoundary &&
-          rect.right <= rightBoundary;
+        // Return true if ALL part of the element is OUTSIDE the extended viewport
+        const fullyOutside =
+          rect.top > bottomBoundary ||
+          rect.bottom < topBoundary ||
+          rect.left > rightBoundary ||
+          rect.right < leftBoundary;
 
         if (!useOutsideLimit) {
-          const result = !fullyContained;
-          return result;
+          return fullyOutside;
         }
 
         // Further extend the extended viewport by VIEWPORT_OUTSIDE_LIMIT_FRACTION to set the maximum outside limit
+        // Use 500px as the miniimum extension, as some element such as shorts are quite big
         const extraHeight =
-          window.innerHeight * this.VIEWPORT_OUTSIDE_LIMIT_FRACTION;
+          window.innerHeight * this.VIEWPORT_OUTSIDE_LIMIT_FRACTION > 500
+            ? window.innerHeight * this.VIEWPORT_OUTSIDE_LIMIT_FRACTION
+            : 500;
         const extraWidth =
-          window.innerWidth * this.VIEWPORT_OUTSIDE_LIMIT_FRACTION;
+          window.innerWidth * this.VIEWPORT_OUTSIDE_LIMIT_FRACTION > 500
+            ? window.innerWidth * this.VIEWPORT_OUTSIDE_LIMIT_FRACTION
+            : 500;
 
         const outerTopBoundary = topBoundary - extraHeight;
         const outerBottomBoundary = bottomBoundary + extraHeight;
@@ -245,12 +247,12 @@ ytm-shorts-lockup-view-model`,
 
         // Check if ANY part of the element is within the outer limit extended viewport
         const intersectsOuterLimitViewport =
-          rect.bottom >= outerTopBoundary &&
           rect.top <= outerBottomBoundary &&
-          rect.right >= outerLeftBoundary &&
-          rect.left <= outerRightBoundary;
+          rect.bottom >= outerTopBoundary &&
+          rect.left <= outerRightBoundary &&
+          rect.right >= outerLeftBoundary;
 
-        const result = !fullyContained && intersectsOuterLimitViewport;
+        const result = fullyOutside && intersectsOuterLimitViewport;
         return result;
       } else {
         // Return true if ANY part of the element is INSIDE the extended viewport
@@ -275,6 +277,10 @@ ytm-shorts-lockup-view-model`,
   getFirstVisible: function (nodes, shouldBeInsideViewport = true) {
     if (!nodes) {
       return null;
+    }
+
+    if (nodes instanceof Node) {
+      nodes = [nodes];
     } else {
       nodes = Array.from(nodes);
     }
@@ -303,6 +309,10 @@ ytm-shorts-lockup-view-model`,
   ) {
     if (!nodes) {
       return null;
+    }
+
+    if (nodes instanceof Node) {
+      nodes = [nodes];
     } else {
       nodes = Array.from(nodes);
     }
@@ -336,6 +346,10 @@ ytm-shorts-lockup-view-model`,
   getAllVisibleNodesOutsideViewport: function (nodes, useOutsideLimit = false) {
     if (!nodes) {
       return null;
+    }
+
+    if (nodes instanceof Node) {
+      nodes = [nodes];
     } else {
       nodes = Array.from(nodes);
     }
@@ -357,67 +371,85 @@ ytm-shorts-lockup-view-model`,
 
   /**
    * Wait for the player to exist
+   * Player could potentially never exist so we give up after 120 frames
+   * @returns {Promise<void>}
    */
-  waitForPlayerExist: async function () {
-    while (
-      !this.getFirstVisible(document.querySelectorAll(this.getPlayerSelector()))
-    ) {
-      await new Promise((resolve) => setTimeout(resolve, 50));
-    }
-  },
+  waitForPlayerExist: function () {
+    return new Promise((resolve, reject) => {
+      let attempts = 0;
+      const maxAttempts = 120; // ~2 seconds at 60fps
 
-  /**
-   * Wait for the player to exist and be ready to respond to function calls
-   */
-  waitForPlayerReady: async function () {
-    while (
-      !this.getFirstVisible(
-        document.querySelectorAll(this.getPlayerSelector()),
-      ) ||
-      (!this.getFirstVisible(
-        document.querySelectorAll(this.getPlayerSelector()),
-      ).getPlayerResponse() &&
-        !this.getFirstVisible(
-          document.querySelectorAll(this.getPlayerSelector()),
-        ).getEmbeddedPlayerResponse())
-    ) {
-      await new Promise((resolve) => setTimeout(resolve, 50));
-    }
-  },
-
-  /**
-   * Wait for the title element to return
-   * @returns {HTMLTimeElement} title element
-   */
-  waitForTitleElement: function () {
-    return new Promise((resolve) => {
       function check() {
-        const titleElement = document.querySelector("title");
-        if (titleElement) {
-          resolve(titleElement);
-        } else {
+        const player = window.YoutubeAntiTranslate.getFirstVisible(
+          document.querySelectorAll(
+            window.YoutubeAntiTranslate.getPlayerSelector(),
+          ),
+        );
+
+        if (player) {
+          resolve();
+        } else if (attempts++ < maxAttempts) {
           requestAnimationFrame(check);
+        } else {
+          reject(new Error("Player did not appear within frame limit"));
         }
       }
+
       check();
     });
   },
 
   /**
-   * Wait for querySelectorAll() to return a NodeList with the provided selector
-   * @param {string} selector - a valid query selector
-   * @returns {NodeList}
+   * Wait for the player to exist and be ready to respond to function calls
+   * Player could potentially never exist or be ready so we give up after 120 frames
+   * @returns {Promise<void>}
    */
-  waitForQuerySelectorAllElements: function (selector) {
-    return new Promise((resolve) => {
+  waitForPlayerReady: function () {
+    return new Promise((resolve, reject) => {
+      let attempts = 0;
+      const maxAttempts = 120; // ~2 seconds at 60fps
+
       function check() {
-        const nodeListResult = window.YoutubeAntiTranslate.getAllVisibleNodes(
-          document.querySelectorAll(selector),
+        const player = window.YoutubeAntiTranslate.getFirstVisible(
+          document.querySelectorAll(
+            window.YoutubeAntiTranslate.getPlayerSelector(),
+          ),
         );
-        if (nodeListResult && nodeListResult.length > 0) {
-          resolve(nodeListResult);
-        } else {
+
+        if (
+          player &&
+          (player.getPlayerResponse?.() || player.getEmbeddedPlayerResponse?.())
+        ) {
+          resolve();
+        } else if (attempts++ < maxAttempts) {
           requestAnimationFrame(check);
+        } else {
+          reject(new Error("Player not ready within frame limit"));
+        }
+      }
+
+      check();
+    });
+  },
+
+  /**
+   * Wait for the title element to return
+   * Limit at 120 frames as a safe limit
+   * @returns {Promise<HTMLTimeElement>} title element
+   */
+  waitForTitleElement: function () {
+    return new Promise((resolve, reject) => {
+      let attempts = 0;
+      const maxAttempts = 120; // ~2 seconds at 60fps
+
+      function check() {
+        const titleElement = document.querySelector("title");
+        if (titleElement) {
+          resolve(titleElement);
+        } else if (attempts++ < maxAttempts) {
+          requestAnimationFrame(check);
+        } else {
+          reject(new Error("Title element not found within frame limit"));
         }
       }
       check();

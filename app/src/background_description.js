@@ -62,53 +62,66 @@ function fetchOriginalAuthor() {
   }
 }
 
+let /** @type {Boolean} */ restoreOriginalDescriptionAndAuthor_running = false;
 /**
  * Processes the description and restores it to its original form
  */
 function restoreOriginalDescriptionAndAuthor() {
-  const originalDescription = fetchOriginalDescription();
-  const originalAuthor = fetchOriginalAuthor();
-
-  if (!originalDescription && !originalAuthor) {
+  if (restoreOriginalDescriptionAndAuthor_running) {
     return;
   }
+  restoreOriginalDescriptionAndAuthor_running = true;
 
-  if (originalDescription) {
-    const descriptionContainer = window.YoutubeAntiTranslate.getFirstVisible(
-      document.querySelectorAll(DESCRIPTION_SELECTOR),
-    );
+  try {
+    const originalDescription = fetchOriginalDescription();
+    const originalAuthor = fetchOriginalAuthor();
 
-    if (descriptionContainer) {
-      updateDescriptionContent(descriptionContainer, originalDescription);
-    } else {
-      window.YoutubeAntiTranslate.logWarning(
-        `Video Description container not found`,
-      );
-    }
-  }
-
-  if (originalAuthor) {
-    // We should skip this operation if the video player was embeded as it does not have the author above the desciption
-    const player = window.YoutubeAntiTranslate.getFirstVisible(
-      document.querySelectorAll(
-        window.YoutubeAntiTranslate.getPlayerSelector(),
-      ),
-    );
-    if (player && player.id === "c4-player") {
+    if (!originalDescription && !originalAuthor) {
+      restoreOriginalDescriptionAndAuthor_running = false;
       return;
     }
 
-    const authorContainer = window.YoutubeAntiTranslate.getFirstVisible(
-      document.querySelectorAll(AUTHOR_SELECTOR),
-    );
-
-    if (authorContainer) {
-      updateAuthorContent(authorContainer, originalAuthor);
-    } else {
-      window.YoutubeAntiTranslate.logWarning(
-        `Video Author container not found`,
+    if (originalDescription) {
+      const descriptionContainer = window.YoutubeAntiTranslate.getFirstVisible(
+        document.querySelectorAll(DESCRIPTION_SELECTOR),
       );
+
+      if (descriptionContainer) {
+        updateDescriptionContent(descriptionContainer, originalDescription);
+      } else {
+        window.YoutubeAntiTranslate.logWarning(
+          `Video Description container not found`,
+        );
+      }
     }
+
+    if (originalAuthor) {
+      // We should skip this operation if the video player was embeded as it does not have the author above the desciption
+      const player = window.YoutubeAntiTranslate.getFirstVisible(
+        document.querySelectorAll(
+          window.YoutubeAntiTranslate.getPlayerSelector(),
+        ),
+      );
+      if (player && player.id === "c4-player") {
+        restoreOriginalDescriptionAndAuthor_running = false;
+        return;
+      }
+
+      const authorContainer = window.YoutubeAntiTranslate.getFirstVisible(
+        document.querySelectorAll(AUTHOR_SELECTOR),
+      );
+
+      if (authorContainer) {
+        updateAuthorContent(authorContainer, originalAuthor);
+      } else {
+        window.YoutubeAntiTranslate.logWarning(
+          `Video Author container not found`,
+        );
+      }
+    }
+    restoreOriginalDescriptionAndAuthor_running = false;
+  } catch {
+    restoreOriginalDescriptionAndAuthor_running = false;
   }
 }
 
@@ -233,44 +246,14 @@ async function handleDescriptionMutation(
       continue;
     }
 
-    if (
-      !mutationRecord.target ||
-      !window.YoutubeAntiTranslate.castNodeToElementOrNull(
-        mutationRecord.target,
-      )
-    ) {
-      continue;
-    }
-
-    const /** @type {Element} */ element = mutationRecord.target;
-
-    // Checks on mutation target
-    if (element.matches(DESCRIPTION_SELECTOR)) {
-      await window.YoutubeAntiTranslate.waitForPlayerReady();
-      await restoreOriginalDescriptionAndAuthor();
-      break;
-    }
-
-    // Checks on mutation closest target
-    if (element.closest(DESCRIPTION_SELECTOR)) {
-      await window.YoutubeAntiTranslate.waitForPlayerReady();
-      await restoreOriginalDescriptionAndAuthor();
-      break;
-    }
-
-    // On mutationRecord.target we never search inside as that is too broad
-
     for (const addedNode of mutationRecord.addedNodes) {
       if (!window.YoutubeAntiTranslate.castNodeToElementOrNull(addedNode)) {
         continue;
       }
       const /** @type {Element} */ addedElement = addedNode;
 
-      // Checks on mutation added nodes
-      if (addedElement.matches(DESCRIPTION_SELECTOR)) {
-        await window.YoutubeAntiTranslate.waitForPlayerReady();
-        await restoreOriginalDescriptionAndAuthor();
-        break;
+      if (!window.YoutubeAntiTranslate.isVisible(addedElement)) {
+        continue;
       }
 
       // Checks on mutation added nodes

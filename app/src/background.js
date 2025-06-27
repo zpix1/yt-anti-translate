@@ -57,22 +57,32 @@ async function get(url) {
   return requestObserver;
 }
 
+let /** @type {Boolean} */ untranslateCurrentShortVideo_running = false;
 async function untranslateCurrentShortVideo() {
-  if (!window.location.pathname.startsWith("/shorts/")) {
-    return; // Should not happen if called correctly, but safety first
+  if (
+    untranslateCurrentShortVideo_running ||
+    !window.location.pathname.startsWith("/shorts/") // Should not happen if called correctly, but safety first
+  ) {
+    return;
   }
+  untranslateCurrentShortVideo_running = true;
 
-  const { fakeNodeID, originalNodeSelector } =
-    getUntranslateCurrentShortVideoParams();
+  try {
+    const { fakeNodeID, originalNodeSelector } =
+      getUntranslateCurrentShortVideoParams();
 
-  await createOrUpdateUntranslatedFakeNode(
-    fakeNodeID,
-    originalNodeSelector,
-    () =>
-      `https://www.youtube.com/shorts/${window.location.pathname.split("/")[2]}`,
-    "span",
-    true,
-  );
+    await createOrUpdateUntranslatedFakeNode(
+      fakeNodeID,
+      originalNodeSelector,
+      () =>
+        `https://www.youtube.com/shorts/${window.location.pathname.split("/")[2]}`,
+      "span",
+      true,
+    );
+    untranslateCurrentShortVideo_running = false;
+  } catch {
+    untranslateCurrentShortVideo_running = false;
+  }
 }
 
 function getUntranslateCurrentShortVideoParams() {
@@ -81,17 +91,31 @@ function getUntranslateCurrentShortVideoParams() {
   return { fakeNodeID, originalNodeSelector };
 }
 
+let /** @type {Boolean} */ untranslateCurrentShortVideoLinks_running = false;
 async function untranslateCurrentShortVideoLinks() {
-  const { fakeNodeID, originalNodeSelector } =
-    getUntranslateCurrentShortVideoLinksParams();
+  if (
+    untranslateCurrentShortVideoLinks_running ||
+    !window.location.pathname.startsWith("/shorts/") // Should not happen if called correctly, but safety first
+  ) {
+    return;
+  }
+  untranslateCurrentShortVideoLinks_running = true;
 
-  await createOrUpdateUntranslatedFakeNode(
-    fakeNodeID,
-    originalNodeSelector,
-    (el) => el?.parentElement?.parentElement?.parentElement?.href,
-    "span",
-    false,
-  );
+  try {
+    const { fakeNodeID, originalNodeSelector } =
+      getUntranslateCurrentShortVideoLinksParams();
+
+    await createOrUpdateUntranslatedFakeNode(
+      fakeNodeID,
+      originalNodeSelector,
+      (el) => el?.parentElement?.parentElement?.parentElement?.href,
+      "span",
+      false,
+    );
+    untranslateCurrentShortVideoLinks_running = false;
+  } catch {
+    untranslateCurrentShortVideoLinks_running = false;
+  }
 }
 
 function getUntranslateCurrentShortVideoLinksParams() {
@@ -100,21 +124,31 @@ function getUntranslateCurrentShortVideoLinksParams() {
   return { fakeNodeID, originalNodeSelector };
 }
 
+let /** @type {Boolean} */ untranslateCurrentVideo_running = false;
 async function untranslateCurrentVideo() {
-  if (!window.location.pathname.startsWith("/watch")) {
-    return; // Should not happen if called correctly, but safety first
+  if (
+    untranslateCurrentVideo_running ||
+    !window.location.pathname.startsWith("/watch") // Should not happen if called correctly, but safety first
+  ) {
+    return;
   }
+  untranslateCurrentVideo_running = true;
 
-  const { fakeNodeID, originalNodeSelector } =
-    getUntranslateCurrentVideoParams();
+  try {
+    const { fakeNodeID, originalNodeSelector } =
+      getUntranslateCurrentVideoParams();
 
-  await createOrUpdateUntranslatedFakeNode(
-    fakeNodeID,
-    originalNodeSelector,
-    () => document.location.href,
-    "div",
-    true,
-  );
+    await createOrUpdateUntranslatedFakeNode(
+      fakeNodeID,
+      originalNodeSelector,
+      () => document.location.href,
+      "div",
+      true,
+    );
+    untranslateCurrentVideo_running = false;
+  } catch {
+    untranslateCurrentVideo_running = false;
+  }
 }
 
 function getUntranslateCurrentVideoParams() {
@@ -123,23 +157,37 @@ function getUntranslateCurrentVideoParams() {
   return { fakeNodeID, originalNodeSelector };
 }
 
+let /** @type {Boolean} */ untranslateCurrentVideoHeadLink_running = false;
 async function untranslateCurrentVideoHeadLink() {
-  const { fakeNodeID, originalNodeSelector } =
-    getUntranslateCurrentVideoHeadLinkParams();
+  if (
+    untranslateCurrentVideoHeadLink_running ||
+    !window.location.pathname.startsWith("/watch") // Should not happen if called correctly, but safety first
+  ) {
+    return;
+  }
+  untranslateCurrentVideoHeadLink_running = true;
 
-  await createOrUpdateUntranslatedFakeNode(
-    fakeNodeID,
-    originalNodeSelector,
-    (el) => {
-      const videoLinkHead = el.href;
-      if (!videoLinkHead || videoLinkHead.trim() === "") {
-        return document.location.href;
-      }
-      return videoLinkHead;
-    },
-    "a",
-    false,
-  );
+  try {
+    const { fakeNodeID, originalNodeSelector } =
+      getUntranslateCurrentVideoHeadLinkParams();
+
+    await createOrUpdateUntranslatedFakeNode(
+      fakeNodeID,
+      originalNodeSelector,
+      (el) => {
+        const videoLinkHead = el.href;
+        if (!videoLinkHead || videoLinkHead.trim() === "") {
+          return document.location.href;
+        }
+        return videoLinkHead;
+      },
+      "a",
+      false,
+    );
+    untranslateCurrentVideoHeadLink_running = false;
+  } catch {
+    untranslateCurrentVideoHeadLink_running = false;
+  }
 }
 
 function getUntranslateCurrentVideoHeadLinkParams() {
@@ -148,22 +196,36 @@ function getUntranslateCurrentVideoHeadLinkParams() {
   return { fakeNodeID, originalNodeSelector };
 }
 
+let /** @type {Boolean} */ untranslateCurrentVideoFullScreenEdu_running = false;
 async function untranslateCurrentVideoFullScreenEdu() {
-  const { fakeNodeID, originalNodeSelector } =
-    getUntranslateCurrentVideoFullScreenEduParams();
-
-  // Skip if on a channel page
-  if (document.location.pathname.startsWith("@")) {
+  if (
+    untranslateCurrentVideoFullScreenEdu_running ||
+    !window.location.pathname.startsWith("/watch") // Should not happen if called correctly, but safety first
+  ) {
     return;
   }
+  untranslateCurrentVideoFullScreenEdu_running = true;
 
-  await createOrUpdateUntranslatedFakeNode(
-    fakeNodeID,
-    originalNodeSelector,
-    () => document.location.href,
-    "div",
-    false,
-  );
+  try {
+    const { fakeNodeID, originalNodeSelector } =
+      getUntranslateCurrentVideoFullScreenEduParams();
+
+    // Skip if on a channel page
+    if (document.location.pathname.startsWith("@")) {
+      return;
+    }
+
+    await createOrUpdateUntranslatedFakeNode(
+      fakeNodeID,
+      originalNodeSelector,
+      () => document.location.href,
+      "div",
+      false,
+    );
+    untranslateCurrentVideoFullScreenEdu_running = false;
+  } catch {
+    untranslateCurrentVideoFullScreenEdu_running = false;
+  }
 }
 
 function getUntranslateCurrentVideoFullScreenEduParams() {
@@ -172,17 +234,28 @@ function getUntranslateCurrentVideoFullScreenEduParams() {
   return { fakeNodeID, originalNodeSelector };
 }
 
+let /** @type {Boolean} */ untranslateCurrentChannelEmbededVideoTitle_running = false;
 async function untranslateCurrentChannelEmbededVideoTitle() {
-  const { fakeNodeID, originalNodeSelector } =
-    getUntranslateCurrentChannelEmbededVideoTitleParams();
+  if (untranslateCurrentChannelEmbededVideoTitle_running) {
+    return;
+  }
+  untranslateCurrentChannelEmbededVideoTitle_running = true;
 
-  await createOrUpdateUntranslatedFakeNode(
-    fakeNodeID,
-    originalNodeSelector,
-    (el) => el.href,
-    "a",
-    false,
-  );
+  try {
+    const { fakeNodeID, originalNodeSelector } =
+      getUntranslateCurrentChannelEmbededVideoTitleParams();
+
+    await createOrUpdateUntranslatedFakeNode(
+      fakeNodeID,
+      originalNodeSelector,
+      (el) => el.href,
+      "a",
+      false,
+    );
+    untranslateCurrentChannelEmbededVideoTitle_running = false;
+  } catch {
+    untranslateCurrentChannelEmbededVideoTitle_running = false;
+  }
 }
 
 function getUntranslateCurrentChannelEmbededVideoTitleParams() {
@@ -299,6 +372,7 @@ async function createOrUpdateUntranslatedFakeNode(
   //}
 }
 
+let /** @type {Boolean} */ untranslateOtherVideos_running = false;
 async function untranslateOtherVideos(intersectElements = null) {
   async function untranslateOtherVideosArray(otherVideos) {
     if (!otherVideos) {
@@ -382,23 +456,36 @@ async function untranslateOtherVideos(intersectElements = null) {
     }
   }
 
+  // For Intersect concurrency is allowed as the intersectElements will be different each time
   if (intersectElements) {
     // If this was called from the intersect obesrver only check the newly intersecting items
     await untranslateOtherVideosArray(intersectElements);
     updateObserverOtherVideosOnIntersect();
     return;
   }
-  // Selectors for all video containers
-  await untranslateOtherVideosArray(
-    window.YoutubeAntiTranslate.getAllVisibleNodes(
-      document.querySelectorAll(
-        window.YoutubeAntiTranslate.ALL_ARRAYS_VIDEOS_SELECTOR,
+
+  if (untranslateOtherVideos_running) {
+    return;
+  }
+  untranslateOtherVideos_running = true;
+
+  try {
+    // Selectors for all video containers
+    await untranslateOtherVideosArray(
+      window.YoutubeAntiTranslate.getAllVisibleNodes(
+        document.querySelectorAll(
+          window.YoutubeAntiTranslate.ALL_ARRAYS_VIDEOS_SELECTOR,
+        ),
       ),
-    ),
-  );
-  updateObserverOtherVideosOnIntersect();
+    );
+    updateObserverOtherVideosOnIntersect();
+    untranslateOtherVideos_running = false;
+  } catch {
+    untranslateOtherVideos_running = false;
+  }
 }
 
+let /** @type {Boolean} */ untranslateOtherShortsVideos_running = false;
 async function untranslateOtherShortsVideos(intersectElements = null) {
   async function untranslateOtherShortsArray(shortsItems) {
     if (!shortsItems) {
@@ -483,35 +570,51 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
     }
   }
 
+  // For Intersect concurrency is allowed as the intersectElements will be different each time
   if (intersectElements) {
     // If this was called from the intersect obesrver only check the newly intersecting items
     await untranslateOtherShortsArray(intersectElements);
     updateObserverOtherShortsOnIntersect();
     return;
   }
-  // Run for all shorts items
-  await untranslateOtherShortsArray(
-    window.YoutubeAntiTranslate.getAllVisibleNodes(
-      document.querySelectorAll(
-        window.YoutubeAntiTranslate.ALL_ARRAYS_SHORTS_SELECTOR,
+
+  if (untranslateOtherShortsVideos_running) {
+    return;
+  }
+  untranslateOtherShortsVideos_running = true;
+
+  try {
+    // Run for all shorts items
+    await untranslateOtherShortsArray(
+      window.YoutubeAntiTranslate.getAllVisibleNodes(
+        document.querySelectorAll(
+          window.YoutubeAntiTranslate.ALL_ARRAYS_SHORTS_SELECTOR,
+        ),
       ),
-    ),
-  );
-  updateObserverOtherShortsOnIntersect();
+    );
+    updateObserverOtherShortsOnIntersect();
+    untranslateOtherShortsVideos_running = false;
+  } catch {
+    untranslateOtherShortsVideos_running = false;
+  }
 }
 
-// --- Mutation conditional processor ---
+// // --- Mutation conditional processor ---
+// let untranslateInvocationCount = 0;
 // async function untranslate(/** @type {MutationRecord[]} */ mutationList) {
-//   let waitForPlayerExistObserver = null;
+//   const startTime = performance.now();
+//   untranslateInvocationCount++;
 
-//   let currentVideoObserver = null;
-//   let currentShortObserver = null;
-//   let currentVideoHeadLinkObserver = null;
-//   let currentVideoFullScreenEduObserver = null;
-//   let channelEmbededVideoObserver = null;
-//   let currentShortVideoLinksObserver = null;
-//   let otherVideosObserver = null;
-//   let otherShortsObserver = null;
+//   let waitForPlayerExistPromise = null;
+
+//   let currentVideoPromise = null;
+//   let currentShortPromise = null;
+//   let currentVideoHeadLinkPromise = null;
+//   let currentVideoFullScreenEduPromise = null;
+//   let channelEmbededVideoPromise = null;
+//   let currentShortVideoLinksPromise = null;
+//   let otherVideosPromise = null;
+//   let otherShortsPromise = null;
 
 //   for (const mutationRecord of mutationList) {
 //     if (mutationRecord.type !== "childList") {
@@ -528,168 +631,104 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
 //     }
 
 //     const /** @type {Element} */ element = mutationRecord.target;
+//     if (!mutationRecord.target.matches("body")) {
+//       // Checks on mutation added nodes
 
-//     // Checks on mutation target
-//     if (
-//       element.matches(getUntranslateCurrentVideoParams().originalNodeSelector)
-//     ) {
-//       waitForPlayerExistObserver ??=
-//         window.YoutubeAntiTranslate.waitForPlayerExist();
-//       currentVideoObserver = untranslateCurrentVideo();
-//     } else if (
-//       element.matches(
-//         getUntranslateCurrentShortVideoParams().originalNodeSelector,
-//       )
-//     ) {
-//       waitForPlayerExistObserver ??=
-//         window.YoutubeAntiTranslate.waitForPlayerExist();
-//       currentShortObserver = untranslateCurrentShortVideo();
-//     } else if (
-//       element.matches(
-//         getUntranslateCurrentVideoHeadLinkParams().originalNodeSelector,
-//       )
-//     ) {
-//       waitForPlayerExistObserver ??=
-//         window.YoutubeAntiTranslate.waitForPlayerExist();
-//       currentVideoHeadLinkObserver = untranslateCurrentVideoHeadLink();
-//     } else if (
-//       element.matches(
-//         getUntranslateCurrentVideoFullScreenEduParams().originalNodeSelector,
-//       )
-//     ) {
-//       waitForPlayerExistObserver ??=
-//         window.YoutubeAntiTranslate.waitForPlayerExist();
-//       currentVideoFullScreenEduObserver = untranslateCurrentVideoFullScreenEdu();
-//     } else if (
-//       element.matches(
-//         getUntranslateCurrentChannelEmbededVideoTitleParams()
-//           .originalNodeSelector,
-//       )
-//     ) {
-//       waitForPlayerExistObserver ??=
-//         window.YoutubeAntiTranslate.waitForPlayerExist();
-//       channelEmbededVideoObserver = untranslateCurrentChannelEmbededVideoTitle();
-//     } else if (
-//       element.matches(
-//         getUntranslateCurrentShortVideoLinksParams().originalNodeSelector,
-//       )
-//     ) {
-//       waitForPlayerExistObserver ??=
-//         window.YoutubeAntiTranslate.waitForPlayerExist();
-//       currentShortVideoLinksObserver = untranslateCurrentShortVideoLinks();
-//     } else if (
-//       element.matches(window.YoutubeAntiTranslate.ALL_ARRAYS_VIDEOS_SELECTOR)
-//     ) {
-//       otherVideosObserver = untranslateOtherVideos();
-//     }
-//     // other videos and other shorts can overlap so this is intentionally not an `else if`
-//     if (
-//       element.matches(window.YoutubeAntiTranslate.ALL_ARRAYS_SHORTS_SELECTOR)
-//     ) {
-//       otherShortsObserver = untranslateOtherShortsVideos();
-//     }
+//       if (!window.YoutubeAntiTranslate.isVisible(element)) {
+//         continue;
+//       }
 
-//     if (
-//       currentVideoObserver &&
-//       currentShortObserver &&
-//       currentVideoHeadLinkObserver &&
-//       currentVideoFullScreenEduObserver &&
-//       channelEmbededVideoObserver &&
-//       currentShortVideoLinksObserver &&
-//       otherVideosObserver &&
-//       otherShortsObserver
-//     ) {
-//       break;
-//     }
+//       // Checks on mutation closest target
+//       // `closest` conditions can overlap so we do not use `else if`
+//       if (
+//         !currentVideoPromise &&
+//         element.closest(getUntranslateCurrentVideoParams().originalNodeSelector)
+//       ) {
+//         waitForPlayerExistPromise ??=
+//           window.YoutubeAntiTranslate.waitForPlayerExist();
+//         currentVideoPromise = untranslateCurrentVideo();
+//       }
+//       if (
+//         !currentShortPromise &&
+//         element.closest(
+//           getUntranslateCurrentShortVideoParams().originalNodeSelector,
+//         )
+//       ) {
+//         waitForPlayerExistPromise ??=
+//           window.YoutubeAntiTranslate.waitForPlayerExist();
+//         currentShortPromise = untranslateCurrentShortVideo();
+//       }
+//       if (
+//         !currentVideoHeadLinkPromise &&
+//         element.closest(
+//           getUntranslateCurrentVideoHeadLinkParams().originalNodeSelector,
+//         )
+//       ) {
+//         waitForPlayerExistPromise ??=
+//           window.YoutubeAntiTranslate.waitForPlayerExist();
+//         currentVideoHeadLinkPromise = untranslateCurrentVideoHeadLink();
+//       }
+//       if (
+//         !currentVideoFullScreenEduPromise &&
+//         element.closest(
+//           getUntranslateCurrentVideoFullScreenEduParams().originalNodeSelector,
+//         )
+//       ) {
+//         waitForPlayerExistPromise ??=
+//           window.YoutubeAntiTranslate.waitForPlayerExist();
+//         currentVideoFullScreenEduPromise =
+//           untranslateCurrentVideoFullScreenEdu();
+//       }
+//       if (
+//         !channelEmbededVideoPromise &&
+//         element.closest(
+//           getUntranslateCurrentChannelEmbededVideoTitleParams()
+//             .originalNodeSelector,
+//         )
+//       ) {
+//         waitForPlayerExistPromise ??=
+//           window.YoutubeAntiTranslate.waitForPlayerExist();
+//         channelEmbededVideoPromise =
+//           untranslateCurrentChannelEmbededVideoTitle();
+//       }
+//       if (
+//         !currentShortVideoLinksPromise &&
+//         element.closest(
+//           getUntranslateCurrentShortVideoLinksParams().originalNodeSelector,
+//         )
+//       ) {
+//         waitForPlayerExistPromise ??=
+//           window.YoutubeAntiTranslate.waitForPlayerExist();
+//         currentShortVideoLinksPromise = untranslateCurrentShortVideoLinks();
+//       }
+//       if (
+//         !otherVideosPromise &&
+//         element.closest(window.YoutubeAntiTranslate.ALL_ARRAYS_VIDEOS_SELECTOR)
+//       ) {
+//         otherVideosPromise = untranslateOtherVideos();
+//       }
+//       if (
+//         !otherShortsPromise &&
+//         element.closest(window.YoutubeAntiTranslate.ALL_ARRAYS_SHORTS_SELECTOR)
+//       ) {
+//         otherShortsPromise = untranslateOtherShortsVideos();
+//       }
 
-//     // Checks on mutation closest target
-//     // `closest` conditions can overlap so we do not use `else if`
-//     if (
-//       !currentVideoObserver &&
-//       element.closest(getUntranslateCurrentVideoParams().originalNodeSelector)
-//     ) {
-//       waitForPlayerExistObserver ??=
-//         window.YoutubeAntiTranslate.waitForPlayerExist();
-//       currentVideoObserver = untranslateCurrentVideo();
-//     }
-//     if (
-//       !currentShortObserver &&
-//       element.closest(
-//         getUntranslateCurrentShortVideoParams().originalNodeSelector,
-//       )
-//     ) {
-//       waitForPlayerExistObserver ??=
-//         window.YoutubeAntiTranslate.waitForPlayerExist();
-//       currentShortObserver = untranslateCurrentShortVideo();
-//     }
-//     if (
-//       !currentVideoHeadLinkObserver &&
-//       element.closest(
-//         getUntranslateCurrentVideoHeadLinkParams().originalNodeSelector,
-//       )
-//     ) {
-//       waitForPlayerExistObserver ??=
-//         window.YoutubeAntiTranslate.waitForPlayerExist();
-//       currentVideoHeadLinkObserver = untranslateCurrentVideoHeadLink();
-//     }
-//     if (
-//       !currentVideoFullScreenEduObserver &&
-//       element.closest(
-//         getUntranslateCurrentVideoFullScreenEduParams().originalNodeSelector,
-//       )
-//     ) {
-//       waitForPlayerExistObserver ??=
-//         window.YoutubeAntiTranslate.waitForPlayerExist();
-//       currentVideoFullScreenEduObserver = untranslateCurrentVideoFullScreenEdu();
-//     }
-//     if (
-//       !channelEmbededVideoObserver &&
-//       element.closest(
-//         getUntranslateCurrentChannelEmbededVideoTitleParams()
-//           .originalNodeSelector,
-//       )
-//     ) {
-//       waitForPlayerExistObserver ??=
-//         window.YoutubeAntiTranslate.waitForPlayerExist();
-//       channelEmbededVideoObserver = untranslateCurrentChannelEmbededVideoTitle();
-//     }
-//     if (
-//       !currentShortVideoLinksObserver &&
-//       element.closest(
-//         getUntranslateCurrentShortVideoLinksParams().originalNodeSelector,
-//       )
-//     ) {
-//       waitForPlayerExistObserver ??=
-//         window.YoutubeAntiTranslate.waitForPlayerExist();
-//       currentShortVideoLinksObserver = untranslateCurrentShortVideoLinks();
-//     }
-//     if (
-//       !otherVideosObserver &&
-//       element.closest(window.YoutubeAntiTranslate.ALL_ARRAYS_VIDEOS_SELECTOR)
-//     ) {
-//       otherVideosObserver = untranslateOtherVideos();
-//     }
-//     if (
-//       !otherShortsObserver &&
-//       element.closest(window.YoutubeAntiTranslate.ALL_ARRAYS_SHORTS_SELECTOR)
-//     ) {
-//       otherShortsObserver = untranslateOtherShortsVideos();
-//     }
+//       if (
+//         currentVideoPromise &&
+//         currentShortPromise &&
+//         currentVideoHeadLinkPromise &&
+//         currentVideoFullScreenEduPromise &&
+//         channelEmbededVideoPromise &&
+//         currentShortVideoLinksPromise &&
+//         otherVideosPromise &&
+//         otherShortsPromise
+//       ) {
+//         break;
+//       }
 
-//     if (
-//       currentVideoObserver &&
-//       currentShortObserver &&
-//       currentVideoHeadLinkObserver &&
-//       currentVideoFullScreenEduObserver &&
-//       channelEmbededVideoObserver &&
-//       currentShortVideoLinksObserver &&
-//       otherVideosObserver &&
-//       otherShortsObserver
-//     ) {
-//       break;
+//       // On mutationRecord.target we never search inside as that is too broad
 //     }
-
-//     // On mutationRecord.target we never search inside as that is too broad
 
 //     for (const addedNode of mutationRecord.addedNodes) {
 //       if (!window.YoutubeAntiTranslate.castNodeToElementOrNull(addedNode)) {
@@ -697,187 +736,101 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
 //       }
 //       const /** @type {Element} */ addedElement = addedNode;
 
-//       // Checks on mutation added nodes
-//       if (
-//         !currentVideoObserver &&
-//         addedElement.matches(
-//           getUntranslateCurrentVideoParams().originalNodeSelector,
-//         )
-//       ) {
-//         waitForPlayerExistObserver ??=
-//           window.YoutubeAntiTranslate.waitForPlayerExist();
-//         currentVideoObserver = untranslateCurrentVideo();
-//       } else if (
-//         !currentShortObserver &&
-//         addedElement.matches(
-//           getUntranslateCurrentShortVideoParams().originalNodeSelector,
-//         )
-//       ) {
-//         waitForPlayerExistObserver ??=
-//           window.YoutubeAntiTranslate.waitForPlayerExist();
-//         currentShortObserver = untranslateCurrentShortVideo();
-//       } else if (
-//         !currentVideoHeadLinkObserver &&
-//         addedElement.matches(
-//           getUntranslateCurrentVideoHeadLinkParams().originalNodeSelector,
-//         )
-//       ) {
-//         waitForPlayerExistObserver ??=
-//           window.YoutubeAntiTranslate.waitForPlayerExist();
-//         currentVideoHeadLinkObserver = untranslateCurrentVideoHeadLink();
-//       } else if (
-//         !currentVideoFullScreenEduObserver &&
-//         addedElement.matches(
-//           getUntranslateCurrentVideoFullScreenEduParams().originalNodeSelector,
-//         )
-//       ) {
-//         waitForPlayerExistObserver ??=
-//           window.YoutubeAntiTranslate.waitForPlayerExist();
-//         currentVideoFullScreenEduObserver =
-//           untranslateCurrentVideoFullScreenEdu();
-//       } else if (
-//         !channelEmbededVideoObserver &&
-//         addedElement.matches(
-//           getUntranslateCurrentChannelEmbededVideoTitleParams()
-//             .originalNodeSelector,
-//         )
-//       ) {
-//         waitForPlayerExistObserver ??=
-//           window.YoutubeAntiTranslate.waitForPlayerExist();
-//         channelEmbededVideoObserver =
-//           untranslateCurrentChannelEmbededVideoTitle();
-//       } else if (
-//         !currentShortVideoLinksObserver &&
-//         addedElement.matches(
-//           getUntranslateCurrentShortVideoLinksParams().originalNodeSelector,
-//         )
-//       ) {
-//         waitForPlayerExistObserver ??=
-//           window.YoutubeAntiTranslate.waitForPlayerExist();
-//         currentShortVideoLinksObserver = untranslateCurrentShortVideoLinks();
-//       } else if (
-//         !otherVideosObserver &&
-//         addedElement.matches(
-//           window.YoutubeAntiTranslate.ALL_ARRAYS_VIDEOS_SELECTOR,
-//         )
-//       ) {
-//         otherVideosObserver = untranslateOtherVideos();
-//       }
-//       // other videos and other shorts can overlap so this is intentionally not an `else if`
-//       if (
-//         !otherShortsObserver &&
-//         addedElement.matches(
-//           window.YoutubeAntiTranslate.ALL_ARRAYS_SHORTS_SELECTOR,
-//         )
-//       ) {
-//         otherShortsObserver = untranslateOtherShortsVideos();
+//       if (!window.YoutubeAntiTranslate.isVisible(addedElement)) {
 //         continue;
-//       }
-
-//       if (
-//         currentVideoObserver &&
-//         currentShortObserver &&
-//         currentVideoHeadLinkObserver &&
-//         currentVideoFullScreenEduObserver &&
-//         channelEmbededVideoObserver &&
-//         currentShortVideoLinksObserver &&
-//         otherVideosObserver &&
-//         otherShortsObserver
-//       ) {
-//         break;
 //       }
 
 //       // Checks on mutation closest added nodes
 //       // `closest` conditions can overlap so we do not use `else if`
 //       if (
-//         !currentVideoObserver &&
+//         !currentVideoPromise &&
 //         addedElement.closest(
 //           getUntranslateCurrentVideoParams().originalNodeSelector,
 //         )
 //       ) {
-//         waitForPlayerExistObserver ??=
+//         waitForPlayerExistPromise ??=
 //           window.YoutubeAntiTranslate.waitForPlayerExist();
-//         currentVideoObserver = untranslateCurrentVideo();
+//         currentVideoPromise = untranslateCurrentVideo();
 //       }
 //       if (
-//         !currentShortObserver &&
+//         !currentShortPromise &&
 //         addedElement.closest(
 //           getUntranslateCurrentShortVideoParams().originalNodeSelector,
 //         )
 //       ) {
-//         waitForPlayerExistObserver ??=
+//         waitForPlayerExistPromise ??=
 //           window.YoutubeAntiTranslate.waitForPlayerExist();
-//         currentShortObserver = untranslateCurrentShortVideo();
+//         currentShortPromise = untranslateCurrentShortVideo();
 //       }
 //       if (
-//         !currentVideoHeadLinkObserver &&
+//         !currentVideoHeadLinkPromise &&
 //         addedElement.closest(
 //           getUntranslateCurrentVideoHeadLinkParams().originalNodeSelector,
 //         )
 //       ) {
-//         waitForPlayerExistObserver ??=
+//         waitForPlayerExistPromise ??=
 //           window.YoutubeAntiTranslate.waitForPlayerExist();
-//         currentVideoHeadLinkObserver = untranslateCurrentVideoHeadLink();
+//         currentVideoHeadLinkPromise = untranslateCurrentVideoHeadLink();
 //       }
 //       if (
-//         !currentVideoFullScreenEduObserver &&
+//         !currentVideoFullScreenEduPromise &&
 //         addedElement.closest(
 //           getUntranslateCurrentVideoFullScreenEduParams().originalNodeSelector,
 //         )
 //       ) {
-//         waitForPlayerExistObserver ??=
+//         waitForPlayerExistPromise ??=
 //           window.YoutubeAntiTranslate.waitForPlayerExist();
-//         currentVideoFullScreenEduObserver =
+//         currentVideoFullScreenEduPromise =
 //           untranslateCurrentVideoFullScreenEdu();
 //       }
 //       if (
-//         !channelEmbededVideoObserver &&
+//         !channelEmbededVideoPromise &&
 //         addedElement.closest(
 //           getUntranslateCurrentChannelEmbededVideoTitleParams()
 //             .originalNodeSelector,
 //         )
 //       ) {
-//         waitForPlayerExistObserver ??=
+//         waitForPlayerExistPromise ??=
 //           window.YoutubeAntiTranslate.waitForPlayerExist();
-//         channelEmbededVideoObserver =
+//         channelEmbededVideoPromise =
 //           untranslateCurrentChannelEmbededVideoTitle();
 //       }
 //       if (
-//         !currentShortVideoLinksObserver &&
+//         !currentShortVideoLinksPromise &&
 //         addedElement.closest(
 //           getUntranslateCurrentShortVideoLinksParams().originalNodeSelector,
 //         )
 //       ) {
-//         waitForPlayerExistObserver ??=
+//         waitForPlayerExistPromise ??=
 //           window.YoutubeAntiTranslate.waitForPlayerExist();
-//         currentShortVideoLinksObserver = untranslateCurrentShortVideoLinks();
+//         currentShortVideoLinksPromise = untranslateCurrentShortVideoLinks();
 //       }
 //       if (
-//         !otherVideosObserver &&
+//         !otherVideosPromise &&
 //         addedElement.closest(
 //           window.YoutubeAntiTranslate.ALL_ARRAYS_VIDEOS_SELECTOR,
 //         )
 //       ) {
-//         otherVideosObserver = untranslateOtherVideos();
+//         otherVideosPromise = untranslateOtherVideos();
 //       }
 //       if (
-//         !otherShortsObserver &&
+//         !otherShortsPromise &&
 //         addedElement.closest(
 //           window.YoutubeAntiTranslate.ALL_ARRAYS_SHORTS_SELECTOR,
 //         )
 //       ) {
-//         otherShortsObserver = untranslateOtherShortsVideos();
+//         otherShortsPromise = untranslateOtherShortsVideos();
 //       }
 
 //       if (
-//         currentVideoObserver &&
-//         currentShortObserver &&
-//         currentVideoHeadLinkObserver &&
-//         currentVideoFullScreenEduObserver &&
-//         channelEmbededVideoObserver &&
-//         currentShortVideoLinksObserver &&
-//         otherVideosObserver &&
-//         otherShortsObserver
+//         currentVideoPromise &&
+//         currentShortPromise &&
+//         currentVideoHeadLinkPromise &&
+//         currentVideoFullScreenEduPromise &&
+//         channelEmbededVideoPromise &&
+//         currentShortVideoLinksPromise &&
+//         otherVideosPromise &&
+//         otherShortsPromise
 //       ) {
 //         break;
 //       }
@@ -885,43 +838,43 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
 //       // Search inside added nodes for matching elements
 //       // Search inside conditions can overlap so we do not use `else if`
 //       if (
-//         !currentVideoObserver &&
+//         !currentVideoPromise &&
 //         window.YoutubeAntiTranslate.getFirstVisible(
 //           addedElement.querySelectorAll(
 //             getUntranslateCurrentVideoParams().originalNodeSelector,
 //           ),
 //         )
 //       ) {
-//         waitForPlayerExistObserver ??=
+//         waitForPlayerExistPromise ??=
 //           window.YoutubeAntiTranslate.waitForPlayerExist();
-//         currentVideoObserver = untranslateCurrentVideo();
+//         currentVideoPromise = untranslateCurrentVideo();
 //       }
 //       if (
-//         !currentShortObserver &&
+//         !currentShortPromise &&
 //         window.YoutubeAntiTranslate.getFirstVisible(
 //           addedElement.querySelectorAll(
 //             getUntranslateCurrentShortVideoParams().originalNodeSelector,
 //           ),
 //         )
 //       ) {
-//         waitForPlayerExistObserver ??=
+//         waitForPlayerExistPromise ??=
 //           window.YoutubeAntiTranslate.waitForPlayerExist();
-//         currentShortObserver = untranslateCurrentShortVideo();
+//         currentShortPromise = untranslateCurrentShortVideo();
 //       }
 //       if (
-//         !currentVideoHeadLinkObserver &&
+//         !currentVideoHeadLinkPromise &&
 //         window.YoutubeAntiTranslate.getFirstVisible(
 //           addedElement.querySelectorAll(
 //             getUntranslateCurrentVideoHeadLinkParams().originalNodeSelector,
 //           ),
 //         )
 //       ) {
-//         waitForPlayerExistObserver ??=
+//         waitForPlayerExistPromise ??=
 //           window.YoutubeAntiTranslate.waitForPlayerExist();
-//         currentVideoHeadLinkObserver = untranslateCurrentVideoHeadLink();
+//         currentVideoHeadLinkPromise = untranslateCurrentVideoHeadLink();
 //       }
 //       if (
-//         !currentVideoFullScreenEduObserver &&
+//         !currentVideoFullScreenEduPromise &&
 //         window.YoutubeAntiTranslate.getFirstVisible(
 //           addedElement.querySelectorAll(
 //             getUntranslateCurrentVideoFullScreenEduParams()
@@ -929,13 +882,13 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
 //           ),
 //         )
 //       ) {
-//         waitForPlayerExistObserver ??=
+//         waitForPlayerExistPromise ??=
 //           window.YoutubeAntiTranslate.waitForPlayerExist();
-//         currentVideoFullScreenEduObserver =
+//         currentVideoFullScreenEduPromise =
 //           untranslateCurrentVideoFullScreenEdu();
 //       }
 //       if (
-//         !channelEmbededVideoObserver &&
+//         !channelEmbededVideoPromise &&
 //         window.YoutubeAntiTranslate.getFirstVisible(
 //           addedElement.querySelectorAll(
 //             getUntranslateCurrentChannelEmbededVideoTitleParams()
@@ -943,54 +896,54 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
 //           ),
 //         )
 //       ) {
-//         waitForPlayerExistObserver ??=
+//         waitForPlayerExistPromise ??=
 //           window.YoutubeAntiTranslate.waitForPlayerExist();
-//         channelEmbededVideoObserver =
+//         channelEmbededVideoPromise =
 //           untranslateCurrentChannelEmbededVideoTitle();
 //       }
 //       if (
-//         !currentShortVideoLinksObserver &&
+//         !currentShortVideoLinksPromise &&
 //         window.YoutubeAntiTranslate.getFirstVisible(
 //           addedElement.querySelectorAll(
 //             getUntranslateCurrentShortVideoLinksParams().originalNodeSelector,
 //           ),
 //         )
 //       ) {
-//         waitForPlayerExistObserver ??=
+//         waitForPlayerExistPromise ??=
 //           window.YoutubeAntiTranslate.waitForPlayerExist();
-//         currentShortVideoLinksObserver = untranslateCurrentShortVideoLinks();
+//         currentShortVideoLinksPromise = untranslateCurrentShortVideoLinks();
 //       }
 //       if (
-//         !otherVideosObserver &&
+//         !otherVideosPromise &&
 //         window.YoutubeAntiTranslate.getFirstVisible(
 //           addedElement.querySelectorAll(
 //             window.YoutubeAntiTranslate.ALL_ARRAYS_VIDEOS_SELECTOR,
 //           ),
 //         )
 //       ) {
-//         otherVideosObserver = untranslateOtherVideos();
+//         otherVideosPromise = untranslateOtherVideos();
 //       }
 //       if (
-//         !otherShortsObserver &&
+//         !otherShortsPromise &&
 //         window.YoutubeAntiTranslate.getFirstVisible(
 //           addedElement.querySelectorAll(
 //             window.YoutubeAntiTranslate.ALL_ARRAYS_SHORTS_SELECTOR,
 //           ),
 //         )
 //       ) {
-//         otherShortsObserver = untranslateOtherShortsVideos();
+//         otherShortsPromise = untranslateOtherShortsVideos();
 //       }
 //     }
 
 //     if (
-//       currentVideoObserver &&
-//       currentShortObserver &&
-//       currentVideoHeadLinkObserver &&
-//       currentVideoFullScreenEduObserver &&
-//       channelEmbededVideoObserver &&
-//       currentShortVideoLinksObserver &&
-//       otherVideosObserver &&
-//       otherShortsObserver
+//       currentVideoPromise &&
+//       currentShortPromise &&
+//       currentVideoHeadLinkPromise &&
+//       currentVideoFullScreenEduPromise &&
+//       channelEmbededVideoPromise &&
+//       currentShortVideoLinksPromise &&
+//       otherVideosPromise &&
+//       otherShortsPromise
 //     ) {
 //       break;
 //     }
@@ -1001,7 +954,7 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
 
 //     // Not ideal but for current video title and current short title/link we need to search inside as on first load sometimes race conditions prevent the other matches
 //     if (
-//       !currentVideoObserver &&
+//       !currentVideoPromise &&
 //       window.location.pathname.startsWith("/watch") &&
 //       window.YoutubeAntiTranslate.getFirstVisible(
 //         mutationRecord.target.querySelectorAll(
@@ -1009,12 +962,12 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
 //         ),
 //       )
 //     ) {
-//       waitForPlayerExistObserver ??=
+//       waitForPlayerExistPromise ??=
 //         window.YoutubeAntiTranslate.waitForPlayerExist();
-//       currentVideoObserver = untranslateCurrentVideo();
+//       currentVideoPromise = untranslateCurrentVideo();
 //     }
 //     if (
-//       !currentShortObserver &&
+//       !currentShortPromise &&
 //       window.location.pathname.startsWith("/shorts/") &&
 //       window.YoutubeAntiTranslate.getFirstVisible(
 //         mutationRecord.target.querySelectorAll(
@@ -1022,12 +975,12 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
 //         ),
 //       )
 //     ) {
-//       waitForPlayerExistObserver ??=
+//       waitForPlayerExistPromise ??=
 //         window.YoutubeAntiTranslate.waitForPlayerExist();
-//       currentShortObserver = untranslateCurrentShortVideo();
+//       currentShortPromise = untranslateCurrentShortVideo();
 //     }
 //     if (
-//       !currentShortVideoLinksObserver &&
+//       !currentShortVideoLinksPromise &&
 //       window.location.pathname.startsWith("/shorts/") &&
 //       window.YoutubeAntiTranslate.getFirstVisible(
 //         mutationRecord.target.querySelectorAll(
@@ -1035,54 +988,62 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
 //         ),
 //       )
 //     ) {
-//       waitForPlayerExistObserver ??=
+//       waitForPlayerExistPromise ??=
 //         window.YoutubeAntiTranslate.waitForPlayerExist();
-//       currentShortVideoLinksObserver = untranslateCurrentShortVideoLinks();
+//       currentShortVideoLinksPromise = untranslateCurrentShortVideoLinks();
 //     }
 
 //     if (
-//       currentVideoObserver &&
-//       currentShortObserver &&
-//       currentVideoHeadLinkObserver &&
-//       currentVideoFullScreenEduObserver &&
-//       channelEmbededVideoObserver &&
-//       currentShortVideoLinksObserver &&
-//       otherVideosObserver &&
-//       otherShortsObserver
+//       currentVideoPromise &&
+//       currentShortPromise &&
+//       currentVideoHeadLinkPromise &&
+//       currentVideoFullScreenEduPromise &&
+//       channelEmbededVideoPromise &&
+//       currentShortVideoLinksPromise &&
+//       otherVideosPromise &&
+//       otherShortsPromise
 //     ) {
 //       break;
 //     }
 //   }
 
 //   if (
-//     !currentVideoObserver &&
-//     !currentShortObserver &&
-//     !currentVideoHeadLinkObserver &&
-//     !currentVideoFullScreenEduObserver &&
-//     !channelEmbededVideoObserver &&
-//     !currentShortVideoLinksObserver &&
-//     !otherVideosObserver &&
-//     !otherShortsObserver
+//     !currentVideoPromise &&
+//     !currentShortPromise &&
+//     !currentVideoHeadLinkPromise &&
+//     !currentVideoFullScreenEduPromise &&
+//     !channelEmbededVideoPromise &&
+//     !currentShortVideoLinksPromise &&
+//     !otherVideosPromise &&
+//     !otherShortsPromise
 //   ) {
 //     return;
 //   }
 
-//   // When waitForPlayerExistObserver is set await it before all other Observers
-//   if (waitForPlayerExistObserver) {
-//     await waitForPlayerExistObserver;
+//   // When waitForPlayerExistPromise is set await it before all other Promises
+//   if (waitForPlayerExistPromise) {
+//     await waitForPlayerExistPromise;
 //   }
 
 //   // Wait for all promises to resolve concurrently
-//   await Observer.all([
-//     currentVideoObserver ?? new Observer(() => {}),
-//     currentShortObserver ?? new Observer(() => {}),
-//     currentVideoHeadLinkObserver ?? new Observer(() => {}),
-//     currentVideoFullScreenEduObserver ?? new Observer(() => {}),
-//     channelEmbededVideoObserver ?? new Observer(() => {}),
-//     currentShortVideoLinksObserver ?? new Observer(() => {}),
-//     otherVideosObserver ?? new Observer(() => {}),
-//     otherShortsObserver ?? new Observer(() => {}),
+//   await Promise.all([
+//     currentVideoPromise ?? new Promise(() => {}),
+//     currentShortPromise ?? new Promise(() => {}),
+//     currentVideoHeadLinkPromise ?? new Promise(() => {}),
+//     currentVideoFullScreenEduPromise ?? new Promise(() => {}),
+//     channelEmbededVideoPromise ?? new Promise(() => {}),
+//     currentShortVideoLinksPromise ?? new Promise(() => {}),
+//     otherVideosPromise ?? new Promise(() => {}),
+//     otherShortsPromise ?? new Promise(() => {}),
 //   ]);
+
+//   const endTime = performance.now();
+//   const durationMicroseconds = endTime - startTime;
+
+//   console.warn(
+//     `untranslate() called ${untranslateInvocationCount} times`,
+//     `${durationMicroseconds} ms`,
+//   );
 // }
 
 /**
