@@ -104,6 +104,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     // Get the channel branding header description
     const brandingDescription = await page
       .locator(channelDescriptionSelector)
+      .first()
       .textContent();
     console.log("Channel header description:", brandingTitle?.trim());
 
