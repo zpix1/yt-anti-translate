@@ -119,12 +119,7 @@ async function untranslateCurrentShortVideo() {
       if (
         realTitle &&
         currentTitle &&
-        !window.YoutubeAntiTranslate.isStringEqual(realTitle, currentTitle, {
-          ignoreCase: true,
-          normalizeNFKC: true,
-          normalizeSpaces: true,
-          trim: true,
-        })
+        !window.YoutubeAntiTranslate.isStringEqual(realTitle, currentTitle)
       ) {
         window.YoutubeAntiTranslate.logInfo(
           `Untranslating Short title: "${currentTitle}" -> "${realTitle}"`,
@@ -138,12 +133,6 @@ async function untranslateCurrentShortVideo() {
             document.title,
             currentTitle,
             realTitle,
-            {
-              ignoreCase: true,
-              normalizeNFKC: true,
-              normalizeSpaces: true,
-              trim: true,
-            },
           );
         } else {
           // Fallback if exact match fails (e.g. " Shorts" suffix)
@@ -296,7 +285,7 @@ async function createOrUpdateUntranslatedFakeNode(
       );
 
     // Ignore advertisement video
-    if (getUrlForElement.includes("www.googleadservices.com")) {
+    if (window.YoutubeAntiTranslate.isAdvertismentHref(getUrlForElement)) {
       return;
     }
     const response = await get(
@@ -322,43 +311,21 @@ async function createOrUpdateUntranslatedFakeNode(
         ) ?? oldTitle;
 
       if (
-        !window.YoutubeAntiTranslate.isStringEqual(realTitle, cachedOldTitle, {
-          ignoreCase: true,
-          normalizeNFKC: true,
-          normalizeSpaces: true,
-          trim: true,
-        })
+        !window.YoutubeAntiTranslate.isStringEqual(realTitle, cachedOldTitle)
       ) {
         document.title = window.YoutubeAntiTranslate.stringReplaceWithOptions(
           document.title,
           cachedOldTitle,
           realTitle,
-          {
-            ignoreCase: true,
-            normalizeNFKC: true,
-            normalizeSpaces: true,
-            trim: true,
-          },
         );
       }
     }
 
     if (
-      window.YoutubeAntiTranslate.isStringEqual(realTitle, oldTitle, {
-        ignoreCase: true,
-        normalizeNFKC: true,
-        normalizeSpaces: true,
-        trim: true,
-      }) ||
+      window.YoutubeAntiTranslate.isStringEqual(realTitle, oldTitle) ||
       window.YoutubeAntiTranslate.isStringEqual(
         fakeNode?.textContent,
         realTitle,
-        {
-          ignoreCase: true,
-          normalizeNFKC: true,
-          normalizeSpaces: true,
-          trim: true,
-        },
       )
     ) {
       return;
@@ -444,7 +411,7 @@ async function untranslateOtherVideos(intersectElements = null) {
       }
 
       // Ignore advertisement video
-      if (linkElement.href.includes("www.googleadservices.com")) {
+      if (window.YoutubeAntiTranslate.isAdvertismentHref(linkElement.href)) {
         continue;
       }
 
@@ -474,12 +441,6 @@ async function untranslateOtherVideos(intersectElements = null) {
           !window.YoutubeAntiTranslate.isStringEqual(
             originalTitle,
             currentTitle,
-            {
-              ignoreCase: true,
-              normalizeNFKC: true,
-              normalizeSpaces: true,
-              trim: true,
-            },
           )
         ) {
           window.YoutubeAntiTranslate.logInfo(
@@ -579,12 +540,7 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
         if (
           realTitle &&
           currentTitle &&
-          !window.YoutubeAntiTranslate.isStringEqual(realTitle, currentTitle, {
-            ignoreCase: true,
-            normalizeNFKC: true,
-            normalizeSpaces: true,
-            trim: true,
-          })
+          !window.YoutubeAntiTranslate.isStringEqual(realTitle, currentTitle)
         ) {
           titleElement.textContent = realTitle;
           // Update title attribute if it exists (for tooltips)

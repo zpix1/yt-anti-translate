@@ -154,20 +154,20 @@ ytm-shorts-lockup-view-model`,
    * @param {string} str1 - First string to compare.
    * @param {string} str2 - Second string to compare.
    * @param {object} [options] - Configuration options for comparison.
-   * @param {boolean} [options.ignoreCase=false] - If true, comparison is case-insensitive.
-   * @param {boolean} [options.normalizeSpaces=false] - If true, replaces consecutive whitespace with a single space.
-   * @param {boolean} [options.normalizeNFKC=false] - If true, applies Unicode Normalization Form Compatibility Composition (NFKC).
-   * @param {boolean} [options.trim=false] - If true, trims both leading and trailing whitespace.
-   * @param {boolean} [options.trimLeft=false] - If true, trims leading whitespace. Ignored if `trim` is true.
-   * @param {boolean} [options.trimRight=false] - If true, trims trailing whitespace. Ignored if `trim` is true.
+   * @param {boolean} [options.ignoreCase=true] - If true, comparison is case-insensitive. Default true
+   * @param {boolean} [options.normalizeSpaces=true] - If true, replaces consecutive whitespace with a single space. Default true
+   * @param {boolean} [options.normalizeNFKC=true] - If true, applies Unicode Normalization Form Compatibility Composition (NFKC). Default true
+   * @param {boolean} [options.trim=true] - If true, trims both leading and trailing whitespace. Default true
+   * @param {boolean} [options.trimLeft=false] - If true, trims leading whitespace. Ignored if `trim` is true. Default false
+   * @param {boolean} [options.trimRight=false] - If true, trims trailing whitespace. Ignored if `trim` is true. Default false
    * @returns {boolean} Whether the two processed strings are equal.
    */
   isStringEqual: function (str1, str2, options = {}) {
     const {
-      ignoreCase = false,
-      normalizeSpaces = false,
-      normalizeNFKC = false,
-      trim = false,
+      ignoreCase = true,
+      normalizeSpaces = true,
+      normalizeNFKC = true,
+      trim = true,
       trimLeft = false,
       trimRight = false,
     } = options;
@@ -212,12 +212,12 @@ ytm-shorts-lockup-view-model`,
    * @param {string|RegExp} pattern - The pattern to replace. If a string, treated as a literal substring.
    * @param {string} replacement - The replacement string.
    * @param {object} [options] - Configuration options.
-   * @param {boolean} [options.ignoreCase=false] - If true, performs case-insensitive replacement.
-   * @param {boolean} [options.normalizeSpaces=false] - If true, replaces all whitespace sequences with a single space before matching.
-   * @param {boolean} [options.normalizeNFKC=false] - If true, applies Unicode Normalization Form Compatibility Composition (NFKC).
-   * @param {boolean} [options.trim=false] - If true, trims leading and trailing whitespace before processing.
-   * @param {boolean} [options.trimLeft=false] - If true, trims leading whitespace (ignored if `trim` is true).
-   * @param {boolean} [options.trimRight=false] - If true, trims trailing whitespace (ignored if `trim` is true).
+   * @param {boolean} [options.ignoreCase=true] - If true, performs case-insensitive replacement. Default true
+   * @param {boolean} [options.normalizeSpaces=true] - If true, replaces all whitespace sequences with a single space before matching. Default true
+   * @param {boolean} [options.normalizeNFKC=true] - If true, applies Unicode Normalization Form Compatibility Composition (NFKC). Default true
+   * @param {boolean} [options.trim=true] - If true, trims leading and trailing whitespace before processing. Default true
+   * @param {boolean} [options.trimLeft=false] - If true, trims leading whitespace (ignored if `trim` is true). Default false
+   * @param {boolean} [options.trimRight=false] - If true, trims trailing whitespace (ignored if `trim` is true). Default false
    * @returns {string} The resulting string after replacement.
    */
   stringReplaceWithOptions: function (
@@ -227,10 +227,10 @@ ytm-shorts-lockup-view-model`,
     options = {},
   ) {
     const {
-      ignoreCase = false,
-      normalizeSpaces = false,
-      normalizeNFKC = false,
-      trim = false,
+      ignoreCase = true,
+      normalizeSpaces = true,
+      normalizeNFKC = true,
+      trim = true,
       trimLeft = false,
       trimRight = false,
     } = options;
@@ -263,7 +263,7 @@ ytm-shorts-lockup-view-model`,
     }
 
     const processedInput = preprocess(input);
-    if (!processedInput || !replacement) {
+    if (!processedInput || replacement === null || replacement === undefined) {
       return processedInput;
     }
 
@@ -350,7 +350,7 @@ ytm-shorts-lockup-view-model`,
         }
 
         // Further extend the extended viewport by VIEWPORT_OUTSIDE_LIMIT_FRACTION to set the maximum outside limit
-        // Use 500px as the miniimum extension, as some element such as shorts are quite big
+        // Use 500px as the minimum extension, as some element such as shorts are quite big
         const extraHeight =
           window.innerHeight * this.VIEWPORT_OUTSIDE_LIMIT_FRACTION > 500
             ? window.innerHeight * this.VIEWPORT_OUTSIDE_LIMIT_FRACTION
@@ -548,6 +548,18 @@ ytm-shorts-lockup-view-model`,
     const searchParams = new URLSearchParams(searchParamsText);
     const videoId = searchParams.get("v");
     return `${url.split("?")[0]}?v=${videoId}`;
+  },
+
+  /**
+   * Identify if the href is advertisement
+   * @param {string} href - the hrewf to check
+   * @returns {boolean} - true if href is recognized as advertisement
+   */
+  isAdvertismentHref(href) {
+    if (href.includes("www.googleadservices.com")) {
+      return true;
+    }
+    return false;
   },
 
   /**
