@@ -111,7 +111,9 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     // Check that the branding header title is in English and not in Thai
     expect(brandingDescription).toContain("SUBSCRIBE FOR A COOKIE");
     expect(brandingDescription).not.toContain("ไปดู Beast Games ได้แล้ว");
-    await expect(page.locator(channelDescriptionSelector).first).toBeVisible();
+    await expect(
+      page.locator(channelDescriptionSelector).first(),
+    ).toBeVisible();
 
     // --- Open About Popup ---
     console.log(
