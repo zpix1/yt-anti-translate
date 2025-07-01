@@ -471,7 +471,7 @@ ytm-shorts-lockup-view-model`,
 
       function check() {
         const nodeListResult = document.querySelectorAll(querySelector);
-        if (nodeListResult) {
+        if (nodeListResult && nodeListResult.length > 0) {
           resolve(nodeListResult);
         } else if (attempts++ < maxAttempts) {
           requestAnimationFrame(check);

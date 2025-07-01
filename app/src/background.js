@@ -1080,83 +1080,83 @@ window.YoutubeAntiTranslate.waitForQuerySelectorAll(
   }
 });
 
-// Current short title MutationObserver
-const currentShortObserver = new MutationObserver(untranslateCurrentShortVideo);
-window.YoutubeAntiTranslate.waitForQuerySelectorAll(
-  getUntranslateCurrentShortVideoParams().originalNodeSelector,
-).then((nodeListResult) => {
-  for (const node of nodeListResult) {
-    currentShortObserver.observe(node, config);
-  }
-});
+// // Current short title MutationObserver
+// const currentShortObserver = new MutationObserver(untranslateCurrentShortVideo);
+// window.YoutubeAntiTranslate.waitForQuerySelectorAll(
+//   getUntranslateCurrentShortVideoParams().originalNodeSelector,
+// ).then((nodeListResult) => {
+//   for (const node of nodeListResult) {
+//     currentShortObserver.observe(node, config);
+//   }
+// });
 
-// Current video head link MutationObserver
-const currentVideoHeadLinkObserver = new MutationObserver(
-  untranslateCurrentVideoHeadLink,
-);
-window.YoutubeAntiTranslate.waitForQuerySelectorAll(
-  getUntranslateCurrentVideoHeadLinkParams().originalNodeSelector,
-).then((nodeListResult) => {
-  for (const node of nodeListResult) {
-    currentVideoHeadLinkObserver.observe(node, config);
-  }
-});
+// // Current video head link MutationObserver
+// const currentVideoHeadLinkObserver = new MutationObserver(
+//   untranslateCurrentVideoHeadLink,
+// );
+// window.YoutubeAntiTranslate.waitForQuerySelectorAll(
+//   getUntranslateCurrentVideoHeadLinkParams().originalNodeSelector,
+// ).then((nodeListResult) => {
+//   for (const node of nodeListResult) {
+//     currentVideoHeadLinkObserver.observe(node, config);
+//   }
+// });
 
-// Current video full screen edu MutationObserver
-const currentVideoFullScreenEduObserver = new MutationObserver(
-  untranslateCurrentVideoFullScreenEdu,
-);
-window.YoutubeAntiTranslate.waitForQuerySelectorAll(
-  getUntranslateCurrentVideoFullScreenEduParams().originalNodeSelector,
-).then((nodeListResult) => {
-  for (const node of nodeListResult) {
-    currentVideoFullScreenEduObserver.observe(node, config);
-  }
-});
+// // Current video full screen edu MutationObserver
+// const currentVideoFullScreenEduObserver = new MutationObserver(
+//   untranslateCurrentVideoFullScreenEdu,
+// );
+// window.YoutubeAntiTranslate.waitForQuerySelectorAll(
+//   getUntranslateCurrentVideoFullScreenEduParams().originalNodeSelector,
+// ).then((nodeListResult) => {
+//   for (const node of nodeListResult) {
+//     currentVideoFullScreenEduObserver.observe(node, config);
+//   }
+// });
 
-// Current embeded channel video title MutationObserver
-const channelEmbededVideoObserver = new MutationObserver(
-  untranslateCurrentChannelEmbededVideoTitle,
-);
-window.YoutubeAntiTranslate.waitForQuerySelectorAll(
-  getUntranslateCurrentChannelEmbededVideoTitleParams().originalNodeSelector,
-).then((nodeListResult) => {
-  for (const node of nodeListResult) {
-    channelEmbededVideoObserver.observe(node, config);
-  }
-});
+// // Current embeded channel video title MutationObserver
+// const channelEmbededVideoObserver = new MutationObserver(
+//   untranslateCurrentChannelEmbededVideoTitle,
+// );
+// window.YoutubeAntiTranslate.waitForQuerySelectorAll(
+//   getUntranslateCurrentChannelEmbededVideoTitleParams().originalNodeSelector,
+// ).then((nodeListResult) => {
+//   for (const node of nodeListResult) {
+//     channelEmbededVideoObserver.observe(node, config);
+//   }
+// });
 
-// Current short title MutationObserver
-const currentShortVideoLinksObserver = new MutationObserver(
-  untranslateCurrentShortVideoLinks,
-);
-window.YoutubeAntiTranslate.waitForQuerySelectorAll(
-  getUntranslateCurrentShortVideoLinksParams().originalNodeSelector,
-).then((nodeListResult) => {
-  for (const node of nodeListResult) {
-    currentShortVideoLinksObserver.observe(node, config);
-  }
-});
+// // Current short title MutationObserver
+// const currentShortVideoLinksObserver = new MutationObserver(
+//   untranslateCurrentShortVideoLinks,
+// );
+// window.YoutubeAntiTranslate.waitForQuerySelectorAll(
+//   getUntranslateCurrentShortVideoLinksParams().originalNodeSelector,
+// ).then((nodeListResult) => {
+//   for (const node of nodeListResult) {
+//     currentShortVideoLinksObserver.observe(node, config);
+//   }
+// });
 
-// other videos titles MutationObserver
-const otherVideosObserver = new MutationObserver(untranslateOtherVideos);
-window.YoutubeAntiTranslate.waitForQuerySelectorAll(
-  window.YoutubeAntiTranslate.ALL_ARRAYS_VIDEOS_SELECTOR,
-).then((nodeListResult) => {
-  for (const node of nodeListResult) {
-    otherVideosObserver.observe(node, config);
-  }
-});
+// // other videos titles MutationObserver
+// const otherVideosObserver = new MutationObserver(untranslateOtherVideos);
+// window.YoutubeAntiTranslate.waitForQuerySelectorAll(
+//   window.YoutubeAntiTranslate.ALL_ARRAYS_VIDEOS_SELECTOR,
+// ).then((nodeListResult) => {
+//   for (const node of nodeListResult) {
+//     otherVideosObserver.observe(node, config);
+//   }
+// });
 
-// other shorts titles MutationObserver
-const otherShortsObserver = new MutationObserver(untranslateOtherShortsVideos);
-window.YoutubeAntiTranslate.waitForQuerySelectorAll(
-  window.YoutubeAntiTranslate.ALL_ARRAYS_SHORTS_SELECTOR,
-).then((nodeListResult) => {
-  for (const node of nodeListResult) {
-    otherShortsObserver.observe(node, config);
-  }
-});
+// // other shorts titles MutationObserver
+// const otherShortsObserver = new MutationObserver(untranslateOtherShortsVideos);
+// window.YoutubeAntiTranslate.waitForQuerySelectorAll(
+//   window.YoutubeAntiTranslate.ALL_ARRAYS_SHORTS_SELECTOR,
+// ).then((nodeListResult) => {
+//   for (const node of nodeListResult) {
+//     otherShortsObserver.observe(node, config);
+//   }
+// });
 
 // // keep MutationObservers updated
 // function updateMutationObservers(/** @type {MutationRecord[]} */ mutationList){
