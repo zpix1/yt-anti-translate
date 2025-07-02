@@ -553,7 +553,7 @@ ytm-shorts-lockup-view-model`,
 
   /**
    * Identify if the href is advertisement
-   * @param {string} href - the hrewf to check
+   * @param {string} href - the href to check
    * @returns {boolean} - true if href is recognized as advertisement
    */
   isAdvertismentHref(href) {
