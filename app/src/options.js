@@ -62,7 +62,12 @@ function renderFooterLinks() {
 
 function saveOptions() {
   if (document.getElementById("reload-checkbox").checked) {
-    chrome.tabs.reload();
+    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+      const tab = tabs[0];
+      if (tab && tab.url && tab.url.match(/^.*youtube\.com\/.{0,}$/)) {
+        chrome.tabs.reload(tab.id);
+      }
+    });
   }
   chrome.storage.sync.get(
     {
