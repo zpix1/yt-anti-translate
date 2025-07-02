@@ -624,12 +624,6 @@ async function untranslate(/** @type {MutationRecord[]} */ mutationList) {
 
     const /** @type {Element} */ element = mutationRecord.target;
     if (!mutationRecord.target.matches("body")) {
-      // Checks on mutation added nodes
-
-      if (!window.YoutubeAntiTranslate.isVisible(element)) {
-        continue;
-      }
-
       // Checks on mutation closest target
       // `closest` conditions can overlap so we do not use `else if`
       if (
@@ -727,10 +721,6 @@ async function untranslate(/** @type {MutationRecord[]} */ mutationList) {
         continue;
       }
       const /** @type {Element} */ addedElement = addedNode;
-
-      if (!window.YoutubeAntiTranslate.isVisible(addedElement)) {
-        continue;
-      }
 
       // Checks on mutation closest added nodes
       // `closest` conditions can overlap so we do not use `else if`
