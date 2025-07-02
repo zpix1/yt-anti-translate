@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix 404 on advertisement videos ([#48](https://github.com/zpix1/yt-anti-translate/issues/48))
 - Fix some issues in viewport/intersect logic
 - Fix channel branding header description not untranslating when window was smaller than 528px width
+- Fix videos in watch suggestions not untranslated by adding a new selector "yt-lockup-view-model" and way to handle it
 
 ## [1.18.2] - 2025-05-27
 

@@ -402,7 +402,11 @@ async function untranslateOtherVideos(intersectElements = null) {
             video.querySelector(`a[href*="/watch?v="]`);
         }
         if (!titleElement) {
-          titleElement = video.querySelector("yt-formatted-string#video-title");
+          titleElement =
+            video.querySelector("yt-formatted-string#video-title") ||
+            video.querySelector(
+              ".yt-lockup-metadata-view-model-wiz__title>.yt-core-attributed-string",
+            );
         }
         if (!linkElement || !titleElement) {
           // console.debug(`Skipping video item, missing link or title:`, video);
