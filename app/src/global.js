@@ -556,7 +556,7 @@ ytm-shorts-lockup-view-model`,
    * @param {string} href - the hrewf to check
    * @returns {boolean} - true if href is recognized as advertisement
    */
-  isAdvertismentHref(href) {
+  isAdvertisementHref(href) {
     if (href.includes("www.googleadservices.com")) {
       return true;
     }

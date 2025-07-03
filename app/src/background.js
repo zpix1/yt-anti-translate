@@ -285,7 +285,7 @@ async function createOrUpdateUntranslatedFakeNode(
       );
 
     // Ignore advertisement video
-    if (window.YoutubeAntiTranslate.isAdvertismentHref(getUrlForElement)) {
+    if (window.YoutubeAntiTranslate.isAdvertisementHref(getUrlForElement)) {
       return;
     }
     const response = await get(
@@ -415,7 +415,7 @@ async function untranslateOtherVideos(intersectElements = null) {
       }
 
       // Ignore advertisement video
-      if (window.YoutubeAntiTranslate.isAdvertismentHref(linkElement.href)) {
+      if (window.YoutubeAntiTranslate.isAdvertisementHref(linkElement.href)) {
         continue;
       }
 

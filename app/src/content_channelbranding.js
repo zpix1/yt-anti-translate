@@ -56,7 +56,7 @@ async function detectChannelOriginalLanguage() {
     }
 
     // Ignore advertisement video
-    if (window.YoutubeAntiTranslate.isAdvertismentHref(href)) {
+    if (window.YoutubeAntiTranslate.isAdvertisementHref(href)) {
       continue;
     }
 
