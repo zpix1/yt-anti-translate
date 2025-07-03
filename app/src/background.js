@@ -58,6 +58,7 @@ async function get(url) {
 }
 
 let /** @type {Boolean} */ untranslateCurrentShortVideo_running = false;
+//Changes main short title on "/shorts/shortid" pages
 async function untranslateCurrentShortVideo() {
   if (
     untranslateCurrentShortVideo_running ||
@@ -92,6 +93,7 @@ function getUntranslateCurrentShortVideoParams() {
 }
 
 let /** @type {Boolean} */ untranslateCurrentShortVideoLinks_running = false;
+//Changes suggested video title link on a short on "/shorts/shortid" pages
 async function untranslateCurrentShortVideoLinks() {
   if (
     untranslateCurrentShortVideoLinks_running ||
@@ -125,6 +127,7 @@ function getUntranslateCurrentShortVideoLinksParams() {
 }
 
 let /** @type {Boolean} */ untranslateCurrentVideo_running = false;
+//Changes main video title on "/watch?v=videoid" pages
 async function untranslateCurrentVideo() {
   if (
     untranslateCurrentVideo_running ||
@@ -158,6 +161,9 @@ function getUntranslateCurrentVideoParams() {
 }
 
 let /** @type {Boolean} */ untranslateCurrentVideoHeadLink_running = false;
+
+//For channel ("/@MrBeast") pages, for the pinned video's title **in** the video player
+//See "docs/Figure 2.png"
 async function untranslateCurrentVideoHeadLink() {
   if (
     untranslateCurrentVideoHeadLink_running ||
@@ -234,16 +240,18 @@ function getUntranslateCurrentVideoFullScreenEduParams() {
   return { fakeNodeID, originalNodeSelector };
 }
 
-let /** @type {Boolean} */ untranslateCurrentChannelEmbededVideoTitle_running = false;
-async function untranslateCurrentChannelEmbededVideoTitle() {
-  if (untranslateCurrentChannelEmbededVideoTitle_running) {
+let /** @type {Boolean} */ untranslateCurrentChannelEmbeddedVideoTitle_running = false;
+//For channel ("/@MrBeast") pages, for the pinned video's title **under** the video player
+//See "docs/Figure 1.png"
+async function untranslateCurrentChannelEmbeddedVideoTitle() {
+  if (untranslateCurrentChannelEmbeddedVideoTitle_running) {
     return;
   }
-  untranslateCurrentChannelEmbededVideoTitle_running = true;
+  untranslateCurrentChannelEmbeddedVideoTitle_running = true;
 
   try {
     const { fakeNodeID, originalNodeSelector } =
-      getUntranslateCurrentChannelEmbededVideoTitleParams();
+      getUntranslateCurrentChannelEmbeddedVideoTitleParams();
 
     await createOrUpdateUntranslatedFakeNode(
       fakeNodeID,
@@ -252,13 +260,13 @@ async function untranslateCurrentChannelEmbededVideoTitle() {
       "a",
       false,
     );
-    untranslateCurrentChannelEmbededVideoTitle_running = false;
+    untranslateCurrentChannelEmbeddedVideoTitle_running = false;
   } catch {
-    untranslateCurrentChannelEmbededVideoTitle_running = false;
+    untranslateCurrentChannelEmbeddedVideoTitle_running = false;
   }
 }
 
-function getUntranslateCurrentChannelEmbededVideoTitleParams() {
+function getUntranslateCurrentChannelEmbeddedVideoTitleParams() {
   const fakeNodeID = "yt-anti-translate-fake-node-channel-embeded-title";
   const originalNodeSelector = `div.ytd-channel-video-player-renderer #metadata-container.ytd-channel-video-player-renderer a:not(#${fakeNodeID})`;
   return { fakeNodeID, originalNodeSelector };
@@ -299,7 +307,14 @@ async function createOrUpdateUntranslatedFakeNode(
     return;
   }
 
-  const getUrlForElement = getUrl(translatedElement ?? fakeNode);
+  const getUrlForElement = window.YoutubeAntiTranslate.stripNonEssentialParams(
+    getUrl(translatedElement ?? fakeNode),
+  );
+
+  // Ignore advertisement video
+  if (window.YoutubeAntiTranslate.isAdvertisementHref(getUrlForElement)) {
+    return;
+  }
   const response = await get(
     "https://www.youtube.com/oembed?url=" + getUrlForElement,
   );
@@ -315,7 +330,10 @@ async function createOrUpdateUntranslatedFakeNode(
 
   const oldTitle = translatedElement?.textContent ?? fakeNode?.textContent;
 
-  if (realTitle === oldTitle || fakeNode?.textContent === realTitle) {
+  if (
+    window.YoutubeAntiTranslate.isStringEqual(realTitle, oldTitle) ||
+    window.YoutubeAntiTranslate.isStringEqual(fakeNode?.textContent, realTitle)
+  ) {
     return;
   } else {
     // cache old title for future reference
@@ -395,7 +413,11 @@ async function untranslateOtherVideos(intersectElements = null) {
             video.querySelector(`a[href*="/watch?v="]`);
         }
         if (!titleElement) {
-          titleElement = video.querySelector("yt-formatted-string#video-title");
+          titleElement =
+            video.querySelector("yt-formatted-string#video-title") ||
+            video.querySelector(
+              ".yt-lockup-metadata-view-model-wiz__title>.yt-core-attributed-string",
+            );
         }
         if (!linkElement || !titleElement) {
           // console.debug(`Skipping video item, missing link or title:`, video);
@@ -403,12 +425,21 @@ async function untranslateOtherVideos(intersectElements = null) {
         }
       }
 
-      const videoHref = linkElement.href; // Use the link's href for oEmbed and as the key
+      // Ignore advertisement video
+      if (window.YoutubeAntiTranslate.isAdvertisementHref(linkElement.href)) {
+        continue;
+      }
+
+      // Use the link's href for oEmbed and as the key
+      // These afaik always conform to "/watch?v=id", and don't have any extra parameters, but just to be safe
+      const videoHref = window.YoutubeAntiTranslate.stripNonEssentialParams(
+        linkElement.href,
+      );
 
       try {
         // console.debug(`Fetching oEmbed for video:`, videoHref);
         const response = await get(
-          "https://www.youtube.com/oembed?url=" + encodeURIComponent(videoHref),
+          "https://www.youtube.com/oembed?url=" + videoHref,
         );
         if (!response || !response.title) {
           // console.debug(`No oEmbed data for video:`, videoHref);
@@ -422,8 +453,10 @@ async function untranslateOtherVideos(intersectElements = null) {
         if (
           originalTitle &&
           currentTitle &&
-          window.YoutubeAntiTranslate.normalizeSpaces(originalTitle) !==
-            window.YoutubeAntiTranslate.normalizeSpaces(currentTitle)
+          !window.YoutubeAntiTranslate.isStringEqual(
+            originalTitle,
+            currentTitle,
+          )
         ) {
           window.YoutubeAntiTranslate.logInfo(
             `Untranslating Video: "${currentTitle}" -> "${originalTitle}"`,
@@ -534,7 +567,11 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
         const realTitle = response.title;
         const currentTitle = titleElement.textContent?.trim(); // Use textContent for typical title spans
 
-        if (realTitle && currentTitle && realTitle !== currentTitle) {
+        if (
+          realTitle &&
+          currentTitle &&
+          !window.YoutubeAntiTranslate.isStringEqual(realTitle, currentTitle)
+        ) {
           titleElement.textContent = realTitle;
           // Update title attribute if it exists (for tooltips)
           if (titleElement.hasAttribute("title")) {
@@ -592,18 +629,14 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
 }
 
 // --- Mutation conditional processor ---
-let untranslateInvocationCount = 0;
 async function untranslate(/** @type {MutationRecord[]} */ mutationList) {
-  const startTime = performance.now();
-  untranslateInvocationCount++;
-
   let waitForPlayerExistPromise = null;
 
   let currentVideoPromise = null;
   let currentShortPromise = null;
   let currentVideoHeadLinkPromise = null;
   let currentVideoFullScreenEduPromise = null;
-  let channelEmbededVideoPromise = null;
+  let channelEmbeddedVideoPromise = null;
   let currentShortVideoLinksPromise = null;
   let otherVideosPromise = null;
   let otherShortsPromise = null;
@@ -666,16 +699,16 @@ async function untranslate(/** @type {MutationRecord[]} */ mutationList) {
           untranslateCurrentVideoFullScreenEdu();
       }
       if (
-        !channelEmbededVideoPromise &&
+        !channelEmbeddedVideoPromise &&
         element.closest(
-          getUntranslateCurrentChannelEmbededVideoTitleParams()
+          getUntranslateCurrentChannelEmbeddedVideoTitleParams()
             .originalNodeSelector,
         )
       ) {
         waitForPlayerExistPromise ??=
           window.YoutubeAntiTranslate.waitForPlayerExist();
-        channelEmbededVideoPromise =
-          untranslateCurrentChannelEmbededVideoTitle();
+        channelEmbeddedVideoPromise =
+          untranslateCurrentChannelEmbeddedVideoTitle();
       }
       if (
         !currentShortVideoLinksPromise &&
@@ -705,7 +738,7 @@ async function untranslate(/** @type {MutationRecord[]} */ mutationList) {
         currentShortPromise &&
         currentVideoHeadLinkPromise &&
         currentVideoFullScreenEduPromise &&
-        channelEmbededVideoPromise &&
+        channelEmbeddedVideoPromise &&
         currentShortVideoLinksPromise &&
         otherVideosPromise &&
         otherShortsPromise
@@ -766,16 +799,16 @@ async function untranslate(/** @type {MutationRecord[]} */ mutationList) {
           untranslateCurrentVideoFullScreenEdu();
       }
       if (
-        !channelEmbededVideoPromise &&
+        !channelEmbeddedVideoPromise &&
         addedElement.closest(
-          getUntranslateCurrentChannelEmbededVideoTitleParams()
+          getUntranslateCurrentChannelEmbeddedVideoTitleParams()
             .originalNodeSelector,
         )
       ) {
         waitForPlayerExistPromise ??=
           window.YoutubeAntiTranslate.waitForPlayerExist();
-        channelEmbededVideoPromise =
-          untranslateCurrentChannelEmbededVideoTitle();
+        channelEmbeddedVideoPromise =
+          untranslateCurrentChannelEmbeddedVideoTitle();
       }
       if (
         !currentShortVideoLinksPromise &&
@@ -809,7 +842,7 @@ async function untranslate(/** @type {MutationRecord[]} */ mutationList) {
         currentShortPromise &&
         currentVideoHeadLinkPromise &&
         currentVideoFullScreenEduPromise &&
-        channelEmbededVideoPromise &&
+        channelEmbeddedVideoPromise &&
         currentShortVideoLinksPromise &&
         otherVideosPromise &&
         otherShortsPromise
@@ -870,18 +903,18 @@ async function untranslate(/** @type {MutationRecord[]} */ mutationList) {
           untranslateCurrentVideoFullScreenEdu();
       }
       if (
-        !channelEmbededVideoPromise &&
+        !channelEmbeddedVideoPromise &&
         window.YoutubeAntiTranslate.getFirstVisible(
           addedElement.querySelectorAll(
-            getUntranslateCurrentChannelEmbededVideoTitleParams()
+            getUntranslateCurrentChannelEmbeddedVideoTitleParams()
               .originalNodeSelector,
           ),
         )
       ) {
         waitForPlayerExistPromise ??=
           window.YoutubeAntiTranslate.waitForPlayerExist();
-        channelEmbededVideoPromise =
-          untranslateCurrentChannelEmbededVideoTitle();
+        channelEmbeddedVideoPromise =
+          untranslateCurrentChannelEmbeddedVideoTitle();
       }
       if (
         !currentShortVideoLinksPromise &&
@@ -922,7 +955,7 @@ async function untranslate(/** @type {MutationRecord[]} */ mutationList) {
       currentShortPromise &&
       currentVideoHeadLinkPromise &&
       currentVideoFullScreenEduPromise &&
-      channelEmbededVideoPromise &&
+      channelEmbeddedVideoPromise &&
       currentShortVideoLinksPromise &&
       otherVideosPromise &&
       otherShortsPromise
@@ -980,7 +1013,7 @@ async function untranslate(/** @type {MutationRecord[]} */ mutationList) {
       currentShortPromise &&
       currentVideoHeadLinkPromise &&
       currentVideoFullScreenEduPromise &&
-      channelEmbededVideoPromise &&
+      channelEmbeddedVideoPromise &&
       currentShortVideoLinksPromise &&
       otherVideosPromise &&
       otherShortsPromise
@@ -994,7 +1027,7 @@ async function untranslate(/** @type {MutationRecord[]} */ mutationList) {
     !currentShortPromise &&
     !currentVideoHeadLinkPromise &&
     !currentVideoFullScreenEduPromise &&
-    !channelEmbededVideoPromise &&
+    !channelEmbeddedVideoPromise &&
     !currentShortVideoLinksPromise &&
     !otherVideosPromise &&
     !otherShortsPromise
@@ -1013,19 +1046,11 @@ async function untranslate(/** @type {MutationRecord[]} */ mutationList) {
     currentShortPromise ?? new Promise(() => {}),
     currentVideoHeadLinkPromise ?? new Promise(() => {}),
     currentVideoFullScreenEduPromise ?? new Promise(() => {}),
-    channelEmbededVideoPromise ?? new Promise(() => {}),
+    channelEmbeddedVideoPromise ?? new Promise(() => {}),
     currentShortVideoLinksPromise ?? new Promise(() => {}),
     otherVideosPromise ?? new Promise(() => {}),
     otherShortsPromise ?? new Promise(() => {}),
   ]);
-
-  const endTime = performance.now();
-  const durationMicroseconds = endTime - startTime;
-
-  console.warn(
-    `untranslate() called ${untranslateInvocationCount} times`,
-    `${durationMicroseconds} ms`,
-  );
 }
 
 /**
@@ -1080,20 +1105,12 @@ async function restoreOriginalPageTitle() {
     return;
   }
 
-  // document tile is sometimes not a perfect match to the oldTile due to spacing, so normalize all
-  const normalizedDocumentTitle = window.YoutubeAntiTranslate.normalizeSpaces(
-    document.title,
-  );
-  const normalizedOldTitle =
-    window.YoutubeAntiTranslate.normalizeSpaces(cachedOldTitle);
-  const normalizeRealTitle =
-    window.YoutubeAntiTranslate.normalizeSpaces(realTitle);
-  const realDocumentTitle = normalizedDocumentTitle.replace(
-    normalizedOldTitle,
-    normalizeRealTitle,
-  );
-  if (normalizedDocumentTitle !== realDocumentTitle) {
-    document.title = realDocumentTitle;
+  if (!window.YoutubeAntiTranslate.isStringEqual(realTitle, cachedOldTitle)) {
+    document.title = window.YoutubeAntiTranslate.stringReplaceWithOptions(
+      document.title,
+      cachedOldTitle,
+      realTitle,
+    );
   }
 }
 

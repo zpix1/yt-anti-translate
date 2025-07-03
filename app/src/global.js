@@ -33,7 +33,8 @@ ytd-rich-item-renderer,
 ytd-compact-video-renderer,
 ytd-grid-video-renderer,
 ytd-playlist-video-renderer,
-ytd-playlist-panel-video-renderer`,
+ytd-playlist-panel-video-renderer,
+yt-lockup-view-model`,
   ALL_ARRAYS_SHORTS_SELECTOR: `div.style-scope.ytd-rich-item-renderer,
 ytm-shorts-lockup-view-model`,
   cacheSessionStorageKey: "[YoutubeAntiTranslate]cache",
@@ -170,11 +171,147 @@ ytm-shorts-lockup-view-model`,
   },
 
   /**
+   * Advanced string equality comparison with optional normalization and trimming.
+   * @param {string} str1 - First string to compare.
+   * @param {string} str2 - Second string to compare.
+   * @param {object} [options] - Configuration options for comparison.
+   * @param {boolean} [options.ignoreCase=true] - If true, comparison is case-insensitive. Default true
+   * @param {boolean} [options.normalizeSpaces=true] - If true, replaces consecutive whitespace with a single space. Default true
+   * @param {boolean} [options.normalizeNFKC=true] - If true, applies Unicode Normalization Form Compatibility Composition (NFKC). Default true
+   * @param {boolean} [options.trim=true] - If true, trims both leading and trailing whitespace. Default true
+   * @param {boolean} [options.trimLeft=false] - If true, trims leading whitespace. Ignored if `trim` is true. Default false
+   * @param {boolean} [options.trimRight=false] - If true, trims trailing whitespace. Ignored if `trim` is true. Default false
+   * @returns {boolean} Whether the two processed strings are equal.
+   */
+  isStringEqual: function (str1, str2, options = {}) {
+    const {
+      ignoreCase = true,
+      normalizeSpaces = true,
+      normalizeNFKC = true,
+      trim = true,
+      trimLeft = false,
+      trimRight = false,
+    } = options;
+
+    function process(str) {
+      if (!str) {
+        return str;
+      }
+
+      if (normalizeNFKC) {
+        str = str.normalize("NFKC");
+      }
+
+      if (normalizeSpaces) {
+        str = str.replace(/\s+/g, " ");
+      }
+
+      if (trim) {
+        str = str.trim();
+      } else {
+        if (trimLeft) {
+          str = str.trimStart();
+        }
+        if (trimRight) {
+          str = str.trimEnd();
+        }
+      }
+
+      if (ignoreCase) {
+        str = str.toLowerCase();
+      }
+
+      return str;
+    }
+
+    return process(str1) === process(str2);
+  },
+
+  /**
+   * Advanced string replace with optional normalization and trimming.
+   * @param {string} input - The original string to operate on.
+   * @param {string|RegExp} pattern - The pattern to replace. If a string, treated as a literal substring.
+   * @param {string} replacement - The replacement string.
+   * @param {object} [options] - Configuration options.
+   * @param {boolean} [options.ignoreCase=true] - If true, performs case-insensitive replacement. Default true
+   * @param {boolean} [options.normalizeSpaces=true] - If true, replaces all whitespace sequences with a single space before matching. Default true
+   * @param {boolean} [options.normalizeNFKC=true] - If true, applies Unicode Normalization Form Compatibility Composition (NFKC). Default true
+   * @param {boolean} [options.trim=true] - If true, trims leading and trailing whitespace before processing. Default true
+   * @param {boolean} [options.trimLeft=false] - If true, trims leading whitespace (ignored if `trim` is true). Default false
+   * @param {boolean} [options.trimRight=false] - If true, trims trailing whitespace (ignored if `trim` is true). Default false
+   * @returns {string} The resulting string after replacement.
+   */
+  stringReplaceWithOptions: function (
+    input,
+    pattern,
+    replacement,
+    options = {},
+  ) {
+    const {
+      ignoreCase = true,
+      normalizeSpaces = true,
+      normalizeNFKC = true,
+      trim = true,
+      trimLeft = false,
+      trimRight = false,
+    } = options;
+
+    function preprocess(str) {
+      if (!str) {
+        return str;
+      }
+
+      if (normalizeNFKC) {
+        str = str.normalize("NFKC");
+      }
+
+      if (normalizeSpaces) {
+        str = str.replace(/\s+/g, " ");
+      }
+
+      if (trim) {
+        str = str.trim();
+      } else {
+        if (trimLeft) {
+          str = str.trimStart();
+        }
+        if (trimRight) {
+          str = str.trimEnd();
+        }
+      }
+
+      return str;
+    }
+
+    const processedInput = preprocess(input);
+    if (!processedInput || replacement === null || replacement === undefined) {
+      return processedInput;
+    }
+
+    let regex;
+    if (typeof pattern === "string") {
+      const processedPattern = preprocess(pattern);
+      const escapedPattern = processedPattern.replace(
+        /[.*+?^${}()|[\]\\]/g,
+        "\\$&",
+      ); // Escape string
+      regex = new RegExp(escapedPattern, ignoreCase ? "gi" : "g");
+    } else if (pattern instanceof RegExp) {
+      const flags = pattern.flags.replace(/i?/, ignoreCase ? "i" : "");
+      regex = new RegExp(pattern.source, flags);
+    } else {
+      throw new TypeError("pattern must be a string or RegExp");
+    }
+
+    return processedInput.replace(regex, replacement);
+  },
+
+  /**
    * Given a Node it uses computed style to determine if it is visible
    * @param {Node} node - A Node of type ELEMENT_NODE
    * @param {boolean} shouldCheckViewport - Optional. If true the element position is checked to be inside or outside the viewport. Viewport is extended based on
    *                                        VIEWPORT_EXTENSION_PERCENTAGE_FRACTION. Defaults true
-   * @param {boolean} onlyOutsideViewport - Optional. only relevant when `shouldCheckViewport` is true. When this is also true the element is returned only if Fully outside
+   * @param {boolean} onlyOutsideViewport - Optional. only relevant when `shouldCheckViewport` is true. When this is also true the element is returned only if fully outside
    *                                        the viewport. By default the element is returned only if inside the viewport. Defaults false
    * @param {boolean} useOutsideLimit - Optional. when true, outside elements are limited to those contained inside the frame between the extended viewport and the
    *                                    limit based on VIEWPORT_OUTSIDE_LIMIT_FRACTION. Defaults false
@@ -230,7 +367,7 @@ ytm-shorts-lockup-view-model`,
         }
 
         // Further extend the extended viewport by VIEWPORT_OUTSIDE_LIMIT_FRACTION to set the maximum outside limit
-        // Use 500px as the miniimum extension, as some element such as shorts are quite big
+        // Use 500px as the minimum extension, as some element such as shorts are quite big
         const extraHeight =
           window.innerHeight * this.VIEWPORT_OUTSIDE_LIMIT_FRACTION > 500
             ? window.innerHeight * this.VIEWPORT_OUTSIDE_LIMIT_FRACTION
@@ -496,6 +633,37 @@ ytm-shorts-lockup-view-model`,
       `convertTimecodeToSeconds: converted ${timecode} to ${result} seconds`,
     );
     return result;
+  },
+
+  /**
+   * Strips all query params except "v" from "/watch" URL to:
+   *  - avoid 404 when passed to YT oembed API (see https://github.com/zpix1/yt-anti-translate/issues/45)
+   *  - improve cache lookups (different "t" params don't mean different vids, "v" is the only important one)
+   * @param {string} url "/watch?app=desktop&v=ghuLDyUEZmY&t=472s" or https://www.youtube.com/watch?app=desktop&v=ghuLDyUEZmY&t=472s)
+   * @returns {string} "/watch?v=ghuLDyUEZmY" or "https://www.youtube.com/watch?v=ghuLDyUEZmY"
+   */
+  stripNonEssentialParams: function (url) {
+    //shorts URLs don't have search parameters afaik, so don't call this on shorts only
+    //this return is here for background.js/createOrUpdateUntranslatedFakeNode, which is called for everything
+    if (!url.includes("/watch?")) {
+      return url;
+    }
+    const searchParamsText = url.split("?")[1];
+    const searchParams = new URLSearchParams(searchParamsText);
+    const videoId = searchParams.get("v");
+    return `${url.split("?")[0]}?v=${videoId}`;
+  },
+
+  /**
+   * Identify if the href is advertisement
+   * @param {string} href - the href to check
+   * @returns {boolean} - true if href is recognized as advertisement
+   */
+  isAdvertisementHref(href) {
+    if (href.includes("www.googleadservices.com")) {
+      return true;
+    }
+    return false;
   },
 
   /**

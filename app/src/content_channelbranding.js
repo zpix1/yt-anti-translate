@@ -54,6 +54,12 @@ async function detectChannelOriginalLanguage() {
       href = `https://www.youtube.com/shorts/${match[1]}`;
     }
 
+    // Ignore advertisement video
+    if (window.YoutubeAntiTranslate.isAdvertisementHref(href)) {
+      continue;
+    }
+
+    href = window.YoutubeAntiTranslate.stripNonEssentialParams(href);
     const oembedUrl = `https://www.youtube.com/oembed?url=${href}`;
 
     let titleFromEmbed;
@@ -205,7 +211,7 @@ async function getChannelBrandingWithYoutubeI(ucid = null, locale = null) {
     locale = window.YoutubeAntiTranslate.getSessionCache(ucid);
   }
   if (!locale) {
-    // detect original language based on oembeded data for videos or shorts on the current channel page
+    // detect original language based on oembedded data for videos or shorts on the current channel page
     locale = await detectChannelOriginalLanguage();
   }
   if (!locale) {
@@ -568,10 +574,12 @@ function updateBrandingHeaderDescriptionContent(
 ) {
   if (originalBrandingData.description) {
     // Find the description text container
+
     let descriptionTextContainer = container.querySelector(
       `yt-description-preview-view-model .truncated-text-wiz__truncated-text-content > ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}:nth-child(1)`,
     );
 
+    // When width is lower than 528px the text container is outside the main container
     if (!descriptionTextContainer) {
       descriptionTextContainer = window.YoutubeAntiTranslate.getFirstVisible(
         document.querySelector(
@@ -579,6 +587,7 @@ function updateBrandingHeaderDescriptionContent(
         ),
       );
     }
+
     if (!descriptionTextContainer) {
       window.YoutubeAntiTranslate.logInfo(
         `No branding header description text containers found`,

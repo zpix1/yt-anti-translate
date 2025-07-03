@@ -30,8 +30,7 @@ When that is populated, some features work more reliably.
 If using Chrome/Edge or other Chromium browsers, install it from [Chrome Web Store](https://chrome.google.com/webstore/detail/yt-anti-translate/ndpmhjnlfkgfalaieeneneenijondgag).
 If using a Firefox browser, install it from [Firefox Extensions Store](https://addons.mozilla.org/firefox/addon/youtube-anti-translate-mv3/).
 
-There's also a [Firefox Manifest v2 version](https://addons.mozilla.org/firefox/addon/youtube-anti-translate/) (maintained by [artisticfox8](https://github.com/artisticfox8/)) compatible with Firefox versions order than `v109.0`.
-However, it is currently outdated, as it was last updated on Aug 2, 2024 and is missing features because of that.
+There's also a [Firefox Manifest v3 version](https://addons.mozilla.org/firefox/addon/youtube-anti-translate/) (maintained by [artisticfox8](https://github.com/artisticfox8/)) since 2021. Currently it is mostly the same as the Chrome version, but it used to include a number of Firefox specific fixes in the past.
 
 ### Development Setup
 
@@ -82,7 +81,7 @@ You can also show your support by:
 - [namakeingo](https://github.com/namakeingo) - Firefox MV3 Developer
   - [Donate to namakeingo](https://github.com/sponsors/namakeingo)
   - Star the fork [namakeingo/yt-anti-translate-firefox](https://github.com/namakeingo/yt-anti-translate-firefox)
-- [artisticfox8](https://github.com/artisticfox8/yt-anti-translate) - Firefox MV2 Developer
+- [artisticfox8](https://github.com/artisticfox8/yt-anti-translate) - Firefox MV3 Developer
   - Star the fork [artisticfox8/yt-anti-translate](https://github.com/artisticfox8/yt-anti-translate)
 - [ajayyy](https://github.com/ayayyy) - DeArrow compatibility [#18](https://github.com/zpix1/yt-anti-translate/pull/18) & [#19](https://github.com/zpix1/yt-anti-translate/pull/19)
 - [YuriiMaiboroda](https://github.com/YuriiMaiboroda) - Fix translating for playlist panel [#14](https://github.com/zpix1/yt-anti-translate/pull/14)
