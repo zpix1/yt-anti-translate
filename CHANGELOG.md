@@ -5,7 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.18.3] - 2025-06-30
+## [Unreleased]
+
+## [1.18.3] - 2025-07-03
 
 ### Fixed
 
@@ -15,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix some issues in viewport/intersect logic
 - Fix channel branding header description not untranslating when window was smaller than 528px width
 - Fix videos in watch suggestions not untranslated by adding a new selector "yt-lockup-view-model" and way to handle it
+- Fix bug #49 - reload current page only if is youtube.com
 
 ## [1.18.2] - 2025-05-27
 
