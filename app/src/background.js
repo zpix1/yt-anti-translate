@@ -207,10 +207,7 @@ async function untranslateCurrentVideoFullScreenEdu() {
   const originalNodeSelector = `${window.YoutubeAntiTranslate.getPlayerSelector()} div.ytp-fullerscreen-edu-text:not(#${fakeNodeID})`;
 
   // Skip if on a channel page
-  if (
-    document.location.pathname.startsWith("@") ||
-    document.location.pathname.startsWith("/@")
-  ) {
+  if (document.location.pathname.startsWith("/@")) {
     return;
   }
 
