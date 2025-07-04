@@ -628,4 +628,46 @@ test.describe("YouTube Anti-Translate extension", () => {
       }
     }
   });
+
+  test("YouTube playlist page contains Popular Shorts playlist", async ({
+    browserNameWithExtensions,
+    localeString,
+  }, testInfo) => {
+    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
+
+    // Launch browser with the extension
+    const context = await createBrowserContext(browserNameWithExtensions);
+
+    // Create a new page
+    const { page, consoleMessageCount } = await setupPageWithAuth(
+      context,
+      browserNameWithExtensions,
+      localeString,
+    );
+
+    await loadPageAndVerifyAuth(
+      page,
+      "https://www.youtube.com/@NileRed/playlists",
+      browserNameWithExtensions,
+    );
+    // Locate the elements with the text "Popular Shorts"
+    const popularShortsLocator = page.locator(
+      'div.yt-lockup-metadata-view-model-wiz__text-container > h3 > a > span:has-text("Popular Shorts")',
+    );
+
+    // Assert that at least one matching element exists
+    const popularShortsCount = await popularShortsLocator.count();
+    expect(popularShortsCount).toBeGreaterThan(0);
+
+    // Take a screenshot for visual verification
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-playlists-test.png`,
+    });
+
+    // Check console message count
+    expect(consoleMessageCount).toBeLessThan(2000);
+
+    // Close the browser context
+    await context.close();
+  });
 });
