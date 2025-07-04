@@ -207,7 +207,7 @@ async function untranslateCurrentVideoFullScreenEdu() {
   const originalNodeSelector = `${window.YoutubeAntiTranslate.getPlayerSelector()} div.ytp-fullerscreen-edu-text:not(#${fakeNodeID})`;
 
   // Skip if on a channel page
-  if (document.location.pathname.startsWith("@")) {
+  if (document.location.pathname.startsWith("/@")) {
     return;
   }
 
@@ -399,7 +399,8 @@ async function untranslateOtherVideos(intersectElements = null) {
         if (!linkElement) {
           linkElement =
             video.querySelector("ytd-thumbnail a") ||
-            video.querySelector(`a[href*="/watch?v="]`);
+            // Ignore playlist links with list= parameter
+            video.querySelector(`a[href*="/watch?v="]:not([href*="list="])`);
         }
         if (!titleElement) {
           titleElement =
