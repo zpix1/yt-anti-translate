@@ -69,7 +69,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     localeString: string,
     addToScreenshotName: string = "",
   ) {
-    const { page, consoleMessageCount } = await setupPageWithAuth(
+    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
       context,
       browserNameWithExtensions,
       localeString,
@@ -228,7 +228,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     expect(pageTitle).not.toContain("มิสเตอร์บีสต์");
 
     // Check console message count
-    expect(consoleMessageCount).toBeLessThan(2000);
+    expect(consoleMessageCountContainer.count).toBeLessThan(2000);
 
     // Close the browser context
     await context.close();
@@ -247,7 +247,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     );
 
     // Create a new page
-    const { page, consoleMessageCount } = await setupPageWithAuth(
+    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
       context,
       browserNameWithExtensions,
       localeString,
@@ -282,7 +282,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     });
 
     // Check console message count
-    expect(consoleMessageCount).toBeLessThan(2000);
+    expect(consoleMessageCountContainer.count).toBeLessThan(2000);
 
     // Close the browser context
     await context.close();

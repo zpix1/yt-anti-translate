@@ -18,7 +18,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     const context = await createBrowserContext(browserNameWithExtensions);
 
     // Create a new page
-    const { page, consoleMessageCount } = await setupPageWithAuth(
+    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
       context,
       browserNameWithExtensions,
       localeString,
@@ -140,7 +140,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     });
 
     // Check console message count
-    expect(consoleMessageCount).toBeLessThan(2000);
+    expect(consoleMessageCountContainer.count).toBeLessThan(2000);
 
     // Close the browser context
     await context.close();
@@ -156,7 +156,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     const context = await createBrowserContext(browserNameWithExtensions);
 
     // Create a new page
-    const { page, consoleMessageCount } = await setupPageWithAuth(
+    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
       context,
       browserNameWithExtensions,
       localeString,
@@ -222,7 +222,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     });
 
     // Check console message count
-    expect(consoleMessageCount).toBeLessThan(2000);
+    expect(consoleMessageCountContainer.count).toBeLessThan(2000);
 
     // Close the browser context
     await context.close();
@@ -238,7 +238,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     const context = await createBrowserContext(browserNameWithExtensions);
 
     // Create a new page
-    const { page, consoleMessageCount } = await setupPageWithAuth(
+    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
       context,
       browserNameWithExtensions,
       localeString,
@@ -291,7 +291,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     });
 
     // Check console message count
-    expect(consoleMessageCount).toBeLessThan(2000);
+    expect(consoleMessageCountContainer.count).toBeLessThan(2000);
 
     // Close the browser context
     await context.close();
@@ -307,7 +307,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     const context = await createBrowserContext(browserNameWithExtensions);
 
     // Create a new page
-    const { page, consoleMessageCount } = await setupPageWithAuth(
+    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
       context,
       browserNameWithExtensions,
       localeString,
@@ -413,7 +413,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     });
 
     // Check console message count
-    expect(consoleMessageCount).toBeLessThan(2000);
+    expect(consoleMessageCountContainer.count).toBeLessThan(2000);
 
     // Close the browser context
     await context.close();
@@ -429,7 +429,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     const context = await createBrowserContext(browserNameWithExtensions);
 
     // Create a new page
-    const { page, consoleMessageCount } = await setupPageWithAuth(
+    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
       context,
       browserNameWithExtensions,
       localeString,
@@ -581,7 +581,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     expect(currentId3).not.toBe(currentId2);
 
     // Check console message count
-    expect(consoleMessageCount).toBeLessThan(2000);
+    expect(consoleMessageCountContainer.count).toBeLessThan(2000);
 
     // Close the browser context
     await context.close();
@@ -639,7 +639,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     const context = await createBrowserContext(browserNameWithExtensions);
 
     // Create a new page
-    const { page, consoleMessageCount } = await setupPageWithAuth(
+    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
       context,
       browserNameWithExtensions,
       localeString,
@@ -665,14 +665,37 @@ test.describe("YouTube Anti-Translate extension", () => {
     });
 
     // Check console message count
-    expect(consoleMessageCount).toBeLessThan(2000);
+    expect(consoleMessageCountContainer.count).toBeLessThan(2000);
+
+    // Close the browser context
+    await context.close();
+  });
+
+  test("YouTube music playlists are untranslated", async ({
+    browserNameWithExtensions,
+    localeString,
+  }, testInfo) => {
+    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
+
+    // Launch browser with the extension
+    const context = await createBrowserContext(browserNameWithExtensions);
+
+    // Create a new page
+    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
+      context,
+      browserNameWithExtensions,
+      localeString,
+    );
 
     // Check music playlists
     await page.goto("https://www.youtube.com/@Ado1024/releases");
-    const musicPlaylist = page
-      .locator(`#video-title:has-text("Ashura-chan")`)
+    const musicPlaylist = await page
+      .locator("#video-title:has-text('Ashura-chan')")
       .count();
-    expect(musicPlaylist).toBeVisible();
+    expect(musicPlaylist).toBeGreaterThan(0);
+
+    // Check console message count
+    expect(consoleMessageCountContainer.count).toBeLessThan(2000);
 
     // Close the browser context
     await context.close();
