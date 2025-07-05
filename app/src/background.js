@@ -400,7 +400,7 @@ async function untranslateOtherVideos(intersectElements = null) {
           linkElement =
             video.querySelector("ytd-thumbnail a") ||
             // Ignore playlist links with list= parameter
-            video.querySelector(`a[href*="/watch?v="]:not([href*="list="])`);
+            video.querySelector(`a[href*="/watch?v="]`);
         }
         if (!titleElement) {
           titleElement =
@@ -417,6 +417,11 @@ async function untranslateOtherVideos(intersectElements = null) {
 
       // Ignore advertisement video
       if (window.YoutubeAntiTranslate.isAdvertisementHref(linkElement.href)) {
+        continue;
+      }
+
+      // Ignore playlist links with list= parameter
+      if (linkElement.href.includes("list=")) {
         continue;
       }
 
@@ -451,6 +456,7 @@ async function untranslateOtherVideos(intersectElements = null) {
           window.YoutubeAntiTranslate.logInfo(
             `Untranslating Video: "${currentTitle}" -> "${originalTitle}"`,
           );
+          console.log("untranslating video", originalTitle, currentTitle);
           // Update both innerText and title attribute
           titleElement.innerText = originalTitle;
           titleElement.title = originalTitle;

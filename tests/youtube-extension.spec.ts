@@ -667,6 +667,13 @@ test.describe("YouTube Anti-Translate extension", () => {
     // Check console message count
     expect(consoleMessageCount).toBeLessThan(2000);
 
+    // Check music playlists
+    await page.goto("https://www.youtube.com/@Ado1024/releases");
+    const musicPlaylist = page
+      .locator(`#video-title:has-text("Ashura-chan")`)
+      .count();
+    expect(musicPlaylist).toBeVisible();
+
     // Close the browser context
     await context.close();
   });
