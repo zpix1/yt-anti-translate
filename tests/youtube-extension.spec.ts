@@ -688,7 +688,12 @@ test.describe("YouTube Anti-Translate extension", () => {
     );
 
     // Check music playlists
-    await page.goto("https://www.youtube.com/@Ado1024/releases");
+    await loadPageAndVerifyAuth(
+      page,
+      "https://www.youtube.com/@Ado1024/releases",
+      browserNameWithExtensions,
+    );
+
     const musicPlaylist = await page
       .locator("#video-title:has-text('Ashura-chan')")
       .count();
