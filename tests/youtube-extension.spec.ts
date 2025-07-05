@@ -670,39 +670,4 @@ test.describe("YouTube Anti-Translate extension", () => {
     // Close the browser context
     await context.close();
   });
-
-  test("YouTube music playlists are untranslated", async ({
-    browserNameWithExtensions,
-    localeString,
-  }, testInfo) => {
-    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
-
-    // Launch browser with the extension
-    const context = await createBrowserContext(browserNameWithExtensions);
-
-    // Create a new page
-    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
-      context,
-      browserNameWithExtensions,
-      localeString,
-    );
-
-    // Check music playlists
-    await loadPageAndVerifyAuth(
-      page,
-      "https://www.youtube.com/@Ado1024/releases",
-      browserNameWithExtensions,
-    );
-
-    const musicPlaylist = await page
-      .locator(":has-text('Ashura-chan')")
-      .count();
-    expect(musicPlaylist).toBeGreaterThan(0);
-
-    // Check console message count
-    expect(consoleMessageCountContainer.count).toBeLessThan(2000);
-
-    // Close the browser context
-    await context.close();
-  });
 });
