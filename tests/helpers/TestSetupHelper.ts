@@ -91,12 +91,12 @@ export async function setupPageWithAuth(
   }
 
   // Set up console message counting
-  let consoleMessageCount = 0;
+  const consoleMessageCountContainer = { count: 0 };
   page.on("console", () => {
-    consoleMessageCount++;
+    consoleMessageCountContainer.count++;
   });
 
-  return { page, consoleMessageCount };
+  return { page, consoleMessageCountContainer };
 }
 
 // Helper function for common page loading and auth checks
