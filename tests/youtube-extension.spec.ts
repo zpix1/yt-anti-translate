@@ -695,7 +695,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     );
 
     const musicPlaylist = await page
-      .locator("#video-title:has-text('Ashura-chan')")
+      .locator(":has-text('Ashura-chan')")
       .count();
     expect(musicPlaylist).toBeGreaterThan(0);
 
