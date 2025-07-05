@@ -456,7 +456,6 @@ async function untranslateOtherVideos(intersectElements = null) {
           window.YoutubeAntiTranslate.logInfo(
             `Untranslating Video: "${currentTitle}" -> "${originalTitle}"`,
           );
-          console.log("untranslating video", originalTitle, currentTitle);
           // Update both innerText and title attribute
           titleElement.innerText = originalTitle;
           titleElement.title = originalTitle;
