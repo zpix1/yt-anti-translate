@@ -1,4 +1,4 @@
-const MUTATION_UPDATE_STEP = 2;
+const MUTATION_UPDATE_STEP = window.YoutubeAntiTranslate.isMobile() ? 1 : 2;
 
 const INTERSECTION_UPDATE_STEP_VIDEOS = 2;
 let allIntersectVideoElements = null;
@@ -170,7 +170,7 @@ async function untranslateCurrentShortVideoLinks() {
 //Changes main video title on "/watch?v=videoid" pages
 async function untranslateCurrentVideo() {
   const fakeNodeID = "yt-anti-translate-fake-node-current-video";
-  const originalNodeSelector = `#title > h1 > yt-formatted-string:not(#${fakeNodeID})`;
+  const originalNodeSelector = `#title > h1 > yt-formatted-string:not(#${fakeNodeID}), .slim-video-information-title .yt-core-attributed-string:not(#${fakeNodeID})`;
 
   await createOrUpdateUntranslatedFakeNode(
     fakeNodeID,
@@ -232,6 +232,23 @@ async function untranslateCurrentChannelEmbeddedVideoTitle() {
     (el) => el.href,
     "a",
     false,
+  );
+}
+
+// Added: Untranslate main video title for the mobile (m.youtube.com) layout
+async function untranslateCurrentMobileVideoDescriptionHeader() {
+  if (!window.YoutubeAntiTranslate.isMobile()) {
+    return;
+  }
+  const fakeNodeID = "yt-anti-translate-fake-node-mobile-video-description";
+  const originalNodeSelector = `ytm-video-description-header-renderer .title > span.yt-core-attributed-string:not(#${fakeNodeID})`;
+
+  await createOrUpdateUntranslatedFakeNode(
+    fakeNodeID,
+    originalNodeSelector,
+    () => document.location.href,
+    "span",
+    true,
   );
 }
 
@@ -608,6 +625,8 @@ async function untranslate() {
     const currentShortPromise = untranslateCurrentShortVideo();
     const currentShortVideoLinksPromise = untranslateCurrentShortVideoLinks();
     const otherShortsPromise = untranslateOtherShortsVideos(); // Call the new function
+    const currentMobileVideoDescriptionPromise =
+      untranslateCurrentMobileVideoDescriptionHeader();
 
     // Wait for all promises to resolve concurrently
     await Promise.all([
@@ -619,6 +638,7 @@ async function untranslate() {
       currentShortPromise,
       currentShortVideoLinksPromise,
       otherShortsPromise,
+      currentMobileVideoDescriptionPromise,
     ]);
 
     // update intersect observers

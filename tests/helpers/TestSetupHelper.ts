@@ -6,6 +6,7 @@ import {
   Browser,
   TestInfo,
   Page,
+  devices,
 } from "@playwright/test";
 import path, { dirname } from "path";
 import { withExtension } from "playwright-webextext";
@@ -38,8 +39,15 @@ export async function handleRetrySetup(
 export async function createBrowserContext(
   browserNameWithExtensions: string,
   extensionPath: string = "../../app",
+  mobile: boolean = false,
 ): Promise<BrowserContext | Browser> {
   let context;
+  const mobileContextOptions = mobile
+    ? {
+        ...devices["Pixel 5"], // emulate a common Android device
+      }
+    : {};
+
   switch (browserNameWithExtensions) {
     case "chromium": {
       const browserTypeWithExtension = withExtension(chromium, [
@@ -48,6 +56,7 @@ export async function createBrowserContext(
       ]);
       context = await browserTypeWithExtension.launchPersistentContext("", {
         headless: false,
+        ...mobileContextOptions,
       });
       break;
     }
@@ -60,7 +69,9 @@ export async function createBrowserContext(
         path.resolve(__dirname, extensionPath),
         path.resolve(__dirname, "..", uBlockPath),
       ]);
-      context = await browserTypeWithExtension.launch();
+      context = await browserTypeWithExtension.launch({
+        ...mobileContextOptions,
+      });
       break;
     }
     default:

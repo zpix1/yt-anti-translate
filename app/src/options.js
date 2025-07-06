@@ -60,20 +60,29 @@ function renderFooterLinks() {
   }
 }
 
-function saveOptions() {
-  if (document.getElementById("reload-checkbox").checked) {
-    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-      const tab = tabs[0];
-      if (tab && tab.url && tab.url.match(/^.*youtube\.com\/.{0,}$/)) {
-        chrome.tabs.reload(tab.id);
-      }
-    });
+const reloadActiveYouTubeTab = () => {
+  const isAutoReloadEnabled =
+    document.getElementById("reload-checkbox")?.checked;
+  if (!isAutoReloadEnabled) {
+    return;
   }
+
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    const tab = tabs[0];
+    if (tab && tab.url && tab.url.match(/^.*youtube\.com\/.*$/)) {
+      chrome.tabs.reload(tab.id);
+    }
+  });
+};
+
+function saveOptions() {
+  reloadActiveYouTubeTab();
   chrome.storage.sync.get(
     {
       disabled: false,
       autoreloadOption: true,
       untranslateAudio: true,
+      untranslateAudioOnlyAI: false,
       untranslateDescription: true,
       untranslateChannelBranding: true,
       youtubeDataApiKey: null,
@@ -108,6 +117,7 @@ function loadOptions() {
       disabled: false,
       autoreloadOption: true,
       untranslateAudio: true,
+      untranslateAudioOnlyAI: false,
       untranslateDescription: true,
       untranslateChannelBranding: true,
       youtubeDataApiKey: null,
@@ -128,6 +138,8 @@ function loadOptions() {
         items.autoreloadOption;
       document.getElementById("audio-checkbox").checked =
         items.untranslateAudio;
+      document.getElementById("audio-only-ai-checkbox").checked =
+        items.untranslateAudioOnlyAI;
       document.getElementById("description-checkbox").checked =
         items.untranslateDescription;
       document.getElementById("channel-branding-checkbox").checked =
@@ -138,15 +150,22 @@ function loadOptions() {
 }
 
 function checkboxUpdate() {
-  chrome.storage.sync.set({
-    autoreloadOption: document.getElementById("reload-checkbox").checked,
-    untranslateAudio: document.getElementById("audio-checkbox").checked,
-    untranslateDescription: document.getElementById("description-checkbox")
-      .checked,
-    untranslateChannelBranding: document.getElementById(
-      "channel-branding-checkbox",
-    ).checked,
-  });
+  chrome.storage.sync.set(
+    {
+      autoreloadOption: document.getElementById("reload-checkbox").checked,
+      untranslateAudio: document.getElementById("audio-checkbox").checked,
+      untranslateAudioOnlyAI: document.getElementById("audio-only-ai-checkbox")
+        .checked,
+      untranslateDescription: document.getElementById("description-checkbox")
+        .checked,
+      untranslateChannelBranding: document.getElementById(
+        "channel-branding-checkbox",
+      ).checked,
+    },
+    () => {
+      reloadActiveYouTubeTab();
+    },
+  );
 }
 
 function apiKeyUpdate() {
@@ -197,6 +216,9 @@ function addListeners() {
     .addEventListener("click", checkboxUpdate);
   document
     .getElementById("audio-checkbox")
+    .addEventListener("click", checkboxUpdate);
+  document
+    .getElementById("audio-only-ai-checkbox")
     .addEventListener("click", checkboxUpdate);
   document
     .getElementById("description-checkbox")

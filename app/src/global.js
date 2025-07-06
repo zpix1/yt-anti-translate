@@ -109,11 +109,12 @@ ytm-shorts-lockup-view-model`,
    * @returns {string}
    */
   getPlayerSelector: function () {
-    this.logDebug(`getPlayerSelector called`);
+    if (window.location.hostname === "m.youtube.com") {
+      return "#player-container-id";
+    }
     const selector = window.location.pathname.startsWith("/shorts")
       ? "#shorts-player"
       : "ytd-player .html5-video-player";
-    this.logDebug(`getPlayerSelector returning: ${selector}`);
     return selector;
   },
 
@@ -121,9 +122,7 @@ ytm-shorts-lockup-view-model`,
    * @returns {string}
    */
   getBrowserOrChrome: function () {
-    this.logDebug(`getBrowserOrChrome called`);
     const result = typeof browser !== "undefined" ? browser : chrome;
-    this.logDebug(`getBrowserOrChrome returning browser type`);
     return result;
   },
 
@@ -131,12 +130,16 @@ ytm-shorts-lockup-view-model`,
    * @returns {bool}
    */
   isFirefoxBasedBrowser: function () {
-    this.logDebug(`isFirefoxBasedBrowser called`);
     const result =
       typeof browser !== "undefined" &&
       typeof browser.runtime !== "undefined" &&
       typeof browser.runtime.getBrowserInfo === "function";
-    this.logDebug(`isFirefoxBasedBrowser returning: ${result}`);
+    return result;
+  },
+
+  // Detects if we are currently on the mobile YouTube site (m.youtube.com)
+  isMobile: function () {
+    const result = window.location.hostname === "m.youtube.com";
     return result;
   },
 
@@ -977,5 +980,11 @@ ytm-shorts-lockup-view-model`,
       `detectSupportedLanguage: all attempts exhausted, returning null`,
     );
     return null;
+  },
+  getSettings: function () {
+    const element = document.querySelector(
+      'script[type="module"][data-ytantitranslatesettings]',
+    );
+    return JSON.parse(element?.dataset?.ytantitranslatesettings ?? "{}");
   },
 };
