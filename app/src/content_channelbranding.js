@@ -195,7 +195,7 @@ async function getChannelUCID() {
 
 /**
  * Fetch the About/branding section of a YouTube channel.
- * @param {string} ucid   Otional Channel ID (starts with "UC…"). Defaults to UCID of the current channel
+ * @param {string} ucid   Optional Channel ID (starts with "UC…"). Defaults to UCID of the current channel
  * @param {string} locale Optional BCP-47 tag, e.g. "it-IT" or "fr". Defaults to the user's browser language.
  * @returns {object}      The title and description branding.
  */
