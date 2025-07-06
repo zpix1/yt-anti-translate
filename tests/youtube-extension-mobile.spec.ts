@@ -75,7 +75,7 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
 
     // Wait for the original (untranslated) description text to appear
     const expectedText =
-      "Go start the business you’ve been dreaming of and visit ";
+      "Go start the business you've been dreaming of and visit ";
     await page.waitForSelector(`text=${expectedText}`, { timeout: 15000 });
 
     // Retrieve full page text and assert it contains the expected English fragment
@@ -85,6 +85,49 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
     // Capture screenshot for visual verification
     await page.screenshot({
       path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-extension-mobile-test-description.png`,
+    });
+
+    // Ensure console output is not excessive
+    expect(consoleMessageCountContainer.count).toBeLessThan(2000);
+
+    // Clean up
+    await context.close();
+  });
+
+  test("Restores original channel branding on mobile channel page", async ({
+    browserNameWithExtensions,
+    localeString,
+  }, testInfo) => {
+    // Handle retries and prerequisite setup
+    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
+
+    // Launch a browser context with the extension loaded
+    const context = await createBrowserContext(
+      browserNameWithExtensions,
+      undefined,
+      true,
+    );
+
+    // Create a page in the context and ensure auth is applied
+    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
+      context,
+      browserNameWithExtensions,
+      localeString,
+    );
+
+    // Navigate to the MrBeast mobile channel videos tab
+    const channelUrl = "https://m.youtube.com/@MrBeast/videos";
+    await loadPageAndVerifyAuth(page, channelUrl, browserNameWithExtensions);
+
+    // Wait for branding description text to appear (English original)
+    const expectedBrandingText = "SUBSCRIBE FOR A COOKIE";
+    await page.waitForSelector(`text=${expectedBrandingText}`, {
+      timeout: 20000,
+    });
+
+    // Take a screenshot for visual verification
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-channel-branding-header-test.png`,
     });
 
     // Ensure console output is not excessive

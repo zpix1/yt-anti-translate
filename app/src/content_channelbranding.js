@@ -1,13 +1,14 @@
+// Support both desktop and mobile YouTube layouts
 const CHANNELBRANDING_HEADER_SELECTOR =
-  "#page-header-container #page-header .page-header-view-model-wiz__page-header-headline-info";
+  "#page-header-container #page-header .page-header-view-model-wiz__page-header-headline-info, .page-header-view-model-wiz__page-header-headline-info";
 const CHANNELBRANDING_ABOUT_SELECTOR =
-  "ytd-engagement-panel-section-list-renderer";
+  "ytd-engagement-panel-section-list-renderer, ytm-engagement-panel-section-list-renderer";
 const CHANNELBRANDING_MUTATION_UPDATE_FREQUENCY = 1;
 const CHANNEL_LOCATION_REGEXES = [
-  /:\/\/(?:www\.)?youtube\.com\/channel\//,
-  /:\/\/(?:www\.)?youtube\.com\/c\//,
-  /:\/\/(?:www\.)?youtube\.com\/@/,
-  /:\/\/(?:www\.)?youtube\.com\/user\//,
+  /:\/\/(?:www\.|m\.)?youtube\.com\/channel\//,
+  /:\/\/(?:www\.|m\.)?youtube\.com\/c\//,
+  /:\/\/(?:www\.|m\.)?youtube\.com\/@/,
+  /:\/\/(?:www\.|m\.)?youtube\.com\/user\//,
 ];
 
 /**
@@ -194,8 +195,8 @@ async function getChannelUCID() {
 
 /**
  * Fetch the About/branding section of a YouTube channel.
- * @param {string} ucid   Otional Channel ID (starts with “UC…”). Defaults to UCID of the current channel
- * @param {string} locale Optional BCP-47 tag, e.g. "it-IT" or "fr". Defaults to the user’s browser language.
+ * @param {string} ucid   Otional Channel ID (starts with "UC…"). Defaults to UCID of the current channel
+ * @param {string} locale Optional BCP-47 tag, e.g. "it-IT" or "fr". Defaults to the user's browser language.
  * @returns {object}      The title and description branding.
  */
 async function getChannelBrandingWithYoutubeI(ucid = null, locale = null) {
@@ -223,8 +224,8 @@ async function getChannelBrandingWithYoutubeI(ucid = null, locale = null) {
   }
 
   // split the locale into hl (= language) and gl (= region)
-  //    • “it-IT” → ["it","IT"]
-  //    • “fr”    → ["fr"]
+  //    • "it-IT" → ["it","IT"]
+  //    • "fr"    → ["fr"]
   const [hl, region] = locale.split(/[-_]/); // tolerate "pt-BR" or "pt_BR"
   const gl = region;
 
@@ -239,7 +240,7 @@ async function getChannelBrandingWithYoutubeI(ucid = null, locale = null) {
       },
     },
     browseId: ucid,
-    // “about” tab protobuf — old first, then fall back to the newer encoding
+    // "about" tab protobuf — old first, then fall back to the newer encoding
     params: "EgVhYm91dA==", // {2:string:"about"} :contentReference[oaicite:0]{index=0}
   };
 
@@ -261,7 +262,7 @@ async function getChannelBrandingWithYoutubeI(ucid = null, locale = null) {
 
   // YT sometimes rejects the legacy protobuf with 400; try the newer one.
   if (res.status === 400) {
-    body.params = "EgVhYm91dPIGBAoCEgA="; // wrapped “about” protobuf (2023-present) :contentReference[oaicite:1]{index=1}
+    body.params = "EgVhYm91dPIGBAoCEgA="; // wrapped "about" protobuf (2023-present) :contentReference[oaicite:1]{index=1}
     res = await fetch(browse, {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -615,22 +616,32 @@ async function restoreOriginalBrandingAbout() {
  * @param {JSON} originalBrandingData - The original branding title and description
  */
 function updateBrandingAboutTitleContent(container, originalBrandingData) {
-  if (originalBrandingData.title) {
-    // Find the title text containers
-    const titleTextContainer = container.querySelector(`#title-text`);
+  if (!originalBrandingData.title) {
+    return;
+  }
 
-    if (!titleTextContainer) {
-      window.YoutubeAntiTranslate.logInfo(
-        `No branding about title text containers found`,
-      );
-    } else {
-      if (titleTextContainer.innerText !== originalBrandingData.title) {
-        window.YoutubeAntiTranslate.replaceTextOnly(
-          titleTextContainer,
-          originalBrandingData.title,
-        );
-      }
-    }
+  // Desktop selector
+  let titleTextContainer = container.querySelector(`#title-text`);
+
+  // Mobile selector – channel name shown in the engagement-panel heading
+  if (!titleTextContainer) {
+    titleTextContainer = container.querySelector(
+      `.engagement-panel-section-list-header-title span${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}`,
+    );
+  }
+
+  if (!titleTextContainer) {
+    window.YoutubeAntiTranslate.logInfo(
+      `No branding about title text containers found`,
+    );
+    return;
+  }
+
+  if (titleTextContainer.innerText !== originalBrandingData.title) {
+    window.YoutubeAntiTranslate.replaceTextOnly(
+      titleTextContainer,
+      originalBrandingData.title,
+    );
   }
 }
 
@@ -643,55 +654,66 @@ function updateBrandingAboutDescriptionContent(
   container,
   originalBrandingData,
 ) {
-  if (originalBrandingData.description) {
-    // Find the description text container
-    const descriptionTextContainer = container.querySelector(
-      `#description-container > ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}:nth-child(1)`,
-    );
+  if (!originalBrandingData.description) {
+    return;
+  }
 
-    if (!descriptionTextContainer) {
-      window.YoutubeAntiTranslate.logInfo(
-        `No branding about description text containers found`,
+  // Desktop selector
+  let descriptionTextContainer = container.querySelector(
+    `#description-container > ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}:nth-child(1)`,
+  );
+
+  // Mobile selector – description is inside .user-text
+  if (!descriptionTextContainer) {
+    descriptionTextContainer = container.querySelector(
+      `.user-text > ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}`,
+    );
+  }
+
+  if (!descriptionTextContainer) {
+    window.YoutubeAntiTranslate.logInfo(
+      `No branding about description text containers found`,
+    );
+    return;
+  }
+
+  let formattedContent;
+  const originalTextFirstLine =
+    originalBrandingData.truncatedDescription ||
+    originalBrandingData.description.split("\n")[0];
+
+  // Compare text first span>span against first line first to avoid wasting resources on formatting content
+  if (
+    descriptionTextContainer.hasChildNodes() &&
+    descriptionTextContainer.firstChild &&
+    (
+      descriptionTextContainer.firstChild.firstChild ||
+      descriptionTextContainer.firstChild
+    ).textContent?.trim() === originalTextFirstLine?.trim()
+  ) {
+    // If identical create formatted content and compare with firstchild text content to determine if any change is needed
+    formattedContent = window.YoutubeAntiTranslate.createFormattedContent(
+      originalBrandingData.description,
+    );
+    if (
+      descriptionTextContainer.hasChildNodes() &&
+      descriptionTextContainer.firstChild.textContent !==
+        formattedContent.textContent
+    ) {
+      window.YoutubeAntiTranslate.replaceContainerContent(
+        descriptionTextContainer,
+        formattedContent.cloneNode(true),
       );
-    } else {
-      let formattedContent;
-      const originalTextFirstLine =
-        originalBrandingData.truncatedDescription ||
-        originalBrandingData.description.split("\n")[0];
-      // Compare text first span>span against first line first to avaoid waisting resources on formatting content
-      if (
-        descriptionTextContainer.hasChildNodes() &&
-        descriptionTextContainer.firstChild.hasChildNodes() &&
-        descriptionTextContainer.firstChild.firstChild.textContent?.trim() ===
-          originalTextFirstLine?.trim()
-      ) {
-        // If identical create formatted content and compare with firstchild text content to determine if any change is needed
-        formattedContent = window.YoutubeAntiTranslate.createFormattedContent(
-          originalBrandingData.description,
-        );
-        if (
-          descriptionTextContainer.hasChildNodes() &&
-          descriptionTextContainer.firstChild.textContent !==
-            formattedContent.textContent
-        ) {
-          // No changes are needed
-          window.YoutubeAntiTranslate.replaceContainerContent(
-            descriptionTextContainer,
-            formattedContent.cloneNode(true),
-          );
-        }
-      } else {
-        // First line was different so we can continue with untraslation
-        // Create formatted content
-        formattedContent = window.YoutubeAntiTranslate.createFormattedContent(
-          originalBrandingData.description,
-        );
-        window.YoutubeAntiTranslate.replaceContainerContent(
-          descriptionTextContainer,
-          formattedContent.cloneNode(true),
-        );
-      }
     }
+  } else {
+    // First line was different so we can continue with untranslation
+    formattedContent = window.YoutubeAntiTranslate.createFormattedContent(
+      originalBrandingData.description,
+    );
+    window.YoutubeAntiTranslate.replaceContainerContent(
+      descriptionTextContainer,
+      formattedContent.cloneNode(true),
+    );
   }
 }
 

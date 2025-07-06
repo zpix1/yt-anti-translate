@@ -407,9 +407,11 @@ async function untranslateOtherVideos(intersectElements = null) {
       let linkElement =
         video.querySelector("a#video-title-link") ||
         video.querySelector("a#thumbnail");
-      let titleElement = video.querySelector(
-        "#video-title:not(.cbCustomTitle)",
-      );
+      let titleElement =
+        video.querySelector("#video-title:not(.cbCustomTitle)") ||
+        video.querySelector(
+          ".compact-media-item-headline .yt-core-attributed-string",
+        );
 
       if (!linkElement || !titleElement) {
         // Try another common pattern before giving up
@@ -424,6 +426,9 @@ async function untranslateOtherVideos(intersectElements = null) {
             video.querySelector("yt-formatted-string#video-title") ||
             video.querySelector(
               ".yt-lockup-metadata-view-model-wiz__title>.yt-core-attributed-string",
+            ) ||
+            video.querySelector(
+              ".compact-media-item-headline .yt-core-attributed-string",
             );
         }
         if (!linkElement || !titleElement) {
@@ -460,7 +465,8 @@ async function untranslateOtherVideos(intersectElements = null) {
 
         const originalTitle = response.title;
         // Use innerText for comparison/logging as per original logic for these elements
-        const currentTitle = titleElement.innerText?.trim();
+        const currentTitle =
+          titleElement.innerText?.trim() || titleElement.textContent?.trim();
 
         if (
           originalTitle &&
