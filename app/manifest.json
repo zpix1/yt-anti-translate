@@ -37,7 +37,8 @@
         "src/global.js",
         "src/background.js",
         "src/background_audio.js",
-        "src/background_description.js"
+        "src/background_description.js",
+        "src/background_notifications.js"
       ],
       "matches": [
         "*://*.youtube.com/*"

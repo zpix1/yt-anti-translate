@@ -545,7 +545,6 @@ function fetchOriginalDescription() {
     if (mobileDescription) {
       return mobileDescription;
     }
-    window.YoutubeAntiTranslate.logWarning("Player response not found");
     return null;
   }
 
@@ -564,7 +563,6 @@ function fetchOriginalAuthor() {
 
   const playerResponse = getPlayerResponseSafely(player);
   if (!playerResponse) {
-    window.YoutubeAntiTranslate.logWarning("Player response not found");
     return null;
   }
 
