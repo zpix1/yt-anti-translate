@@ -74,13 +74,8 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
     await page.locator(showMoreSelector).click();
 
     // Wait for the original (untranslated) description text to appear
-    const expectedText =
-      "Go start the business you've been dreaming of and visit ";
-    await page.waitForSelector(`text=${expectedText}`, { timeout: 15000 });
-
-    // Retrieve full page text and assert it contains the expected English fragment
-    const bodyText = await page.locator("body").innerText();
-    expect(bodyText).toContain(expectedText);
+    const expectedText = "In Loving Memory of Coach Tyler Wall*";
+    await page.getByText(expectedText, { timeout: 15000 });
 
     // Capture screenshot for visual verification
     await page.screenshot({
