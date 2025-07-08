@@ -18,7 +18,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     const context = await createBrowserContext(browserNameWithExtensions);
 
     // Create a new page
-    const { page, consoleMessageCount } = await setupPageWithAuth(
+    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
       context,
       browserNameWithExtensions,
       localeString,
@@ -140,7 +140,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     });
 
     // Check console message count
-    expect(consoleMessageCount).toBeLessThan(2000);
+    expect(consoleMessageCountContainer.count).toBeLessThan(2000);
 
     // Close the browser context
     await context.close();
@@ -156,7 +156,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     const context = await createBrowserContext(browserNameWithExtensions);
 
     // Create a new page
-    const { page, consoleMessageCount } = await setupPageWithAuth(
+    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
       context,
       browserNameWithExtensions,
       localeString,
@@ -222,7 +222,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     });
 
     // Check console message count
-    expect(consoleMessageCount).toBeLessThan(2000);
+    expect(consoleMessageCountContainer.count).toBeLessThan(2000);
 
     // Close the browser context
     await context.close();
@@ -238,7 +238,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     const context = await createBrowserContext(browserNameWithExtensions);
 
     // Create a new page
-    const { page, consoleMessageCount } = await setupPageWithAuth(
+    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
       context,
       browserNameWithExtensions,
       localeString,
@@ -291,7 +291,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     });
 
     // Check console message count
-    expect(consoleMessageCount).toBeLessThan(2000);
+    expect(consoleMessageCountContainer.count).toBeLessThan(2000);
 
     // Close the browser context
     await context.close();
@@ -307,7 +307,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     const context = await createBrowserContext(browserNameWithExtensions);
 
     // Create a new page
-    const { page, consoleMessageCount } = await setupPageWithAuth(
+    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
       context,
       browserNameWithExtensions,
       localeString,
@@ -413,7 +413,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     });
 
     // Check console message count
-    expect(consoleMessageCount).toBeLessThan(2000);
+    expect(consoleMessageCountContainer.count).toBeLessThan(2000);
 
     // Close the browser context
     await context.close();
@@ -429,7 +429,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     const context = await createBrowserContext(browserNameWithExtensions);
 
     // Create a new page
-    const { page, consoleMessageCount } = await setupPageWithAuth(
+    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
       context,
       browserNameWithExtensions,
       localeString,
@@ -581,7 +581,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     expect(currentId3).not.toBe(currentId2);
 
     // Check console message count
-    expect(consoleMessageCount).toBeLessThan(2000);
+    expect(consoleMessageCountContainer.count).toBeLessThan(2000);
 
     // Close the browser context
     await context.close();
@@ -639,7 +639,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     const context = await createBrowserContext(browserNameWithExtensions);
 
     // Create a new page
-    const { page, consoleMessageCount } = await setupPageWithAuth(
+    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
       context,
       browserNameWithExtensions,
       localeString,
@@ -665,7 +665,72 @@ test.describe("YouTube Anti-Translate extension", () => {
     });
 
     // Check console message count
-    expect(consoleMessageCount).toBeLessThan(2000);
+    expect(consoleMessageCountContainer.count).toBeLessThan(2000);
+
+    // Close the browser context
+    await context.close();
+  });
+
+  test("YouTube chapters titles are not translated and chapter 2 has expected text", async ({
+    browserNameWithExtensions,
+    localeString,
+  }, testInfo) => {
+    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
+
+    // Launch browser with the extension
+    const context = await createBrowserContext(browserNameWithExtensions);
+
+    // Create a new page with the extension already authenticated
+    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
+      context,
+      browserNameWithExtensions,
+      localeString,
+    );
+
+    // Open a video which contains chapters (used in time-code test)
+    await loadPageAndVerifyAuth(
+      page,
+      "https://www.youtube.com/watch?v=4PBPXbd4DkQ",
+      browserNameWithExtensions,
+    );
+
+    // Wait until the chapter button next to the progress bar is rendered
+    await page.waitForSelector(
+      ".ytp-chapter-title .ytp-chapter-title-content",
+      { timeout: 15000 },
+    );
+
+    // Seek near the start to allow the extension to map chapters then later to chapter 2 time (≈ 40s based on timecode)
+    await page.evaluate(() => {
+      const video = document.querySelector("video");
+      if (video) {
+        video.currentTime = 5 * 60 + 50;
+      } // second chapter begins around 0:45 – 1:00 for this video
+    });
+
+    // --- Verify chapter button (above progress bar) contains expected chapter 2 English title ---
+    const expectedChapterTitle = "Chris helps Alice find her cars";
+
+    // Filter to the element which the extension has decorated with the attribute
+    const chapterButtonLocator = page
+      .locator(
+        ".ytp-chapter-title .ytp-chapter-title-content[data-original-chapter-button]",
+      )
+      .first();
+
+    // Wait until the attribute appears and matches exactly
+    await expect(chapterButtonLocator).toHaveAttribute(
+      "data-original-chapter-button",
+      expectedChapterTitle,
+      { timeout: 10000 },
+    );
+    // Screenshot for manual visual verification when needed
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-chapters-test.png`,
+    });
+
+    // Ensure console is not flooded
+    expect(consoleMessageCountContainer.count).toBeLessThan(2000);
 
     // Close the browser context
     await context.close();

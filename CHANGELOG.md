@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.19.0] - 2025-07-06
+
+### New Feature
+
+- Chapters untranslation
+- Option to only untranslate AI-dubbed audio
+- Initial m.youtube.com support
+- Notification untranslation
+
+## [1.18.5] - 2025-07-05
+
+### Fixed
+
+- Fix [#63](https://github.com/zpix1/yt-anti-translate/issues/63) Album names wrongly replaced in the Releases section of music channels
+
 ## [1.18.4] - 2025-07-04
 
 ### Fixed

@@ -4,6 +4,7 @@ chrome.storage.sync.get(
     disabled: false,
     untranslateAudio: true,
     untranslateDescription: true,
+    untranslateNotification: true,
   },
   async function (items) {
     if (!items.disabled) {
@@ -11,6 +12,16 @@ chrome.storage.sync.get(
       backgroundScript.type = "module";
       backgroundScript.src = chrome.runtime.getURL("src/background.js");
       document.body.appendChild(backgroundScript);
+
+      // Inject notification title handler if enabled
+      if (items.untranslateNotification) {
+        const backgroundNotificationScript = document.createElement("script");
+        backgroundNotificationScript.type = "module";
+        backgroundNotificationScript.src = chrome.runtime.getURL(
+          "src/background_notifications.js",
+        );
+        document.body.appendChild(backgroundNotificationScript);
+      }
 
       if (items.untranslateAudio) {
         const backgroundAudioScript = document.createElement("script");

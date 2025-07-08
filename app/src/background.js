@@ -1,4 +1,4 @@
-const MUTATION_UPDATE_STEP = 2;
+const MUTATION_UPDATE_STEP = window.YoutubeAntiTranslate.isMobile() ? 1 : 2;
 
 const INTERSECTION_UPDATE_STEP_VIDEOS = 2;
 let allIntersectVideoElements = null;
@@ -170,7 +170,7 @@ async function untranslateCurrentShortVideoLinks() {
 //Changes main video title on "/watch?v=videoid" pages
 async function untranslateCurrentVideo() {
   const fakeNodeID = "yt-anti-translate-fake-node-current-video";
-  const originalNodeSelector = `#title > h1 > yt-formatted-string:not(#${fakeNodeID})`;
+  const originalNodeSelector = `#title > h1 > yt-formatted-string:not(#${fakeNodeID}), .slim-video-information-title .yt-core-attributed-string:not(#${fakeNodeID})`;
 
   await createOrUpdateUntranslatedFakeNode(
     fakeNodeID,
@@ -232,6 +232,23 @@ async function untranslateCurrentChannelEmbeddedVideoTitle() {
     (el) => el.href,
     "a",
     false,
+  );
+}
+
+// Added: Untranslate main video title for the mobile (m.youtube.com) layout
+async function untranslateCurrentMobileVideoDescriptionHeader() {
+  if (!window.YoutubeAntiTranslate.isMobile()) {
+    return;
+  }
+  const fakeNodeID = "yt-anti-translate-fake-node-mobile-video-description";
+  const originalNodeSelector = `ytm-video-description-header-renderer .title > span.yt-core-attributed-string:not(#${fakeNodeID})`;
+
+  await createOrUpdateUntranslatedFakeNode(
+    fakeNodeID,
+    originalNodeSelector,
+    () => document.location.href,
+    "span",
+    true,
   );
 }
 
@@ -389,10 +406,14 @@ async function untranslateOtherVideos(intersectElements = null) {
       // Find link and title elements typical for standard videos
       let linkElement =
         video.querySelector("a#video-title-link") ||
-        video.querySelector("a#thumbnail");
-      let titleElement = video.querySelector(
-        "#video-title:not(.cbCustomTitle)",
-      );
+        video.querySelector("a#thumbnail") ||
+        video.querySelector("a.media-item-thumbnail-container");
+      let titleElement =
+        video.querySelector("#video-title:not(.cbCustomTitle)") ||
+        video.querySelector(
+          ".compact-media-item-headline .yt-core-attributed-string",
+        ) ||
+        video.querySelector(".media-item-headline .yt-core-attributed-string");
 
       if (!linkElement || !titleElement) {
         // Try another common pattern before giving up
@@ -400,13 +421,16 @@ async function untranslateOtherVideos(intersectElements = null) {
           linkElement =
             video.querySelector("ytd-thumbnail a") ||
             // Ignore playlist links with list= parameter
-            video.querySelector(`a[href*="/watch?v="]:not([href*="list="])`);
+            video.querySelector(`a[href*="/watch?v="]`);
         }
         if (!titleElement) {
           titleElement =
             video.querySelector("yt-formatted-string#video-title") ||
             video.querySelector(
               ".yt-lockup-metadata-view-model-wiz__title>.yt-core-attributed-string",
+            ) ||
+            video.querySelector(
+              ".compact-media-item-headline .yt-core-attributed-string",
             );
         }
         if (!linkElement || !titleElement) {
@@ -417,6 +441,11 @@ async function untranslateOtherVideos(intersectElements = null) {
 
       // Ignore advertisement video
       if (window.YoutubeAntiTranslate.isAdvertisementHref(linkElement.href)) {
+        continue;
+      }
+
+      // Ignore playlist links with list= parameter
+      if (linkElement.href.includes("list=")) {
         continue;
       }
 
@@ -438,7 +467,8 @@ async function untranslateOtherVideos(intersectElements = null) {
 
         const originalTitle = response.title;
         // Use innerText for comparison/logging as per original logic for these elements
-        const currentTitle = titleElement.innerText?.trim();
+        const currentTitle =
+          titleElement.innerText?.trim() || titleElement.textContent?.trim();
 
         if (
           originalTitle &&
@@ -460,6 +490,50 @@ async function untranslateOtherVideos(intersectElements = null) {
           }
         } else {
           // console.debug(`Video title unchanged or element missing:`, { href: videoHref, originalTitle, currentTitle });
+        }
+
+        /* -------- Handle description snippet untranslation (search results, video lists) -------- */
+        if (!video.hasAttribute("data-ytat-untranslated-desc")) {
+          // Locate snippet containers
+          const snippetElements = video.querySelectorAll(
+            ".metadata-snippet-text, .metadata-snippet-text-navigation",
+          );
+
+          if (snippetElements && snippetElements.length > 0) {
+            const idMatch = videoHref.match(/[?&]v=([a-zA-Z0-9_-]+)/);
+            if (idMatch && idMatch[1]) {
+              const videoId = idMatch[1];
+              const originalDescription =
+                await getOriginalVideoDescription(videoId);
+
+              if (originalDescription) {
+                // Use the first line and truncate similarly to YouTube behaviour
+                let truncated = originalDescription.split("\n")[0] || "";
+                truncated = truncated.replace(/\s+/g, " ").trim();
+                const MAX_LEN = 150;
+                if (truncated.length > MAX_LEN) {
+                  truncated = `${truncated.slice(0, MAX_LEN - 1)}…`;
+                }
+
+                snippetElements.forEach((el) => {
+                  const currentText = el.textContent?.trim();
+                  if (
+                    truncated &&
+                    currentText &&
+                    !window.YoutubeAntiTranslate.isStringEqual(
+                      currentText,
+                      truncated,
+                    )
+                  ) {
+                    el.textContent = truncated;
+                  }
+                });
+              }
+            }
+          }
+
+          // Mark as processed to avoid repeated attempts
+          video.setAttribute("data-ytat-untranslated-desc", "true");
         }
       } catch (error) {
         window.YoutubeAntiTranslate.logInfo(
@@ -603,6 +677,8 @@ async function untranslate() {
     const currentShortPromise = untranslateCurrentShortVideo();
     const currentShortVideoLinksPromise = untranslateCurrentShortVideoLinks();
     const otherShortsPromise = untranslateOtherShortsVideos(); // Call the new function
+    const currentMobileVideoDescriptionPromise =
+      untranslateCurrentMobileVideoDescriptionHeader();
 
     // Wait for all promises to resolve concurrently
     await Promise.all([
@@ -614,6 +690,7 @@ async function untranslate() {
       currentShortPromise,
       currentShortVideoLinksPromise,
       otherShortsPromise,
+      currentMobileVideoDescriptionPromise,
     ]);
 
     // update intersect observers
@@ -706,5 +783,60 @@ function updateObserverOtherShortsOnIntersect() {
     );
   for (const el of allIntersectShortElements ?? []) {
     intersectionObserverOtherShorts.observe(el);
+  }
+}
+
+// Added: Retrieve original (untranslated) video description using YouTube internal player endpoint and cache the response
+async function getOriginalVideoDescription(videoId, locale = "en-US") {
+  // Use locale in cache key in case user switches language during session
+  const cacheKey = `youtubei_player_desc_${videoId}_${locale}`;
+  const cached = window.YoutubeAntiTranslate.getSessionCache(cacheKey);
+  if (cached !== null && cached !== undefined) {
+    return cached;
+  }
+
+  // Split locale into hl / gl parameters (e.g. en-US ⇒ hl=en, gl=US)
+  const [hl, region] = locale.split(/[-_]/);
+  const gl = region || "US";
+
+  const body = {
+    context: {
+      client: {
+        hl,
+        gl,
+        clientName: "WEB",
+        clientVersion: "2.20250527.00.00",
+      },
+    },
+    videoId,
+  };
+
+  try {
+    const res = await fetch(
+      "https://www.youtube.com/youtubei/v1/player?prettyPrint=false",
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body),
+      },
+    );
+
+    if (!res.ok) {
+      window.YoutubeAntiTranslate.logDebug(
+        "Failed to fetch player data:",
+        res.statusText,
+      );
+      window.YoutubeAntiTranslate.setSessionCache(cacheKey, null);
+      return null;
+    }
+
+    const json = await res.json();
+    const description = json?.videoDetails?.shortDescription || null;
+    window.YoutubeAntiTranslate.setSessionCache(cacheKey, description);
+    return description;
+  } catch (err) {
+    window.YoutubeAntiTranslate.logDebug("Error fetching player data:", err);
+    window.YoutubeAntiTranslate.setSessionCache(cacheKey, null);
+    return null;
   }
 }
