@@ -728,9 +728,9 @@ async function untranslateBranding() {
     if (isChannelPage) {
       const brandingHeaderPromise = restoreOriginalBrandingHeader();
       const brandingAboutPromise = restoreOriginalBrandingAbout();
-
-      // Wait for all promises to resolve concurrently
       await Promise.all([brandingHeaderPromise, brandingAboutPromise]);
+    } else {
+      await restoreOriginalBrandingSearchResults();
     }
   }
   mutationBrandingIdx++;
@@ -751,3 +751,87 @@ chrome.storage.sync.get(
     }
   },
 );
+
+function updateSearchResultDescriptionContent(container, originalBrandingData) {
+  if (!originalBrandingData?.description) {
+    return;
+  }
+
+  const descriptionTextContainer = container.querySelector(`#description`);
+  if (!descriptionTextContainer) {
+    window.YoutubeAntiTranslate.logDebug(
+      `No search result description container found`,
+    );
+    return;
+  }
+
+  const truncatedDescription = originalBrandingData.description;
+
+  if (
+    descriptionTextContainer.textContent?.trim() !==
+    truncatedDescription?.trim()
+  ) {
+    descriptionTextContainer.textContent = truncatedDescription;
+  }
+}
+
+async function getChannelUCIDFromHref(href) {
+  if (!href) {
+    return null;
+  }
+  // Direct UCID reference
+  const channelMatch = href.match(/\/channel\/([\w-]+)/);
+  if (channelMatch && channelMatch[1]) {
+    return channelMatch[1];
+  }
+
+  // Handle paths such as /@handle or /c/Custom or /user/Username
+  const handleMatch = href.match(/\/(?:@|c\/|user\/)([\w-]+)/);
+  if (handleMatch && handleMatch[1]) {
+    let handle = handleMatch[1];
+    // restore missing @ for handle form
+    if (!handle.startsWith("@")) {
+      handle = href.includes("/@") ? `@${handle}` : handle;
+    }
+    return await lookupChannelId(handle);
+  }
+  return null;
+}
+
+/**
+ * Restores original channel branding for channel renderers visible in search results.
+ */
+async function restoreOriginalBrandingSearchResults() {
+  const channelRenderers = window.YoutubeAntiTranslate.getAllVisibleNodes(
+    document.querySelectorAll("ytd-channel-renderer"),
+    true,
+    20,
+  );
+
+  if (!channelRenderers || channelRenderers.length === 0) {
+    return;
+  }
+
+  const tasks = channelRenderers.map(async (renderer) => {
+    const linkElement =
+      renderer.querySelector("a.channel-link") ||
+      renderer.querySelector("a#main-link");
+    if (!linkElement) {
+      return;
+    }
+    const href = linkElement.href;
+    const ucid = await getChannelUCIDFromHref(href);
+    if (!ucid) {
+      return;
+    }
+
+    const originalBrandingData = await getChannelBrandingWithYoutubeI(ucid);
+    if (!originalBrandingData) {
+      return;
+    }
+
+    updateSearchResultDescriptionContent(renderer, originalBrandingData);
+  });
+
+  await Promise.allSettled(tasks);
+}

@@ -406,12 +406,14 @@ async function untranslateOtherVideos(intersectElements = null) {
       // Find link and title elements typical for standard videos
       let linkElement =
         video.querySelector("a#video-title-link") ||
-        video.querySelector("a#thumbnail");
+        video.querySelector("a#thumbnail") ||
+        video.querySelector("a.media-item-thumbnail-container");
       let titleElement =
         video.querySelector("#video-title:not(.cbCustomTitle)") ||
         video.querySelector(
           ".compact-media-item-headline .yt-core-attributed-string",
-        );
+        ) ||
+        video.querySelector(".media-item-headline .yt-core-attributed-string");
 
       if (!linkElement || !titleElement) {
         // Try another common pattern before giving up
