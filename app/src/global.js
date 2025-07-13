@@ -279,7 +279,7 @@ ytm-shorts-lockup-view-model`,
       */
       const processedPattern = preprocess(pattern);
       // Prepend any characters with special meaning in regex with a \
-      // avoiding unintended matches 
+      // avoiding unintended matches
       const escapedPattern = processedPattern.replace(
         /[.*+?^${}()|[\]\\]/g,
         "\\$&",
@@ -361,14 +361,14 @@ ytm-shorts-lockup-view-model`,
 
         // Further extend the extended viewport by VIEWPORT_OUTSIDE_LIMIT_FRACTION to set the maximum outside limit
         // Use 500px as the minimum extension, as some element such as shorts are quite big
-        const extraHeight =
-          window.innerHeight * this.VIEWPORT_OUTSIDE_LIMIT_FRACTION > 500
-            ? window.innerHeight * this.VIEWPORT_OUTSIDE_LIMIT_FRACTION
-            : 500;
-        const extraWidth =
-          window.innerWidth * this.VIEWPORT_OUTSIDE_LIMIT_FRACTION > 500
-            ? window.innerWidth * this.VIEWPORT_OUTSIDE_LIMIT_FRACTION
-            : 500;
+        const extraHeight = Math.max(
+          window.innerHeight * this.VIEWPORT_OUTSIDE_LIMIT_FRACTION,
+          500,
+        );
+        const extraWidth = Math.max(
+          window.innerWidth * this.VIEWPORT_OUTSIDE_LIMIT_FRACTION,
+          500,
+        );
 
         const outerTopBoundary = topBoundary - extraHeight;
         const outerBottomBoundary = bottomBoundary + extraHeight;
