@@ -270,11 +270,20 @@ ytm-shorts-lockup-view-model`,
 
     let regex;
     if (typeof pattern === "string") {
+      /*
+      Replace a substring, possibly case insensitive
+      - when case sensitive:
+          the same as str.replace(oldString, newString);
+      - when case insensitive:
+          the regex magic is for replacing oldString's characters in any case (lower/upper)
+      */
       const processedPattern = preprocess(pattern);
+      // Prepend any characters with special meaning in regex with a \
+      // avoiding unintended matches 
       const escapedPattern = processedPattern.replace(
         /[.*+?^${}()|[\]\\]/g,
         "\\$&",
-      ); // Escape string
+      );
       regex = new RegExp(escapedPattern, ignoreCase ? "gi" : "g");
     } else if (pattern instanceof RegExp) {
       const flags = pattern.flags.replace(/i?/, ignoreCase ? "i" : "");
