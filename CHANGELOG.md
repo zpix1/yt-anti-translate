@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.19.1] - 2025-01-07
+
+### Fixed
+
+- Fix [#73](https://github.com/zpix1/yt-anti-translate/issues/73) Video Chapters repeating
+
 ## [1.19.0] - 2025-07-06
 
 ### New Feature
