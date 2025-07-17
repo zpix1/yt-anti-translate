@@ -71,13 +71,9 @@ ytd-macro-markers-list-item-renderer h4[data-original-chapter-title]::after {
 }
 `;
 
-// Frequency (in ms) for polling chapter updates
-const CHAPTERS_UPDATE_INTERVAL_MS = 200;
-
 // Chapters functionality
 let chaptersObserver = null;
 let chapterButtonObserver = null;
-let chaptersUpdateInterval = null;
 let horizontalChaptersObserver = null;
 
 /**
@@ -85,7 +81,7 @@ let horizontalChaptersObserver = null;
  * created by the chapters replacement system.
  * Call this before re-initialising the system or on page unload.
  */
-export function cleanupChaptersObserver() {
+function cleanupChaptersObserver() {
   if (chaptersObserver) {
     chaptersObserver.disconnect();
     chaptersObserver = null;
@@ -99,11 +95,6 @@ export function cleanupChaptersObserver() {
   if (horizontalChaptersObserver) {
     horizontalChaptersObserver.disconnect();
     horizontalChaptersObserver = null;
-  }
-
-  if (chaptersUpdateInterval) {
-    clearInterval(chaptersUpdateInterval);
-    chaptersUpdateInterval = null;
   }
 
   // Remove CSS style
@@ -170,7 +161,23 @@ function parseChaptersFromDescription(description) {
       .trim()
       .match(/^.*?(\d{1,2}):(\d{2})(?::(\d{2}))?.*?\s*(.+)$/);
     if (match) {
-      const [, minutes, seconds, hours, title] = match;
+      const [, part1, part2, part3, title] = match;
+
+      // Determine hours/minutes/seconds based on the presence of the third timestamp part
+      let hours = 0;
+      let minutes = 0;
+      let seconds = 0;
+
+      if (part3 !== undefined) {
+        // Timestamp is in the form HH:MM:SS
+        hours = parseInt(part1, 10);
+        minutes = parseInt(part2, 10);
+        seconds = parseInt(part3, 10);
+      } else {
+        // Timestamp is in the form MM:SS
+        minutes = parseInt(part1, 10);
+        seconds = parseInt(part2, 10);
+      }
 
       // Extract clean title by removing everything before the timestamp and separators after
       let cleanTitle = title.trim();
@@ -183,10 +190,8 @@ function parseChaptersFromDescription(description) {
         return;
       }
 
-      const totalSeconds =
-        (hours ? parseInt(hours) * 3600 : 0) +
-        parseInt(minutes) * 60 +
-        parseInt(seconds);
+      const totalSeconds = hours * 3600 + minutes * 60 + seconds;
+
       chapters.push({
         startTime: totalSeconds,
         title: cleanTitle.trim(),
@@ -216,6 +221,7 @@ function findChapterByTime(timeInSeconds, chapters) {
       break;
     }
   }
+
   return targetChapter;
 }
 
@@ -385,7 +391,7 @@ function setupChapterButtonObserver() {
  *
  * @param {string} originalDescription - Untranslated video description obtained from the player API.
  */
-export function setupChapters(originalDescription) {
+function setupChapters(originalDescription) {
   // Clean up any existing observer first
   cleanupChaptersObserver();
 
@@ -394,6 +400,9 @@ export function setupChapters(originalDescription) {
     cachedChapters = parseChaptersFromDescription(originalDescription);
     lastDescription = originalDescription;
   }
+
+  // Sort chapters by start time
+  cachedChapters.sort((a, b) => a.startTime - b.startTime);
 
   if (cachedChapters.length === 0) {
     window.YoutubeAntiTranslate.logInfo("No chapters found in description");
@@ -415,6 +424,7 @@ export function setupChapters(originalDescription) {
     let shouldUpdate = false;
 
     mutations.forEach((mutation) => {
+      console.log("mutation chapters");
       if (mutation.type === "childList") {
         mutation.addedNodes.forEach((node) => {
           if (node.nodeType === Node.ELEMENT_NODE) {
@@ -454,17 +464,9 @@ export function setupChapters(originalDescription) {
     });
   }
 
-  // Setup chapter button observer
   setupChapterButtonObserver();
 
-  // Setup horizontal chapters observer
   setupHorizontalChaptersObserver();
-
-  // Reduced interval frequency - configured via CHAPTERS_UPDATE_INTERVAL_MS
-  chaptersUpdateInterval = setInterval(() => {
-    updateTooltipChapter();
-    updateHorizontalChapters();
-  }, CHAPTERS_UPDATE_INTERVAL_MS);
 
   window.YoutubeAntiTranslate.logInfo(
     "Optimized chapters replacement initialized with chapter button and horizontal chapters support",
