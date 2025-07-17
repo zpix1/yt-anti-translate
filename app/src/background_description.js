@@ -424,7 +424,6 @@ function setupChapters(originalDescription) {
     let shouldUpdate = false;
 
     mutations.forEach((mutation) => {
-      console.log("mutation chapters");
       if (mutation.type === "childList") {
         mutation.addedNodes.forEach((node) => {
           if (node.nodeType === Node.ELEMENT_NODE) {

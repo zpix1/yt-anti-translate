@@ -115,6 +115,9 @@ ytm-shorts-lockup-view-model`,
     if (window.location.hostname === "m.youtube.com") {
       return "#player-container-id";
     }
+    if (window.location.pathname.startsWith("/embed")) {
+      return "#movie_player";
+    }
     const selector = window.location.pathname.startsWith("/shorts")
       ? "#shorts-player"
       : "ytd-player .html5-video-player";
