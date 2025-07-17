@@ -42,7 +42,9 @@ async function get(url) {
           window.YoutubeAntiTranslate.setSessionCache(url, null);
           return null;
         }
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(
+          `HTTP error! status: ${response.status}, while fetching: ${url}`,
+        );
       }
       const data = await response.json();
       window.YoutubeAntiTranslate.setSessionCache(url, data);
@@ -153,7 +155,7 @@ async function untranslateCurrentShortVideo() {
   }
 }
 
-//Changes main short title on "/shorts/shortid" pages
+// Changes main short title on "/shorts/shortid" pages
 async function untranslateCurrentShortVideoLinks() {
   const fakeNodeID = "yt-anti-translate-fake-node-current-short-video-links";
   const originalNodeSelector = `.ytReelMultiFormatLinkViewModelEndpoint span${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}>span:not(#${fakeNodeID})`;
@@ -167,8 +169,12 @@ async function untranslateCurrentShortVideoLinks() {
   );
 }
 
-//Changes main video title on "/watch?v=videoid" pages
+// Changes main video title on "/watch?v=videoid" pages
 async function untranslateCurrentVideo() {
+  if (!window.location.pathname.startsWith("/watch")) {
+    return;
+  }
+
   const fakeNodeID = "yt-anti-translate-fake-node-current-video";
   const originalNodeSelector = `#title > h1 > yt-formatted-string:not(#${fakeNodeID}), .slim-video-information-title .yt-core-attributed-string:not(#${fakeNodeID})`;
 
@@ -181,8 +187,8 @@ async function untranslateCurrentVideo() {
   );
 }
 
-//For channel ("/@MrBeast") pages, for the pinned video's title **in** the video player
-//See "docs/Figure 2.png"
+// For channel ("/@MrBeast") pages, for the pinned video's title **in** the video player
+// See "docs/Figure 2.png"
 async function untranslateCurrentVideoHeadLink() {
   const fakeNodeID = "yt-anti-translate-fake-node-video-head-link";
   const originalNodeSelector = `${window.YoutubeAntiTranslate.getPlayerSelector()} a.ytp-title-link:not(#${fakeNodeID})`;
@@ -203,13 +209,12 @@ async function untranslateCurrentVideoHeadLink() {
 }
 
 async function untranslateCurrentVideoFullScreenEdu() {
-  const fakeNodeID = "yt-anti-translate-fake-node-fullscreen-edu";
-  const originalNodeSelector = `${window.YoutubeAntiTranslate.getPlayerSelector()} div.ytp-fullerscreen-edu-text:not(#${fakeNodeID})`;
-
-  // Skip if on a channel page
-  if (document.location.pathname.startsWith("/@")) {
+  if (!window.location.pathname.startsWith("/watch")) {
     return;
   }
+
+  const fakeNodeID = "yt-anti-translate-fake-node-fullscreen-edu";
+  const originalNodeSelector = `${window.YoutubeAntiTranslate.getPlayerSelector()} div.ytp-fullerscreen-edu-text:not(#${fakeNodeID})`;
 
   await createOrUpdateUntranslatedFakeNode(
     fakeNodeID,
@@ -220,8 +225,8 @@ async function untranslateCurrentVideoFullScreenEdu() {
   );
 }
 
-//For channel ("/@MrBeast") pages, for the pinned video's title **under** the video player
-//See "docs/Figure 1.png"
+// For channel ("/@MrBeast") pages, for the pinned video's title **under** the video player
+// See "docs/Figure 1.png"
 async function untranslateCurrentChannelEmbeddedVideoTitle() {
   const fakeNodeID = "yt-anti-translate-fake-node-channel-embedded-title";
   const originalNodeSelector = `div.ytd-channel-video-player-renderer #metadata-container.ytd-channel-video-player-renderer a:not(#${fakeNodeID})`;
@@ -420,7 +425,6 @@ async function untranslateOtherVideos(intersectElements = null) {
         if (!linkElement) {
           linkElement =
             video.querySelector("ytd-thumbnail a") ||
-            // Ignore playlist links with list= parameter
             video.querySelector(`a[href*="/watch?v="]`);
         }
         if (!titleElement) {
@@ -444,8 +448,10 @@ async function untranslateOtherVideos(intersectElements = null) {
         continue;
       }
 
-      // Ignore playlist links with list= parameter
-      if (linkElement.href.includes("list=")) {
+      if (
+        !window.location.pathname.startsWith("/playlist") &&
+        linkElement.href.includes("list=")
+      ) {
         continue;
       }
 
