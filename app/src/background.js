@@ -503,49 +503,49 @@ async function untranslateOtherVideos(intersectElements = null) {
           // console.debug(`Video title unchanged or element missing:`, { href: videoHref, originalTitle, currentTitle });
         }
 
-        /* -------- Handle description snippet untranslation (search results, video lists) -------- */
-        if (!video.hasAttribute("data-ytat-untranslated-desc")) {
-          // Locate snippet containers
-          const snippetElements = video.querySelectorAll(
-            ".metadata-snippet-text, .metadata-snippet-text-navigation",
-          );
+        // /* -------- Handle description snippet untranslation (search results, video lists) -------- */
+        // if (!video.hasAttribute("data-ytat-untranslated-desc")) {
+        //   // Locate snippet containers
+        //   const snippetElements = video.querySelectorAll(
+        //     ".metadata-snippet-text, .metadata-snippet-text-navigation",
+        //   );
 
-          if (snippetElements && snippetElements.length > 0) {
-            const idMatch = videoHref.match(/[?&]v=([a-zA-Z0-9_-]+)/);
-            if (idMatch && idMatch[1]) {
-              const videoId = idMatch[1];
-              const originalDescription =
-                await getOriginalVideoDescription(videoId);
+        //   if (snippetElements && snippetElements.length > 0) {
+        //     const idMatch = videoHref.match(/[?&]v=([a-zA-Z0-9_-]+)/);
+        //     if (idMatch && idMatch[1]) {
+        //       const videoId = idMatch[1];
+        //       const originalDescription =
+        //         await getOriginalVideoDescription(videoId);
 
-              if (originalDescription) {
-                // Use the first line and truncate similarly to YouTube behaviour
-                let truncated = originalDescription.split("\n")[0] || "";
-                truncated = truncated.replace(/\s+/g, " ").trim();
-                const MAX_LEN = 150;
-                if (truncated.length > MAX_LEN) {
-                  truncated = `${truncated.slice(0, MAX_LEN - 1)}…`;
-                }
+        //       if (originalDescription) {
+        //         // Use the first line and truncate similarly to YouTube behaviour
+        //         let truncated = originalDescription.split("\n")[0] || "";
+        //         truncated = truncated.replace(/\s+/g, " ").trim();
+        //         const MAX_LEN = 150;
+        //         if (truncated.length > MAX_LEN) {
+        //           truncated = `${truncated.slice(0, MAX_LEN - 1)}…`;
+        //         }
 
-                snippetElements.forEach((el) => {
-                  const currentText = el.textContent?.trim();
-                  if (
-                    truncated &&
-                    currentText &&
-                    !window.YoutubeAntiTranslate.isStringEqual(
-                      currentText,
-                      truncated,
-                    )
-                  ) {
-                    el.textContent = truncated;
-                  }
-                });
-              }
-            }
-          }
+        //         snippetElements.forEach((el) => {
+        //           const currentText = el.textContent?.trim();
+        //           if (
+        //             truncated &&
+        //             currentText &&
+        //             !window.YoutubeAntiTranslate.isStringEqual(
+        //               currentText,
+        //               truncated,
+        //             )
+        //           ) {
+        //             el.textContent = truncated;
+        //           }
+        //         });
+        //       }
+        //     }
+        //   }
 
-          // Mark as processed to avoid repeated attempts
-          video.setAttribute("data-ytat-untranslated-desc", "true");
-        }
+        //   // Mark as processed to avoid repeated attempts
+        //   video.setAttribute("data-ytat-untranslated-desc", "true");
+        // }
       } catch (error) {
         window.YoutubeAntiTranslate.logInfo(
           `Error processing video:`,
