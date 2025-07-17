@@ -412,13 +412,14 @@ async function untranslateOtherVideos(intersectElements = null) {
       let linkElement =
         video.querySelector("a#video-title-link") ||
         video.querySelector("a#thumbnail") ||
-        video.querySelector("a.media-item-thumbnail-container");
+        video.querySelector("a.media-item-thumbnail-container") ||
+        video.querySelector("ytd-playlist-panel-video-renderer a");
       let titleElement =
         video.querySelector("#video-title:not(.cbCustomTitle)") ||
         video.querySelector(
           ".compact-media-item-headline .yt-core-attributed-string",
         ) ||
-        video.querySelector(".media-item-headline .yt-core-attributed-string");
+        video.querySelector("ytd-playlist-panel-video-renderer #video-title");
 
       if (!linkElement || !titleElement) {
         // Try another common pattern before giving up
@@ -448,9 +449,13 @@ async function untranslateOtherVideos(intersectElements = null) {
         continue;
       }
 
+      // Check if current widget is a playlist, not video
       if (
-        !window.location.pathname.startsWith("/playlist") &&
-        linkElement.href.includes("list=")
+        // Playlists include a "list=" parameter in their href
+        linkElement.href.includes("list=") &&
+        // Playlist do not include an "index=" parameter in their href
+        // Only videos in playlists include an "index=" parameter
+        !linkElement.href.includes("index=")
       ) {
         continue;
       }
