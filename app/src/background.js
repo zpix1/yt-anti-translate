@@ -502,50 +502,6 @@ async function untranslateOtherVideos(intersectElements = null) {
         } else {
           // console.debug(`Video title unchanged or element missing:`, { href: videoHref, originalTitle, currentTitle });
         }
-
-        // /* -------- Handle description snippet untranslation (search results, video lists) -------- */
-        // if (!video.hasAttribute("data-ytat-untranslated-desc")) {
-        //   // Locate snippet containers
-        //   const snippetElements = video.querySelectorAll(
-        //     ".metadata-snippet-text, .metadata-snippet-text-navigation",
-        //   );
-
-        //   if (snippetElements && snippetElements.length > 0) {
-        //     const idMatch = videoHref.match(/[?&]v=([a-zA-Z0-9_-]+)/);
-        //     if (idMatch && idMatch[1]) {
-        //       const videoId = idMatch[1];
-        //       const originalDescription =
-        //         await getOriginalVideoDescription(videoId);
-
-        //       if (originalDescription) {
-        //         // Use the first line and truncate similarly to YouTube behaviour
-        //         let truncated = originalDescription.split("\n")[0] || "";
-        //         truncated = truncated.replace(/\s+/g, " ").trim();
-        //         const MAX_LEN = 150;
-        //         if (truncated.length > MAX_LEN) {
-        //           truncated = `${truncated.slice(0, MAX_LEN - 1)}…`;
-        //         }
-
-        //         snippetElements.forEach((el) => {
-        //           const currentText = el.textContent?.trim();
-        //           if (
-        //             truncated &&
-        //             currentText &&
-        //             !window.YoutubeAntiTranslate.isStringEqual(
-        //               currentText,
-        //               truncated,
-        //             )
-        //           ) {
-        //             el.textContent = truncated;
-        //           }
-        //         });
-        //       }
-        //     }
-        //   }
-
-        //   // Mark as processed to avoid repeated attempts
-        //   video.setAttribute("data-ytat-untranslated-desc", "true");
-        // }
       } catch (error) {
         window.YoutubeAntiTranslate.logInfo(
           `Error processing video:`,
@@ -794,60 +750,5 @@ function updateObserverOtherShortsOnIntersect() {
     );
   for (const el of allIntersectShortElements ?? []) {
     intersectionObserverOtherShorts.observe(el);
-  }
-}
-
-// Added: Retrieve original (untranslated) video description using YouTube internal player endpoint and cache the response
-async function getOriginalVideoDescription(videoId, locale = "en-US") {
-  // Use locale in cache key in case user switches language during session
-  const cacheKey = `youtubei_player_desc_${videoId}_${locale}`;
-  const cached = window.YoutubeAntiTranslate.getSessionCache(cacheKey);
-  if (cached !== null && cached !== undefined) {
-    return cached;
-  }
-
-  // Split locale into hl / gl parameters (e.g. en-US ⇒ hl=en, gl=US)
-  const [hl, region] = locale.split(/[-_]/);
-  const gl = region || "US";
-
-  const body = {
-    context: {
-      client: {
-        hl,
-        gl,
-        clientName: "WEB",
-        clientVersion: "2.20250527.00.00",
-      },
-    },
-    videoId,
-  };
-
-  try {
-    const res = await fetch(
-      "https://www.youtube.com/youtubei/v1/player?prettyPrint=false",
-      {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(body),
-      },
-    );
-
-    if (!res.ok) {
-      window.YoutubeAntiTranslate.logDebug(
-        "Failed to fetch player data:",
-        res.statusText,
-      );
-      window.YoutubeAntiTranslate.setSessionCache(cacheKey, null);
-      return null;
-    }
-
-    const json = await res.json();
-    const description = json?.videoDetails?.shortDescription || null;
-    window.YoutubeAntiTranslate.setSessionCache(cacheKey, description);
-    return description;
-  } catch (err) {
-    window.YoutubeAntiTranslate.logDebug("Error fetching player data:", err);
-    window.YoutubeAntiTranslate.setSessionCache(cacheKey, null);
-    return null;
   }
 }
