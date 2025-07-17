@@ -1,19 +1,6 @@
 // Stand-alone utility functions (no external imports)
 
 /**
- * Normalizes text for comparison (unicode NFKC, single-space, trimmed, lower-case).
- * @param {string} text
- * @returns {string}
- */
-function normalizeText(text) {
-  return (text || "")
-    .normalize("NFKC")
-    .replace(/\s+/g, " ")
-    .trim()
-    .toLowerCase();
-}
-
-/**
  * Extracts the YouTube video ID from a given URL.
  * Supports /watch?v=, /shorts/, and full URLs.
  * @param {string} url
@@ -190,7 +177,10 @@ async function refreshNotificationTitles() {
 
     if (
       originalTitle &&
-      !normalizeText(currentTitle).includes(normalizeText(originalTitle))
+      !window.YoutubeAntiTranslate.doesStringInclude(
+        currentTitle,
+        originalTitle,
+      )
     ) {
       const replaced = replaceVideoTitleInNotification(
         currentTitle,

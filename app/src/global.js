@@ -157,6 +157,58 @@ ytm-shorts-lockup-view-model`,
   },
 
   /**
+   * Processes a string with normalization and trimming options.
+   * @param {string} str - The string to process.
+   * @param {object} [options] - Configuration options for processing.
+   * @param {boolean} [options.ignoreCase=true] - If true, converts to lowercase. Default true
+   * @param {boolean} [options.normalizeSpaces=true] - If true, replaces consecutive whitespace with a single space. Default true
+   * @param {boolean} [options.normalizeNFKC=true] - If true, applies Unicode Normalization Form Compatibility Composition (NFKC). Default true
+   * @param {boolean} [options.trim=true] - If true, trims both leading and trailing whitespace. Default true
+   * @param {boolean} [options.trimLeft=false] - If true, trims leading whitespace. Ignored if `trim` is true. Default false
+   * @param {boolean} [options.trimRight=false] - If true, trims trailing whitespace. Ignored if `trim` is true. Default false
+   * @returns {string} The processed string.
+   */
+  processString: function (str, options = {}) {
+    const {
+      ignoreCase = true,
+      normalizeSpaces = true,
+      normalizeNFKC = true,
+      trim = true,
+      trimLeft = false,
+      trimRight = false,
+    } = options;
+
+    if (!str) {
+      return str;
+    }
+
+    if (normalizeNFKC) {
+      str = str.normalize("NFKC");
+    }
+
+    if (normalizeSpaces) {
+      str = str.replace(/\s+/g, " ");
+    }
+
+    if (trim) {
+      str = str.trim();
+    } else {
+      if (trimLeft) {
+        str = str.trimStart();
+      }
+      if (trimRight) {
+        str = str.trimEnd();
+      }
+    }
+
+    if (ignoreCase) {
+      str = str.toLowerCase();
+    }
+
+    return str;
+  },
+
+  /**
    * Advanced string equality comparison with optional normalization and trimming.
    * @param {string} str1 - First string to compare.
    * @param {string} str2 - Second string to compare.
@@ -170,47 +222,28 @@ ytm-shorts-lockup-view-model`,
    * @returns {boolean} Whether the two processed strings are equal.
    */
   isStringEqual: function (str1, str2, options = {}) {
-    const {
-      ignoreCase = true,
-      normalizeSpaces = true,
-      normalizeNFKC = true,
-      trim = true,
-      trimLeft = false,
-      trimRight = false,
-    } = options;
+    return (
+      this.processString(str1, options) === this.processString(str2, options)
+    );
+  },
 
-    function process(str) {
-      if (!str) {
-        return str;
-      }
-
-      if (normalizeNFKC) {
-        str = str.normalize("NFKC");
-      }
-
-      if (normalizeSpaces) {
-        str = str.replace(/\s+/g, " ");
-      }
-
-      if (trim) {
-        str = str.trim();
-      } else {
-        if (trimLeft) {
-          str = str.trimStart();
-        }
-        if (trimRight) {
-          str = str.trimEnd();
-        }
-      }
-
-      if (ignoreCase) {
-        str = str.toLowerCase();
-      }
-
-      return str;
-    }
-
-    return process(str1) === process(str2);
+  /**
+   * Advanced string includes check with optional normalization and trimming.
+   * @param {string} container - The string to check in.
+   * @param {string} substring - The string to look for.
+   * @param {object} [options] - Configuration options for comparison.
+   * @param {boolean} [options.ignoreCase=true] - If true, comparison is case-insensitive. Default true
+   * @param {boolean} [options.normalizeSpaces=true] - If true, replaces consecutive whitespace with a single space. Default true
+   * @param {boolean} [options.normalizeNFKC=true] - If true, applies Unicode Normalization Form Compatibility Composition (NFKC). Default true
+   * @param {boolean} [options.trim=true] - If true, trims both leading and trailing whitespace. Default true
+   * @param {boolean} [options.trimLeft=false] - If true, trims leading whitespace. Ignored if `trim` is true. Default false
+   * @param {boolean} [options.trimRight=false] - If true, trims trailing whitespace. Ignored if `trim` is true. Default false
+   * @returns {boolean} Whether the processed container includes the processed substring.
+   */
+  doesStringInclude: function (container, substring, options = {}) {
+    return this.processString(container, options).includes(
+      this.processString(substring, options),
+    );
   },
 
   /**
@@ -233,50 +266,19 @@ ytm-shorts-lockup-view-model`,
     replacement,
     options = {},
   ) {
-    const {
-      ignoreCase = true,
-      normalizeSpaces = true,
-      normalizeNFKC = true,
-      trim = true,
-      trimLeft = false,
-      trimRight = false,
-    } = options;
+    const { ignoreCase = true } = options;
 
-    function preprocess(str) {
-      if (!str) {
-        return str;
-      }
+    // Create options without ignoreCase for preprocessing (since it's handled separately)
+    const preprocessOptions = { ...options, ignoreCase: false };
 
-      if (normalizeNFKC) {
-        str = str.normalize("NFKC");
-      }
-
-      if (normalizeSpaces) {
-        str = str.replace(/\s+/g, " ");
-      }
-
-      if (trim) {
-        str = str.trim();
-      } else {
-        if (trimLeft) {
-          str = str.trimStart();
-        }
-        if (trimRight) {
-          str = str.trimEnd();
-        }
-      }
-
-      return str;
-    }
-
-    const processedInput = preprocess(input);
+    const processedInput = this.processString(input, preprocessOptions);
     if (!processedInput || replacement === null || replacement === undefined) {
       return processedInput;
     }
 
     let regex;
     if (typeof pattern === "string") {
-      const processedPattern = preprocess(pattern);
+      const processedPattern = this.processString(pattern, preprocessOptions);
       const escapedPattern = processedPattern.replace(
         /[.*+?^${}()|[\]\\]/g,
         "\\$&",
