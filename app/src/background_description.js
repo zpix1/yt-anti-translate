@@ -6,7 +6,6 @@ const ATTRIBUTED_STRING_SELECTOR =
   "yt-attributed-string, .yt-core-attributed-string";
 const FORMATTED_STRING_SELECTOR = "yt-formatted-string";
 const SNIPPET_TEXT_SELECTOR = "#attributed-snippet-text";
-const MUTATION_UPDATE_FREQUENCY = 10;
 const HORIZONTAL_CHAPTERS_SELECTOR =
   "ytd-horizontal-card-list-renderer, ytd-macro-markers-list-renderer";
 const CHAPTER_ITEM_SELECTOR = "ytd-macro-markers-list-item-renderer";
@@ -737,33 +736,24 @@ function updateAuthorContent(container, originalText) {
   }
 }
 
-/**
- * Handles mutations related to the description area. It throttles execution by
- * MUTATION_UPDATE_FREQUENCY and triggers restoration when needed.
- */
-let mutationCounter = 0;
-
 async function handleDescriptionMutation() {
-  if (mutationCounter % MUTATION_UPDATE_FREQUENCY === 0) {
-    const descriptionElement = window.YoutubeAntiTranslate.getFirstVisible(
-      document.querySelectorAll(DESCRIPTION_SELECTOR),
-    );
-    const player = window.YoutubeAntiTranslate.getFirstVisible(
-      document.querySelectorAll(
-        window.YoutubeAntiTranslate.getPlayerSelector(),
-      ),
-    );
-    if (descriptionElement && player) {
-      restoreOriginalDescriptionAndAuthor();
-    }
+  const descriptionElement = window.YoutubeAntiTranslate.getFirstVisible(
+    document.querySelectorAll(DESCRIPTION_SELECTOR),
+  );
+  const player = window.YoutubeAntiTranslate.getFirstVisible(
+    document.querySelectorAll(window.YoutubeAntiTranslate.getPlayerSelector()),
+  );
+  if (descriptionElement && player) {
+    restoreOriginalDescriptionAndAuthor();
   }
-  mutationCounter++;
 }
 
 // Initialize the mutation observer for description
 const targetNode = document.body;
 const observerConfig = { childList: true, subtree: true };
-const descriptionObserver = new MutationObserver(handleDescriptionMutation);
+const descriptionObserver = new MutationObserver(
+  window.YoutubeAntiTranslate.debounce(handleDescriptionMutation),
+);
 descriptionObserver.observe(targetNode, observerConfig);
 
 // Add global click handler for timecode links

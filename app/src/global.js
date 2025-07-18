@@ -68,6 +68,29 @@ ytm-shorts-lockup-view-model`,
   },
 
   /**
+   * Creates a debounced version of a function that will be executed at most once
+   * during the given wait interval. The wrapped function is invoked immediately
+   * on the first call and then suppressed for the remainder of the interval so
+   * that the real function runs **no more than once every `wait` milliseconds**.
+   *
+   * @param {Function} func - The function to debounce/throttle.
+   * @param {number} wait - The minimum time between invocations in milliseconds.
+   * @returns {Function} A debounced function.
+   */
+  debounce: function (func, wait = 100) {
+    let timeoutId = null;
+    return function (...args) {
+      if (!timeoutId) {
+        func.apply(this, args);
+      }
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        timeoutId = null;
+      }, wait);
+    };
+  },
+
+  /**
    * Retrieves a deserialized object from session storage.
    * @param {string} key
    * @return {any|null}

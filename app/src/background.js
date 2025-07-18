@@ -1,5 +1,3 @@
-const MUTATION_UPDATE_STEP = window.YoutubeAntiTranslate.isMobile() ? 1 : 10;
-
 const INTERSECTION_UPDATE_STEP_VIDEOS = 2;
 let allIntersectVideoElements = null;
 const intersectionObserverOtherVideos = new IntersectionObserver(
@@ -630,47 +628,44 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
   );
 }
 
-let mutationIdx = 0;
-
 async function untranslate() {
-  if (mutationIdx % MUTATION_UPDATE_STEP === 0) {
-    const currentVideoPromise = untranslateCurrentVideo();
-    const currentVideoFullScreenLinkPromise = untranslateCurrentVideoHeadLink();
-    const currentVideoFullScreenEduPromise =
-      untranslateCurrentVideoFullScreenEdu();
-    const channelEmbeddedVideoPromise =
-      untranslateCurrentChannelEmbeddedVideoTitle();
-    const otherVideosPromise = untranslateOtherVideos();
-    const currentShortPromise = untranslateCurrentShortVideo();
-    const currentShortVideoLinksPromise = untranslateCurrentShortVideoLinks();
-    const otherShortsPromise = untranslateOtherShortsVideos(); // Call the new function
-    const currentMobileVideoDescriptionPromise =
-      untranslateCurrentMobileVideoDescriptionHeader();
+  const currentVideoPromise = untranslateCurrentVideo();
+  const currentVideoFullScreenLinkPromise = untranslateCurrentVideoHeadLink();
+  const currentVideoFullScreenEduPromise =
+    untranslateCurrentVideoFullScreenEdu();
+  const channelEmbeddedVideoPromise =
+    untranslateCurrentChannelEmbeddedVideoTitle();
+  const otherVideosPromise = untranslateOtherVideos();
+  const currentShortPromise = untranslateCurrentShortVideo();
+  const currentShortVideoLinksPromise = untranslateCurrentShortVideoLinks();
+  const otherShortsPromise = untranslateOtherShortsVideos(); // Call the new function
+  const currentMobileVideoDescriptionPromise =
+    untranslateCurrentMobileVideoDescriptionHeader();
 
-    // Wait for all promises to resolve concurrently
-    await Promise.all([
-      currentVideoPromise,
-      currentVideoFullScreenLinkPromise,
-      currentVideoFullScreenEduPromise,
-      channelEmbeddedVideoPromise,
-      otherVideosPromise,
-      currentShortPromise,
-      currentShortVideoLinksPromise,
-      otherShortsPromise,
-      currentMobileVideoDescriptionPromise,
-    ]);
+  // Wait for all promises to resolve concurrently
+  await Promise.all([
+    currentVideoPromise,
+    currentVideoFullScreenLinkPromise,
+    currentVideoFullScreenEduPromise,
+    channelEmbeddedVideoPromise,
+    otherVideosPromise,
+    currentShortPromise,
+    currentShortVideoLinksPromise,
+    otherShortsPromise,
+    currentMobileVideoDescriptionPromise,
+  ]);
 
-    // update intersect observers
-    updateObserverOtherVideosOnIntersect();
-    updateObserverOtherShortsOnIntersect();
-  }
-  mutationIdx++;
+  // update intersect observers
+  updateObserverOtherVideosOnIntersect();
+  updateObserverOtherShortsOnIntersect();
 }
 
 // Initialize the extension
 const target = document.body;
 const config = { childList: true, subtree: true };
-const observer = new MutationObserver(untranslate);
+const observer = new MutationObserver(
+  window.YoutubeAntiTranslate.debounce(untranslate),
+);
 observer.observe(target, config);
 
 // --- Observe all Other Videos outside viewport for intersect ---
