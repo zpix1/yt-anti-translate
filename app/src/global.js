@@ -72,19 +72,48 @@ ytm-shorts-lockup-view-model`,
    * Creates a debounced version of a function that will be executed at most once
    * during the given wait interval. The wrapped function is invoked immediately
    * on the first call and then suppressed for the remainder of the interval so
-   * that the real function runs **no more than once every `wait` milliseconds**.
+   * that the real function runs **no more than once every `waitMinMs` milliseconds**.
+   *
+   * Uses `requestAnimationFrame` to align with the browser's repaint cycle.
    *
    * @param {Function} func - The function to debounce/throttle.
-   * @param {number} wait - The minimum time between invocations in milliseconds.
+   * @param {number} waitMinMs - The minimum time between invocations in milliseconds.
    * @returns {Function} A debounced function.
    */
   debounce: function (func, wait = 30) {
-    let timeoutId = null;
+    let isScheduled = false;
+    let lastExecTime = 0;
+
+    function tick(time, context, args) {
+      if (!isScheduled) {
+        return;
+      }
+
+      const elapsed = time - lastExecTime;
+
+      if (elapsed >= wait) {
+        func.apply(context, args);
+        lastExecTime = time;
+        isScheduled = false; // allow next schedule
+      } else {
+        requestAnimationFrame((t) => tick(t, context, args));
+      }
+    }
+
     return function (...args) {
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => {
-        func.apply(this, args);
-      }, wait);
+      if (!isScheduled) {
+        isScheduled = true;
+        requestAnimationFrame((time) => {
+          if (lastExecTime === 0) {
+            // first invocation: run immediately
+            func.apply(this, args);
+            lastExecTime = time;
+            isScheduled = false;
+          } else {
+            tick(time, this, args);
+          }
+        });
+      }
     };
   },
 
