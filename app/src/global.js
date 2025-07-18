@@ -34,7 +34,11 @@ ytd-compact-video-renderer,
 ytd-grid-video-renderer,
 ytd-playlist-video-renderer,
 ytd-playlist-panel-video-renderer,
-yt-lockup-view-model`,
+yt-lockup-view-model,
+ytm-compact-video-renderer,
+ytm-rich-item-renderer,
+ytm-video-with-context-renderer,
+ytm-video-card-renderer`,
   ALL_ARRAYS_SHORTS_SELECTOR: `div.style-scope.ytd-rich-item-renderer,
 ytm-shorts-lockup-view-model`,
   cacheSessionStorageKey: "[YoutubeAntiTranslate]cache",
@@ -62,6 +66,55 @@ ytm-shorts-lockup-view-model`,
     if (this.currentLogLevel >= this.LOG_LEVELS.DEBUG) {
       console.debug(`${this.LOG_PREFIX} [DEBUG]`, ...args);
     }
+  },
+
+  /**
+   * Creates a debounced version of a function that will be executed at most once
+   * during the given wait interval. The wrapped function is invoked immediately
+   * on the first call and then suppressed for the remainder of the interval so
+   * that the real function runs **no more than once every `waitMinMs` milliseconds**.
+   *
+   * Uses `requestAnimationFrame` to align with the browser's repaint cycle.
+   *
+   * @param {Function} func - The function to debounce/throttle.
+   * @param {number} waitMinMs - The minimum time between invocations in milliseconds.
+   * @returns {Function} A debounced function.
+   */
+  debounce: function (func, wait = 30) {
+    let isScheduled = false;
+    let lastExecTime = 0;
+
+    function tick(time, context, args) {
+      if (!isScheduled) {
+        return;
+      }
+
+      const elapsed = time - lastExecTime;
+
+      if (elapsed >= wait) {
+        func.apply(context, args);
+        lastExecTime = time;
+        isScheduled = false; // allow next schedule
+      } else {
+        requestAnimationFrame((t) => tick(t, context, args));
+      }
+    }
+
+    return function (...args) {
+      if (!isScheduled) {
+        isScheduled = true;
+        requestAnimationFrame((time) => {
+          if (lastExecTime === 0) {
+            // first invocation: run immediately
+            func.apply(this, args);
+            lastExecTime = time;
+            isScheduled = false;
+          } else {
+            tick(time, this, args);
+          }
+        });
+      }
+    };
   },
 
   /**
@@ -109,11 +162,15 @@ ytm-shorts-lockup-view-model`,
    * @returns {string}
    */
   getPlayerSelector: function () {
-    this.logDebug(`getPlayerSelector called`);
+    if (window.location.hostname === "m.youtube.com") {
+      return "#player-container-id";
+    }
+    if (window.location.pathname.startsWith("/embed")) {
+      return "#movie_player";
+    }
     const selector = window.location.pathname.startsWith("/shorts")
       ? "#shorts-player"
       : "ytd-player .html5-video-player";
-    this.logDebug(`getPlayerSelector returning: ${selector}`);
     return selector;
   },
 
@@ -121,9 +178,7 @@ ytm-shorts-lockup-view-model`,
    * @returns {string}
    */
   getBrowserOrChrome: function () {
-    this.logDebug(`getBrowserOrChrome called`);
     const result = typeof browser !== "undefined" ? browser : chrome;
-    this.logDebug(`getBrowserOrChrome returning browser type`);
     return result;
   },
 
@@ -131,12 +186,16 @@ ytm-shorts-lockup-view-model`,
    * @returns {bool}
    */
   isFirefoxBasedBrowser: function () {
-    this.logDebug(`isFirefoxBasedBrowser called`);
     const result =
       typeof browser !== "undefined" &&
       typeof browser.runtime !== "undefined" &&
       typeof browser.runtime.getBrowserInfo === "function";
-    this.logDebug(`isFirefoxBasedBrowser returning: ${result}`);
+    return result;
+  },
+
+  // Detects if we are currently on the mobile YouTube site (m.youtube.com)
+  isMobile: function () {
+    const result = window.location.hostname === "m.youtube.com";
     return result;
   },
 
@@ -148,6 +207,58 @@ ytm-shorts-lockup-view-model`,
   normalizeSpaces: function (str) {
     const result = str.replace(/\s+/g, " ").trim();
     return result;
+  },
+
+  /**
+   * Processes a string with normalization and trimming options.
+   * @param {string} str - The string to process.
+   * @param {object} [options] - Configuration options for processing.
+   * @param {boolean} [options.ignoreCase=true] - If true, converts to lowercase. Default true
+   * @param {boolean} [options.normalizeSpaces=true] - If true, replaces consecutive whitespace with a single space. Default true
+   * @param {boolean} [options.normalizeNFKC=true] - If true, applies Unicode Normalization Form Compatibility Composition (NFKC). Default true
+   * @param {boolean} [options.trim=true] - If true, trims both leading and trailing whitespace. Default true
+   * @param {boolean} [options.trimLeft=false] - If true, trims leading whitespace. Ignored if `trim` is true. Default false
+   * @param {boolean} [options.trimRight=false] - If true, trims trailing whitespace. Ignored if `trim` is true. Default false
+   * @returns {string} The processed string.
+   */
+  processString: function (str, options = {}) {
+    const {
+      ignoreCase = true,
+      normalizeSpaces = true,
+      normalizeNFKC = true,
+      trim = true,
+      trimLeft = false,
+      trimRight = false,
+    } = options;
+
+    if (!str) {
+      return str;
+    }
+
+    if (normalizeNFKC) {
+      str = str.normalize("NFKC");
+    }
+
+    if (normalizeSpaces) {
+      str = str.replace(/\s+/g, " ");
+    }
+
+    if (trim) {
+      str = str.trim();
+    } else {
+      if (trimLeft) {
+        str = str.trimStart();
+      }
+      if (trimRight) {
+        str = str.trimEnd();
+      }
+    }
+
+    if (ignoreCase) {
+      str = str.toLowerCase();
+    }
+
+    return str;
   },
 
   /**
@@ -164,47 +275,28 @@ ytm-shorts-lockup-view-model`,
    * @returns {boolean} Whether the two processed strings are equal.
    */
   isStringEqual: function (str1, str2, options = {}) {
-    const {
-      ignoreCase = true,
-      normalizeSpaces = true,
-      normalizeNFKC = true,
-      trim = true,
-      trimLeft = false,
-      trimRight = false,
-    } = options;
+    return (
+      this.processString(str1, options) === this.processString(str2, options)
+    );
+  },
 
-    function process(str) {
-      if (!str) {
-        return str;
-      }
-
-      if (normalizeNFKC) {
-        str = str.normalize("NFKC");
-      }
-
-      if (normalizeSpaces) {
-        str = str.replace(/\s+/g, " ");
-      }
-
-      if (trim) {
-        str = str.trim();
-      } else {
-        if (trimLeft) {
-          str = str.trimStart();
-        }
-        if (trimRight) {
-          str = str.trimEnd();
-        }
-      }
-
-      if (ignoreCase) {
-        str = str.toLowerCase();
-      }
-
-      return str;
-    }
-
-    return process(str1) === process(str2);
+  /**
+   * Advanced string includes check with optional normalization and trimming.
+   * @param {string} container - The string to check in.
+   * @param {string} substring - The string to look for.
+   * @param {object} [options] - Configuration options for comparison.
+   * @param {boolean} [options.ignoreCase=true] - If true, comparison is case-insensitive. Default true
+   * @param {boolean} [options.normalizeSpaces=true] - If true, replaces consecutive whitespace with a single space. Default true
+   * @param {boolean} [options.normalizeNFKC=true] - If true, applies Unicode Normalization Form Compatibility Composition (NFKC). Default true
+   * @param {boolean} [options.trim=true] - If true, trims both leading and trailing whitespace. Default true
+   * @param {boolean} [options.trimLeft=false] - If true, trims leading whitespace. Ignored if `trim` is true. Default false
+   * @param {boolean} [options.trimRight=false] - If true, trims trailing whitespace. Ignored if `trim` is true. Default false
+   * @returns {boolean} Whether the processed container includes the processed substring.
+   */
+  doesStringInclude: function (container, substring, options = {}) {
+    return this.processString(container, options).includes(
+      this.processString(substring, options),
+    );
   },
 
   /**
@@ -227,50 +319,19 @@ ytm-shorts-lockup-view-model`,
     replacement,
     options = {},
   ) {
-    const {
-      ignoreCase = true,
-      normalizeSpaces = true,
-      normalizeNFKC = true,
-      trim = true,
-      trimLeft = false,
-      trimRight = false,
-    } = options;
+    const { ignoreCase = true } = options;
 
-    function preprocess(str) {
-      if (!str) {
-        return str;
-      }
+    // Create options without ignoreCase for preprocessing (since it's handled separately)
+    const preprocessOptions = { ...options, ignoreCase: false };
 
-      if (normalizeNFKC) {
-        str = str.normalize("NFKC");
-      }
-
-      if (normalizeSpaces) {
-        str = str.replace(/\s+/g, " ");
-      }
-
-      if (trim) {
-        str = str.trim();
-      } else {
-        if (trimLeft) {
-          str = str.trimStart();
-        }
-        if (trimRight) {
-          str = str.trimEnd();
-        }
-      }
-
-      return str;
-    }
-
-    const processedInput = preprocess(input);
+    const processedInput = this.processString(input, preprocessOptions);
     if (!processedInput || replacement === null || replacement === undefined) {
       return processedInput;
     }
 
     let regex;
     if (typeof pattern === "string") {
-      const processedPattern = preprocess(pattern);
+      const processedPattern = this.processString(pattern, preprocessOptions);
       const escapedPattern = processedPattern.replace(
         /[.*+?^${}()|[\]\\]/g,
         "\\$&",
@@ -977,5 +1038,11 @@ ytm-shorts-lockup-view-model`,
       `detectSupportedLanguage: all attempts exhausted, returning null`,
     );
     return null;
+  },
+  getSettings: function () {
+    const element = document.querySelector(
+      'script[type="module"][data-ytantitranslatesettings]',
+    );
+    return JSON.parse(element?.dataset?.ytantitranslatesettings ?? "{}");
   },
 };

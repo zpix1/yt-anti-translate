@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.19.1] - 2025-01-07
+
+### Fixed
+
+- Fix [#73](https://github.com/zpix1/yt-anti-translate/issues/73) Video Chapters repeating
+- Fix [#68](https://github.com/zpix1/yt-anti-translate/issues/68) Anti-translation does not work on embedded URLs
+- Fix [#67](https://github.com/zpix1/yt-anti-translate/issues/67) Titles in playlists are not untranslated
+- Fix [#40](https://github.com/zpix1/yt-anti-translate/issues/40) Performance issues
+
+## [1.19.0] - 2025-07-06
+
+### New Feature
+
+- Chapters untranslation
+- Option to only untranslate AI-dubbed audio
+- Initial m.youtube.com support
+- Notification untranslation
+- Fix [#63](https://github.com/zpix1/yt-anti-translate/issues/63) Album names wrongly replaced in the Releases section of music channels
+
 ## [1.18.4] - 2025-07-04
 
 ### Fixed
