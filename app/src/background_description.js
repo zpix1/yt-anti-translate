@@ -6,7 +6,7 @@ const ATTRIBUTED_STRING_SELECTOR =
   "yt-attributed-string, .yt-core-attributed-string";
 const FORMATTED_STRING_SELECTOR = "yt-formatted-string";
 const SNIPPET_TEXT_SELECTOR = "#attributed-snippet-text";
-const MUTATION_UPDATE_FREQUENCY = 2;
+const MUTATION_UPDATE_FREQUENCY = 10;
 const HORIZONTAL_CHAPTERS_SELECTOR =
   "ytd-horizontal-card-list-renderer, ytd-macro-markers-list-renderer";
 const CHAPTER_ITEM_SELECTOR = "ytd-macro-markers-list-item-renderer";
@@ -540,7 +540,7 @@ function fetchOriginalDescription() {
   );
 
   const playerResponse = getPlayerResponseSafely(player);
-  if (!playerResponse && !window.YoutubeAntiTranslate.isMobile()) {
+  if (!playerResponse && window.YoutubeAntiTranslate.isMobile()) {
     // Fallback for mobile layout when player response is unavailable
     const mobileDescription = getDescriptionMobile();
     if (mobileDescription) {
