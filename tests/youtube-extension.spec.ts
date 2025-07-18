@@ -757,6 +757,13 @@ test.describe("YouTube Anti-Translate extension", () => {
     // Wait for the video to load
     await page.waitForSelector("video", { timeout: 10000 });
 
+    await page.click("#movie_player > div.ytp-cued-thumbnail-overlay > button");
+
+    await expect(
+      page.locator("#movie_player > div.ytp-cued-thumbnail-overlay > button"),
+    ).not.toBeVisible();
+    await page.waitForTimeout(2000);
+
     function getTrackLanguageFieldObjectName(track: object) {
       let languageFieldName: string;
 
@@ -775,18 +782,20 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Check that audio track is set to original
     const currentTrack = await page.evaluate(async () => {
-      const video = document.querySelector("video") as HTMLVideoElement & {
+      const video = document.querySelector(
+        "#movie_player",
+      ) as HTMLVideoElement & {
         getAudioTrack?: () => Promise<unknown>;
       };
       return await video?.getAudioTrack?.();
     });
 
-    if (currentTrack) {
-      // Check original track is the selected one
-      const trackLanguageField = getTrackLanguageFieldObjectName(currentTrack);
-      if (trackLanguageField) {
-        expect(currentTrack[trackLanguageField]?.name).toContain("оригинал");
-      }
+    expect(currentTrack).toBeTruthy();
+
+    // Check original track is the selected one
+    const trackLanguageField = getTrackLanguageFieldObjectName(currentTrack);
+    if (trackLanguageField) {
+      expect(currentTrack[trackLanguageField]?.name).toContain("оригинал");
     }
 
     await page.screenshot({
