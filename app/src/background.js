@@ -22,22 +22,27 @@ const intersectionObserverOtherShorts = new IntersectionObserver(
 
 const pendingRequests = new Map();
 
-async function get(url) {
-  const storedResponse = window.YoutubeAntiTranslate.getSessionCache(url);
+async function cachedRequest(url, postData = null) {
+  const cacheKey = url + "|" + postData;
+  const storedResponse = window.YoutubeAntiTranslate.getSessionCache(cacheKey);
   if (storedResponse) {
     return storedResponse;
   }
 
-  if (pendingRequests.has(url)) {
-    return pendingRequests.get(url);
+  if (pendingRequests.has(cacheKey)) {
+    return pendingRequests.get(cacheKey);
   }
 
   const requestPromise = (async () => {
     try {
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        method: postData ? "POST" : "GET",
+        headers: { "content-type": "application/json" },
+        body: postData ? postData : undefined,
+      });
       if (!response.ok) {
         if (response.status === 404 || response.status === 401) {
-          window.YoutubeAntiTranslate.setSessionCache(url, null);
+          window.YoutubeAntiTranslate.setSessionCache(cacheKey, null);
           return null;
         }
         throw new Error(
@@ -45,19 +50,19 @@ async function get(url) {
         );
       }
       const data = await response.json();
-      window.YoutubeAntiTranslate.setSessionCache(url, data);
+      window.YoutubeAntiTranslate.setSessionCache(cacheKey, data);
       return data;
     } catch (error) {
       window.YoutubeAntiTranslate.logWarning("Error fetching:", error);
       // Cache null even on general fetch error to prevent immediate retries for the same failing URL
-      window.YoutubeAntiTranslate.setSessionCache(url, null);
+      window.YoutubeAntiTranslate.setSessionCache(cacheKey, null);
       return null;
     } finally {
-      pendingRequests.delete(url);
+      pendingRequests.delete(cacheKey);
     }
   })();
 
-  pendingRequests.set(url, requestPromise);
+  pendingRequests.set(cacheKey, requestPromise);
   return requestPromise;
 }
 
@@ -102,7 +107,7 @@ async function untranslateCurrentShortVideo() {
 
     try {
       // console.debug(`Fetching oEmbed for Short:`, videoId);
-      const response = await get(oembedUrl);
+      const response = await cachedRequest(oembedUrl);
       if (!response || !response.title) {
         // console.debug(` No oEmbed data for Short:`, videoId);
         // Mark as checked even if no data, to prevent retrying unless element changes
@@ -308,7 +313,7 @@ async function createOrUpdateUntranslatedFakeNode(
     if (window.YoutubeAntiTranslate.isAdvertisementHref(getUrlForElement)) {
       return;
     }
-    const response = await get(
+    const response = await cachedRequest(
       "https://www.youtube.com/oembed?url=" + getUrlForElement,
     );
     if (!response) {
@@ -470,7 +475,7 @@ async function untranslateOtherVideos(intersectElements = null) {
 
       try {
         // console.debug(`Fetching oEmbed for video:`, videoHref);
-        const response = await get(
+        const response = await cachedRequest(
           "https://www.youtube.com/oembed?url=" + videoHref,
         );
         if (!response || !response.title) {
@@ -503,6 +508,50 @@ async function untranslateOtherVideos(intersectElements = null) {
           }
         } else {
           // console.debug(`Video title unchanged or element missing:`, { href: videoHref, originalTitle, currentTitle });
+        }
+
+        /* -------- Handle description snippet untranslation (search results, video lists) -------- */
+        if (!video.hasAttribute("data-ytat-untranslated-desc")) {
+          // Locate snippet containers
+          const snippetElements = video.querySelectorAll(
+            ".metadata-snippet-text, .metadata-snippet-text-navigation",
+          );
+
+          if (snippetElements && snippetElements.length > 0) {
+            const idMatch = videoHref.match(/[?&]v=([a-zA-Z0-9_-]+)/);
+            if (idMatch && idMatch[1]) {
+              const videoId = idMatch[1];
+              const originalDescription =
+                await getOriginalVideoDescription(videoId);
+
+              if (originalDescription) {
+                // Use the first line and truncate similarly to YouTube behaviour
+                let truncated = originalDescription.split("\n")[0] || "";
+                truncated = truncated.replace(/\s+/g, " ").trim();
+                const MAX_LEN = 150;
+                if (truncated.length > MAX_LEN) {
+                  truncated = `${truncated.slice(0, MAX_LEN - 1)}…`;
+                }
+
+                snippetElements.forEach((el) => {
+                  const currentText = el.textContent?.trim();
+                  if (
+                    truncated &&
+                    currentText &&
+                    !window.YoutubeAntiTranslate.isStringEqual(
+                      currentText,
+                      truncated,
+                    )
+                  ) {
+                    el.textContent = truncated;
+                  }
+                });
+              }
+            }
+          }
+
+          // Mark as processed to avoid repeated attempts
+          video.setAttribute("data-ytat-untranslated-desc", "true");
         }
       } catch (error) {
         window.YoutubeAntiTranslate.logInfo(
@@ -575,7 +624,7 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
       const oembedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/shorts/${videoId}`;
 
       try {
-        const response = await get(oembedUrl);
+        const response = await cachedRequest(oembedUrl);
         if (!response || !response.title) {
           // Mark as checked even if no oEmbed data is found
           shortElement.setAttribute("data-ytat-untranslated-other", "checked");
@@ -750,4 +799,23 @@ function updateObserverOtherShortsOnIntersect() {
   for (const el of allIntersectShortElements ?? []) {
     intersectionObserverOtherShorts.observe(el);
   }
+}
+
+async function getOriginalVideoDescription(videoId) {
+  const body = {
+    context: {
+      client: {
+        clientName: "WEB",
+        clientVersion: "2.20250527.00.00",
+      },
+    },
+    videoId,
+  };
+
+  const json = await cachedRequest(
+    "https://www.youtube.com/youtubei/v1/player?prettyPrint=false",
+    JSON.stringify(body),
+  );
+  const description = json?.videoDetails?.shortDescription || null;
+  return description;
 }
