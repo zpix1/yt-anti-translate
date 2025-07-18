@@ -3,7 +3,6 @@ const CHANNELBRANDING_HEADER_SELECTOR =
   "#page-header-container #page-header .page-header-view-model-wiz__page-header-headline-info, .page-header-view-model-wiz__page-header-headline-info";
 const CHANNELBRANDING_ABOUT_SELECTOR =
   "ytd-engagement-panel-section-list-renderer, ytm-engagement-panel-section-list-renderer";
-const CHANNELBRANDING_MUTATION_UPDATE_FREQUENCY = 1;
 const CHANNEL_LOCATION_REGEXES = [
   /:\/\/(?:www\.|m\.)?youtube\.com\/channel\//,
   /:\/\/(?:www\.|m\.)?youtube\.com\/c\//,
