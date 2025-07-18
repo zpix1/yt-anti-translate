@@ -540,7 +540,7 @@ function fetchOriginalDescription() {
   );
 
   const playerResponse = getPlayerResponseSafely(player);
-  if (!playerResponse) {
+  if (!playerResponse && !window.YoutubeAntiTranslate.isMobile()) {
     // Fallback for mobile layout when player response is unavailable
     const mobileDescription = getDescriptionMobile();
     if (mobileDescription) {

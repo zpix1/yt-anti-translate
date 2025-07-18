@@ -1,4 +1,4 @@
-const MUTATION_UPDATE_STEP = window.YoutubeAntiTranslate.isMobile() ? 1 : 2;
+const MUTATION_UPDATE_STEP = window.YoutubeAntiTranslate.isMobile() ? 1 : 10;
 
 const INTERSECTION_UPDATE_STEP_VIDEOS = 2;
 let allIntersectVideoElements = null;
