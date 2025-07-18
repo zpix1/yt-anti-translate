@@ -717,23 +717,19 @@ function updateBrandingAboutDescriptionContent(
   }
 }
 
-let mutationBrandingIdx = 0;
 async function untranslateBranding() {
-  if (mutationBrandingIdx % CHANNELBRANDING_MUTATION_UPDATE_FREQUENCY === 0) {
-    const url = document.location.href;
-    const isChannelPage = CHANNEL_LOCATION_REGEXES.some((regex) =>
-      regex.test(url),
-    );
+  const url = document.location.href;
+  const isChannelPage = CHANNEL_LOCATION_REGEXES.some((regex) =>
+    regex.test(url),
+  );
 
-    if (isChannelPage) {
-      const brandingHeaderPromise = restoreOriginalBrandingHeader();
-      const brandingAboutPromise = restoreOriginalBrandingAbout();
-      await Promise.all([brandingHeaderPromise, brandingAboutPromise]);
-    } else {
-      await restoreOriginalBrandingSearchResults();
-    }
+  if (isChannelPage) {
+    const brandingHeaderPromise = restoreOriginalBrandingHeader();
+    const brandingAboutPromise = restoreOriginalBrandingAbout();
+    await Promise.all([brandingHeaderPromise, brandingAboutPromise]);
+  } else {
+    await restoreOriginalBrandingSearchResults();
   }
-  mutationBrandingIdx++;
 }
 
 // Initialize the mutation observer for branding
@@ -746,7 +742,9 @@ chrome.storage.sync.get(
     if (!items.disabled && items.untranslateChannelBranding) {
       const targetNode = document.body;
       const observerConfig = { childList: true, subtree: true };
-      const brandingObserver = new MutationObserver(untranslateBranding);
+      const brandingObserver = new MutationObserver(
+        window.YoutubeAntiTranslate.debounce(untranslateBranding),
+      );
       brandingObserver.observe(targetNode, observerConfig);
     }
   },

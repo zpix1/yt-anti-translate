@@ -37,7 +37,8 @@ ytd-playlist-panel-video-renderer,
 yt-lockup-view-model,
 ytm-compact-video-renderer,
 ytm-rich-item-renderer,
-ytm-video-with-context-renderer`,
+ytm-video-with-context-renderer,
+ytm-video-card-renderer`,
   ALL_ARRAYS_SHORTS_SELECTOR: `div.style-scope.ytd-rich-item-renderer,
 ytm-shorts-lockup-view-model`,
   cacheSessionStorageKey: "[YoutubeAntiTranslate]cache",
@@ -77,15 +78,12 @@ ytm-shorts-lockup-view-model`,
    * @param {number} wait - The minimum time between invocations in milliseconds.
    * @returns {Function} A debounced function.
    */
-  debounce: function (func, wait = 100) {
+  debounce: function (func, wait = 30) {
     let timeoutId = null;
     return function (...args) {
-      if (!timeoutId) {
-        func.apply(this, args);
-      }
       clearTimeout(timeoutId);
       timeoutId = setTimeout(() => {
-        timeoutId = null;
+        func.apply(this, args);
       }, wait);
     };
   },
