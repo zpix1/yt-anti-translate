@@ -23,7 +23,7 @@ jobs:
 
     steps:
       - name: Require 'safe-to-test' label
-        if: github.event_name == 'pull_request_target'
+        if: github.event_name == 'pull_request_target' && github.event.pull_request.author_association != 'COLLABORATOR' && github.event.pull_request.author_association != 'MEMBER' && github.event.pull_request.author_association != 'OWNER'
         uses: mheap/github-action-required-labels@v5
         with:
           mode: minimum
