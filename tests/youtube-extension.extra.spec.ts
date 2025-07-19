@@ -22,7 +22,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     // expect(process.env.YOUTUBE_API_KEY?.trim() || "").not.toBe("");
     // Instead of failing the test if I as a dev haven't configured YOUTUBE_API_KEY,
     // just warn and skip the YT API test
-    const skipReason = (process.env.YOUTUBE_API_KEY?.trim() || "") == "";
+    const skipReason = (process.env.YOUTUBE_API_KEY?.trim() || "") === "";
     const skipMessage =
       "YouTube API key not configured, so skipping tests with it";
     if (skipReason) {
