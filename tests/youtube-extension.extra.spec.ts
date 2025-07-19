@@ -15,18 +15,17 @@ import "dotenv/config";
 // Tests that use locale th-TH (instead of ru-RU)
 
 test.describe("YouTube Anti-Translate extension - Extras", () => {
-
   test("YouTube channel branding header and about retain original content - WITH Api Key Set", async ({
     browserNameWithExtensions,
     localeString,
   }, testInfo) => {
-
     // expect(process.env.YOUTUBE_API_KEY?.trim() || "").not.toBe("");
     // Instead of failing the test if I as a dev haven't configured YOUTUBE_API_KEY,
     // just warn and skip the YT API test
     const skipReason = (process.env.YOUTUBE_API_KEY?.trim() || "") == "";
-    const skipMessage = "YouTube API key not configured, so skipping tests with it";
-    if(skipReason){
+    const skipMessage =
+      "YouTube API key not configured, so skipping tests with it";
+    if (skipReason) {
       console.log(skipMessage);
     }
     test.skip(skipReason, skipMessage);
