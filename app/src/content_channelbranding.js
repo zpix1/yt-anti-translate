@@ -11,104 +11,6 @@ const CHANNEL_LOCATION_REGEXES = [
 ];
 
 /**
- * Use channel videos or shorts original titles to determine the original locale with i18n.detectLanguage()
- * @returns {string|null} detected locale ISO string or null
- */
-async function detectChannelOriginalLanguage() {
-  const videoElements = window.YoutubeAntiTranslate.getAllVisibleNodes(
-    document.querySelectorAll(`${window.YoutubeAntiTranslate.ALL_ARRAYS_SHORTS_SELECTOR},
-      ${window.YoutubeAntiTranslate.ALL_ARRAYS_VIDEOS_SELECTOR}`),
-    true,
-    20,
-  );
-
-  if (!videoElements || videoElements.length === 0) {
-    return;
-  }
-
-  let combinedTitle = "";
-
-  for (const el of videoElements) {
-    const linkElement =
-      el.querySelector("a#video-title-link") ||
-      el.querySelector("a#thumbnail") ||
-      el.querySelector("ytd-thumbnail a") ||
-      el.querySelector(`a[href*="/watch?v="]`) ||
-      el.querySelector("a.shortsLockupViewModelHostEndpoint") ||
-      el.querySelector(`a[href*="/shorts/"]`);
-
-    if (!linkElement) {
-      continue;
-    }
-
-    let href = linkElement.href;
-    if (!href) {
-      continue;
-    }
-
-    // Handle shorts specifically
-    if (href.includes("/shorts/")) {
-      const match = href.match(/shorts\/([a-zA-Z0-9_-]+)/);
-      if (!match || !match[1]) {
-        continue;
-      }
-      href = `https://www.youtube.com/shorts/${match[1]}`;
-    }
-
-    // Ignore advertisement video
-    if (window.YoutubeAntiTranslate.isAdvertisementHref(href)) {
-      continue;
-    }
-
-    href = window.YoutubeAntiTranslate.stripNonEssentialParams(href);
-    const oembedUrl = `https://www.youtube.com/oembed?url=${href}`;
-
-    let titleFromEmbed;
-
-    // Check cache first
-    const storedResponse =
-      window.YoutubeAntiTranslate.getSessionCache(oembedUrl);
-    if (storedResponse) {
-      titleFromEmbed = `${storedResponse.title} ${storedResponse.author_name}`;
-    } else {
-      try {
-        const res = await fetch(oembedUrl);
-        if (!res.ok) {
-          window.YoutubeAntiTranslate.logInfo(
-            `Failed to fetch ${oembedUrl}:`,
-            res.statusText,
-          );
-          continue;
-        }
-
-        const json = await res.json();
-        titleFromEmbed = `${json.title} ${json.author_name}`;
-        window.YoutubeAntiTranslate.setSessionCache(oembedUrl, json);
-      } catch (e) {
-        window.YoutubeAntiTranslate.logInfo("Fetch failed:", e);
-        continue;
-      }
-    }
-
-    if (titleFromEmbed) {
-      combinedTitle += `${titleFromEmbed}. `;
-    }
-  }
-
-  if (!combinedTitle.trim()) {
-    return;
-  }
-
-  const detection =
-    await window.YoutubeAntiTranslate.detectSupportedLanguage(combinedTitle);
-
-  if (!detection) {
-    return null;
-  }
-  return detection[0];
-}
-
-/**
  * Retrieve the UCID of a channel using youtubei/v1/search
  * @param {string} query the YouTube channel handle (e.g. "@mrbeast" or "MrBeast")
  * @returns {string} channel UCID
@@ -207,33 +109,10 @@ async function getChannelBrandingWithYoutubeI(ucid = null, locale = null) {
     return;
   }
 
-  if (!locale) {
-    // Check if we have a previusly successful locale
-    locale = window.YoutubeAntiTranslate.getSessionCache(ucid);
-  }
-  if (!locale) {
-    // detect original language based on oembedded data for videos or shorts on the current channel page
-    locale = await detectChannelOriginalLanguage();
-  }
-  if (!locale) {
-    window.YoutubeAntiTranslate.logInfo(
-      `could not find channel original locale`,
-    );
-    return;
-  }
-
-  // split the locale into hl (= language) and gl (= region)
-  //    • "it-IT" → ["it","IT"]
-  //    • "fr"    → ["fr"]
-  const [hl, region] = locale.split(/[-_]/); // tolerate "pt-BR" or "pt_BR"
-  const gl = region;
-
   // build the request body
   const body = {
     context: {
       client: {
-        hl, // language
-        gl, // region
         clientName: "WEB",
         clientVersion: "2.20250527.00.00",
       },

@@ -525,13 +525,7 @@ async function untranslateOtherVideos(intersectElements = null) {
                 await getOriginalVideoDescription(videoId);
 
               if (originalDescription) {
-                // Use the first line and truncate similarly to YouTube behaviour
-                let truncated = originalDescription.split("\n")[0] || "";
-                truncated = truncated.replace(/\s+/g, " ").trim();
-                const MAX_LEN = 150;
-                if (truncated.length > MAX_LEN) {
-                  truncated = `${truncated.slice(0, MAX_LEN - 1)}…`;
-                }
+                const truncated = trimDescriptionByWords(originalDescription);
 
                 snippetElements.forEach((el) => {
                   const currentText = el.textContent?.trim();
@@ -818,4 +812,46 @@ async function getOriginalVideoDescription(videoId) {
   );
   const description = json?.videoDetails?.shortDescription || null;
   return description;
+}
+
+/**
+ * Trims description text by words with a maximum length of 128 characters
+ * @param {string} description - The description text to trim
+ * @returns {string} The trimmed description with &nbsp... if truncated
+ */
+function trimDescriptionByWords(description) {
+  if (!description) {
+    return "";
+  }
+
+  // Use the first line and normalize spaces
+  let text = description || "";
+  text = text.replace(/\s+/g, " ").trim();
+
+  const MAX_LEN = 128;
+
+  if (text.length <= MAX_LEN) {
+    return text;
+  }
+
+  // Split into words and build truncated string
+  const words = text.split(" ");
+  let truncated = "";
+  const suffix = "\xa0...";
+
+  for (const word of words) {
+    const testString = truncated + (truncated ? " " : "") + word;
+    // Check if adding this word would exceed the limit (accounting for suffix)
+    truncated = testString;
+    if (testString.length + suffix.length > MAX_LEN) {
+      break;
+    }
+  }
+
+  // If we truncated, add the suffix
+  if (truncated.length < text.length) {
+    truncated += suffix;
+  }
+
+  return truncated;
 }

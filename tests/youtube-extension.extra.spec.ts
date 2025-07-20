@@ -288,51 +288,51 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     await context.close();
   });
 
-  test.fixme(
-    "YouTube search results channel description retain original content",
-    async ({ browserNameWithExtensions, localeString }, testInfo) => {
-      await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
+  test("YouTube search results channel description retain original content", async ({
+    browserNameWithExtensions,
+    localeString,
+  }, testInfo) => {
+    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
 
-      // Launch browser with the extension
-      const context = await createBrowserContext(browserNameWithExtensions);
+    // Launch browser with the extension
+    const context = await createBrowserContext(browserNameWithExtensions);
 
-      // Open new page with auth + extension
-      const { page, consoleMessageCountContainer } = await setupPageWithAuth(
-        context,
-        browserNameWithExtensions,
-        localeString,
-      );
+    // Open new page with auth + extension
+    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
+      context,
+      browserNameWithExtensions,
+      localeString,
+    );
 
-      const searchUrl = "https://www.youtube.com/results?search_query=mr+beast";
-      await loadPageAndVerifyAuth(page, searchUrl, browserNameWithExtensions);
+    const searchUrl = "https://www.youtube.com/results?search_query=mr+beast";
+    await loadPageAndVerifyAuth(page, searchUrl, browserNameWithExtensions);
 
-      // Wait until at least one channel renderer for MrBeast appears
-      const channelRenderer = page
-        .locator('ytd-channel-renderer:has-text("MrBeast")')
-        .first();
-      await expect(channelRenderer).toBeVisible({ timeout: 15000 });
+    // Wait until at least one channel renderer for MrBeast appears
+    const channelRenderer = page
+      .locator('ytd-channel-renderer:has-text("MrBeast")')
+      .first();
+    await expect(channelRenderer).toBeVisible({ timeout: 15000 });
 
-      // Locate the description element inside the renderer
-      const descriptionLocator = channelRenderer.locator("#description");
-      await expect(descriptionLocator).toBeVisible({ timeout: 15000 });
+    // Locate the description element inside the renderer
+    const descriptionLocator = channelRenderer.locator("#description");
+    await expect(descriptionLocator).toBeVisible({ timeout: 15000 });
 
-      const descriptionText = (await descriptionLocator.textContent()) ?? "";
-      console.log("Search result description:", descriptionText.trim());
+    const descriptionText = (await descriptionLocator.textContent()) ?? "";
+    console.log("Search result description:", descriptionText.trim());
 
-      // Check that original English text is present and Russian translation is absent
-      expect(descriptionText).toContain("SUBSCRIBE FOR A COOKIE");
-      expect(descriptionText).not.toContain("ПОДПИШИСЬ");
+    // Check that original English text is present and Russian translation is absent
+    expect(descriptionText).toContain("SUBSCRIBE FOR A COOKIE");
+    expect(descriptionText).not.toContain("ПОДПИШИСЬ");
 
-      // Screenshot for visual verification
-      await page.screenshot({
-        path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-channel-search-result-test-description.png`,
-      });
+    // Screenshot for visual verification
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-channel-search-result-test-description.png`,
+    });
 
-      // Ensure console output not flooded
-      expect(consoleMessageCountContainer.count).toBeLessThan(2000);
+    // Ensure console output not flooded
+    expect(consoleMessageCountContainer.count).toBeLessThan(2000);
 
-      // Close context
-      await context.close();
-    },
-  );
+    // Close context
+    await context.close();
+  });
 });
