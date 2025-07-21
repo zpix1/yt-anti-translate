@@ -335,4 +335,56 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     // Close context
     await context.close();
   });
+
+  test("Non english channel description retains original content", async ({
+    browserNameWithExtensions,
+    localeString,
+  }, testInfo) => {
+    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
+
+    // Launch browser with the extension
+    const context = await createBrowserContext(browserNameWithExtensions);
+
+    // Open new page with auth + extension
+    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
+      context,
+      browserNameWithExtensions,
+      localeString,
+    );
+
+    const channelUrl = "https://www.youtube.com/@CARTONIMORTI";
+    await loadPageAndVerifyAuth(page, channelUrl, browserNameWithExtensions);
+
+    // Wait for the channel header to appear
+    const channelHeaderSelector =
+      "#page-header-container #page-header .page-header-view-model-wiz__page-header-headline-info";
+    await page.waitForSelector(channelHeaderSelector);
+
+    // Check channel description
+    const channelDescriptionSelector = `${channelHeaderSelector} yt-description-preview-view-model .truncated-text-wiz__truncated-text-content > .yt-core-attributed-string:nth-child(1)`;
+
+    // Get the channel description
+    const brandingDescription = await page
+      .locator(channelDescriptionSelector)
+      .first()
+      .textContent();
+
+    // Check that the description is in original Italian and not translated
+    expect(brandingDescription).toContain("Questi cartoni non sono animati.");
+    expect(brandingDescription).not.toContain("Very italian cartoons");
+    await expect(
+      page.locator(channelDescriptionSelector).first(),
+    ).toBeVisible();
+
+    // Take a screenshot for visual verification
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-cartonimorti-channel-test.png`,
+    });
+
+    // Check console message count
+    expect(consoleMessageCountContainer.count).toBeLessThan(2000);
+
+    // Close the browser context
+    await context.close();
+  });
 });

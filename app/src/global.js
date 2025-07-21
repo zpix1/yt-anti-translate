@@ -1047,7 +1047,7 @@ ytm-shorts-lockup-view-model`,
     );
     return JSON.parse(element?.dataset?.ytantitranslatesettings ?? "{}");
   },
-  cachedRequest: async function (url, postData = null) {
+  cachedRequest: async function (url, postData = null, html = false) {
     const cacheKey = url + "|" + postData;
     const storedResponse =
       window.YoutubeAntiTranslate.getSessionCache(cacheKey);
@@ -1063,7 +1063,7 @@ ytm-shorts-lockup-view-model`,
       try {
         const response = await fetch(url, {
           method: postData ? "POST" : "GET",
-          headers: { "content-type": "application/json" },
+          headers: html ? undefined : { "content-type": "application/json" },
           body: postData ? postData : undefined,
         });
         if (!response.ok) {
@@ -1075,7 +1075,7 @@ ytm-shorts-lockup-view-model`,
             `HTTP error! status: ${response.status}, while fetching: ${url}`,
           );
         }
-        const data = await response.json();
+        const data = html ? await response.text() : await response.json();
         window.YoutubeAntiTranslate.setSessionCache(cacheKey, data);
         return data;
       } catch (error) {
