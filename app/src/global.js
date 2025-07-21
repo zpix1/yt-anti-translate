@@ -1,3 +1,5 @@
+const pendingRequests = new Map();
+
 window.YoutubeAntiTranslate = {
   VIEWPORT_EXTENSION_PERCENTAGE_FRACTION: 0.5,
   VIEWPORT_OUTSIDE_LIMIT_FRACTION: 0.5,
@@ -1044,5 +1046,49 @@ ytm-shorts-lockup-view-model`,
       'script[type="module"][data-ytantitranslatesettings]',
     );
     return JSON.parse(element?.dataset?.ytantitranslatesettings ?? "{}");
+  },
+  cachedRequest: async function (url, postData = null) {
+    const cacheKey = url + "|" + postData;
+    const storedResponse =
+      window.YoutubeAntiTranslate.getSessionCache(cacheKey);
+    if (storedResponse) {
+      return storedResponse;
+    }
+
+    if (pendingRequests.has(cacheKey)) {
+      return pendingRequests.get(cacheKey);
+    }
+
+    const requestPromise = (async () => {
+      try {
+        const response = await fetch(url, {
+          method: postData ? "POST" : "GET",
+          headers: { "content-type": "application/json" },
+          body: postData ? postData : undefined,
+        });
+        if (!response.ok) {
+          if (response.status === 404 || response.status === 401) {
+            window.YoutubeAntiTranslate.setSessionCache(cacheKey, null);
+            return null;
+          }
+          throw new Error(
+            `HTTP error! status: ${response.status}, while fetching: ${url}`,
+          );
+        }
+        const data = await response.json();
+        window.YoutubeAntiTranslate.setSessionCache(cacheKey, data);
+        return data;
+      } catch (error) {
+        window.YoutubeAntiTranslate.logWarning("Error fetching:", error);
+        // Cache null even on general fetch error to prevent immediate retries for the same failing URL
+        window.YoutubeAntiTranslate.setSessionCache(cacheKey, null);
+        return null;
+      } finally {
+        pendingRequests.delete(cacheKey);
+      }
+    })();
+
+    pendingRequests.set(cacheKey, requestPromise);
+    return requestPromise;
   },
 };

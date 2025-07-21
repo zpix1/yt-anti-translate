@@ -118,8 +118,6 @@ async function getChannelBrandingWithYoutubeI(ucid = null, locale = null) {
       },
     },
     browseId: ucid,
-    // "about" tab protobuf — old first, then fall back to the newer encoding
-    params: "EgVhYm91dA==", // {2:string:"about"} :contentReference[oaicite:0]{index=0}
   };
 
   const requestIdentifier = `youtubei/v1/browse_${JSON.stringify(body)}`;
@@ -132,31 +130,17 @@ async function getChannelBrandingWithYoutubeI(ucid = null, locale = null) {
   }
 
   const browse = "https://www.youtube.com/youtubei/v1/browse?prettyPrint=false";
-  let res = await fetch(browse, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(body),
-  });
+  const json = await window.YoutubeAntiTranslate.cachedRequest(
+    browse,
+    JSON.stringify(body),
+  );
 
-  // YT sometimes rejects the legacy protobuf with 400; try the newer one.
-  if (res.status === 400 || res.status === 500) {
-    body.params = "EgVhYm91dPIGBAoCEgA="; // wrapped "about" protobuf (2023-present) :contentReference[oaicite:1]{index=1}
-    res = await fetch(browse, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(body),
-    });
-  }
-
-  if (!res.ok) {
-    window.YoutubeAntiTranslate.logInfo(
-      `Failed to fetch ${browse}:`,
-      res.statusText,
+  if (!json) {
+    window.YoutubeAntiTranslate.logWarning(
+      `Failed to fetch ${browse} or parse response`,
     );
     return;
   }
-
-  const json = await res.json();
 
   const hdr = json.header?.pageHeaderRenderer;
   const metadata = json.metadata?.channelMetadataRenderer;
