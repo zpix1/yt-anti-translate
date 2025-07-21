@@ -273,6 +273,10 @@ function countryToLocale(country) {
 }
 
 async function getChannelLocale(ucid, locale = "en-US") {
+  if (window.YoutubeAntiTranslate.isMobile()) {
+    return "en-US"; // Mobile YouTube does not support locale detection
+  }
+
   /* ── split locale → hl / gl ────────────────────────────────────────── */
   const [hl, gl] = locale.split(/[-_]/); // "en-US" → ["en", "US"]
 
