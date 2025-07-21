@@ -139,7 +139,7 @@ async function getChannelBrandingWithYoutubeI(ucid = null, locale = null) {
   });
 
   // YT sometimes rejects the legacy protobuf with 400; try the newer one.
-  if (res.status === 400) {
+  if (res.status === 400 || res.status === 500) {
     body.params = "EgVhYm91dPIGBAoCEgA="; // wrapped "about" protobuf (2023-present) :contentReference[oaicite:1]{index=1}
     res = await fetch(browse, {
       method: "POST",
