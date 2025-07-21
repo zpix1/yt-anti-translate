@@ -277,11 +277,10 @@ async function getChannelLocale(ucid, locale = "en-US") {
   const [hl, gl] = locale.split(/[-_]/); // "en-US" → ["en", "US"]
 
   /* ── 1. fetch raw channel page ─────────────────────────────────────── */
-  const html = await window.YoutubeAntiTranslate.cachedRequest(
+  const response = await fetch(
     `https://www.youtube.com/channel/${ucid}?hl=${hl}&gl=${gl}`,
-    null,
-    true, // fetch as HTML
   );
+  const html = await response.text();
 
   /* ── 2. pull continuation token + clientVersion from the HTML ──────── */
   const tokens = [
