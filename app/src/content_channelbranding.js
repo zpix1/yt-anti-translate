@@ -287,10 +287,7 @@ async function getChannelLocale(ucid, locale = "en-US") {
   const tokens = [
     ...html.matchAll(/"continuationCommand":\{"token":"([^"]+?)"/g),
   ].map((m) => m[1]);
-  if (tokens.length < 3) {
-    throw new Error("Less than two continuation tokens found on page");
-  }
-  const token = tokens[2];
+  const token = tokens.at(-1);
 
   /* ── 3. build and send the continuation POST ───────────────────────── */
   const body = JSON.stringify({

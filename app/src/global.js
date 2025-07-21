@@ -1076,7 +1076,13 @@ ytm-shorts-lockup-view-model`,
           );
         }
         const data = html ? await response.text() : await response.json();
-        window.YoutubeAntiTranslate.setSessionCache(cacheKey, data);
+        if (html && data.length > 100000) {
+          window.YoutubeAntiTranslate.logInfo(
+            `HTML response too large (${data.length} bytes), caching as null to prevent excessive memory usage.`,
+          );
+        } else {
+          window.YoutubeAntiTranslate.setSessionCache(cacheKey, data);
+        }
         return data;
       } catch (error) {
         window.YoutubeAntiTranslate.logWarning("Error fetching:", error);
