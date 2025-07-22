@@ -278,10 +278,7 @@ async function getChannelLocale(ucid, locale = "en-US") {
   if (window.YoutubeAntiTranslate.isMobile()) {
     return "en-US"; // Mobile YouTube does not support locale detection
   }
-  const storedLocale = window.YoutubeAntiTranslate.setSessionCache(
-    ucid,
-    locale,
-  );
+  const storedLocale = window.YoutubeAntiTranslate.getSessionCache(ucid);
   if (storedLocale) {
     return storedLocale;
   }
