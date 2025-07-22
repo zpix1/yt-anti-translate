@@ -752,6 +752,14 @@ function updateObserverOtherShortsOnIntersect() {
 }
 
 async function getOriginalVideoDescription(videoId) {
+  const cacheKey = `video_description_${videoId}`;
+  const cachedDescription =
+    window.YoutubeAntiTranslate.getSessionCache(cacheKey);
+
+  if (cachedDescription) {
+    return cachedDescription; // Return cached description if available
+  }
+
   const body = {
     context: {
       client: {
@@ -765,8 +773,14 @@ async function getOriginalVideoDescription(videoId) {
   const json = await cachedRequest(
     "https://www.youtube.com/youtubei/v1/player?prettyPrint=false",
     JSON.stringify(body),
+    // As it might take too much space
+    true,
   );
   const description = json?.videoDetails?.shortDescription || null;
+  if (description) {
+    // Cache the description for future use
+    window.YoutubeAntiTranslate.setSessionCache(cacheKey, description);
+  }
   return description;
 }
 

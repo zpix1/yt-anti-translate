@@ -140,6 +140,8 @@ async function getChannelBrandingWithYoutubeI(ucid = null) {
   const json = await window.YoutubeAntiTranslate.cachedRequest(
     browse,
     JSON.stringify(body),
+    // As it might take too much space
+    true,
   );
 
   if (!json) {
@@ -276,6 +278,13 @@ async function getChannelLocale(ucid, locale = "en-US") {
   if (window.YoutubeAntiTranslate.isMobile()) {
     return "en-US"; // Mobile YouTube does not support locale detection
   }
+  const storedLocale = window.YoutubeAntiTranslate.setSessionCache(
+    ucid,
+    locale,
+  );
+  if (storedLocale) {
+    return storedLocale;
+  }
 
   /* ── split locale → hl / gl ────────────────────────────────────────── */
   const [hl, gl] = locale.split(/[-_]/); // "en-US" → ["en", "US"]
@@ -308,6 +317,8 @@ async function getChannelLocale(ucid, locale = "en-US") {
   const json = await window.YoutubeAntiTranslate.cachedRequest(
     "https://www.youtube.com/youtubei/v1/browse?prettyPrint=false",
     body,
+    // As it might take too much space
+    true,
   );
 
   try {
@@ -315,7 +326,11 @@ async function getChannelLocale(ucid, locale = "en-US") {
       json.onResponseReceivedEndpoints[0].appendContinuationItemsAction
         .continuationItems[0].aboutChannelRenderer.metadata
         .aboutChannelViewModel.country;
-    return countryToLocale(country);
+    const locale = countryToLocale(country);
+
+    window.YoutubeAntiTranslate.setSessionCache(ucid, locale);
+
+    return locale;
   } catch (error) {
     window.YoutubeAntiTranslate.logWarning(
       `Failed to extract country from continuation JSON: ${error.message}`,

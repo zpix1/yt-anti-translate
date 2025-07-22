@@ -1,5 +1,119 @@
 const pendingRequests = new Map();
 
+class SessionLRUCache {
+  /**
+   * @param {object} [opts]
+   * @param {number} [opts.maxBytes=5*1024*1024]  Storage budget
+   * @param {string} [opts.ns='slru:']             Key prefix / namespace
+   */
+  constructor({
+    maxBytes = 5 * 1024 * 1024,
+    ns = "[YoutubeAntiTranslate]cache:",
+  } = {}) {
+    this.maxBytes = maxBytes;
+    this.ns = ns;
+  }
+
+  /* ---------- Public API ---------- */
+
+  /** Store or update an item */
+  set(key, value) {
+    const entryKey = this.ns + key;
+    const entry = { v: value, t: Date.now() }; // v = value, t = last‑touch
+    sessionStorage.setItem(entryKey, JSON.stringify(entry));
+    this._evictIfNeeded();
+  }
+
+  /** Retrieve an item (or undefined) and refresh its LRU timestamp */
+  get(key) {
+    const entryKey = this.ns + key;
+    const raw = sessionStorage.getItem(entryKey);
+    if (!raw) {
+      return undefined;
+    }
+
+    try {
+      const entry = JSON.parse(raw);
+      entry.t = Date.now(); // touch
+      sessionStorage.setItem(entryKey, JSON.stringify(entry));
+      return entry.v;
+    } catch {
+      // corrupted entry – remove it
+      sessionStorage.removeItem(entryKey);
+      return undefined;
+    }
+  }
+
+  /** Remove one item */
+  delete(key) {
+    sessionStorage.removeItem(this.ns + key);
+  }
+
+  /** Empty the whole cache (namespace only) */
+  clear() {
+    this._eachEntry(({ k }) => sessionStorage.removeItem(k));
+  }
+
+  /** Approximate bytes used by this cache */
+  bytes() {
+    let total = 0;
+    this._eachEntry(({ k, v }) => {
+      total += (k.length + v.length) * 2;
+    });
+    return total;
+  }
+
+  /** How many entries in the cache */
+  size() {
+    let n = 0;
+    this._eachEntry(() => {
+      n += 1;
+    });
+    return n;
+  }
+
+  /* ---------- Internal helpers ---------- */
+
+  /** Iterate over *only* our namespaced entries */
+  _eachEntry(cb) {
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const k = sessionStorage.key(i);
+      if (k && k.startsWith(this.ns)) {
+        cb({ k, v: sessionStorage.getItem(k) });
+      }
+    }
+  }
+
+  /** Remove LRU items until under budget */
+  _evictIfNeeded() {
+    let usage = this.bytes();
+    if (usage <= this.maxBytes) {
+      return;
+    }
+
+    // Collect [{k, bytes, lastTouched}]
+    const items = [];
+    this._eachEntry(({ k, v }) => {
+      const { t } = JSON.parse(v || "{}");
+      const bytes = (k.length + v.length) * 2;
+      items.push({ k, bytes, t: t ?? 0 });
+    });
+
+    // Oldest first
+    items.sort((a, b) => a.t - b.t);
+
+    for (const item of items) {
+      sessionStorage.removeItem(item.k);
+      usage -= item.bytes;
+      if (usage <= this.maxBytes) {
+        break;
+      }
+    }
+  }
+}
+
+const lruCache = new SessionLRUCache();
+
 window.YoutubeAntiTranslate = {
   VIEWPORT_EXTENSION_PERCENTAGE_FRACTION: 0.5,
   VIEWPORT_OUTSIDE_LIMIT_FRACTION: 0.5,
@@ -43,7 +157,6 @@ ytm-video-with-context-renderer,
 ytm-video-card-renderer`,
   ALL_ARRAYS_SHORTS_SELECTOR: `div.style-scope.ytd-rich-item-renderer,
 ytm-shorts-lockup-view-model`,
-  cacheSessionStorageKey: "[YoutubeAntiTranslate]cache",
 
   logWarning: function (...args) {
     if (this.currentLogLevel >= this.LOG_LEVELS.WARN) {
@@ -125,23 +238,7 @@ ytm-shorts-lockup-view-model`,
    * @return {any|null}
    */
   getSessionCache: function (key) {
-    this.logDebug(`getSessionCache called with key: ${key}`);
-    const fullKey = `${this.cacheSessionStorageKey}_${key}`;
-    const raw = sessionStorage.getItem(fullKey);
-    if (!raw) {
-      this.logDebug(`getSessionCache: No data found for key ${key}`);
-      return null;
-    }
-
-    try {
-      const result = JSON.parse(raw);
-      this.logDebug(`getSessionCache: Successfully parsed data for key ${key}`);
-      return result;
-    } catch (err) {
-      this.logError(`Failed to parse session cache for key "${key}"`, err);
-      sessionStorage.removeItem(fullKey); // clear corrupted entry
-      return null;
-    }
+    return lruCache.get(key);
   },
 
   /**
@@ -150,14 +247,7 @@ ytm-shorts-lockup-view-model`,
    * @param {any} value
    */
   setSessionCache: function (key, value) {
-    this.logDebug(`setSessionCache called with key: ${key}`);
-    const fullKey = `${this.cacheSessionStorageKey}_${key}`;
-    try {
-      sessionStorage.setItem(fullKey, JSON.stringify(value));
-      this.logDebug(`setSessionCache: Successfully stored data for key ${key}`);
-    } catch (err) {
-      this.logError(`Failed to set session cache for key "${key}"`, err);
-    }
+    return lruCache.set(key, value);
   },
 
   /**
@@ -1047,7 +1137,18 @@ ytm-shorts-lockup-view-model`,
     );
     return JSON.parse(element?.dataset?.ytantitranslatesettings ?? "{}");
   },
-  cachedRequest: async function cachedRequest(url, postData = null) {
+  /**
+   * Make a GET request. Its result will be cached in sessionStorage and will return same promise for parallel requests.
+   * @param {string} url - The URL to fetch data from
+   * @param {string} postData - Optional. If passed, will make a POST request with this data
+   * @param {boolean} doNotCache - Optional. If true, the result will not be cached in sessionStorage, only same promise will be returned for parallel requests
+   * @returns
+   */
+  cachedRequest: async function cachedRequest(
+    url,
+    postData = null,
+    doNotCache = false,
+  ) {
     const cacheKey = url + "|" + postData;
     const storedResponse =
       window.YoutubeAntiTranslate.getSessionCache(cacheKey);
@@ -1068,7 +1169,9 @@ ytm-shorts-lockup-view-model`,
         });
         if (!response.ok) {
           if (response.status === 404 || response.status === 401) {
-            window.YoutubeAntiTranslate.setSessionCache(cacheKey, null);
+            if (!doNotCache) {
+              window.YoutubeAntiTranslate.setSessionCache(cacheKey, null);
+            }
             return null;
           }
           throw new Error(
@@ -1076,12 +1179,16 @@ ytm-shorts-lockup-view-model`,
           );
         }
         const data = await response.json();
-        window.YoutubeAntiTranslate.setSessionCache(cacheKey, data);
+        if (!doNotCache) {
+          window.YoutubeAntiTranslate.setSessionCache(cacheKey, data);
+        }
         return data;
       } catch (error) {
         window.YoutubeAntiTranslate.logWarning("Error fetching:", error);
         // Cache null even on general fetch error to prevent immediate retries for the same failing URL
-        window.YoutubeAntiTranslate.setSessionCache(cacheKey, null);
+        if (!doNotCache) {
+          window.YoutubeAntiTranslate.setSessionCache(cacheKey, null);
+        }
         return null;
       } finally {
         pendingRequests.delete(cacheKey);
