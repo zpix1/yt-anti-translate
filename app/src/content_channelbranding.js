@@ -1,3 +1,4 @@
+/* eslint-disable no-unreachable */
 // Support both desktop and mobile YouTube layouts
 const CHANNELBRANDING_HEADER_SELECTOR =
   "#page-header-container #page-header .page-header-view-model-wiz__page-header-headline-info, .page-header-view-model-wiz__page-header-headline-info";
@@ -278,6 +279,9 @@ async function getChannelLocale(ucid, locale = "en-US") {
   if (window.YoutubeAntiTranslate.isMobile()) {
     return "en-US"; // Mobile YouTube does not support locale detection
   }
+  // Default to en-US until we can find a better way to detect locale
+  return "en-US";
+
   const storedLocale = window.YoutubeAntiTranslate.getSessionCache(ucid);
   if (storedLocale) {
     return storedLocale;
