@@ -113,5 +113,22 @@ export default defineConfig<TestOptions>({
       },
       dependencies: ["setup-auth-and-ublock"],
     },
+    {
+      name: "chromium-extension-mobile-ru-RU",
+      testMatch: /.*extension-mobile\.spec\.ts/,
+      use: {
+        browserNameWithExtensions: "chromium",
+        localeString: "ru-RU",
+        ...devices["Pixel 5"],
+        contextOptions: {
+          permissions: ["clipboard-read", "clipboard-write"],
+        },
+        launchOptions: {
+          args: ["--headless=new"],
+        },
+        locale: "ru-RU",
+      },
+      dependencies: ["setup-auth-and-ublock"],
+    },
   ],
 });
