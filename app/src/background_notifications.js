@@ -137,7 +137,7 @@ function replaceVideoTitleInNotification(message, originalTitle) {
   }
 
   // Handle :
-  const colonIdx = message.lastIndexOf(":");
+  const colonIdx = message.indexOf(":");
   if (colonIdx !== -1) {
     return message.slice(0, colonIdx + 1) + " " + originalTitle;
   }
