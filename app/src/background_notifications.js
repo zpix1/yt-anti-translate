@@ -29,7 +29,7 @@ function extractVideoIdFromUrl(url) {
 async function fetchOriginalTitle(videoId) {
   const cacheKey = `ytat_oembed_${videoId}`;
   const cached = window.YoutubeAntiTranslate.getSessionCache(cacheKey);
-  if (cached !== null) {
+  if (cached) {
     return { originalTitle: cached };
   }
 
@@ -134,6 +134,12 @@ function replaceVideoTitleInNotification(message, originalTitle) {
         message.slice(0, startIdx + 1) + originalTitle + message.slice(endIdx)
       );
     }
+  }
+
+  // Handle :
+  const colonIdx = message.indexOf(":");
+  if (colonIdx !== -1) {
+    return message.slice(0, colonIdx + 1) + " " + originalTitle;
   }
 
   // Fallback – return originalTitle
