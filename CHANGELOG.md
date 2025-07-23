@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.19.3] - 2025-07-23
+
 ### Fixed
 
 - Fix notification untranslation not working due to a typo, and add handle for ':'
