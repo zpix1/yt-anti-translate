@@ -111,9 +111,9 @@ async function getChannelBrandingWithYoutubeI(ucid = null) {
   }
 
   // 1. get continuation to get country in english
-  const locale = await getChannelLocale(ucid, "en-US");
+  // const locale = await getChannelLocale(ucid, "en-US");
 
-  const [hl, gl] = locale.split(/[-_]/); // "en-US" → ["en", "US"]
+  // const [hl, gl] = locale.split(/[-_]/); // "en-US" → ["en", "US"]
 
   // build the request body
   const body = {
@@ -121,8 +121,7 @@ async function getChannelBrandingWithYoutubeI(ucid = null) {
       client: {
         clientName: "WEB",
         clientVersion: "2.20250527.00.00",
-        hl,
-        gl,
+        hl: "lo",
       },
     },
     browseId: ucid,
@@ -144,6 +143,7 @@ async function getChannelBrandingWithYoutubeI(ucid = null) {
     // As it might take too much space
     true,
   );
+  console.log("json", json);
 
   if (!json) {
     window.YoutubeAntiTranslate.logWarning(
@@ -171,173 +171,9 @@ async function getChannelBrandingWithYoutubeI(ucid = null) {
   window.YoutubeAntiTranslate.setSessionCache(requestIdentifier, result);
 
   // Store also the successful detected locale that worked
-  window.YoutubeAntiTranslate.setSessionCache(ucid, locale);
+  // window.YoutubeAntiTranslate.setSessionCache(ucid, locale);
 
   return result;
-}
-
-function countryToLocale(country) {
-  // Comprehensive mapping of countries to their primary locale codes
-  const countryMap = {
-    // English-speaking countries
-    "United States": "en-US",
-    "United Kingdom": "en-GB",
-    Canada: "en-CA",
-    Australia: "en-AU",
-    "New Zealand": "en-NZ",
-    Ireland: "en-IE",
-    "South Africa": "en-ZA",
-    Singapore: "en-SG",
-
-    // European countries
-    Italy: "it-IT",
-    France: "fr-FR",
-    Germany: "de-DE",
-    Spain: "es-ES",
-    Portugal: "pt-PT",
-    Netherlands: "nl-NL",
-    Belgium: "nl-BE",
-    Switzerland: "de-CH",
-    Austria: "de-AT",
-    Poland: "pl-PL",
-    Sweden: "sv-SE",
-    Norway: "no-NO",
-    Denmark: "da-DK",
-    Finland: "fi-FI",
-    Greece: "el-GR",
-    Turkey: "tr-TR",
-    Czech: "cs-CZ",
-    "Czech Republic": "cs-CZ",
-    Hungary: "hu-HU",
-    Romania: "ro-RO",
-    Bulgaria: "bg-BG",
-    Croatia: "hr-HR",
-    Slovakia: "sk-SK",
-    Slovenia: "sl-SI",
-    Estonia: "et-EE",
-    Latvia: "lv-LV",
-    Lithuania: "lt-LT",
-    Iceland: "is-IS",
-
-    // Asian countries
-    Japan: "ja-JP",
-    Korea: "ko-KR",
-    "South Korea": "ko-KR",
-    China: "zh-CN",
-    Taiwan: "zh-TW",
-    "Hong Kong": "zh-HK",
-    Thailand: "th-TH",
-    Vietnam: "vi-VN",
-    Indonesia: "id-ID",
-    Malaysia: "ms-MY",
-    Philippines: "fil-PH",
-    India: "hi-IN",
-    Pakistan: "ur-PK",
-    Bangladesh: "bn-BD",
-
-    // Middle Eastern countries
-    Russia: "ru-RU",
-    Ukraine: "uk-UA",
-    "Saudi Arabia": "ar-SA",
-    "United Arab Emirates": "ar-AE",
-    Egypt: "ar-EG",
-    Israel: "he-IL",
-    Iran: "fa-IR",
-
-    // Americas
-    Brazil: "pt-BR",
-    Mexico: "es-MX",
-    Argentina: "es-AR",
-    Chile: "es-CL",
-    Colombia: "es-CO",
-    Peru: "es-PE",
-    Venezuela: "es-VE",
-    Ecuador: "es-EC",
-    Uruguay: "es-UY",
-    Paraguay: "es-PY",
-    Bolivia: "es-BO",
-
-    // African countries
-    Nigeria: "en-NG",
-    Kenya: "sw-KE",
-    Ghana: "en-GH",
-    Morocco: "ar-MA",
-    Algeria: "ar-DZ",
-    Tunisia: "ar-TN",
-
-    // Oceania
-    "Papua New Guinea": "en-PG",
-    Fiji: "en-FJ",
-
-    // Add more mappings as needed
-  };
-  // Default to en-US if not found
-  return countryMap[country] || "en-US";
-}
-
-async function getChannelLocale(ucid, locale = "en-US") {
-  if (window.YoutubeAntiTranslate.isMobile()) {
-    return "en-US"; // Mobile YouTube does not support locale detection
-  }
-  // Default to en-US until we can find a better way to detect locale
-  return "en-US";
-
-  const storedLocale = window.YoutubeAntiTranslate.getSessionCache(ucid);
-  if (storedLocale) {
-    return storedLocale;
-  }
-
-  /* ── split locale → hl / gl ────────────────────────────────────────── */
-  const [hl, gl] = locale.split(/[-_]/); // "en-US" → ["en", "US"]
-
-  /* ── 1. fetch raw channel page ─────────────────────────────────────── */
-  const response = await fetch(
-    `https://www.youtube.com/channel/${ucid}?hl=${hl}&gl=${gl}`,
-  );
-  const html = await response.text();
-
-  /* ── 2. pull continuation token + clientVersion from the HTML ──────── */
-  const tokens = [
-    ...html.matchAll(/"continuationCommand":\{"token":"([^"]+?)"/g),
-  ].map((m) => m[1]);
-  const token = tokens.at(-1);
-
-  /* ── 3. build and send the continuation POST ───────────────────────── */
-  const body = JSON.stringify({
-    context: {
-      client: {
-        clientName: "WEB",
-        clientVersion: "2.20250527.00.00",
-        hl,
-        gl,
-      },
-    },
-    continuation: token,
-  });
-
-  const json = await window.YoutubeAntiTranslate.cachedRequest(
-    "https://www.youtube.com/youtubei/v1/browse?prettyPrint=false",
-    body,
-    // As it might take too much space
-    true,
-  );
-
-  try {
-    const country =
-      json.onResponseReceivedEndpoints[0].appendContinuationItemsAction
-        .continuationItems[0].aboutChannelRenderer.metadata
-        .aboutChannelViewModel.country;
-    const locale = countryToLocale(country);
-
-    window.YoutubeAntiTranslate.setSessionCache(ucid, locale);
-
-    return locale;
-  } catch (error) {
-    window.YoutubeAntiTranslate.logWarning(
-      `Failed to extract country from continuation JSON: ${error.message}`,
-    );
-    return null;
-  }
 }
 
 /**
