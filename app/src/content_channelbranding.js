@@ -77,7 +77,7 @@ async function lookupChannelId(query) {
  */
 async function getChannelUCID() {
   if (window.location.pathname.startsWith("/channel/")) {
-    var match = window.location.pathname.match(/\/channel\/([\w-]+)/);
+    var match = window.location.pathname.match(/\/channel\/([^/?]+)/);
     return match ? `${match[1]}` : null;
   }
 
@@ -346,17 +346,17 @@ async function getChannelLocale(ucid, locale = "en-US") {
  */
 function getChannelFilter() {
   if (window.location.pathname.startsWith("/channel/")) {
-    var match = window.location.pathname.match(/\/channel\/([\w-]+)/);
+    var match = window.location.pathname.match(/\/channel\/([^/?]+)/);
     return match ? `id=${match[1]}` : null;
   }
   if (window.location.pathname.startsWith("/c/")) {
-    const match = window.location.pathname.match(/\/c\/([\w-]+)/);
+    const match = window.location.pathname.match(/\/c\/([^/?]+)/);
     return match ? `forHandle=${match[1]}` : null;
   } else if (window.location.pathname.startsWith("/@")) {
-    const match = window.location.pathname.match(/\/(@[\w-]+)/);
+    const match = window.location.pathname.match(/\/(@[^/?]+)/);
     return match ? `forHandle=${match[1]}` : null;
   } else if (window.location.pathname.startsWith("/user/")) {
-    const match = window.location.pathname.match(/\/user\/(@[\w-]+)/);
+    const match = window.location.pathname.match(/\/user\/([^/?]+)/);
     return match ? `forUsername=${match[1]}` : null;
   }
 }
@@ -814,7 +814,7 @@ async function getChannelUCIDFromHref(href) {
     return null;
   }
   // Direct UCID reference
-  const channelMatch = href.match(/\/channel\/([\w-]+)/);
+  const channelMatch = href.match(/\/channel\/([^/?&#]+)/);
   if (channelMatch && channelMatch[1]) {
     return channelMatch[1];
   }
