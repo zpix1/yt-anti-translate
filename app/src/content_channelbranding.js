@@ -820,13 +820,14 @@ async function getChannelUCIDFromHref(href) {
   }
 
   // Handle paths such as /@handle or /c/Custom or /user/Username
-  const handleMatch = href.match(/\/(?:@|c\/|user\/)([\w-]+)/);
+  const handleMatch = href.match(/\/(?:@|c\/|user\/)([^/?&#]+)/);
   if (handleMatch && handleMatch[1]) {
     let handle = handleMatch[1];
     // restore missing @ for handle form
     if (!handle.startsWith("@")) {
       handle = href.includes("/@") ? `@${handle}` : handle;
     }
+    console.log("got handle href", handle, href);
     return await lookupChannelId(handle);
   }
   return null;
