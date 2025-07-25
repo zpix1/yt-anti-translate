@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Fix [#78](https://github.com/zpix1/yt-anti-translate/issues/78) Handles with dots or unicode are incorrectly untranslated
+- Fix [#80](https://github.com/zpix1/yt-anti-translate/issues/80) Chapter descriptions are gone when you mouse over the search bar
 
 ## [1.19.3] - 2025-07-23
 
