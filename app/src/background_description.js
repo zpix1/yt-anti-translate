@@ -14,11 +14,6 @@ const CHAPTER_TIME_SELECTOR = "div#time";
 const CHAPTER_HEADER_SELECTOR =
   "ytd-rich-list-header-renderer yt-formatted-string#title";
 const CHAPTER_STYLE = `
-.ytp-tooltip.ytp-bottom.ytp-preview .ytp-tooltip-title span {
-    font-size: 0 !important;
-    line-height: 0 !important;
-}
-
 .ytp-tooltip.ytp-bottom.ytp-preview .ytp-tooltip-title span[data-original-chapter]::after {
     content: attr(data-original-chapter);
     font-size: 12px !important;
@@ -258,16 +253,7 @@ function updateTooltipChapter() {
   const targetChapter = findChapterByTime(timeInSeconds, cachedChapters);
 
   if (targetChapter) {
-    const currentOriginalChapter = titleElement.getAttribute(
-      "data-original-chapter",
-    );
-
-    if (currentOriginalChapter !== targetChapter.title) {
-      window.YoutubeAntiTranslate.logDebug(
-        `Time: ${timeString} (${timeInSeconds}s) -> Chapter: "${targetChapter.title}"`,
-      );
-      titleElement.setAttribute("data-original-chapter", targetChapter.title);
-    }
+    titleElement.textContent = targetChapter.title;
   }
 }
 
@@ -418,7 +404,7 @@ function setupChapters(originalDescription) {
   style.textContent = CHAPTER_STYLE;
   document.head.appendChild(style);
 
-  // More targeted observer - only watch for tooltip appearances
+  // More targeted observer - watch for tooltip changes and visibility
   chaptersObserver = new MutationObserver((mutations) => {
     let shouldUpdate = false;
 
@@ -436,6 +422,19 @@ function setupChapters(originalDescription) {
             }
           }
         });
+      }
+
+      // Watch for attribute changes (style changes that show/hide tooltips)
+      if (mutation.type === "attributes") {
+        const target = mutation.target;
+        if (
+          target.classList?.contains("ytp-tooltip") &&
+          target.classList?.contains("ytp-preview") &&
+          (mutation.attributeName === "style" ||
+            mutation.attributeName === "class")
+        ) {
+          shouldUpdate = true;
+        }
       }
 
       // Only watch for changes in tooltip text content
@@ -459,8 +458,13 @@ function setupChapters(originalDescription) {
       childList: true,
       subtree: true,
       characterData: true,
+      attributes: true,
+      attributeFilter: ["style", "class"],
     });
   }
+
+  // Initial update for any existing visible tooltips
+  setTimeout(updateTooltipChapter, 50);
 
   setupChapterButtonObserver();
 
@@ -737,11 +741,9 @@ function updateAuthorContent(container, originalText) {
 }
 
 async function handleDescriptionMutation() {
-  const descriptionElement = window.YoutubeAntiTranslate.getFirstVisible(
-    document.querySelectorAll(DESCRIPTION_SELECTOR),
-  );
-  const player = window.YoutubeAntiTranslate.getFirstVisible(
-    document.querySelectorAll(window.YoutubeAntiTranslate.getPlayerSelector()),
+  const descriptionElement = document.querySelectorAll(DESCRIPTION_SELECTOR);
+  const player = document.querySelectorAll(
+    window.YoutubeAntiTranslate.getPlayerSelector(),
   );
   if (descriptionElement && player) {
     restoreOriginalDescriptionAndAuthor();
