@@ -143,7 +143,6 @@ async function getChannelBrandingWithYoutubeI(ucid = null) {
     // As it might take too much space
     true,
   );
-  console.log("json", json);
 
   if (!json) {
     window.YoutubeAntiTranslate.logWarning(
