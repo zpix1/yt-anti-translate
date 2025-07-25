@@ -827,7 +827,6 @@ async function getChannelUCIDFromHref(href) {
     if (!handle.startsWith("@")) {
       handle = href.includes("/@") ? `@${handle}` : handle;
     }
-    console.log("got handle href", handle, href);
     return await lookupChannelId(handle);
   }
   return null;
