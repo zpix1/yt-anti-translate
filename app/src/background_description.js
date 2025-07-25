@@ -390,6 +390,14 @@ function setupChapterButtonObserver() {
  * @param {string} originalDescription - Untranslated video description obtained from the player API.
  */
 function setupChapters(originalDescription) {
+  // Early return if description hasn't changed - avoid expensive cleanup/setup
+  if (originalDescription === lastDescription) {
+    window.YoutubeAntiTranslate.logDebug(
+      "Description unchanged, skipping chapters setup",
+    );
+    return;
+  }
+
   // Clean up any existing observer first
   cleanupChaptersObserver();
 
@@ -786,7 +794,7 @@ async function handleDescriptionMutation() {
 const targetNode = document.body;
 const observerConfig = { childList: true, subtree: true };
 const descriptionObserver = new MutationObserver(
-  window.YoutubeAntiTranslate.debounce(handleDescriptionMutation),
+  window.YoutubeAntiTranslate.debounce(handleDescriptionMutation, 100),
 );
 descriptionObserver.observe(targetNode, observerConfig);
 
