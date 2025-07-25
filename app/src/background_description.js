@@ -150,10 +150,16 @@ function parseChaptersFromDescription(description) {
   const chapters = [];
 
   description.split("\n").forEach((line) => {
-    // More flexible regex to handle emojis, bullets, and various separators
-    const match = line
-      .trim()
-      .match(/^.*?(\d{1,2}):(\d{2})(?::(\d{2}))?.*?\s*(.+)$/);
+    const trimmedLine = line.trim();
+
+    // More specific regex for YouTube chapter format:
+    // - Allows minimal decoration at start (bullets, dashes, etc.)
+    // - Timestamp must be near the beginning of the line
+    // - Must have a space/separator after timestamp before the title
+    const match = trimmedLine.match(
+      /^[\s–—•·▪▫‣⁃-]*(\d{1,2}):(\d{2})(?::(\d{2}))?\s*[–—•·▪▫‣⁃:→>-]*\s*(.+)$/,
+    );
+
     if (match) {
       const [, part1, part2, part3, title] = match;
 
@@ -173,11 +179,13 @@ function parseChaptersFromDescription(description) {
         seconds = parseInt(part2, 10);
       }
 
-      // Extract clean title by removing everything before the timestamp and separators after
-      let cleanTitle = title.trim();
+      // Validate timestamp values
+      if (minutes >= 60 || seconds >= 60) {
+        return;
+      }
 
-      // Remove common separators at the beginning of title
-      cleanTitle = cleanTitle.replace(/^[\s\-–—•·▪▫‣⁃:→>]*\s*/, "");
+      // Extract clean title
+      const cleanTitle = title.trim();
 
       // Skip if title is too short (likely not a real chapter)
       if (cleanTitle.length < 2) {
@@ -188,7 +196,7 @@ function parseChaptersFromDescription(description) {
 
       chapters.push({
         startTime: totalSeconds,
-        title: cleanTitle.trim(),
+        title: cleanTitle,
       });
     }
   });
@@ -229,6 +237,11 @@ let lastDescription = "";
  * Uses cached chapter information for efficiency.
  */
 function updateTooltipChapter() {
+  // Don't touch tooltip if YouTube doesn't have chapters enabled
+  if (cachedChapters.length === 0) {
+    return;
+  }
+
   // Only query for visible tooltips
   const visibleTooltip = document.querySelector(
     '.ytp-tooltip.ytp-bottom.ytp-preview:not([style*="display: none"])',
@@ -650,46 +663,64 @@ function updateDescriptionContent(container, originalText) {
     return;
   }
 
-  let formattedContent;
+  let formattedContent = null;
   const originalTextFirstLine = originalText.split("\n")[0];
-  // Compare text first span>span against first line first to avaoid waisting resources on formatting content
-  if (
-    mainTextContainer.hasChildNodes() &&
-    mainTextContainer.firstChild.hasChildNodes() &&
-    mainTextContainer.firstChild.firstChild.textContent ===
-      originalTextFirstLine
-    /* as we are always doing both the comparison on mainTextContainer is sufficient*/
-  ) {
-    // If identical create formatted content and compare with firstchild text content to determine if any change is needed
-    formattedContent =
-      window.YoutubeAntiTranslate.createFormattedContent(originalText);
-    if (
-      mainTextContainer.hasChildNodes() &&
-      mainTextContainer.firstChild.textContent === formattedContent.textContent
-      /* as we are always doing both actions, the comparison on mainTextContainer is sufficient*/
-    ) {
-      // No changes are needed
-      return;
+
+  // Helper function to check if a container needs updating
+  function needsUpdate(textContainer) {
+    if (!textContainer || !textContainer.hasChildNodes()) {
+      return false;
     }
-  } else {
-    // First line was different so we can continue with untraslation
-    // Create formatted content
+
+    // Check first line comparison
+    if (
+      textContainer.firstChild.hasChildNodes() &&
+      textContainer.firstChild.firstChild.textContent === originalTextFirstLine
+    ) {
+      // If first lines match, create formatted content and do full comparison
+      if (!formattedContent) {
+        formattedContent =
+          window.YoutubeAntiTranslate.createFormattedContent(originalText);
+      }
+
+      // Compare full content
+      return (
+        textContainer.firstChild.textContent !== formattedContent.textContent
+      );
+    }
+
+    // First line is different, so update is needed
+    return true;
+  }
+
+  // Check each container independently
+  const mainNeedsUpdate = mainTextContainer
+    ? needsUpdate(mainTextContainer)
+    : false;
+  const snippetNeedsUpdate = snippetTextContainer
+    ? needsUpdate(snippetTextContainer)
+    : false;
+
+  // If neither container needs updating, return early
+  if (!mainNeedsUpdate && !snippetNeedsUpdate) {
+    return;
+  }
+
+  // Create formatted content if not already created
+  if (!formattedContent) {
     formattedContent =
       window.YoutubeAntiTranslate.createFormattedContent(originalText);
   }
 
-  // It is safe to assume both untralations are needed as we are always doing both
-  // so no point in wasting resorces on another text comparison
-
-  // Update both containers if they exist
-  if (mainTextContainer) {
+  // Update containers that need updating
+  if (mainNeedsUpdate && mainTextContainer) {
     window.YoutubeAntiTranslate.replaceContainerContent(
       mainTextContainer,
       formattedContent.cloneNode(true),
     );
   }
 
-  if (snippetTextContainer) {
+  if (snippetNeedsUpdate && snippetTextContainer) {
     window.YoutubeAntiTranslate.replaceContainerContent(
       snippetTextContainer,
       formattedContent.cloneNode(true),
@@ -741,15 +772,16 @@ function updateAuthorContent(container, originalText) {
 }
 
 async function handleDescriptionMutation() {
-  const descriptionElement = document.querySelectorAll(DESCRIPTION_SELECTOR);
-  const player = document.querySelectorAll(
-    window.YoutubeAntiTranslate.getPlayerSelector(),
+  const descriptionElement = window.YoutubeAntiTranslate.getFirstVisible(
+    document.querySelectorAll(DESCRIPTION_SELECTOR),
+  );
+  const player = window.YoutubeAntiTranslate.getFirstVisible(
+    document.querySelectorAll(window.YoutubeAntiTranslate.getPlayerSelector()),
   );
   if (descriptionElement && player) {
     restoreOriginalDescriptionAndAuthor();
   }
 }
-
 // Initialize the mutation observer for description
 const targetNode = document.body;
 const observerConfig = { childList: true, subtree: true };
