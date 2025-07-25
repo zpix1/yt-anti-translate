@@ -14,11 +14,6 @@ const CHAPTER_TIME_SELECTOR = "div#time";
 const CHAPTER_HEADER_SELECTOR =
   "ytd-rich-list-header-renderer yt-formatted-string#title";
 const CHAPTER_STYLE = `
-.ytp-tooltip.ytp-bottom.ytp-preview .ytp-tooltip-title span {
-    font-size: 0 !important;
-    line-height: 0 !important;
-}
-
 .ytp-tooltip.ytp-bottom.ytp-preview .ytp-tooltip-title span[data-original-chapter]::after {
     content: attr(data-original-chapter);
     font-size: 12px !important;
@@ -155,10 +150,16 @@ function parseChaptersFromDescription(description) {
   const chapters = [];
 
   description.split("\n").forEach((line) => {
-    // More flexible regex to handle emojis, bullets, and various separators
-    const match = line
-      .trim()
-      .match(/^.*?(\d{1,2}):(\d{2})(?::(\d{2}))?.*?\s*(.+)$/);
+    const trimmedLine = line.trim();
+
+    // More specific regex for YouTube chapter format:
+    // - Allows minimal decoration at start (bullets, dashes, etc.)
+    // - Timestamp must be near the beginning of the line
+    // - Must have a space/separator after timestamp before the title
+    const match = trimmedLine.match(
+      /^[\s–—•·▪▫‣⁃-]*(\d{1,2}):(\d{2})(?::(\d{2}))?\s*[–—•·▪▫‣⁃:→>-]*\s*(.+)$/,
+    );
+
     if (match) {
       const [, part1, part2, part3, title] = match;
 
@@ -178,11 +179,13 @@ function parseChaptersFromDescription(description) {
         seconds = parseInt(part2, 10);
       }
 
-      // Extract clean title by removing everything before the timestamp and separators after
-      let cleanTitle = title.trim();
+      // Validate timestamp values
+      if (minutes >= 60 || seconds >= 60) {
+        return;
+      }
 
-      // Remove common separators at the beginning of title
-      cleanTitle = cleanTitle.replace(/^[\s\-–—•·▪▫‣⁃:→>]*\s*/, "");
+      // Extract clean title
+      const cleanTitle = title.trim();
 
       // Skip if title is too short (likely not a real chapter)
       if (cleanTitle.length < 2) {
@@ -193,7 +196,7 @@ function parseChaptersFromDescription(description) {
 
       chapters.push({
         startTime: totalSeconds,
-        title: cleanTitle.trim(),
+        title: cleanTitle,
       });
     }
   });
@@ -234,6 +237,11 @@ let lastDescription = "";
  * Uses cached chapter information for efficiency.
  */
 function updateTooltipChapter() {
+  // Don't touch tooltip if YouTube doesn't have chapters enabled
+  if (cachedChapters.length === 0) {
+    return;
+  }
+
   // Only query for visible tooltips
   const visibleTooltip = document.querySelector(
     '.ytp-tooltip.ytp-bottom.ytp-preview:not([style*="display: none"])',
@@ -258,16 +266,7 @@ function updateTooltipChapter() {
   const targetChapter = findChapterByTime(timeInSeconds, cachedChapters);
 
   if (targetChapter) {
-    const currentOriginalChapter = titleElement.getAttribute(
-      "data-original-chapter",
-    );
-
-    if (currentOriginalChapter !== targetChapter.title) {
-      window.YoutubeAntiTranslate.logDebug(
-        `Time: ${timeString} (${timeInSeconds}s) -> Chapter: "${targetChapter.title}"`,
-      );
-      titleElement.setAttribute("data-original-chapter", targetChapter.title);
-    }
+    titleElement.textContent = targetChapter.title;
   }
 }
 
@@ -391,6 +390,14 @@ function setupChapterButtonObserver() {
  * @param {string} originalDescription - Untranslated video description obtained from the player API.
  */
 function setupChapters(originalDescription) {
+  // Early return if description hasn't changed - avoid expensive cleanup/setup
+  if (originalDescription === lastDescription) {
+    window.YoutubeAntiTranslate.logDebug(
+      "Description unchanged, skipping chapters setup",
+    );
+    return;
+  }
+
   // Clean up any existing observer first
   cleanupChaptersObserver();
 
@@ -418,7 +425,7 @@ function setupChapters(originalDescription) {
   style.textContent = CHAPTER_STYLE;
   document.head.appendChild(style);
 
-  // More targeted observer - only watch for tooltip appearances
+  // More targeted observer - watch for tooltip changes and visibility
   chaptersObserver = new MutationObserver((mutations) => {
     let shouldUpdate = false;
 
@@ -436,6 +443,19 @@ function setupChapters(originalDescription) {
             }
           }
         });
+      }
+
+      // Watch for attribute changes (style changes that show/hide tooltips)
+      if (mutation.type === "attributes") {
+        const target = mutation.target;
+        if (
+          target.classList?.contains("ytp-tooltip") &&
+          target.classList?.contains("ytp-preview") &&
+          (mutation.attributeName === "style" ||
+            mutation.attributeName === "class")
+        ) {
+          shouldUpdate = true;
+        }
       }
 
       // Only watch for changes in tooltip text content
@@ -459,8 +479,13 @@ function setupChapters(originalDescription) {
       childList: true,
       subtree: true,
       characterData: true,
+      attributes: true,
+      attributeFilter: ["style", "class"],
     });
   }
+
+  // Initial update for any existing visible tooltips
+  setTimeout(updateTooltipChapter, 50);
 
   setupChapterButtonObserver();
 
@@ -646,46 +671,64 @@ function updateDescriptionContent(container, originalText) {
     return;
   }
 
-  let formattedContent;
+  let formattedContent = null;
   const originalTextFirstLine = originalText.split("\n")[0];
-  // Compare text first span>span against first line first to avaoid waisting resources on formatting content
-  if (
-    mainTextContainer.hasChildNodes() &&
-    mainTextContainer.firstChild.hasChildNodes() &&
-    mainTextContainer.firstChild.firstChild.textContent ===
-      originalTextFirstLine
-    /* as we are always doing both the comparison on mainTextContainer is sufficient*/
-  ) {
-    // If identical create formatted content and compare with firstchild text content to determine if any change is needed
-    formattedContent =
-      window.YoutubeAntiTranslate.createFormattedContent(originalText);
-    if (
-      mainTextContainer.hasChildNodes() &&
-      mainTextContainer.firstChild.textContent === formattedContent.textContent
-      /* as we are always doing both actions, the comparison on mainTextContainer is sufficient*/
-    ) {
-      // No changes are needed
-      return;
+
+  // Helper function to check if a container needs updating
+  function needsUpdate(textContainer) {
+    if (!textContainer || !textContainer.hasChildNodes()) {
+      return false;
     }
-  } else {
-    // First line was different so we can continue with untraslation
-    // Create formatted content
+
+    // Check first line comparison
+    if (
+      textContainer.firstChild.hasChildNodes() &&
+      textContainer.firstChild.firstChild.textContent === originalTextFirstLine
+    ) {
+      // If first lines match, create formatted content and do full comparison
+      if (!formattedContent) {
+        formattedContent =
+          window.YoutubeAntiTranslate.createFormattedContent(originalText);
+      }
+
+      // Compare full content
+      return (
+        textContainer.firstChild.textContent !== formattedContent.textContent
+      );
+    }
+
+    // First line is different, so update is needed
+    return true;
+  }
+
+  // Check each container independently
+  const mainNeedsUpdate = mainTextContainer
+    ? needsUpdate(mainTextContainer)
+    : false;
+  const snippetNeedsUpdate = snippetTextContainer
+    ? needsUpdate(snippetTextContainer)
+    : false;
+
+  // If neither container needs updating, return early
+  if (!mainNeedsUpdate && !snippetNeedsUpdate) {
+    return;
+  }
+
+  // Create formatted content if not already created
+  if (!formattedContent) {
     formattedContent =
       window.YoutubeAntiTranslate.createFormattedContent(originalText);
   }
 
-  // It is safe to assume both untralations are needed as we are always doing both
-  // so no point in wasting resorces on another text comparison
-
-  // Update both containers if they exist
-  if (mainTextContainer) {
+  // Update containers that need updating
+  if (mainNeedsUpdate && mainTextContainer) {
     window.YoutubeAntiTranslate.replaceContainerContent(
       mainTextContainer,
       formattedContent.cloneNode(true),
     );
   }
 
-  if (snippetTextContainer) {
+  if (snippetNeedsUpdate && snippetTextContainer) {
     window.YoutubeAntiTranslate.replaceContainerContent(
       snippetTextContainer,
       formattedContent.cloneNode(true),
@@ -747,12 +790,11 @@ async function handleDescriptionMutation() {
     restoreOriginalDescriptionAndAuthor();
   }
 }
-
 // Initialize the mutation observer for description
 const targetNode = document.body;
 const observerConfig = { childList: true, subtree: true };
 const descriptionObserver = new MutationObserver(
-  window.YoutubeAntiTranslate.debounce(handleDescriptionMutation),
+  window.YoutubeAntiTranslate.debounce(handleDescriptionMutation, 100),
 );
 descriptionObserver.observe(targetNode, observerConfig);
 
