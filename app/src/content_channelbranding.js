@@ -83,13 +83,13 @@ async function getChannelUCID() {
 
   let handle = null;
   if (window.location.pathname.startsWith("/c/")) {
-    const match = window.location.pathname.match(/\/c\/([\w-]+)/);
+    const match = window.location.pathname.match(/\/c\/([^/?]+)/);
     handle = match ? `${match[1]}` : null;
   } else if (window.location.pathname.startsWith("/@")) {
-    const match = window.location.pathname.match(/\/(@[\w-]+)/);
+    const match = window.location.pathname.match(/\/(@[^/?]+)/);
     handle = match ? `${match[1]}` : null;
   } else if (window.location.pathname.startsWith("/user/")) {
-    const match = window.location.pathname.match(/\/user\/(@[\w-]+)/);
+    const match = window.location.pathname.match(/\/user\/([^/?]+)/);
     handle = match ? `${match[1]}` : null;
   }
   return await lookupChannelId(handle);

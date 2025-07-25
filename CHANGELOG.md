@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.19.4] - 2025-07-25
+
+### Fixed
+
+- Fix [#78](https://github.com/zpix1/yt-anti-translate/issues/78) Handles with dots or unicode are incorrectly untranslated
+
 ## [1.19.3] - 2025-07-23
 
 ### Fixed
