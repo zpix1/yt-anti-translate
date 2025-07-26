@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.19.5] - 2025-07-26
+
+### New Feature
+
+- Mobile audio untranslation
+
 ## [1.19.4] - 2025-07-25
 
 ### Fixed
