@@ -759,8 +759,14 @@ ytm-shorts-lockup-view-model`,
     return span;
   },
 
-  createHashtagLink: function (hashtag) {
-    this.logDebug(`createHashtagLink called with: ${hashtag}`);
+  /**
+  * Creates a styled link for hashtag or mention
+  * @param {"hashtag"|"mention"} type - Type of link to create
+  * @param {string} value - Hashtag (without #) or mention (without @)
+  * @returns {HTMLElement} - Span element containing the styled link
+  */
+  createTagLink: function (type, value) {
+    this.logDebug(`createTagLink called with: ${type}: ${value}`);
 
     // Create the container span
     const span = document.createElement("span");
@@ -773,34 +779,16 @@ ytm-shorts-lockup-view-model`,
     link.className =
       "yt-core-attributed-string__link yt-core-attributed-string__link--call-to-action-color";
     link.tabIndex = "0";
-    link.href = `/hashtag/${encodeURIComponent(hashtag.replace(/^#/, ""))}`;
+    if (type === "hashtag") {
+      link.href = `/hashtag/${encodeURIComponent(value)}`;
+      link.textContent = `#${value}`;
+    } else if (type === "mention") {
+      link.href = `/@${value}`;
+      link.textContent = `@${value}`;
+    }
     link.target = "";
     link.setAttribute("force-new-state", "true");
-    link.textContent = `#${hashtag}`;
-
-    span.appendChild(link);
-    return span;
-  },
-
-  createMentionLink: function (mention) {
-    this.logDebug(`createMentionLink called with: ${mention}`);
-
-    // Create the container span
-    const span = document.createElement("span");
-    span.className = "yt-core-attributed-string--link-inherit-color";
-    span.dir = "auto";
-    span.style.color = "rgb(62, 166, 255)";
-
-    // Create the anchor element
-    const link = document.createElement("a");
-    link.className =
-      "yt-core-attributed-string__link yt-core-attributed-string__link--call-to-action-color";
-    link.tabIndex = "0";
-    link.href = `/@${mention}`;
-    link.target = "";
-    link.setAttribute("force-new-state", "true");
-    link.textContent = `@${mention}`;
-
+    
     span.appendChild(link);
     return span;
   },
@@ -821,7 +809,7 @@ ytm-shorts-lockup-view-model`,
     // Group 6: Mention has prefix "@" and possibly space `(?:^|\s)@([\w\-]{3,100})`
     // Group 7: Mention only `([\w\-]{3,100})`
     const combinedPattern =
-      /(https?:\/\/[^\s]+)|((?:^|\s)((?:\d{1,2}:)?\d{1,2}:\d{2}))(?=\s|$)|((?:^|\s)#([\p{L}\p{N}_\p{Script=Han}-]{2,50}))|((?:^|\s)@([\w\-]{3,100}))/gu;
+      /(https?:\/\/[^\s]+)|((?:^|\s)((?:\d{1,2}:)?\d{1,2}:\d{2}))(?=\s|$)|((?:^|\s)#([\p{L}\p{N}_\p{Script=Han}-]{1,50}))|((?:^|\s)@([\w\-]{3,100}))/gu;
 
     let lastIndex = 0;
     let match;
@@ -869,7 +857,7 @@ ytm-shorts-lockup-view-model`,
           container.appendChild(document.createTextNode(" "));
         }
 
-        const hashtagLink = this.createHashtagLink(hashtag);
+        const hashtagLink = this.createTagLink("hashtag", hashtag);
         container.appendChild(hashtagLink);
 
         lastIndex = match.index + hashtagFullMatch.length;
@@ -882,7 +870,7 @@ ytm-shorts-lockup-view-model`,
           container.appendChild(document.createTextNode(" "));
         }
 
-        const mentionLink = this.createMentionLink(mention);
+        const mentionLink = this.createTagLink("mention", mention);
         container.appendChild(mentionLink);
 
         lastIndex = match.index + mentionFullMatch.length;
