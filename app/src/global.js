@@ -804,7 +804,7 @@ ytm-shorts-lockup-view-model`,
     // Group 1: URL (https?:\/\/[^\s]+)
     // Group 2: Full timecode match including preceding space/start of line `(?:^|\s)((?:\d{1,2}:)?\d{1,2}:\d{2})`
     // Group 3: The actual timecode `(\d{1,2}:)?\d{1,2}:\d{2}`
-    // Group 4: Hashtag has prefix "#" and possibly space `(?:^|\s)#([\p{L}\p{N}_\p{Script=Han}-]{2,50})`
+    // Group 4: Hashtag has prefix "#" and possibly space `(?:^|\s)#([\p{L}\p{N}_\p{Script=Han}-]{1,50})`
     // Group 5: Hashtag only `#([\p{L}\p{N}_\p{Script=Han}-]{2,50})`
     // Group 6: Mention has prefix "@" and possibly space `(?:^|\s)@([\w\-]{3,100})`
     // Group 7: Mention only `([\w\-]{3,100})`
@@ -820,9 +820,9 @@ ytm-shorts-lockup-view-model`,
       const timecodeFullMatch = match[2]; // e.g., " 1:23:45" or "1:23:45" if at start
       const timecodeValue = match[3]; // e.g., "1:23:45"
       const hashtagFullMatch = match[4]; // e.g., " #hashtag" or "#hashtag" if at start
-      const hashtag = match[5]; // e.g., "#hashtag"
+      const hashtag = match[5]; // e.g., "hashtag"
       const mentionFullMatch = match[6]; // e.g., " @username" or "@username" if at start
-      const mention = match[7]; // e.g., "@username"
+      const mention = match[7]; // e.g., "username"
 
       // Add text segment before the match
       if (match.index > lastIndex) {
