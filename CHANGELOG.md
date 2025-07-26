@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.19.4] - 2025-07-25
+
+### Fixed
+
+- Fix [#78](https://github.com/zpix1/yt-anti-translate/issues/78) Handles with dots or unicode are incorrectly untranslated
+- Fix [#80](https://github.com/zpix1/yt-anti-translate/issues/80) Chapter descriptions are gone when you mouse over the search bar
+
+## [1.19.3] - 2025-07-23
+
+### Fixed
+
+- Fix notification untranslation not working due to a typo, and add handle for ':'
+
+## [1.19.2] - 2025-07-22
+
+### New Feature
+
+- Chapters untranslation
+- Option to only untranslate AI-dubbed audio
+- Initial m.youtube.com support
+- Notification untranslation
+
+### Fixed
+
+- Fix [#73](https://github.com/zpix1/yt-anti-translate/issues/73) Video Chapters repeating
+- Fix [#68](https://github.com/zpix1/yt-anti-translate/issues/68) Anti-translation does not work on embedded URLs
+- Fix [#67](https://github.com/zpix1/yt-anti-translate/issues/67) Titles in playlists are not untranslated
+- Fix [#40](https://github.com/zpix1/yt-anti-translate/issues/40) Performance issues
+- Fix [#63](https://github.com/zpix1/yt-anti-translate/issues/63) Album names wrongly replaced in the Releases section of music channels
+
 ## [1.18.4] - 2025-07-04
 
 ### Fixed

@@ -1,3 +1,119 @@
+const pendingRequests = new Map();
+
+class SessionLRUCache {
+  /**
+   * @param {object} [opts]
+   * @param {number} [opts.maxBytes=5*1024*1024]  Storage budget
+   * @param {string} [opts.ns='slru:']             Key prefix / namespace
+   */
+  constructor({
+    maxBytes = 5 * 1024 * 1024,
+    ns = "[YoutubeAntiTranslate]cache:",
+  } = {}) {
+    this.maxBytes = maxBytes;
+    this.ns = ns;
+  }
+
+  /* ---------- Public API ---------- */
+
+  /** Store or update an item */
+  set(key, value) {
+    const entryKey = this.ns + key;
+    const entry = { v: value, t: Date.now() }; // v = value, t = last‑touch
+    sessionStorage.setItem(entryKey, JSON.stringify(entry));
+    this._evictIfNeeded();
+  }
+
+  /** Retrieve an item (or undefined) and refresh its LRU timestamp */
+  get(key) {
+    const entryKey = this.ns + key;
+    const raw = sessionStorage.getItem(entryKey);
+    if (!raw) {
+      return undefined;
+    }
+
+    try {
+      const entry = JSON.parse(raw);
+      entry.t = Date.now(); // touch
+      sessionStorage.setItem(entryKey, JSON.stringify(entry));
+      return entry.v;
+    } catch {
+      // corrupted entry – remove it
+      sessionStorage.removeItem(entryKey);
+      return undefined;
+    }
+  }
+
+  /** Remove one item */
+  delete(key) {
+    sessionStorage.removeItem(this.ns + key);
+  }
+
+  /** Empty the whole cache (namespace only) */
+  clear() {
+    this._eachEntry(({ k }) => sessionStorage.removeItem(k));
+  }
+
+  /** Approximate bytes used by this cache */
+  bytes() {
+    let total = 0;
+    this._eachEntry(({ k, v }) => {
+      total += (k.length + v.length) * 2;
+    });
+    return total;
+  }
+
+  /** How many entries in the cache */
+  size() {
+    let n = 0;
+    this._eachEntry(() => {
+      n += 1;
+    });
+    return n;
+  }
+
+  /* ---------- Internal helpers ---------- */
+
+  /** Iterate over *only* our namespaced entries */
+  _eachEntry(cb) {
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const k = sessionStorage.key(i);
+      if (k && k.startsWith(this.ns)) {
+        cb({ k, v: sessionStorage.getItem(k) });
+      }
+    }
+  }
+
+  /** Remove LRU items until under budget */
+  _evictIfNeeded() {
+    let usage = this.bytes();
+    if (usage <= this.maxBytes) {
+      return;
+    }
+
+    // Collect [{k, bytes, lastTouched}]
+    const items = [];
+    this._eachEntry(({ k, v }) => {
+      const { t } = JSON.parse(v || "{}");
+      const bytes = (k.length + v.length) * 2;
+      items.push({ k, bytes, t: t ?? 0 });
+    });
+
+    // Oldest first
+    items.sort((a, b) => a.t - b.t);
+
+    for (const item of items) {
+      sessionStorage.removeItem(item.k);
+      usage -= item.bytes;
+      if (usage <= this.maxBytes) {
+        break;
+      }
+    }
+  }
+}
+
+const lruCache = new SessionLRUCache();
+
 window.YoutubeAntiTranslate = {
   VIEWPORT_EXTENSION_PERCENTAGE_FRACTION: 0.5,
   VIEWPORT_OUTSIDE_LIMIT_FRACTION: 0.5,
@@ -34,10 +150,13 @@ ytd-compact-video-renderer,
 ytd-grid-video-renderer,
 ytd-playlist-video-renderer,
 ytd-playlist-panel-video-renderer,
-yt-lockup-view-model`,
+yt-lockup-view-model,
+ytm-compact-video-renderer,
+ytm-rich-item-renderer,
+ytm-video-with-context-renderer,
+ytm-video-card-renderer`,
   ALL_ARRAYS_SHORTS_SELECTOR: `div.style-scope.ytd-rich-item-renderer,
 ytm-shorts-lockup-view-model`,
-  cacheSessionStorageKey: "[YoutubeAntiTranslate]cache",
 
   logWarning: function (...args) {
     if (this.currentLogLevel >= this.LOG_LEVELS.WARN) {
@@ -65,28 +184,61 @@ ytm-shorts-lockup-view-model`,
   },
 
   /**
+   * Creates a debounced version of a function that will be executed at most once
+   * during the given wait interval. The wrapped function is invoked immediately
+   * on the first call and then suppressed for the remainder of the interval so
+   * that the real function runs **no more than once every `waitMinMs` milliseconds**.
+   *
+   * Uses `requestAnimationFrame` to align with the browser's repaint cycle.
+   *
+   * @param {Function} func - The function to debounce/throttle.
+   * @param {number} waitMinMs - The minimum time between invocations in milliseconds.
+   * @returns {Function} A debounced function.
+   */
+  debounce: function (func, wait = 30) {
+    let isScheduled = false;
+    let lastExecTime = 0;
+
+    function tick(time, context, args) {
+      if (!isScheduled) {
+        return;
+      }
+
+      const elapsed = time - lastExecTime;
+
+      if (elapsed >= wait) {
+        func.apply(context, args);
+        lastExecTime = time;
+        isScheduled = false; // allow next schedule
+      } else {
+        requestAnimationFrame((t) => tick(t, context, args));
+      }
+    }
+
+    return function (...args) {
+      if (!isScheduled) {
+        isScheduled = true;
+        requestAnimationFrame((time) => {
+          if (lastExecTime === 0) {
+            // first invocation: run immediately
+            func.apply(this, args);
+            lastExecTime = time;
+            isScheduled = false;
+          } else {
+            tick(time, this, args);
+          }
+        });
+      }
+    };
+  },
+
+  /**
    * Retrieves a deserialized object from session storage.
    * @param {string} key
    * @return {any|null}
    */
   getSessionCache: function (key) {
-    this.logDebug(`getSessionCache called with key: ${key}`);
-    const fullKey = `${this.cacheSessionStorageKey}_${key}`;
-    const raw = sessionStorage.getItem(fullKey);
-    if (!raw) {
-      this.logDebug(`getSessionCache: No data found for key ${key}`);
-      return null;
-    }
-
-    try {
-      const result = JSON.parse(raw);
-      this.logDebug(`getSessionCache: Successfully parsed data for key ${key}`);
-      return result;
-    } catch (err) {
-      this.logError(`Failed to parse session cache for key "${key}"`, err);
-      sessionStorage.removeItem(fullKey); // clear corrupted entry
-      return null;
-    }
+    return lruCache.get(key);
   },
 
   /**
@@ -95,25 +247,22 @@ ytm-shorts-lockup-view-model`,
    * @param {any} value
    */
   setSessionCache: function (key, value) {
-    this.logDebug(`setSessionCache called with key: ${key}`);
-    const fullKey = `${this.cacheSessionStorageKey}_${key}`;
-    try {
-      sessionStorage.setItem(fullKey, JSON.stringify(value));
-      this.logDebug(`setSessionCache: Successfully stored data for key ${key}`);
-    } catch (err) {
-      this.logError(`Failed to set session cache for key "${key}"`, err);
-    }
+    return lruCache.set(key, value);
   },
 
   /**
    * @returns {string}
    */
   getPlayerSelector: function () {
-    this.logDebug(`getPlayerSelector called`);
+    if (window.location.hostname === "m.youtube.com") {
+      return "#player-container-id";
+    }
+    if (window.location.pathname.startsWith("/embed")) {
+      return "#movie_player";
+    }
     const selector = window.location.pathname.startsWith("/shorts")
       ? "#shorts-player"
       : "ytd-player .html5-video-player";
-    this.logDebug(`getPlayerSelector returning: ${selector}`);
     return selector;
   },
 
@@ -121,9 +270,7 @@ ytm-shorts-lockup-view-model`,
    * @returns {string}
    */
   getBrowserOrChrome: function () {
-    this.logDebug(`getBrowserOrChrome called`);
     const result = typeof browser !== "undefined" ? browser : chrome;
-    this.logDebug(`getBrowserOrChrome returning browser type`);
     return result;
   },
 
@@ -131,12 +278,16 @@ ytm-shorts-lockup-view-model`,
    * @returns {bool}
    */
   isFirefoxBasedBrowser: function () {
-    this.logDebug(`isFirefoxBasedBrowser called`);
     const result =
       typeof browser !== "undefined" &&
       typeof browser.runtime !== "undefined" &&
       typeof browser.runtime.getBrowserInfo === "function";
-    this.logDebug(`isFirefoxBasedBrowser returning: ${result}`);
+    return result;
+  },
+
+  // Detects if we are currently on the mobile YouTube site (m.youtube.com)
+  isMobile: function () {
+    const result = window.location.hostname === "m.youtube.com";
     return result;
   },
 
@@ -148,6 +299,58 @@ ytm-shorts-lockup-view-model`,
   normalizeSpaces: function (str) {
     const result = str.replace(/\s+/g, " ").trim();
     return result;
+  },
+
+  /**
+   * Processes a string with normalization and trimming options.
+   * @param {string} str - The string to process.
+   * @param {object} [options] - Configuration options for processing.
+   * @param {boolean} [options.ignoreCase=true] - If true, converts to lowercase. Default true
+   * @param {boolean} [options.normalizeSpaces=true] - If true, replaces consecutive whitespace with a single space. Default true
+   * @param {boolean} [options.normalizeNFKC=true] - If true, applies Unicode Normalization Form Compatibility Composition (NFKC). Default true
+   * @param {boolean} [options.trim=true] - If true, trims both leading and trailing whitespace. Default true
+   * @param {boolean} [options.trimLeft=false] - If true, trims leading whitespace. Ignored if `trim` is true. Default false
+   * @param {boolean} [options.trimRight=false] - If true, trims trailing whitespace. Ignored if `trim` is true. Default false
+   * @returns {string} The processed string.
+   */
+  processString: function (str, options = {}) {
+    const {
+      ignoreCase = true,
+      normalizeSpaces = true,
+      normalizeNFKC = true,
+      trim = true,
+      trimLeft = false,
+      trimRight = false,
+    } = options;
+
+    if (!str) {
+      return str;
+    }
+
+    if (normalizeNFKC) {
+      str = str.normalize("NFKC");
+    }
+
+    if (normalizeSpaces) {
+      str = str.replace(/\s+/g, " ");
+    }
+
+    if (trim) {
+      str = str.trim();
+    } else {
+      if (trimLeft) {
+        str = str.trimStart();
+      }
+      if (trimRight) {
+        str = str.trimEnd();
+      }
+    }
+
+    if (ignoreCase) {
+      str = str.toLowerCase();
+    }
+
+    return str;
   },
 
   /**
@@ -164,47 +367,28 @@ ytm-shorts-lockup-view-model`,
    * @returns {boolean} Whether the two processed strings are equal.
    */
   isStringEqual: function (str1, str2, options = {}) {
-    const {
-      ignoreCase = true,
-      normalizeSpaces = true,
-      normalizeNFKC = true,
-      trim = true,
-      trimLeft = false,
-      trimRight = false,
-    } = options;
+    return (
+      this.processString(str1, options) === this.processString(str2, options)
+    );
+  },
 
-    function process(str) {
-      if (!str) {
-        return str;
-      }
-
-      if (normalizeNFKC) {
-        str = str.normalize("NFKC");
-      }
-
-      if (normalizeSpaces) {
-        str = str.replace(/\s+/g, " ");
-      }
-
-      if (trim) {
-        str = str.trim();
-      } else {
-        if (trimLeft) {
-          str = str.trimStart();
-        }
-        if (trimRight) {
-          str = str.trimEnd();
-        }
-      }
-
-      if (ignoreCase) {
-        str = str.toLowerCase();
-      }
-
-      return str;
-    }
-
-    return process(str1) === process(str2);
+  /**
+   * Advanced string includes check with optional normalization and trimming.
+   * @param {string} container - The string to check in.
+   * @param {string} substring - The string to look for.
+   * @param {object} [options] - Configuration options for comparison.
+   * @param {boolean} [options.ignoreCase=true] - If true, comparison is case-insensitive. Default true
+   * @param {boolean} [options.normalizeSpaces=true] - If true, replaces consecutive whitespace with a single space. Default true
+   * @param {boolean} [options.normalizeNFKC=true] - If true, applies Unicode Normalization Form Compatibility Composition (NFKC). Default true
+   * @param {boolean} [options.trim=true] - If true, trims both leading and trailing whitespace. Default true
+   * @param {boolean} [options.trimLeft=false] - If true, trims leading whitespace. Ignored if `trim` is true. Default false
+   * @param {boolean} [options.trimRight=false] - If true, trims trailing whitespace. Ignored if `trim` is true. Default false
+   * @returns {boolean} Whether the processed container includes the processed substring.
+   */
+  doesStringInclude: function (container, substring, options = {}) {
+    return this.processString(container, options).includes(
+      this.processString(substring, options),
+    );
   },
 
   /**
@@ -227,50 +411,19 @@ ytm-shorts-lockup-view-model`,
     replacement,
     options = {},
   ) {
-    const {
-      ignoreCase = true,
-      normalizeSpaces = true,
-      normalizeNFKC = true,
-      trim = true,
-      trimLeft = false,
-      trimRight = false,
-    } = options;
+    const { ignoreCase = true } = options;
 
-    function preprocess(str) {
-      if (!str) {
-        return str;
-      }
+    // Create options without ignoreCase for preprocessing (since it's handled separately)
+    const preprocessOptions = { ...options, ignoreCase: false };
 
-      if (normalizeNFKC) {
-        str = str.normalize("NFKC");
-      }
-
-      if (normalizeSpaces) {
-        str = str.replace(/\s+/g, " ");
-      }
-
-      if (trim) {
-        str = str.trim();
-      } else {
-        if (trimLeft) {
-          str = str.trimStart();
-        }
-        if (trimRight) {
-          str = str.trimEnd();
-        }
-      }
-
-      return str;
-    }
-
-    const processedInput = preprocess(input);
+    const processedInput = this.processString(input, preprocessOptions);
     if (!processedInput || replacement === null || replacement === undefined) {
       return processedInput;
     }
 
     let regex;
     if (typeof pattern === "string") {
-      const processedPattern = preprocess(pattern);
+      const processedPattern = this.processString(pattern, preprocessOptions);
       const escapedPattern = processedPattern.replace(
         /[.*+?^${}()|[\]\\]/g,
         "\\$&",
@@ -1057,5 +1210,72 @@ ytm-shorts-lockup-view-model`,
       `detectSupportedLanguage: all attempts exhausted, returning null`,
     );
     return null;
+  },
+  getSettings: function () {
+    const element = document.querySelector(
+      'script[type="module"][data-ytantitranslatesettings]',
+    );
+    return JSON.parse(element?.dataset?.ytantitranslatesettings ?? "{}");
+  },
+  /**
+   * Make a GET request. Its result will be cached in sessionStorage and will return same promise for parallel requests.
+   * @param {string} url - The URL to fetch data from
+   * @param {string} postData - Optional. If passed, will make a POST request with this data
+   * @param {boolean} doNotCache - Optional. If true, the result will not be cached in sessionStorage, only same promise will be returned for parallel requests
+   * @returns
+   */
+  cachedRequest: async function cachedRequest(
+    url,
+    postData = null,
+    doNotCache = false,
+  ) {
+    const cacheKey = url + "|" + postData;
+    const storedResponse =
+      window.YoutubeAntiTranslate.getSessionCache(cacheKey);
+    if (storedResponse) {
+      return storedResponse;
+    }
+
+    if (pendingRequests.has(cacheKey)) {
+      return pendingRequests.get(cacheKey);
+    }
+
+    const requestPromise = (async () => {
+      try {
+        const response = await fetch(url, {
+          method: postData ? "POST" : "GET",
+          headers: { "content-type": "application/json" },
+          body: postData ? postData : undefined,
+        });
+        if (!response.ok) {
+          if (response.status === 404 || response.status === 401) {
+            if (!doNotCache) {
+              window.YoutubeAntiTranslate.setSessionCache(cacheKey, null);
+            }
+            return null;
+          }
+          throw new Error(
+            `HTTP error! status: ${response.status}, while fetching: ${url}`,
+          );
+        }
+        const data = await response.json();
+        if (!doNotCache) {
+          window.YoutubeAntiTranslate.setSessionCache(cacheKey, data);
+        }
+        return data;
+      } catch (error) {
+        window.YoutubeAntiTranslate.logWarning("Error fetching:", error);
+        // Cache null even on general fetch error to prevent immediate retries for the same failing URL
+        if (!doNotCache) {
+          window.YoutubeAntiTranslate.setSessionCache(cacheKey, null);
+        }
+        return null;
+      } finally {
+        pendingRequests.delete(cacheKey);
+      }
+    })();
+
+    pendingRequests.set(cacheKey, requestPromise);
+    return requestPromise;
   },
 };

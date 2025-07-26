@@ -218,13 +218,26 @@
         scrollbar-width: thin;
         scrollbar-color: rgba(0, 140, 186, 0.6) transparent;
       }
+
+      /* Automatically disable the AI-dub checkbox when the main
+         audio-track checkbox is unchecked. Uses the :has() relational
+         pseudo-class available in Chromium-based browsers (and coming
+         soon to Firefox). */
+      .options:has(#audio-checkbox:not(:checked)) input#audio-only-ai-checkbox {
+        pointer-events: none; /* block interaction */
+      }
+
+      /* Dim the entire row for visual feedback */
+      .options:has(#audio-checkbox:not(:checked)) .option:nth-child(2) {
+        opacity: 0.5;
+      }
     </style>
   </head>
 
   <body id="yt-anti-translate">
     <div class="scroll-wrapper">
       <div class="container">
-        <div class="header">YT Anti Translate 1.18.4</div>
+        <div class="header">YT Anti Translate 1.19.4</div>
         <div id="permission-warning" style="display: none; margin-top: 15px;">
           <div class="small" style="color: red;">
             <p><strong>Permission to access YouTube is not granted.</strong></p>
@@ -242,6 +255,10 @@
             <span>Untranslate audio track</span>
             <input id="audio-checkbox" type="checkbox" checked />
           </div>
+          <div class="option" style="padding-left: 10px; font-size: 14px;">
+            <span>Only for AI-dubbed audio</span>
+            <input id="audio-only-ai-checkbox" type="checkbox" />
+          </div>
           <div class="option">
             <span>Untranslate description</span>
             <input id="description-checkbox" type="checkbox" checked />
@@ -249,6 +266,10 @@
           <div class="option">
             <span>Untranslate channel branding</span>
             <input id="channel-branding-checkbox" type="checkbox" />
+          </div>
+          <div class="option">
+            <span>Untranslate notification titles</span>
+            <input id="notification-checkbox" type="checkbox" checked />
           </div>
           <div class="option">
             <span>Reload page automatically</span>
