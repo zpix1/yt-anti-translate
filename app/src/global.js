@@ -729,6 +729,15 @@ ytm-shorts-lockup-view-model`,
   },
 
   /**
+   * Gets current theme
+   * link color in dark theme: rgb(62, 166, 255)
+   * link color in light theme: rgb(6, 95, 212)
+   */
+  isDarkTheme: function () {
+    return document.documentElement.hasAttribute("dark");
+  },
+
+  /**
    * Creates a timecode link element with proper YouTube styling
    * @param {string} timecode - Timecode string (e.g., "05:36")
    * @returns {HTMLElement} - Span element containing the timecode link
@@ -742,7 +751,7 @@ ytm-shorts-lockup-view-model`,
     const span = document.createElement("span");
     span.className = "yt-core-attributed-string--link-inherit-color";
     span.dir = "auto";
-    span.style.color = "rgb(62, 166, 255)";
+    span.style.color = this.isDarkTheme() ? "rgb(62, 166, 255)" : "rgb(6, 95, 212)";
 
     // Create the anchor element
     const link = document.createElement("a");
@@ -772,7 +781,7 @@ ytm-shorts-lockup-view-model`,
     const span = document.createElement("span");
     span.className = "yt-core-attributed-string--link-inherit-color";
     span.dir = "auto";
-    span.style.color = "rgb(62, 166, 255)";
+    span.style.color = this.isDarkTheme() ? "rgb(62, 166, 255)" : "rgb(6, 95, 212)";
 
     // Create the anchor element
     const link = document.createElement("a");
@@ -805,7 +814,7 @@ ytm-shorts-lockup-view-model`,
     // Group 2: Full timecode match including preceding space/start of line `(?:^|\s)((?:\d{1,2}:)?\d{1,2}:\d{2})`
     // Group 3: The actual timecode `(\d{1,2}:)?\d{1,2}:\d{2}`
     // Group 4: Hashtag has prefix "#" and possibly space `(?:^|\s)#([\p{L}\p{N}_\p{Script=Han}-]{1,50})`
-    // Group 5: Hashtag only `#([\p{L}\p{N}_\p{Script=Han}-]{2,50})`
+    // Group 5: Hashtag only `#([\p{L}\p{N}_\p{Script=Han}-]{1,50})`
     // Group 6: Mention has prefix "@" and possibly space `(?:^|\s)@([\w\-]{3,100})`
     // Group 7: Mention only `([\w\-]{3,100})`
     const combinedPattern =
