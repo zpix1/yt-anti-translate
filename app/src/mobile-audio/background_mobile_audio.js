@@ -2,7 +2,7 @@
  * Copyright (c) 2025 Ivan Baksheev
  * All rights reserved.
  *
- * Proprietary Source‑Available License
+ * Proprietary Source-Available License
  * ------------------------------------
  * Permission is granted, free of charge, to any person who receives
  * this file as part of the  extension YouTube Anti Translate
