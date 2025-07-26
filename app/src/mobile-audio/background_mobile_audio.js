@@ -137,7 +137,7 @@
     };
   }
 
-  /* ─────────────────────────────  ❹  INSTALL  ──────────────────────────── */
+  /* -----------------------------  4  INSTALL  ----------------------------- */
   (function install() {
     // Set up ytInitialPlayerResponse interception first
     setupPlayerResponseInterception();
