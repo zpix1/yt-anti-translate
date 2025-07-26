@@ -4,18 +4,19 @@
  *
  * Proprietary Source‑Available License
  * ------------------------------------
- * Permission is hereby granted, free of charge, to any person who
- * receives this file **solely as part of** the extension
- * YouTube Anti‑Translate (the Software), to execute the file
- * within the Software for its intended purpose.
+ * Permission is granted, free of charge, to any person who receives
+ * this file as part of the  extension YouTube Anti Translate
+ * (the Software), to execute, copy, and modify this file solely for
+ * the purpose of creating and maintaining forks of the Software,
+ * provided that this copyright notice and license header are
+ * preserved in all copies or substantial portions of the file.
  *
- * No other rights are granted. In particular, you may **not** copy,
- * modify, merge, publish, distribute, sublicense, sell, or prepare
- * derivative works of this file, except with prior written
- * permission from the copyright holder.
+ * No other rights are granted. You may not sell, sublicense, or
+ * distribute this file separately from the Software without prior
+ * written permission from the copyright holder.
  *
- * This file is **NOT** covered by the MIT License that applies to
- * other parts of this project.
+ * This file is NOT covered by the MIT License that applies to other
+ * parts of this project.
  *
  * For licensing inquiries, contact: dczpix@gmail.com
  */
