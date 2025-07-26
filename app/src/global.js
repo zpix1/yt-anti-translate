@@ -421,13 +421,22 @@ ytm-shorts-lockup-view-model`,
       return processedInput;
     }
 
+    /*
+      Replace a substring, possibly case insensitive
+      - when case sensitive:
+          the same as str.replace(oldString, newString);
+      - when case insensitive:
+          the regex magic is for replacing oldString's characters in any case (lower/upper)
+    */
     let regex;
     if (typeof pattern === "string") {
       const processedPattern = this.processString(pattern, preprocessOptions);
+      // Prepend any characters with special meaning in regex with a \
+      // avoiding unintended matches
       const escapedPattern = processedPattern.replace(
         /[.*+?^${}()|[\]\\]/g,
         "\\$&",
-      ); // Escape string
+      );
       regex = new RegExp(escapedPattern, ignoreCase ? "gi" : "g");
     } else if (pattern instanceof RegExp) {
       const flags = pattern.flags.replace(/i?/, ignoreCase ? "i" : "");
@@ -505,14 +514,14 @@ ytm-shorts-lockup-view-model`,
 
         // Further extend the extended viewport by VIEWPORT_OUTSIDE_LIMIT_FRACTION to set the maximum outside limit
         // Use 500px as the minimum extension, as some element such as shorts are quite big
-        const extraHeight =
-          window.innerHeight * this.VIEWPORT_OUTSIDE_LIMIT_FRACTION > 500
-            ? window.innerHeight * this.VIEWPORT_OUTSIDE_LIMIT_FRACTION
-            : 500;
-        const extraWidth =
-          window.innerWidth * this.VIEWPORT_OUTSIDE_LIMIT_FRACTION > 500
-            ? window.innerWidth * this.VIEWPORT_OUTSIDE_LIMIT_FRACTION
-            : 500;
+        const extraHeight = Math.max(
+          window.innerHeight * this.VIEWPORT_OUTSIDE_LIMIT_FRACTION,
+          500,
+        );
+        const extraWidth = Math.max(
+          window.innerWidth * this.VIEWPORT_OUTSIDE_LIMIT_FRACTION,
+          500,
+        );
 
         const outerTopBoundary = topBoundary - extraHeight;
         const outerBottomBoundary = bottomBoundary + extraHeight;
