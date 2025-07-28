@@ -216,6 +216,23 @@ async function untranslateCurrentMobileVideoDescriptionHeader() {
   );
 }
 
+// Untranslate channel featured video title for the mobile (m.youtube.com) layout
+async function untranslateCurrentMobileFeaturedVideoChannel() {
+  if (!window.YoutubeAntiTranslate.isMobile()) {
+    return;
+  }
+  const fakeNodeID = "yt-anti-translate-fake-node-mobile-featured-video-channel";
+  const originalNodeSelector = `ytm-channel-featured-video-renderer > a > h3 > span.yt-core-attributed-string:not(#${fakeNodeID})`;
+
+  await createOrUpdateUntranslatedFakeNode(
+    fakeNodeID,
+    originalNodeSelector,
+    (el) => el.closest("a").href,
+    "span",
+    true,
+  );
+}
+
 /**
  * Create or Updates and untranslated fake node for the translated element
  * @param {string} fakeNodeID
@@ -646,6 +663,7 @@ async function untranslate() {
   const otherShortsPromise = untranslateOtherShortsVideos(); // Call the new function
   const currentMobileVideoDescriptionPromise =
     untranslateCurrentMobileVideoDescriptionHeader();
+  const currentMobileFeaturedVideoChannel = untranslateCurrentMobileFeaturedVideoChannel();
 
   // Wait for all promises to resolve concurrently
   await Promise.all([
@@ -658,6 +676,7 @@ async function untranslate() {
     currentShortVideoLinksPromise,
     otherShortsPromise,
     currentMobileVideoDescriptionPromise,
+    currentMobileFeaturedVideoChannel
   ]);
 
   // update intersect observers
