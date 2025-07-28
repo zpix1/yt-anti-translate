@@ -1209,4 +1209,25 @@ ytm-shorts-lockup-view-model`,
     pendingRequests.set(cacheKey, requestPromise);
     return requestPromise;
   },
+
+  /**
+   * Extracts the YouTube video ID from a given URL.
+   * Supports /watch?v=, /shorts/, and full URLs.
+   * @param {string} url
+   * @returns {string|null}
+   */
+  extractVideoIdFromUrl: function (url) {
+    try {
+      const u = new URL(url, window.location.origin);
+      if (u.pathname === "/watch") {
+        return u.searchParams.get("v");
+      }
+      if (u.pathname.startsWith("/shorts/")) {
+        return u.pathname.split("/")[2] || null;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  },
 };
