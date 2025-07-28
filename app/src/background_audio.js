@@ -27,9 +27,6 @@ const ORIGINAL_TRANSLATIONS = [
   "ต้นฉบับ", // Thai (th_TH)
 ];
 
-let mutationIdx = 0;
-const MUTATION_UPDATE_STEP = 5;
-
 // Helper: parse track id and extract useful information
 function getTrackInfo(track) {
   const defaultInfo = {
@@ -182,14 +179,13 @@ async function untranslateAudioTrack() {
 }
 
 async function untranslate() {
-  if (mutationIdx % MUTATION_UPDATE_STEP === 0) {
-    await untranslateAudioTrack();
-  }
-  mutationIdx++;
+  await untranslateAudioTrack();
 }
 
 // Initialize the extension
 const target = document.body;
 const config = { childList: true, subtree: true };
-const observer = new MutationObserver(untranslate);
+const observer = new MutationObserver(
+  window.YoutubeAntiTranslate.debounce(untranslate),
+);
 observer.observe(target, config);
