@@ -121,7 +121,8 @@ async function getChannelBrandingWithYoutubeI(ucid = null) {
       client: {
         clientName: "WEB",
         clientVersion: "2.20250527.00.00",
-        hl: "lo",
+        hl: "lo", // Using "Lao" as default that is an unsupported (but valid) language of youtube
+        // That always get the original language as a result
       },
     },
     browseId: ucid,
@@ -644,6 +645,26 @@ function updateSearchResultDescriptionContent(container, originalBrandingData) {
   }
 }
 
+function updateSearchResultChannelAuthor(container, originalBrandingData) {
+  if (!originalBrandingData?.title) {
+    return;
+  }
+
+  const authorTextContainer = container.querySelector(
+    `#channel-title yt-formatted-string`,
+  );
+  if (!authorTextContainer) {
+    window.YoutubeAntiTranslate.logDebug(
+      `No search result channel author container found`,
+    );
+    return;
+  }
+
+  if (authorTextContainer.textContent !== originalBrandingData.title) {
+    authorTextContainer.textContent = originalBrandingData.title;
+  }
+}
+
 async function getChannelUCIDFromHref(href) {
   if (!href) {
     return null;
@@ -700,6 +721,7 @@ async function restoreOriginalBrandingSearchResults() {
     }
 
     updateSearchResultDescriptionContent(renderer, originalBrandingData);
+    updateSearchResultChannelAuthor(renderer, originalBrandingData);
   });
 
   await Promise.allSettled(tasks);
