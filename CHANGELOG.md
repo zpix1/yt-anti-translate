@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.19.6] - 2025-07-29
+
+### Fixed
+
+- Fix [#85](https://github.com/zpix1/yt-anti-translate/issues/85) Video Titles inside of a Playlist are not untranslated on mobile
+- Fix [#86](https://github.com/zpix1/yt-anti-translate/issues/86) Channel Featured video title not untranslated on Mobile
+
 ## [1.19.5] - 2025-07-26
 
 ### New Feature

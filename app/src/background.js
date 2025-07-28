@@ -221,7 +221,8 @@ async function untranslateCurrentMobileFeaturedVideoChannel() {
   if (!window.YoutubeAntiTranslate.isMobile()) {
     return;
   }
-  const fakeNodeID = "yt-anti-translate-fake-node-mobile-featured-video-channel";
+  const fakeNodeID =
+    "yt-anti-translate-fake-node-mobile-featured-video-channel";
   const originalNodeSelector = `ytm-channel-featured-video-renderer > a > h3 > span.yt-core-attributed-string:not(#${fakeNodeID})`;
 
   await createOrUpdateUntranslatedFakeNode(
@@ -663,7 +664,8 @@ async function untranslate() {
   const otherShortsPromise = untranslateOtherShortsVideos(); // Call the new function
   const currentMobileVideoDescriptionPromise =
     untranslateCurrentMobileVideoDescriptionHeader();
-  const currentMobileFeaturedVideoChannel = untranslateCurrentMobileFeaturedVideoChannel();
+  const currentMobileFeaturedVideoChannel =
+    untranslateCurrentMobileFeaturedVideoChannel();
 
   // Wait for all promises to resolve concurrently
   await Promise.all([
@@ -676,7 +678,7 @@ async function untranslate() {
     currentShortVideoLinksPromise,
     otherShortsPromise,
     currentMobileVideoDescriptionPromise,
-    currentMobileFeaturedVideoChannel
+    currentMobileFeaturedVideoChannel,
   ]);
 
   // update intersect observers
