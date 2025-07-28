@@ -140,7 +140,11 @@
   /* -----------------------------  4  INSTALL  ----------------------------- */
   (function install() {
     // Set up ytInitialPlayerResponse interception first
-    setupPlayerResponseInterception();
+    try {
+      setupPlayerResponseInterception();
+    } catch (error) {
+      log(`Error setting up player response interception: ${error.message}`);
+    }
 
     /* 4-a. wrap whatever fetch exists right now (likely the native one) */
     log("installing wrapper around current window.fetch");

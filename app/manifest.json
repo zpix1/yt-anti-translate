@@ -21,7 +21,7 @@
       "js": ["src/content_start.js", "src/content_channelbranding.js"]
     },
     {
-      "matches": ["*://*.youtube.com/*"],
+      "matches": ["*://m.youtube.com/*"],
       "js": ["src/mobile-audio/content_inject_mobile_audio.js"],
       "run_at": "document_start"
     }

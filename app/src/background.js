@@ -373,7 +373,8 @@ async function untranslateOtherVideos(intersectElements = null) {
         video.querySelector("a#thumbnail") ||
         video.querySelector("a.media-item-thumbnail-container") ||
         video.querySelector("ytd-playlist-panel-video-renderer a") ||
-        video.querySelector("ytm-video-card-renderer a");
+        video.querySelector("ytm-video-card-renderer a") ||
+        video.querySelector("a.media-item-thumbnail-container");
       let titleElement =
         video.querySelector("#video-title:not(.cbCustomTitle)") ||
         video.querySelector(
@@ -382,7 +383,8 @@ async function untranslateOtherVideos(intersectElements = null) {
         video.querySelector("ytd-playlist-panel-video-renderer #video-title") ||
         video.querySelector(
           "ytm-video-card-renderer .video-card-title .yt-core-attributed-string",
-        );
+        ) ||
+        video.querySelector(".media-item-headline .yt-core-attributed-string");
 
       if (!linkElement || !titleElement) {
         // Try another common pattern before giving up
