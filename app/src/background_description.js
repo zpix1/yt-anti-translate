@@ -644,9 +644,7 @@ function restoreOriginalAuthorOnly() {
     return;
   }
 
-  if (originalAuthor) {
-    handleAuthor(originalAuthor);
-  }
+  handleAuthor(originalAuthor);
 }
 
 // Author handler
