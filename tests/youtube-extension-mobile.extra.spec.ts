@@ -14,7 +14,7 @@ import {
 // This tests use locale th-TH (instead of ru-RU)
 
 test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
-  test("YouTube search results channel description retain original content", async ({
+  test("YouTube search results channel author name retain original content", async ({
     browserNameWithExtensions,
     localeString,
   }, testInfo) => {

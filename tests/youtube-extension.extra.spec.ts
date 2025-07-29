@@ -31,14 +31,14 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     // Launch browser with the extension
     const context = await createBrowserContext(
       browserNameWithExtensions,
-      "../testDist",
+      "../testDist"
     );
 
     // Create a new page
     await channelBrandingAboutTest(
       context,
       browserNameWithExtensions,
-      localeString,
+      localeString
     );
   });
 
@@ -51,7 +51,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     // Launch browser with the extension
     const context = await createBrowserContext(
       browserNameWithExtensions,
-      "../../app",
+      "../../app"
     );
 
     // Create a new page
@@ -59,7 +59,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
       context,
       browserNameWithExtensions,
       localeString,
-      "-youtubeI",
+      "-youtubeI"
     );
   });
 
@@ -67,12 +67,12 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     context: BrowserContext | Browser,
     browserNameWithExtensions: string,
     localeString: string,
-    addToScreenshotName: string = "",
+    addToScreenshotName: string = ""
   ) {
     const { page, consoleMessageCountContainer } = await setupPageWithAuth(
       context,
       browserNameWithExtensions,
-      localeString,
+      localeString
     );
 
     await loadPageAndVerifyAuth(page, "https://www.youtube.com/@MrBeast");
@@ -112,12 +112,12 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     expect(brandingDescription).toContain("SUBSCRIBE FOR A COOKIE");
     expect(brandingDescription).not.toContain("ไปดู Beast Games ได้แล้ว");
     await expect(
-      page.locator(channelDescriptionSelector).first(),
+      page.locator(channelDescriptionSelector).first()
     ).toBeVisible();
 
     // --- Open About Popup ---
     console.log(
-      "Clicking '..more' button on description to open About Popup...",
+      "Clicking '..more' button on description to open About Popup..."
     );
     await page
       .locator(`${channelHeaderSelector} .truncated-text-wiz__absolute-button`)
@@ -156,7 +156,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     console.log("Clicking 'X' button to close Popup...");
     await page
       .locator(
-        `${aboutContainer} #visibility-button button.yt-spec-button-shape-next:visible`,
+        `${aboutContainer} #visibility-button button.yt-spec-button-shape-next:visible`
       )
       .click();
     try {
@@ -166,11 +166,11 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
 
     // --- Open About Popup via more links ---
     console.log(
-      "Clicking '..more links' button on description to open About Popup...",
+      "Clicking '..more links' button on description to open About Popup..."
     );
     await page
       .locator(
-        `${channelHeaderSelector} span.yt-core-attributed-string>span>a.yt-core-attributed-string__link[role="button"]`,
+        `${channelHeaderSelector} span.yt-core-attributed-string>span>a.yt-core-attributed-string__link[role="button"]`
       )
       .click();
     try {
@@ -207,7 +207,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     console.log("Clicking 'X' button to close Popup...");
     await page
       .locator(
-        `${aboutContainer} #visibility-button button.yt-spec-button-shape-next:visible`,
+        `${aboutContainer} #visibility-button button.yt-spec-button-shape-next:visible`
       )
       .click();
     try {
@@ -243,19 +243,19 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     // Launch browser with the extension
     const context = await createBrowserContext(
       browserNameWithExtensions,
-      "../../app",
+      "../../app"
     );
 
     // Create a new page
     const { page, consoleMessageCountContainer } = await setupPageWithAuth(
       context,
       browserNameWithExtensions,
-      localeString,
+      localeString
     );
 
     await loadPageAndVerifyAuth(
       page,
-      "https://www.youtube.com/watch?v=l-nMKJ5J3Uc",
+      "https://www.youtube.com/watch?v=l-nMKJ5J3Uc"
     );
 
     // Wait for the video player to appear
@@ -288,7 +288,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     await context.close();
   });
 
-  test("YouTube search results channel description retain original content", async ({
+  test("YouTube search results channel author name and description retain original content", async ({
     browserNameWithExtensions,
     localeString,
   }, testInfo) => {
@@ -301,7 +301,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     const { page, consoleMessageCountContainer } = await setupPageWithAuth(
       context,
       browserNameWithExtensions,
-      localeString,
+      localeString
     );
 
     const searchUrl = "https://www.youtube.com/results?search_query=mr+beast";
@@ -315,7 +315,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
 
     // Locate the channel name element inside the renderer
     const authorLocator = channelRenderer.locator(
-      "#channel-title yt-formatted-string",
+      "#channel-title yt-formatted-string"
     );
     await expect(authorLocator).toBeVisible({ timeout: 15000 });
 
@@ -362,7 +362,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     const { page, consoleMessageCountContainer } = await setupPageWithAuth(
       context,
       browserNameWithExtensions,
-      localeString,
+      localeString
     );
 
     const channelUrl = "https://www.youtube.com/@CARTONIMORTI";
@@ -386,7 +386,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     expect(brandingDescription).toContain("Questi cartoni non sono animati.");
     expect(brandingDescription).not.toContain("Very italian cartoons");
     await expect(
-      page.locator(channelDescriptionSelector).first(),
+      page.locator(channelDescriptionSelector).first()
     ).toBeVisible();
 
     // Take a screenshot for visual verification
