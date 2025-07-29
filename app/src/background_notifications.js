@@ -1,27 +1,6 @@
 // Stand-alone utility functions (no external imports)
 
 /**
- * Extracts the YouTube video ID from a given URL.
- * Supports /watch?v=, /shorts/, and full URLs.
- * @param {string} url
- * @returns {string|null}
- */
-function extractVideoIdFromUrl(url) {
-  try {
-    const u = new URL(url, window.location.origin);
-    if (u.pathname === "/watch") {
-      return u.searchParams.get("v");
-    }
-    if (u.pathname.startsWith("/shorts/")) {
-      return u.pathname.split("/")[2] || null;
-    }
-    return null;
-  } catch {
-    return null;
-  }
-}
-
-/**
  * Fetches the original (untranslated) title via YouTube oEmbed and caches it in sessionStorage.
  * @param {string} videoId
  * @returns {Promise<{ originalTitle: string|null }>}
@@ -167,7 +146,7 @@ async function refreshNotificationTitles() {
       continue;
     }
 
-    const videoId = extractVideoIdFromUrl(
+    const videoId = window.YoutubeAntiTranslate.extractVideoIdFromUrl(
       href.startsWith("http") ? href : window.location.origin + href,
     );
     if (!videoId) {

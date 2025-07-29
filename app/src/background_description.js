@@ -1,7 +1,9 @@
 // Constants
 const DESCRIPTION_SELECTOR =
   "#description-inline-expander, ytd-expander#description, .expandable-video-description-body-main, .expandable-video-description-container, #collapsed-string, #expanded-string";
-const AUTHOR_SELECTOR = "#upload-info.ytd-video-owner-renderer";
+const AUTHOR_SELECTOR = `#upload-info.ytd-video-owner-renderer, 
+div.slim-owner-bylines > h3.slim-owner-channel-name,  
+div.cbox > a > h3.reel-player-header-channel-title`;
 const ATTRIBUTED_STRING_SELECTOR =
   "yt-attributed-string, .yt-core-attributed-string";
 const FORMATTED_STRING_SELECTOR = "yt-formatted-string";
@@ -587,7 +589,12 @@ function fetchOriginalAuthor() {
   );
 
   const playerResponse = getPlayerResponseSafely(player);
-  if (!playerResponse) {
+  if (!playerResponse && window.YoutubeAntiTranslate.isMobile()) {
+    // Fallback for mobile layout when player response is unavailable
+    const mobileAuthor = getAuthorMobile();
+    if (mobileAuthor) {
+      return mobileAuthor;
+    }
     return null;
   }
 
@@ -623,27 +630,43 @@ function restoreOriginalDescriptionAndAuthor() {
   }
 
   if (originalAuthor) {
-    // We should skip this operation if the video player was embedded as it does not have the author above the description
-    const player = window.YoutubeAntiTranslate.getFirstVisible(
-      document.querySelectorAll(
-        window.YoutubeAntiTranslate.getPlayerSelector(),
-      ),
-    );
-    if (player && player.id === "c4-player") {
-      return;
-    }
+    handleAuthor(originalAuthor);
+  }
+}
 
-    const authorContainer = window.YoutubeAntiTranslate.getFirstVisible(
-      document.querySelectorAll(AUTHOR_SELECTOR),
-    );
+/**
+ * Restores the original (untranslated) author name only
+ */
+function restoreOriginalAuthorOnly() {
+  const originalAuthor = fetchOriginalAuthor();
 
-    if (authorContainer) {
+  if (!originalAuthor) {
+    return;
+  }
+
+  handleAuthor(originalAuthor);
+}
+
+// Author handler
+function handleAuthor(originalAuthor) {
+  // We should skip this operation if the video player was embedded as it does not have the author above the description
+  const player = window.YoutubeAntiTranslate.getFirstVisible(
+    document.querySelectorAll(window.YoutubeAntiTranslate.getPlayerSelector()),
+  );
+  if (player && player.id === "c4-player") {
+    return;
+  }
+
+  const authorContainers = window.YoutubeAntiTranslate.getAllVisibleNodes(
+    document.querySelectorAll(AUTHOR_SELECTOR),
+  );
+
+  if (authorContainers) {
+    for (const authorContainer of authorContainers) {
       updateAuthorContent(authorContainer, originalAuthor);
-    } else {
-      window.YoutubeAntiTranslate.logWarning(
-        `Video Author container not found`,
-      );
     }
+  } else {
+    window.YoutubeAntiTranslate.logWarning(`Video Author container not found`);
   }
 }
 
@@ -748,7 +771,9 @@ function updateAuthorContent(container, originalText) {
     container.querySelectorAll(FORMATTED_STRING_SELECTOR),
   );
   const snippetTextContainer = window.YoutubeAntiTranslate.getFirstVisible(
-    container.querySelectorAll(`${FORMATTED_STRING_SELECTOR} a`),
+    container.querySelectorAll(
+      `${FORMATTED_STRING_SELECTOR} a, ${ATTRIBUTED_STRING_SELECTOR}`,
+    ),
   );
 
   if (!mainTextContainer && !snippetTextContainer) {
@@ -788,6 +813,18 @@ async function handleDescriptionMutation() {
   );
   if (descriptionElement && player) {
     restoreOriginalDescriptionAndAuthor();
+  }
+
+  // On mobile the author is visible even when the description is not
+  // so we need to check separately
+  if (window.YoutubeAntiTranslate.isMobile()) {
+    const authorElement = window.YoutubeAntiTranslate.getFirstVisible(
+      document.querySelectorAll(AUTHOR_SELECTOR),
+    );
+
+    if (authorElement && player) {
+      restoreOriginalAuthorOnly();
+    }
   }
 }
 // Initialize the mutation observer for description
@@ -936,7 +973,8 @@ function setupHorizontalChaptersObserver() {
   updateHorizontalChapters();
 }
 
-function getDescriptionMobile() {
+// Extract video metadata window.ytPubsubPubsubInstance
+function extractVideoDataField(fieldName) {
   try {
     const pubsub = window.ytPubsubPubsubInstance;
     if (!pubsub) {
@@ -951,28 +989,30 @@ function getDescriptionMobile() {
       }
       visited.add(obj);
 
-      // Direct match: object contains videoData with shortDescription
-      if (obj.videoData && typeof obj.videoData.shortDescription === "string") {
-        return obj.videoData.shortDescription;
+      if (obj.videoData && typeof obj.videoData[fieldName] === "string") {
+        const videoId = obj.videoData.videoId;
+        const currentVideoId =
+          window.YoutubeAntiTranslate.extractVideoIdFromUrl(
+            document.location.href,
+          );
+
+        if (
+          videoId &&
+          typeof videoId === "string" &&
+          videoId !== currentVideoId
+        ) {
+          // If the videoId does not match the page this is an Advert
+          // Ignore Advert video data
+        } else {
+          return obj.videoData[fieldName];
+        }
       }
 
-      // Recurse into arrays and objects
-      if (Array.isArray(obj)) {
-        for (const item of obj) {
-          const res = search(item, depth + 1);
-          if (res) {
-            return res;
-          }
-        }
-      } else {
-        for (const key in obj) {
-          if (!Object.prototype.hasOwnProperty.call(obj, key)) {
-            continue;
-          }
-          const res = search(obj[key], depth + 1);
-          if (res) {
-            return res;
-          }
+      const children = Array.isArray(obj) ? obj : Object.values(obj);
+      for (const child of children) {
+        const res = search(child, depth + 1);
+        if (res) {
+          return res;
         }
       }
 
@@ -981,7 +1021,20 @@ function getDescriptionMobile() {
 
     return search(pubsub);
   } catch (err) {
-    window.YoutubeAntiTranslate?.logDebug?.("getDescriptionMobile failed", err);
+    window.YoutubeAntiTranslate?.logDebug?.(
+      `extractVideoDataField(${fieldName}) failed`,
+      err,
+    );
     return null;
   }
+}
+
+// Get Description from the VideoData
+function getDescriptionMobile() {
+  return extractVideoDataField("shortDescription");
+}
+
+// Get Author from the VideoData
+function getAuthorMobile() {
+  return extractVideoDataField("author");
 }

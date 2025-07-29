@@ -121,7 +121,8 @@ async function getChannelBrandingWithYoutubeI(ucid = null) {
       client: {
         clientName: "WEB",
         clientVersion: "2.20250527.00.00",
-        hl: "lo",
+        hl: "lo", // Using "Lao" as default that is an unsupported (but valid) language of youtube
+        // That always get the original language as a result
       },
     },
     browseId: ucid,
@@ -644,6 +645,27 @@ function updateSearchResultDescriptionContent(container, originalBrandingData) {
   }
 }
 
+function updateSearchResultChannelAuthor(container, originalBrandingData) {
+  if (!originalBrandingData?.title) {
+    return;
+  }
+
+  const authorTextContainer = container.querySelector(
+    `#channel-title yt-formatted-string,
+    h4.compact-media-item-headline > .yt-core-attributed-string`,
+  );
+  if (!authorTextContainer) {
+    window.YoutubeAntiTranslate.logDebug(
+      `No search result channel author container found`,
+    );
+    return;
+  }
+
+  if (authorTextContainer.textContent !== originalBrandingData.title) {
+    authorTextContainer.textContent = originalBrandingData.title;
+  }
+}
+
 async function getChannelUCIDFromHref(href) {
   if (!href) {
     return null;
@@ -672,7 +694,9 @@ async function getChannelUCIDFromHref(href) {
  */
 async function restoreOriginalBrandingSearchResults() {
   const channelRenderers = window.YoutubeAntiTranslate.getAllVisibleNodes(
-    document.querySelectorAll("ytd-channel-renderer"),
+    document.querySelectorAll(
+      "ytd-channel-renderer, ytm-compact-channel-renderer",
+    ),
     true,
     20,
   );
@@ -684,7 +708,9 @@ async function restoreOriginalBrandingSearchResults() {
   const tasks = channelRenderers.map(async (renderer) => {
     const linkElement =
       renderer.querySelector("a.channel-link") ||
-      renderer.querySelector("a#main-link");
+      renderer.querySelector("a#main-link") ||
+      renderer.querySelector("a.compact-media-item-image") ||
+      renderer.querySelector("a.compact-media-item-metadata-content");
     if (!linkElement) {
       return;
     }
@@ -700,6 +726,7 @@ async function restoreOriginalBrandingSearchResults() {
     }
 
     updateSearchResultDescriptionContent(renderer, originalBrandingData);
+    updateSearchResultChannelAuthor(renderer, originalBrandingData);
   });
 
   await Promise.allSettled(tasks);
