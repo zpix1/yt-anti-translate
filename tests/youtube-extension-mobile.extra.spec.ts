@@ -24,14 +24,14 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
     const context = await createBrowserContext(
       browserNameWithExtensions,
       undefined,
-      true
+      true,
     );
 
     // Open new page with auth + extension
     const { page, consoleMessageCountContainer } = await setupPageWithAuth(
       context,
       browserNameWithExtensions,
-      localeString
+      localeString,
     );
 
     const searchUrl = "https://m.youtube.com/results?search_query=mr+beast";
@@ -45,7 +45,7 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
 
     // Locate the channel name element inside the renderer
     const authorLocator = channelRenderer.locator(
-      "h4.compact-media-item-headline > .yt-core-attributed-string"
+      "h4.compact-media-item-headline > .yt-core-attributed-string",
     );
     await expect(authorLocator).toBeVisible({ timeout: 15000 });
 
