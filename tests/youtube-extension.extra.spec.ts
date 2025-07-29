@@ -11,7 +11,7 @@ import {
 import "dotenv/config";
 
 // This are tests for additional features that benefit from Youtube Data API and a APIKey provided by the user
-// OR
+// AND
 // Tests that use locale th-TH (instead of ru-RU)
 
 test.describe("YouTube Anti-Translate extension - Extras", () => {
@@ -309,9 +309,22 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
 
     // Wait until at least one channel renderer for MrBeast appears
     const channelRenderer = page
-      .locator('ytd-channel-renderer:has-text("MrBeast")')
+      .locator('ytd-channel-renderer:has-text("@MrBeast")')
       .first();
     await expect(channelRenderer).toBeVisible({ timeout: 15000 });
+
+    // Locate the channel name element inside the renderer
+    const authorLocator = channelRenderer.locator(
+      "#channel-title yt-formatted-string",
+    );
+    await expect(authorLocator).toBeVisible({ timeout: 15000 });
+
+    const authorText = (await authorLocator.textContent()) ?? "";
+    console.log("Search result author:", authorText.trim());
+
+    // Check that original English text is present and Thai translation is absent
+    expect(authorText).toContain("MrBeast");
+    expect(authorText).not.toContain("มิสเตอร์บีสต์");
 
     // Locate the description element inside the renderer
     const descriptionLocator = channelRenderer.locator("#description");
@@ -320,9 +333,9 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     const descriptionText = (await descriptionLocator.textContent()) ?? "";
     console.log("Search result description:", descriptionText.trim());
 
-    // Check that original English text is present and Russian translation is absent
+    // Check that original English text is present and Thai translation is absent
     expect(descriptionText).toContain("SUBSCRIBE FOR A COOKIE");
-    expect(descriptionText).not.toContain("ПОДПИШИСЬ");
+    expect(descriptionText).not.toContain("ไปดู Beast Games ได้แล้ว");
 
     // Screenshot for visual verification
     await page.screenshot({
