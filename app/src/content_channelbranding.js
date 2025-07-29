@@ -651,7 +651,8 @@ function updateSearchResultChannelAuthor(container, originalBrandingData) {
   }
 
   const authorTextContainer = container.querySelector(
-    `#channel-title yt-formatted-string`,
+    `#channel-title yt-formatted-string,
+    h4.compact-media-item-headline > .yt-core-attributed-string`,
   );
   if (!authorTextContainer) {
     window.YoutubeAntiTranslate.logDebug(
@@ -693,7 +694,9 @@ async function getChannelUCIDFromHref(href) {
  */
 async function restoreOriginalBrandingSearchResults() {
   const channelRenderers = window.YoutubeAntiTranslate.getAllVisibleNodes(
-    document.querySelectorAll("ytd-channel-renderer"),
+    document.querySelectorAll(
+      "ytd-channel-renderer, ytm-compact-channel-renderer",
+    ),
     true,
     20,
   );
@@ -705,7 +708,9 @@ async function restoreOriginalBrandingSearchResults() {
   const tasks = channelRenderers.map(async (renderer) => {
     const linkElement =
       renderer.querySelector("a.channel-link") ||
-      renderer.querySelector("a#main-link");
+      renderer.querySelector("a#main-link") ||
+      renderer.querySelector("a.compact-media-item-image") ||
+      renderer.querySelector("a.compact-media-item-metadata-content");
     if (!linkElement) {
       return;
     }
