@@ -15,8 +15,10 @@ const token = jwt.sign(payload, secret, { algorithm: "HS256" });
 const version = `${process.env.VERSION}`;
 const slug = `${process.env.EXTENSION_SLUG}`;
 const data = {
-  firefox: { min: "109.0", max: "*" },
-  android: { min: "120.0", max: "*" },
+  compatibility: {
+    firefox: { min: "109.0", max: "*" },
+    android: { min: "120.0", max: "*" },
+  },
 };
 
 (async () => {
