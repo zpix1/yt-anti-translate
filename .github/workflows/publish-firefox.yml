@@ -76,7 +76,7 @@ jobs:
 
       - name: Install jwtool
         run: |-
-          npm install --global @mozilla/jwtool
+          npm install --global jsonwebtoken
           ls
 
       - name: Determine channel
@@ -104,19 +104,44 @@ jobs:
       - name: Set Firefox for Android compatibility
         if: steps.sign_step.outputs.status == '0'
         run: |
-          VERSION=${{ needs.build-firefox-extension.outputs.version }}
-          EXTENSION_SLUG="youtube-anti-translate-mv3" # Must match AMO slug
-          JWT=$(npx --yes @mozilla/jwtool --issuer "${{ secrets.AMO_JWT_ISSUER }}" --secret "${{ secrets.AMO_JWT_SECRET }}")
+          node <<'EOF'
+          const jwt = require('jsonwebtoken');
+          const { execSync } = require('child_process');
+          const issuedAt = Math.floor(Date.now() / 1000);
+          const payload = {
+            iss: process.env.AMO_JWT_ISSUER,
+            jti: Math.random().toString(),
+            iat: issuedAt,
+            exp: issuedAt + 60,
+          };
+          const secret = process.env.AMO_JWT_SECRET;
+          const token = jwt.sign(payload, secret, { algorithm: 'HS256' });
 
-          curl -X PATCH "https://addons.mozilla.org/api/v5/addons/addon/$EXTENSION_SLUG/versions/$VERSION/" \
-            -H "Authorization: JWT $JWT" \
-            -H "Content-Type: application/json" \
-            --data '{
-              "compatibility": {
-                "firefox": { "min": "109.0", "max": "*" },
-                "android": { "min": "120.0", "max": "*" }
-              }
-            }'
+          const version = process.env.VERSION;
+          const slug = process.env.EXTENSION_SLUG;
+          const data = JSON.stringify({
+            compatibility: {
+              firefox: { min: "109.0", max: "*" },
+              android: { min: "120.0", max: "*" }
+            }
+          });
+
+          const curlCmd = [
+            'curl', '-X', 'PATCH',
+            `"https://addons.mozilla.org/api/v5/addons/addon/${slug}/versions/${version}/"`,
+            '-H', `"Authorization: JWT ${token}"`,
+            '-H', '"Content-Type: application/json"',
+            '--data', `'${data}'`
+          ].join(' ');
+
+          console.log(`[INFO] Running: ${curlCmd}`);
+          execSync(curlCmd, { stdio: 'inherit' });
+          EOF
+        env:
+          AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
+          AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+          VERSION: ${{ needs.build-firefox-extension.outputs.version }}
+          EXTENSION_SLUG: "youtube-anti-translate-mv3"
 
       - name: Archive signed Firefox extension
         uses: actions/upload-artifact@v4
