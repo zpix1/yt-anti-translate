@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   playwright:
-    name: Tests YT Anti Translate Extension with xvfb-run Headed
+    name: YT Anti Translate Extension Tests
     timeout-minutes: 60
     runs-on: ubuntu-latest
     permissions:
@@ -44,6 +44,8 @@ jobs:
         run: npm ci
       - name: Lint
         run: npm run lint
+      - name: Run unit tests
+        run: npm run test:unit
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
       - name: Set up virtual display

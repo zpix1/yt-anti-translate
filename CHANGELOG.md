@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.19.7] - 2025-07-30
+
+### Fixed
+
+- Fix [#91](https://github.com/zpix1/yt-anti-translate/issues/91) Chapter untranslation not always working
+
 ## [1.19.6] - 2025-07-29
 
 ### Fixed
