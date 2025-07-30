@@ -59,17 +59,6 @@ jobs:
           echo -e "\n" >> release_notes.txt
           node .github/workflows/scripts/extractChangelogSection.js >> release_notes.txt
 
-      - name: Set release name suffix
-        id: suffix
-        run: |
-          bash <<'EOF'
-          BRANCH_NAME="${{ github.event.pull_request.head.ref }}"
-          if printf '%s\n' "$BRANCH_NAME" | grep -iq '^fix-'; then
-            echo "suffix= Fix" >> $GITHUB_OUTPUT
-          else
-            echo "suffix=" >> $GITHUB_OUTPUT
-          fi
-
       - name: Append auto-generated release notes
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -92,7 +81,7 @@ jobs:
           allowUpdates: true
           updateOnlyUnreleased: true
           tag: ${{ steps.get_version.outputs.tag }}
-          name: ${{ env.VERSION }}${{ steps.suffix.outputs.suffix }}
+          name: ${{ env.VERSION }}
           bodyFile: release_notes.txt
           draft: true
 
@@ -113,9 +102,9 @@ jobs:
           VERSION: ${{ env.VERSION }}
         if: steps.check_ci_fix.outputs.skip == 'true'
         run: |
-          echo "Release would have been skipped due to [CI-FIX] PR title." > skipped_release_info.txt
+          echo "Release has been skipped due to [CI-FIX] PR title." > skipped_release_info.txt
           echo "Tag: ${{ steps.get_version.outputs.tag }}" >> skipped_release_info.txt
-          echo "Name: ${{ env.VERSION }}${{ steps.suffix.outputs.suffix }}" >> skipped_release_info.txt
+          echo "Name: ${{ env.VERSION }}" >> skipped_release_info.txt
           echo -e "Body:\n$(cat release_notes.txt)" >> skipped_release_info.txt
 
       - name: Upload skipped release info
