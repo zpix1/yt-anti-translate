@@ -105,7 +105,7 @@ jobs:
         # necessary information for the AMO review team
         if: steps.sign_step.outputs.status == '0' || steps.sign_step.outputs.status == '124'
         run: |
-          npm install jsonwebtoken fs path dotenv
+          npm install jsonwebtoken@9.0.2 dotenv@16.5.0
           node scripts/mozilla_amo_version_patch.js
         env:
           AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}

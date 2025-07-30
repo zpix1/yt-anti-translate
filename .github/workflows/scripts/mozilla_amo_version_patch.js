@@ -1,113 +1,45 @@
 import jwt from "jsonwebtoken";
-import fs from "fs";
-import path from "path";
 import "dotenv/config";
 
-async function getLatestCommitShaFromMain() {
+async function getDraftReleaseBody(name) {
   const repo = process.env.GITHUB_REPOSITORY;
   const token = process.env.GITHUB_TOKEN;
 
-  const url = `https://api.github.com/repos/${repo}/commits/main`;
-  const res = await fetch(url, {
+  const res = await fetch(`https://api.github.com/repos/${repo}/releases`, {
     headers: {
       Authorization: `Bearer ${token}`,
-      Accept: "application/vnd.github+json",
+      "Content-Type": "application/vnd.github+json",
     },
   });
 
   if (!res.ok) {
-    throw new Error(
-      `GitHub API (commits/main) error: HTTP ${res.status} ${await res.text()}`,
-    );
+    throw new Error(`Failed to fetch releases: ${res.statusText}`);
   }
 
-  const json = await res.json();
-  return json.sha;
+  const releases = await res.json();
+  const versionRelease = releases.find((r) => r.name.includes(name));
+  console.log(versionRelease);
+  const draftRelease = releases.find((r) => r.draft);
+  console.log(draftRelease);
+  if (!draftRelease) {
+    throw new Error("No draft release found for the specified version.");
+  }
+  return draftRelease.body;
 }
 
-async function getGitHubReleaseNotes(commitSha) {
-  const repo = process.env.GITHUB_REPOSITORY;
-  const version = process.env.VERSION;
-  const tag = `v${version}`;
-  const token = process.env.GITHUB_TOKEN;
+const version = `${process.env.VERSION}`;
 
-  const url = `https://api.github.com/repos/${repo}/releases/generate-notes`;
+console.log(`[INFO] Getting latest draft release body...`);
+const draftReleaseBody = await getDraftReleaseBody(version);
 
-  const res = await fetch(url, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-      Accept: "application/vnd.github+json",
-    },
-    body: JSON.stringify({
-      tag_name: tag,
-      target_commitish: commitSha,
-    }),
-  });
-
-  if (!res.ok) {
-    throw new Error(
-      `GitHub API (generate-notes) error: HTTP ${res.status} ${await res.text()}`,
-    );
-  }
-
-  const json = await res.json();
-  return json.body; // Auto-generated release notes text
+let [versionReleaseNotes, notesForApprovers] = draftReleaseBody.split(
+  "\r\n---\r\n",
+) || ["", ""];
+if (notesForApprovers === "") {
+  [versionReleaseNotes, notesForApprovers] = draftReleaseBody.split(
+    "\n---\n",
+  ) || ["", ""];
 }
-
-function extractChangelogSection() {
-  const changelogPath = path.resolve(
-    path.dirname(new URL(import.meta.url).pathname),
-    "../../../CHANGELOG.md",
-  );
-  const version = process.env.VERSION;
-
-  console.log(`📦 Extracting release notes for version: ${version}`);
-
-  if (!fs.existsSync(changelogPath)) {
-    throw new Error(`❌ CHANGELOG.md not found at ${changelogPath}`);
-  }
-
-  const changelog = fs.readFileSync(changelogPath, "utf-8");
-  const lines = changelog.split("\n");
-
-  const startLineIndex = lines.findIndex((line) =>
-    line.startsWith(`## [${version}]`),
-  );
-  if (startLineIndex === -1) {
-    throw new Error(
-      `❌ Could not find changelog section for version ${version}`,
-    );
-  }
-
-  let endLineIndex = lines
-    .slice(startLineIndex + 1)
-    .findIndex((line) => line.startsWith("## ["));
-  if (endLineIndex === -1) {
-    endLineIndex = lines.length;
-  } else {
-    endLineIndex = startLineIndex + 1 + endLineIndex;
-  }
-
-  const extracted = lines
-    .slice(startLineIndex + 1, endLineIndex)
-    .join("\n")
-    .trim();
-
-  return extracted;
-}
-
-console.log(`[INFO] Getting latest commit SHA from main...`);
-const commitSha = await getLatestCommitShaFromMain();
-
-console.log(`[INFO] Generating notes for approvers for commit ${commitSha}...`);
-const notesForApprovers = await getGitHubReleaseNotes(commitSha);
-
-console.log(
-  `[INFO] Extracting release notes section for version ${process.env.VERSION}...`,
-);
-const versionReleaseNotes = extractChangelogSection();
 
 const issuedAt = Math.floor(Date.now() / 1000);
 const payload = {
@@ -119,7 +51,6 @@ const payload = {
 const secret = `${process.env.AMO_JWT_SECRET}`;
 const token = jwt.sign(payload, secret, { algorithm: "HS256" });
 
-const version = `${process.env.VERSION}`;
 const slug = `${process.env.EXTENSION_SLUG}`;
 
 const data = {
@@ -129,7 +60,7 @@ const data = {
   },
   approval_notes: `${notesForApprovers}`,
   release_notes: {
-    en_US: `${versionReleaseNotes}`,
+    "en-US": `${versionReleaseNotes}`,
   },
 };
 
