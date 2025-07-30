@@ -89,23 +89,31 @@ jobs:
         run: |-
           unzip firefox-extension.zip -d .
           cd dist
+
+          set +e  # disable fail-on-error to allow timeout exit code to be captured
           timeout 600 \
             web-ext sign --channel=${{ steps.determine-channel.outputs.channel }} \
             --api-key="${{ secrets.AMO_JWT_ISSUER }}" \
             --api-secret="${{ secrets.AMO_JWT_SECRET }}"
+          status=$?
+          set -e  # restore default fail-on-error behavior
 
-          echo "status=$?" >> "$GITHUB_OUTPUT"
+          echo "status=$status" >> "$GITHUB_OUTPUT"
 
-      - name: Set Firefox for Android compatibility
-        if: steps.sign_step.outputs.status == '0'
+      - name: Set Firefox for Android compatibility & approval_notes
+        # Also run on timeout of "Sign and upload step" so that we provide the
+        # necessary information for the AMO review team
+        if: steps.sign_step.outputs.status == '0' || steps.sign_step.outputs.status == '124'
         run: |
-          npm install jsonwebtoken node-fetch
+          npm install jsonwebtoken fs path dotenv
           node scripts/mozilla_amo_version_patch.js
         env:
           AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
           AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
           VERSION: ${{ needs.build-firefox-extension.outputs.version }}
           EXTENSION_SLUG: "youtube-anti-translate-mv3"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
 
       - name: Archive signed Firefox extension
         uses: actions/upload-artifact@v4

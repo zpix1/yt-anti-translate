@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
-import fetch from "node-fetch";
+import fs from "fs";
+import path from "path";
 import "dotenv/config";
 
 async function getLatestCommitShaFromMain() {
@@ -55,11 +56,58 @@ async function getGitHubReleaseNotes(commitSha) {
   return json.body; // Auto-generated release notes text
 }
 
+function extractChangelogSection() {
+  const changelogPath = path.resolve(
+    path.dirname(new URL(import.meta.url).pathname),
+    "../../../CHANGELOG.md",
+  );
+  const version = process.env.VERSION;
+
+  console.log(`📦 Extracting release notes for version: ${version}`);
+
+  if (!fs.existsSync(changelogPath)) {
+    throw new Error(`❌ CHANGELOG.md not found at ${changelogPath}`);
+  }
+
+  const changelog = fs.readFileSync(changelogPath, "utf-8");
+  const lines = changelog.split("\n");
+
+  const startLineIndex = lines.findIndex((line) =>
+    line.startsWith(`## [${version}]`),
+  );
+  if (startLineIndex === -1) {
+    throw new Error(
+      `❌ Could not find changelog section for version ${version}`,
+    );
+  }
+
+  let endLineIndex = lines
+    .slice(startLineIndex + 1)
+    .findIndex((line) => line.startsWith("## ["));
+  if (endLineIndex === -1) {
+    endLineIndex = lines.length;
+  } else {
+    endLineIndex = startLineIndex + 1 + endLineIndex;
+  }
+
+  const extracted = lines
+    .slice(startLineIndex + 1, endLineIndex)
+    .join("\n")
+    .trim();
+
+  return extracted;
+}
+
 console.log(`[INFO] Getting latest commit SHA from main...`);
 const commitSha = await getLatestCommitShaFromMain();
 
-console.log(`[INFO] Generating release notes for commit ${commitSha}...`);
-const releaseNotes = await getGitHubReleaseNotes(commitSha);
+console.log(`[INFO] Generating notes for approvers for commit ${commitSha}...`);
+const notesForApprovers = await getGitHubReleaseNotes(commitSha);
+
+console.log(
+  `[INFO] Extracting release notes section for version ${process.env.VERSION}...`,
+);
+const versionReleaseNotes = extractChangelogSection();
 
 const issuedAt = Math.floor(Date.now() / 1000);
 const payload = {
@@ -79,7 +127,10 @@ const data = {
     firefox: { min: "109.0", max: "*" },
     android: { min: "120.0", max: "*" },
   },
-  approval_notes: `${releaseNotes}`,
+  approval_notes: `${notesForApprovers}`,
+  release_notes: {
+    en_US: `${versionReleaseNotes}`,
+  },
 };
 
 (async () => {
