@@ -53,67 +53,11 @@ jobs:
         env:
           VERSION: ${{ env.VERSION }}
         run: |
-          set -euxo pipefail
-
-          CHANGELOG_FILE="CHANGELOG.md"
-
-          VERSION="${{ env.VERSION }}"
-          TAG="v$VERSION"
-
-          echo "📦 Extracting release notes for version: $VERSION"
+          npm install fs@0.0.1-security path@0.12.7 url@0.11.4 dotenv@16.5.0
 
           echo -e "## Release Notes" > release_notes.txt
-
-          # Find the start line of the current version section
-          START_LINE=$(grep -n "^## \[$VERSION\]" "$CHANGELOG_FILE" | cut -d: -f1)
-          if [ -z "$START_LINE" ]; then
-            echo "❌ Could not find changelog section for version $VERSION"
-            exit 1
-          fi
-
-          # Find the line number of the next version section, or EOF
-          END_LINE=$(tail -n +$((START_LINE + 1)) "$CHANGELOG_FILE" | grep -n "^## \[" | head -n1 | cut -d: -f1)
-
-          if [ -z "$END_LINE" ]; then
-            END_LINE=$(wc -l < "$CHANGELOG_FILE")
-          else
-            END_LINE=$((START_LINE + END_LINE - 1))
-          fi
-
-          # Extract the lines AFTER the heading (START_LINE+1 to END_LINE-1)
-          echo "✂️  Extracting lines $((START_LINE + 1)) to $((END_LINE - 1))"
-          sed -n "$((START_LINE + 1)),$((END_LINE - 1))p" "$CHANGELOG_FILE" >> release_notes.txt
-
-          # # The following section is not needed with step `Append auto-generated release notes`
-          # # but keeping it in case we want to revert it
-          #
-          # Find previous version tag
-          # PREV_TAG=$(git tag --sort=-creatordate | grep -E '^v[0-9]+\.[0-9]+\.[0-9\.]+' | grep -v "^$TAG\$" | head -n1)
-
-          # # Get repo info
-          # REPO_URL=$(git config --get remote.origin.url | sed -E 's/\.git$//' | sed -E 's#git@github.com:#https://github.com/#')
-
-          # # Add Full Changelog link
-          # if [ -n "$PREV_TAG" ]; then
-          #   echo "" >> release_notes.txt
-          #   echo "**Full Changelog**: $REPO_URL/compare/$PREV_TAG...$TAG" >> release_notes.txt
-          #   echo "🔗 Added compare link: $REPO_URL/compare/$PREV_TAG...$TAG"
-          # else
-          #   echo "⚠️  No previous tag found, skipping Full Changelog link"
-          # fi
-
-          echo "✅ Release notes written to release_notes.txt"
-
-      - name: Set release name suffix
-        id: suffix
-        run: |
-          bash <<'EOF'
-          BRANCH_NAME="${{ github.event.pull_request.head.ref }}"
-          if printf '%s\n' "$BRANCH_NAME" | grep -iq '^fix-'; then
-            echo "suffix= Fix" >> $GITHUB_OUTPUT
-          else
-            echo "suffix=" >> $GITHUB_OUTPUT
-          fi
+          echo -e "\n" >> release_notes.txt
+          node .github/workflows/scripts/extractChangelogSection.js >> release_notes.txt
 
       - name: Append auto-generated release notes
         env:
@@ -137,7 +81,7 @@ jobs:
           allowUpdates: true
           updateOnlyUnreleased: true
           tag: ${{ steps.get_version.outputs.tag }}
-          name: ${{ env.VERSION }}${{ steps.suffix.outputs.suffix }}
+          name: ${{ env.VERSION }}
           bodyFile: release_notes.txt
           draft: true
 
@@ -158,9 +102,9 @@ jobs:
           VERSION: ${{ env.VERSION }}
         if: steps.check_ci_fix.outputs.skip == 'true'
         run: |
-          echo "Release would have been skipped due to [CI-FIX] PR title." > skipped_release_info.txt
+          echo "Release has been skipped due to [CI-FIX] PR title." > skipped_release_info.txt
           echo "Tag: ${{ steps.get_version.outputs.tag }}" >> skipped_release_info.txt
-          echo "Name: ${{ env.VERSION }}${{ steps.suffix.outputs.suffix }}" >> skipped_release_info.txt
+          echo "Name: ${{ env.VERSION }}" >> skipped_release_info.txt
           echo -e "Body:\n$(cat release_notes.txt)" >> skipped_release_info.txt
 
       - name: Upload skipped release info

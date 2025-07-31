@@ -42,7 +42,10 @@
   "action": {
     "default_popup": "pages/popup.html"
   },
-  "options_page": "pages/popup.html",
+  "options_ui": {
+    "page": "pages/popup.html",
+    "open_in_tab": true
+  },
   "permissions": ["storage"],
   "host_permissions": ["*://*.youtube.com/*"],
   "icons": {
