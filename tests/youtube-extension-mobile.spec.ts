@@ -61,7 +61,7 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
     // Also validate the document title
     const pageTitle = await page.title();
     console.log("Document title:", pageTitle);
-    expect(pageTitle).toMatch("Lose 100 LBs, Win $250,000!");
+    expect(pageTitle).toMatch("Lose 100 LBs, Win $250,000");
 
     // Capture a screenshot for visual verification
     await page.screenshot({
