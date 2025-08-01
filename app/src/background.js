@@ -86,14 +86,15 @@ async function untranslateCurrentShortVideo() {
             );
             return;
           }
+        } else {
+          // console.debug(` No oEmbed data for Short:`, videoId);
+          // Mark as checked even if no data, to prevent retrying unless element changes
+          translatedTitleElement.setAttribute(
+            "data-ytat-untranslated",
+            "checked",
+          );
+          return;
         }
-        // console.debug(` No oEmbed data for Short:`, videoId);
-        // Mark as checked even if no data, to prevent retrying unless element changes
-        translatedTitleElement.setAttribute(
-          "data-ytat-untranslated",
-          "checked",
-        );
-        return;
       }
 
       const realTitle = response.data.title;
@@ -333,8 +334,9 @@ async function createOrUpdateUntranslatedFakeNode(
           );
           return;
         }
+      } else {
+        return;
       }
-      return;
     }
 
     const realTitle = response.data.title;
@@ -520,9 +522,10 @@ async function untranslateOtherVideos(intersectElements = null) {
               );
               continue;
             }
+          } else {
+            // console.debug(`No oEmbed data for video:`, videoHref);
+            continue; // Skip if no oEmbed data
           }
-          // console.debug(`No oEmbed data for video:`, videoHref);
-          continue; // Skip if no oEmbed data
         }
 
         const originalTitle = response.data.title;
@@ -677,12 +680,20 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
               window.YoutubeAntiTranslate.logWarning(
                 `YoutubeI title request failed for video ${videoId}`,
               );
+              shortElement.setAttribute(
+                "data-ytat-untranslated-other",
+                "checked",
+              );
               continue;
             }
+          } else {
+            // Mark as checked even if no oEmbed data is found
+            shortElement.setAttribute(
+              "data-ytat-untranslated-other",
+              "checked",
+            );
+            continue;
           }
-          // Mark as checked even if no oEmbed data is found
-          shortElement.setAttribute("data-ytat-untranslated-other", "checked");
-          continue;
         }
 
         const realTitle = response.data.title;
