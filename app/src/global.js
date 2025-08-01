@@ -1179,16 +1179,11 @@ ytm-shorts-lockup-view-model`,
 
     const requestPromise = (async () => {
       try {
-        const fetchOptions = postData
-          ? {
-              method: "POST",
-              headers: { "content-type": "application/json" },
-              body: postData,
-            }
-          : {
-              method: "GET",
-            };
-        const response = await fetch(url, fetchOptions);
+        const response = await fetch(url, {
+          method: postData ? "POST" : "GET",
+          headers: { "content-type": "application/json" },
+          body: postData ? postData : undefined,
+        });
         if (!response.ok) {
           if (response.status === 404) {
             if (!doNotCache) {
@@ -1197,11 +1192,14 @@ ytm-shorts-lockup-view-model`,
             return null;
           } else if (response.status === 401) {
             if (!doNotCache) {
-              // 401 will not resolve so we actually cache a 401 response so that we do not retry
-              window.YoutubeAntiTranslate.setSessionCache(cacheKey, {
-                title: undefined,
-                status: 401,
-              });
+              if (url.includes("youtube.com/oembed")) {
+                // 401 on youtube.com/oembed will not resolve so we actually cache a 401 response so that we do not retry
+                window.YoutubeAntiTranslate.setSessionCache(cacheKey, {
+                  title: undefined,
+                  status: 401,
+                });
+              }
+              window.YoutubeAntiTranslate.setSessionCache(cacheKey, null);
             }
             return { response: response, data: null };
           }
