@@ -273,35 +273,37 @@ async function createOrUpdateUntranslatedFakeNode(
 
     const fakeNode = document.querySelector(`#${fakeNodeID}`);
 
-    //Find DeArrow fake node if it exist
-    const existingDeArrowNode = (
-      translatedElement ||
-      fakeNode ||
-      document.querySelector(originalNodeSelector)
-    )?.parentElement?.querySelector(".cbCustomTitle");
+    // Find DeArrow fake node if it exists
+    const existingDeArrowNode = !window.location.pathname.startsWith("/watch")
+      ? null
+      : (
+          translatedElement ||
+          fakeNode ||
+          document.querySelector(originalNodeSelector)
+        )?.parentElement?.querySelector(".cbCustomTitle");
     if (existingDeArrowNode) {
       // Make sure we are observing the DeArrow node too
       observer.observe(existingDeArrowNode, config);
-    }
-    if (window.YoutubeAntiTranslate.isVisible(existingDeArrowNode)) {
-      // If a visible DeArrow fake node exists and is visible skip this as it is not needed
-      window.YoutubeAntiTranslate.logInfo(
-        `Skipping creation of fake node "${fakeNodeID}" as a visible DeArrow fake node already exists.`,
-      );
-      if (fakeNode) {
-        // If a fake node already exists, make sure it is hidden
-        fakeNode.style.visibility = "hidden";
-        fakeNode.style.display = "none";
-      }
-    } else if (fakeNode) {
-      fakeNode.style.visibility = "visible";
-      fakeNode.style.display = "block";
-      for (const translatedElement of document.querySelectorAll(
-        originalNodeSelector,
-      )) {
-        // If a fake node exists, make sure the translated element is hidden
-        translatedElement.style.visibility = "hidden";
-        translatedElement.style.display = "none";
+      if (window.YoutubeAntiTranslate.isVisible(existingDeArrowNode)) {
+        // If a visible DeArrow fake node exists and is visible skip this as it is not needed
+        window.YoutubeAntiTranslate.logInfo(
+          `Skipping creation of fake node "${fakeNodeID}" as a visible DeArrow fake node already exists.`,
+        );
+        if (fakeNode) {
+          // If a fake node already exists, make sure it is hidden
+          fakeNode.style.visibility = "hidden";
+          fakeNode.style.display = "none";
+        }
+      } else if (fakeNode) {
+        fakeNode.style.visibility = "visible";
+        fakeNode.style.display = "block";
+        for (const translatedElement of document.querySelectorAll(
+          originalNodeSelector,
+        )) {
+          // If a fake node exists, make sure the translated element is hidden
+          translatedElement.style.visibility = "hidden";
+          translatedElement.style.display = "none";
+        }
       }
     }
 
@@ -549,14 +551,24 @@ async function untranslateOtherVideos(intersectElements = null) {
             if (
               !titleElement.classList.contains("cbCustomTitle") ||
               window.YoutubeAntiTranslate.isStringEqual(
-                titleElement.parentElement.querySelector(":not(.cbCustomTitle)")
-                  ?.textContent,
+                titleElement.parentElement
+                  .querySelector(":not(.cbCustomTitle)")
+                  ?.getAttribute("data-ytat-title_before_untranslate") ||
+                  titleElement.parentElement.querySelector(
+                    ":not(.cbCustomTitle)",
+                  )?.textContent,
                 currentTitle,
               )
             ) {
               // Update both innerText and title attribute
               titleElement.innerText = originalTitle;
               titleElement.title = originalTitle;
+              if (!titleElement.classList.contains("cbCustomTitle")) {
+                titleElement.setAttribute(
+                  "data-ytat-title_before_untranslate",
+                  currentTitle,
+                );
+              }
             }
             // Update link title attribute if it's the specific title link
             if (linkElement.matches("a#video-title-link:not(.cbCustomTitle)")) {
@@ -714,13 +726,22 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
             if (
               !titleElement.classList.contains("cbCustomTitle") ||
               window.YoutubeAntiTranslate.isStringEqual(
-                titleElement.parentElement.querySelector(
-                  `${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}:not(.cbCustomTitle)`,
-                )?.textContent,
+                titleElement.parentElement
+                  .querySelector(":not(.cbCustomTitle)")
+                  ?.getAttribute("data-ytat-title_before_untranslate") ||
+                  titleElement.parentElement.querySelector(
+                    ":not(.cbCustomTitle)",
+                  )?.textContent,
                 currentTitle,
               )
             ) {
               titleElement.textContent = realTitle;
+              if (!titleElement.classList.contains("cbCustomTitle")) {
+                titleElement.setAttribute(
+                  "data-ytat-title_before_untranslate",
+                  currentTitle,
+                );
+              }
             }
             // Update title attribute if it exists (for tooltips)
             if (titleElement.hasAttribute("title")) {
