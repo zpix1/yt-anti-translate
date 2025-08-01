@@ -654,7 +654,7 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
 
       // Find title element (Common patterns: #video-title inside the renderer)
       const titleElements = shortElement.querySelectorAll(
-        `${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}.yt-core-attributed-string--white-space-pre-wrap`,
+        `.shortsLockupViewModelHostMetadataTitle > a > ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}.yt-core-attributed-string--white-space-pre-wrap`,
       );
       for (const titleElement of titleElements) {
         if (!titleElement) {
@@ -687,8 +687,9 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
             if (
               !titleElement.classList.contains("cbCustomTitle") ||
               window.YoutubeAntiTranslate.isStringEqual(
-                titleElement.parentElement.querySelector(":not(.cbCustomTitle)")
-                  ?.textContent,
+                titleElement.parentElement.querySelector(
+                  `${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}:not(.cbCustomTitle)`,
+                )?.textContent,
                 currentTitle,
               )
             ) {
@@ -699,7 +700,7 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
               titleElement.title = realTitle;
             }
             const titleA = shortElement.querySelector(
-              "a.shortsLockupViewModelHostEndpoint.shortsLockupViewModelHostOutsideMetadataEndpoint",
+              "a.shortsLockupViewModelHostEndpoint.shortsLockupViewModelHostOutsideMetadataEndpoint:not(.shortsLockupViewModelHostMetadataSubhead)",
             );
             if (
               titleA &&
