@@ -1192,7 +1192,7 @@ ytm-shorts-lockup-view-model`,
             return null;
           } else if (response.status === 401) {
             if (!doNotCache) {
-              if (url.includes("youtube.com/oembed")) {
+              if (url.includes("oembed?url=")) {
                 // 401 on youtube.com/oembed will not resolve so we actually cache a 401 response so that we do not retry
                 window.YoutubeAntiTranslate.setSessionCache(cacheKey, {
                   title: undefined,
