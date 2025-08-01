@@ -90,7 +90,8 @@ async function getOriginalVideoResponse(videoId) {
   if (json) {
     videoResponseCache.set(cacheKey, json); // Cache the player response for future use
   }
-  return json;
+  //return json;
+  return response;
 }
 
 // // Helper: parse track id and extract useful information
@@ -223,6 +224,7 @@ async function getOriginalAdaptiveFormats(adaptiveFormats, videoId) {
 //     }
 //   }
 // }
+let untranslatedResponse = null;
 
 (() => {
   // Simple logging function
@@ -234,7 +236,7 @@ async function getOriginalAdaptiveFormats(adaptiveFormats, videoId) {
   let originalPlayerResponse = null;
   let isIntercepted = false;
 
-  function getModifiedPlayerResponse(original) {
+  async function getModifiedPlayerResponse(original) {
     if (!original) {
       return original;
     }
@@ -244,16 +246,21 @@ async function getOriginalAdaptiveFormats(adaptiveFormats, videoId) {
       const modified = JSON.parse(JSON.stringify(original));
 
       // Replace streamingData.adaptiveFormats with custom data
-      if (modified.streamingData && modified.streamingData.adaptiveFormats) {
+      if (
+        modified.streamingData &&
+        modified.streamingData.adaptiveFormats &&
+        (!modified.streamingData.adaptiveFormatsUntranslated ||
+          modified.streamingData.adaptiveFormatsUntranslated === false)
+      ) {
         log(
           "Modifying streamingData.adaptiveFormats in ytInitialPlayerResponse",
         );
-        getOriginalAdaptiveFormats(
-          modified.streamingData.adaptiveFormats,
-          modified.videoDetails.videoId,
-        ).then((formats) => {
-          modified.streamingData.adaptiveFormats = formats;
-        });
+        modified.streamingData.adaptiveFormats =
+          await getOriginalAdaptiveFormats(
+            modified.streamingData.adaptiveFormats,
+            modified.videoDetails.videoId,
+          );
+        modified.streamingData.adaptiveFormatsUntranslated = true; // Mark as untranslated
       }
 
       return modified;
@@ -280,13 +287,23 @@ async function getOriginalAdaptiveFormats(adaptiveFormats, videoId) {
       configurable: true,
       enumerable: true,
       get() {
-        log("ytInitialPlayerResponse accessed - returning modified version");
-        return getModifiedPlayerResponse(originalPlayerResponse);
+        return null; // Prevent direct access to the original response
       },
       set(value) {
         log("ytInitialPlayerResponse being set - storing original");
         originalPlayerResponse = value;
       },
+      // async get() {
+      //   log("ytInitialPlayerResponse accessed - returning modified version");
+      //   return await getModifiedPlayerResponse(
+      //     untranslatedResponse || originalPlayerResponse,
+      //   );
+      // },
+      // async set(value) {
+      //   log("ytInitialPlayerResponse being set - storing original");
+      //   originalPlayerResponse = value;
+      //   untranslatedResponse = await getModifiedPlayerResponse(value);
+      // },
     });
 
     isIntercepted = true;
@@ -294,6 +311,24 @@ async function getOriginalAdaptiveFormats(adaptiveFormats, videoId) {
   }
 
   function createRewriter(origFetch) {
+    async function parseBody(input) {
+      let bodyJson = {};
+      // Read ReadableStream body if present
+      if (typeof input.body === "string") {
+        bodyJson = JSON.parse(input.body);
+      } else if (input.body instanceof ReadableStream) {
+        const reader = input.body.getReader();
+        const chunks = [];
+        let done, value;
+        while ((({ done, value } = await reader.read()), !done)) {
+          chunks.push(value);
+        }
+        const decoder = new TextDecoder();
+        const bodyString = decoder.decode(chunks[0]);
+        bodyJson = JSON.parse(bodyString);
+      }
+      return bodyJson;
+    }
     return async function (input, init = {}) {
       const url = typeof input === "string" ? input : input.url;
 
@@ -306,45 +341,110 @@ async function getOriginalAdaptiveFormats(adaptiveFormats, videoId) {
         return origFetch(input, init);
       }
 
+      const bodyJson = await parseBody(input);
+      return await getOriginalVideoResponse(bodyJson.videoId);
+
+      /*let altHeaders = {};
+      let altBody = null;
+      // Alter the request to include Lao as the language
+      if (input.headers) {
+        // Clone the headers to avoid modifying the original request
+        altHeaders = new Headers(input.headers);
+        altHeaders["Accept-Language"] = "lo"; // Lao language code
+        altHeaders["Content-Type"] = "application/json";
+      }
+      if (input.body) {
+        const bodyJson = await parseBody(input);
+        if (bodyJson.context && bodyJson.context.client) {
+          bodyJson.context.client.hl = "lo"; // Set the language to Lao
+          bodyJson.context.client.gl = undefined; // Clear the gl (geo) field
+        }
+
+        // Write as ReadableStream to altBody
+        altBody = new ReadableStream({
+          start(controller) {
+            controller.enqueue(
+              new TextEncoder().encode(JSON.stringify(bodyJson)),
+            );
+            controller.close();
+          },
+        });
+
+        const response = await origFetch(
+          {
+            url: input.url,
+            method: input.method || "POST",
+            headers: altHeaders,
+            body: altBody,
+            // Preserve other properties from the original request
+            bodyUsed: input.bodyUsed || true,
+            cache: input.cache || "default",
+            credentials: input.credentials || "same-origin",
+            destination: input.destination || "",
+            duplex: input.duplex || "half",
+            integrity: input.integrity || "",
+            isHistoryNavigation: input.isHistoryNavigation || false,
+            keepalive: input.keepalive || false,
+            mode: input.mode || "same-origin",
+            redirect: input.redirect || "follow",
+            referrer: input.referrer || "about:client",
+            referrerPolicy: input.referrerPolicy || "",
+            signal: input.signal || null,
+          },
+          init,
+        );
+
+        const responseJson = await parseBody(response);
+        console.log(`Response from YouTube mobile player API:`, responseJson);
+
+        return response;
+      } else {
+        return await origFetch(input, init); // If no body, just return the original fetch
+      }
+      */
+
       log(`Processing YouTube mobile player API request: ${url}`);
       const response = await origFetch(input, init);
 
-      // Only process JSON responses that might contain streamingData
-      const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        return response;
-      }
+      // // Only process JSON responses that might contain streamingData
+      // const contentType = response.headers.get("content-type");
+      // if (!contentType || !contentType.includes("application/json")) {
+      //   return response;
+      // }
 
-      try {
-        // Clone the response to read the body
-        const responseClone = response.clone();
-        const jsonData = await responseClone.json();
+      // try {
+      //   // Clone the response to read the body
+      //   const responseClone = response.clone();
+      //   const jsonData = await responseClone.json();
 
-        // Check if this response contains streamingData.adaptiveFormats
-        if (jsonData.streamingData && jsonData.streamingData.adaptiveFormats) {
-          log(
-            `Found streamingData.adaptiveFormats, replacing with custom data`,
-          );
+      //   // Check if this response contains streamingData.adaptiveFormats
+      //   if (jsonData.streamingData && jsonData.streamingData.adaptiveFormats) {
+      //     log(
+      //       `Found streamingData.adaptiveFormats, replacing with custom data`,
+      //     );
 
-          // Replace adaptiveFormats with the original formats
-          jsonData.streamingData.adaptiveFormats =
-            await getOriginalAdaptiveFormats(
-              jsonData.streamingData.adaptiveFormats,
-              jsonData.videoDetails.videoId,
-            );
+      //     // Replace adaptiveFormats with the original formats
+      //     jsonData.streamingData.adaptiveFormats =
+      //       await getOriginalAdaptiveFormats(
+      //         jsonData.streamingData.adaptiveFormats,
+      //         jsonData.videoDetails.videoId,
+      //       );
 
-          // Create a new response with modified JSON
-          const modifiedResponse = new Response(JSON.stringify(jsonData), {
-            status: response.status,
-            statusText: response.statusText,
-            headers: response.headers,
-          });
+      //     // Create a new response with modified JSON
+      //     const modifiedResponse = new Response(JSON.stringify(jsonData), {
+      //       status: response.status,
+      //       statusText: response.statusText,
+      //       headers: response.headers,
+      //     });
 
-          return modifiedResponse;
-        }
-      } catch (error) {
-        log(`Error processing JSON response: ${error.message}`);
-      }
+      //     return modifiedResponse;
+      //   }
+      // } catch (error) {
+      //   log(`Error processing JSON response: ${error.message}`);
+      // }
+
+      const responseJson = await response.json();
+      console.log(`Response from YouTube mobile player API:`, responseJson);
 
       return response;
     };
