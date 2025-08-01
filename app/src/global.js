@@ -1198,8 +1198,9 @@ ytm-shorts-lockup-view-model`,
                   title: undefined,
                   status: 401,
                 });
+              } else {
+                window.YoutubeAntiTranslate.setSessionCache(cacheKey, null);
               }
-              window.YoutubeAntiTranslate.setSessionCache(cacheKey, null);
             }
             return { response: response, data: null };
           }
