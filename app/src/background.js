@@ -261,16 +261,14 @@ async function createOrUpdateUntranslatedFakeNode(
       ),
     )
   ) {
-    let translatedElement = window.YoutubeAntiTranslate.getFirstVisible(
+    const translatedElement = window.YoutubeAntiTranslate.getFirstVisible(
       document.querySelectorAll(originalNodeSelector),
     );
 
-    if (!translatedElement || !translatedElement.textContent) {
-      translatedElement = window.YoutubeAntiTranslate.getFirstVisible(
-        document.querySelectorAll(
-          `${originalNodeSelector}:not(.cbCustomTitle)`,
-        ),
-      );
+    // Check if the title element is already processed by DeArrow
+    if (translatedElement.classList.contains("cbCustomTitle")) {
+      // Skip if this is a custom title element, as it was already processed by DeArrow
+      return;
     }
 
     const fakeNode = document.querySelector(`#${fakeNodeID}`);
@@ -398,7 +396,7 @@ async function untranslateOtherVideos(intersectElements = null) {
         video.querySelector("ytm-video-card-renderer a") ||
         video.querySelector("a.media-item-thumbnail-container");
       let titleElement =
-        video.querySelector("#video-title:not(.cbCustomTitle)") ||
+        video.querySelector("#video-title") ||
         video.querySelector(
           ".compact-media-item-headline .yt-core-attributed-string",
         ) ||
@@ -429,6 +427,12 @@ async function untranslateOtherVideos(intersectElements = null) {
           // console.debug(`Skipping video item, missing link or title:`, video);
           continue; // Skip if essential elements aren't found
         }
+      }
+
+      // Check if the title element is already processed by DeArrow
+      if (titleElement.classList.contains("cbCustomTitle")) {
+        // Skip if this is a custom title element, as it was already processed by DeArrow
+        continue;
       }
 
       // Ignore advertisement video
@@ -483,7 +487,7 @@ async function untranslateOtherVideos(intersectElements = null) {
           titleElement.innerText = originalTitle;
           titleElement.title = originalTitle;
           // Update link title attribute if it's the specific title link
-          if (linkElement.matches("a#video-title-link:not(.cbCustomTitle)")) {
+          if (linkElement.matches("a#video-title-link")) {
             linkElement.title = originalTitle;
           }
         } else {
@@ -592,6 +596,12 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
       if (!titleElement) {
         // Mark if title element is missing
         shortElement.setAttribute("data-ytat-untranslated-other", "checked");
+        continue;
+      }
+
+      // Check if the title element is already processed by DeArrow
+      if (titleElement.classList.contains("cbCustomTitle")) {
+        // Skip if this is a custom title element, as it was already processed by DeArrow
         continue;
       }
 
