@@ -266,12 +266,43 @@ async function createOrUpdateUntranslatedFakeNode(
     );
 
     // Check if the title element is already processed by DeArrow
-    if (translatedElement.classList.contains("cbCustomTitle")) {
+    if (translatedElement?.classList?.contains("cbCustomTitle")) {
       // Skip if this is a custom title element, as it was already processed by DeArrow
       return;
     }
 
     const fakeNode = document.querySelector(`#${fakeNodeID}`);
+
+    //Find DeArrow fake node if it exist
+    const existingDeArrowNode = (
+      translatedElement || fakeNode
+    )?.parentElement?.querySelector(".cbCustomTitle");
+    if (existingDeArrowNode) {
+      // Make sure we are observing the DeArrow node too
+      observer.observe(existingDeArrowNode, config);
+    }
+    if (window.YoutubeAntiTranslate.isVisible(existingDeArrowNode)) {
+      // If a visible DeArrow fake node exists and is visible skip this as it is not needed
+      window.YoutubeAntiTranslate.logInfo(
+        `Skipping creation of fake node "${fakeNodeID}" as a visible DeArrow fake node already exists.`,
+      );
+      if (fakeNode) {
+        // If a fake node already exists, make sure it is hidden
+        fakeNode.style.visibility = "hidden";
+        fakeNode.style.display = "none";
+      }
+      return;
+    } else if (fakeNode) {
+      fakeNode.style.visibility = "visible";
+      fakeNode.style.display = "block";
+      for (const translatedElement of document.querySelectorAll(
+        originalNodeSelector,
+      )) {
+        // If a fake node exists, make sure the translated element is hidden
+        translatedElement.style.visibility = "hidden";
+        translatedElement.style.display = "none";
+      }
+    }
 
     if (
       (!fakeNode || !fakeNode.textContent) &&
@@ -358,7 +389,7 @@ async function createOrUpdateUntranslatedFakeNode(
         newFakeNode.style.visibility =
           translatedElement.style?.visibility ?? "visible";
         newFakeNode.style.display = translatedElement.style?.display ?? "block";
-        translatedElement.after(newFakeNode);
+        translatedElement.before(newFakeNode);
       } else {
         newFakeNode.style.visibility =
           existingFakeNode.style?.visibility ?? "visible";
