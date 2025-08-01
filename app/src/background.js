@@ -520,7 +520,17 @@ async function untranslateOtherVideos(intersectElements = null) {
 
         const originalTitle = response.title;
 
+        //order the titleElements so that any with the "cbCustomTitle" class is always first
+        //use a for of loop to keep it safe
+        const orderedTitleElements = [];
         for (const titleElement of titleElements) {
+          if (titleElement.classList?.contains("cbCustomTitle")) {
+            orderedTitleElements.unshift(titleElement);
+          } else {
+            orderedTitleElements.push(titleElement);
+          }
+        }
+        for (const titleElement of orderedTitleElements) {
           // Use innerText for comparison/logging as per original logic for these elements
           const currentTitle =
             titleElement.innerText?.trim() || titleElement.textContent?.trim();
@@ -656,7 +666,24 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
       const titleElements = shortElement.querySelectorAll(
         `.shortsLockupViewModelHostMetadataTitle > a > ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}.yt-core-attributed-string--white-space-pre-wrap`,
       );
+
+      if (!titleElements) {
+        // Mark to avoid re-checking non-standard items, might not have a standard title
+        shortElement.setAttribute("data-ytat-untranslated-other", "checked");
+        continue;
+      }
+
+      //order the titleElements so that any with the "cbCustomTitle" class is always first
+      //use a for of loop to keep it safe
+      const orderedTitleElements = [];
       for (const titleElement of titleElements) {
+        if (titleElement.classList?.contains("cbCustomTitle")) {
+          orderedTitleElements.unshift(titleElement);
+        } else {
+          orderedTitleElements.push(titleElement);
+        }
+      }
+      for (const titleElement of orderedTitleElements) {
         if (!titleElement) {
           // Mark if title element is missing
           shortElement.setAttribute("data-ytat-untranslated-other", "checked");
