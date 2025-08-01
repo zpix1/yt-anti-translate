@@ -14,8 +14,23 @@ async function fetchOriginalTitle(videoId) {
 
   const oembedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}`;
   try {
-    const response = await fetch(oembedUrl);
+    let response = await fetch(oembedUrl);
     if (!response.ok) {
+      if (response?.status === 401) {
+        // 401 likely means the video is restricted try again with youtubeI
+        response =
+          await window.YoutubeAntiTranslate.getVideoTitleFromYoutubeI(videoId);
+        if (!response.ok) {
+          window.YoutubeAntiTranslate.logWarning(
+            `YoutubeI title request failed (${response.status}) for video ${videoId}`,
+          );
+          window.YoutubeAntiTranslate.setSessionCache(cacheKey, null);
+          return { originalTitle: null };
+        } else {
+          window.YoutubeAntiTranslate.setSessionCache(cacheKey, response.title);
+          return { originalTitle: response.title };
+        }
+      }
       window.YoutubeAntiTranslate.logWarning(
         `oEmbed request failed (${response.status}) for video ${videoId}`,
       );

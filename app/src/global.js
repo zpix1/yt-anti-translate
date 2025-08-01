@@ -1164,7 +1164,10 @@ ytm-shorts-lockup-view-model`,
     const storedResponse =
       window.YoutubeAntiTranslate.getSessionCache(cacheKey);
     if (storedResponse) {
-      return storedResponse;
+      return {
+        response: new Response({ data: storedResponse }, { status: 200 }),
+        data: storedResponse,
+      };
     }
 
     if (pendingRequests.has(cacheKey)) {
@@ -1179,11 +1182,16 @@ ytm-shorts-lockup-view-model`,
           body: postData ? postData : undefined,
         });
         if (!response.ok) {
-          if (response.status === 404 || response.status === 401) {
+          if (response.status === 404) {
             if (!doNotCache) {
               window.YoutubeAntiTranslate.setSessionCache(cacheKey, null);
             }
             return null;
+          } else if (response.status === 401) {
+            if (!doNotCache) {
+              window.YoutubeAntiTranslate.setSessionCache(cacheKey, null);
+            }
+            return { response: response, data: null };
           }
           throw new Error(
             `HTTP error! status: ${response.status}, while fetching: ${url}`,
@@ -1193,7 +1201,7 @@ ytm-shorts-lockup-view-model`,
         if (!doNotCache) {
           window.YoutubeAntiTranslate.setSessionCache(cacheKey, data);
         }
-        return data;
+        return { response: response, data: data };
       } catch (error) {
         window.YoutubeAntiTranslate.logWarning("Error fetching:", error);
         // Cache null even on general fetch error to prevent immediate retries for the same failing URL
@@ -1229,5 +1237,40 @@ ytm-shorts-lockup-view-model`,
     } catch {
       return null;
     }
+  },
+
+  getVideoTitleFromYoutubeI: async function (videoId) {
+    const cacheKey = `video_title_${videoId}`;
+    const cachedTitle = window.YoutubeAntiTranslate.getSessionCache(cacheKey);
+
+    if (cachedTitle) {
+      return {
+        response: new Response({ title: cachedTitle }, { status: 200 }),
+        data: cachedTitle,
+      }; // Return cached title if available
+    }
+
+    const body = {
+      context: {
+        client: {
+          clientName: "WEB",
+          clientVersion: "2.20250527.00.00",
+        },
+      },
+      videoId,
+    };
+
+    const response = await this.cachedRequest(
+      "https://www.youtube.com/youtubei/v1/player?prettyPrint=false",
+      JSON.stringify(body),
+      // As it might take too much space
+      true,
+    );
+    const title = response?.data?.videoDetails?.title || null;
+    if (title) {
+      // Cache the title for future use
+      window.YoutubeAntiTranslate.setSessionCache(cacheKey, title);
+    }
+    return { response: response.response, data: null };
   },
 };
