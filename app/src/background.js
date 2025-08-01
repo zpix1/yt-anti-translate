@@ -275,7 +275,9 @@ async function createOrUpdateUntranslatedFakeNode(
 
     //Find DeArrow fake node if it exist
     const existingDeArrowNode = (
-      translatedElement || fakeNode
+      translatedElement ||
+      fakeNode ||
+      document.querySelector(originalNodeSelector)
     )?.parentElement?.querySelector(".cbCustomTitle");
     if (existingDeArrowNode) {
       // Make sure we are observing the DeArrow node too
@@ -291,7 +293,6 @@ async function createOrUpdateUntranslatedFakeNode(
         fakeNode.style.visibility = "hidden";
         fakeNode.style.display = "none";
       }
-      return;
     } else if (fakeNode) {
       fakeNode.style.visibility = "visible";
       fakeNode.style.display = "block";
@@ -306,7 +307,8 @@ async function createOrUpdateUntranslatedFakeNode(
 
     if (
       (!fakeNode || !fakeNode.textContent) &&
-      (!translatedElement || !translatedElement.textContent)
+      (!translatedElement || !translatedElement.textContent) &&
+      !existingDeArrowNode
     ) {
       return;
     }
@@ -329,8 +331,28 @@ async function createOrUpdateUntranslatedFakeNode(
 
     const realTitle = response.title;
 
-    if (!realTitle || (!translatedElement && !fakeNode)) {
+    if (
+      !realTitle ||
+      (!translatedElement && !fakeNode && !existingDeArrowNode)
+    ) {
       return;
+    }
+
+    // Make sure DeArrow is not only formatting the translated title
+    if (
+      existingDeArrowNode &&
+      existingDeArrowNode.textContent &&
+      window.YoutubeAntiTranslate.isStringEqual(
+        window.YoutubeAntiTranslate.getSessionCache(
+          `${fakeNodeID}_${getUrlForElement}`,
+        ) || document.querySelector(originalNodeSelector)?.textContent,
+        existingDeArrowNode.textContent,
+      )
+    ) {
+      existingDeArrowNode.textContent = realTitle;
+      if (window.YoutubeAntiTranslate.isVisible(existingDeArrowNode)) {
+        return;
+      }
     }
 
     const oldTitle = translatedElement?.textContent ?? fakeNode?.textContent;
@@ -460,12 +482,6 @@ async function untranslateOtherVideos(intersectElements = null) {
         }
       }
 
-      // Check if the title element is already processed by DeArrow
-      if (titleElement.classList.contains("cbCustomTitle")) {
-        // Skip if this is a custom title element, as it was already processed by DeArrow
-        continue;
-      }
-
       // Ignore advertisement video
       if (window.YoutubeAntiTranslate.isAdvertisementHref(linkElement.href)) {
         continue;
@@ -514,11 +530,13 @@ async function untranslateOtherVideos(intersectElements = null) {
           window.YoutubeAntiTranslate.logInfo(
             `Untranslating Video: "${currentTitle}" -> "${originalTitle}"`,
           );
-          // Update both innerText and title attribute
-          titleElement.innerText = originalTitle;
-          titleElement.title = originalTitle;
+          if (!titleElement.classList.includes("cbCustomTitle")) {
+            // Update both innerText and title attribute
+            titleElement.innerText = originalTitle;
+            titleElement.title = originalTitle;
+          }
           // Update link title attribute if it's the specific title link
-          if (linkElement.matches("a#video-title-link")) {
+          if (linkElement.matches("a#video-title-link:not(.cbCustomTitle)")) {
             linkElement.title = originalTitle;
           }
         } else {
@@ -630,12 +648,6 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
         continue;
       }
 
-      // Check if the title element is already processed by DeArrow
-      if (titleElement.classList.contains("cbCustomTitle")) {
-        // Skip if this is a custom title element, as it was already processed by DeArrow
-        continue;
-      }
-
       const oembedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/shorts/${videoId}`;
 
       try {
@@ -654,7 +666,9 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
           currentTitle &&
           !window.YoutubeAntiTranslate.isStringEqual(realTitle, currentTitle)
         ) {
-          titleElement.textContent = realTitle;
+          if (!titleElement.classList.includes("cbCustomTitle")) {
+            titleElement.textContent = realTitle;
+          }
           // Update title attribute if it exists (for tooltips)
           if (titleElement.hasAttribute("title")) {
             titleElement.title = realTitle;
@@ -662,8 +676,15 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
           const titleA = shortElement.querySelector(
             "a.shortsLockupViewModelHostEndpoint.shortsLockupViewModelHostOutsideMetadataEndpoint",
           );
-          if (titleA) {
-            titleA.title = realTitle;
+          if (
+            titleA &&
+            realTitle &&
+            currentTitle &&
+            !window.YoutubeAntiTranslate.isStringEqual(realTitle, currentTitle)
+          ) {
+            if (!titleElement.classList.includes("cbCustomTitle")) {
+              titleA.title = realTitle;
+            }
           }
           shortElement.setAttribute("data-ytat-untranslated-other", "true"); // Mark as successfully untranslated
         } else {
