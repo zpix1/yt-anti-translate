@@ -138,22 +138,22 @@ async function getChannelBrandingWithYoutubeI(ucid = null) {
   }
 
   const browse = "https://www.youtube.com/youtubei/v1/browse?prettyPrint=false";
-  const json = await window.YoutubeAntiTranslate.cachedRequest(
+  const response = await window.YoutubeAntiTranslate.cachedRequest(
     browse,
     JSON.stringify(body),
     // As it might take too much space
     true,
   );
 
-  if (!json) {
+  if (!response?.data) {
     window.YoutubeAntiTranslate.logWarning(
       `Failed to fetch ${browse} or parse response`,
     );
     return;
   }
 
-  const hdr = json.header?.pageHeaderRenderer;
-  const metadata = json.metadata?.channelMetadataRenderer;
+  const hdr = response.data.header?.pageHeaderRenderer;
+  const metadata = response.data.metadata?.channelMetadataRenderer;
 
   const result = {
     title: metadata?.title, // channel name

@@ -67,18 +67,37 @@ async function untranslateCurrentShortVideo() {
 
     try {
       // console.debug(`Fetching oEmbed for Short:`, videoId);
-      const response = await cachedRequest(oembedUrl);
-      if (!response || !response.title) {
-        // console.debug(` No oEmbed data for Short:`, videoId);
-        // Mark as checked even if no data, to prevent retrying unless element changes
-        translatedTitleElement.setAttribute(
-          "data-ytat-untranslated",
-          "checked",
-        );
-        return;
+      let response = await cachedRequest(oembedUrl);
+      if (
+        !response ||
+        !response.response ||
+        !response.response.ok ||
+        !response.data?.title
+      ) {
+        if (response?.response?.status === 401) {
+          // 401 likely means the video is restricted try again with youtubeI
+          response =
+            await window.YoutubeAntiTranslate.getVideoTitleFromYoutubeI(
+              videoId,
+            );
+          if (!response?.response?.ok || !response.data?.title) {
+            window.YoutubeAntiTranslate.logWarning(
+              `YoutubeI title request failed for video ${videoId}`,
+            );
+            return;
+          }
+        } else {
+          // console.debug(` No oEmbed data for Short:`, videoId);
+          // Mark as checked even if no data, to prevent retrying unless element changes
+          translatedTitleElement.setAttribute(
+            "data-ytat-untranslated",
+            "checked",
+          );
+          return;
+        }
       }
 
-      const realTitle = response.title;
+      const realTitle = response.data.title;
       const currentTitle = translatedTitleElement.textContent?.trim();
 
       if (
@@ -291,14 +310,36 @@ async function createOrUpdateUntranslatedFakeNode(
     if (window.YoutubeAntiTranslate.isAdvertisementHref(getUrlForElement)) {
       return;
     }
-    const response = await cachedRequest(
+    let response = await cachedRequest(
       "https://www.youtube.com/oembed?url=" + getUrlForElement,
     );
-    if (!response) {
-      return;
+    if (
+      !response ||
+      !response.response ||
+      !response.response.ok ||
+      !response.data?.title
+    ) {
+      if (response?.response?.status === 401) {
+        // 401 likely means the video is restricted try again with youtubeI
+        const videoId = window.YoutubeAntiTranslate.extractVideoIdFromUrl(
+          getUrlForElement.startsWith("http")
+            ? getUrlForElement
+            : window.location.origin + getUrlForElement,
+        );
+        response =
+          await window.YoutubeAntiTranslate.getVideoTitleFromYoutubeI(videoId);
+        if (!response?.response?.ok || !response.data?.title) {
+          window.YoutubeAntiTranslate.logWarning(
+            `YoutubeI title request failed for video ${videoId}`,
+          );
+          return;
+        }
+      } else {
+        return;
+      }
     }
 
-    const realTitle = response.title;
+    const realTitle = response.data.title;
 
     if (!realTitle || (!translatedElement && !fakeNode)) {
       return;
@@ -455,15 +496,39 @@ async function untranslateOtherVideos(intersectElements = null) {
 
       try {
         // console.debug(`Fetching oEmbed for video:`, videoHref);
-        const response = await cachedRequest(
+        let response = await cachedRequest(
           "https://www.youtube.com/oembed?url=" + videoHref,
         );
-        if (!response || !response.title) {
-          // console.debug(`No oEmbed data for video:`, videoHref);
-          continue; // Skip if no oEmbed data
+        if (
+          !response ||
+          !response.response ||
+          !response.response.ok ||
+          !response.data?.title
+        ) {
+          if (response?.response?.status === 401) {
+            // 401 likely means the video is restricted try again with youtubeI
+            const videoId = window.YoutubeAntiTranslate.extractVideoIdFromUrl(
+              videoHref.startsWith("http")
+                ? videoHref
+                : window.location.origin + videoHref,
+            );
+            response =
+              await window.YoutubeAntiTranslate.getVideoTitleFromYoutubeI(
+                videoId,
+              );
+            if (!response?.response?.ok || !response.data?.title) {
+              window.YoutubeAntiTranslate.logWarning(
+                `YoutubeI title request failed for video ${videoId}`,
+              );
+              continue;
+            }
+          } else {
+            // console.debug(`No oEmbed data for video:`, videoHref);
+            continue; // Skip if no oEmbed data
+          }
         }
 
-        const originalTitle = response.title;
+        const originalTitle = response.data.title;
         // Use innerText for comparison/logging as per original logic for these elements
         const currentTitle =
           titleElement.innerText?.trim() || titleElement.textContent?.trim();
@@ -598,14 +663,40 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
       const oembedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/shorts/${videoId}`;
 
       try {
-        const response = await cachedRequest(oembedUrl);
-        if (!response || !response.title) {
-          // Mark as checked even if no oEmbed data is found
-          shortElement.setAttribute("data-ytat-untranslated-other", "checked");
-          continue;
+        let response = await cachedRequest(oembedUrl);
+        if (
+          !response ||
+          !response.response ||
+          !response.response.ok ||
+          !response.data?.title
+        ) {
+          if (response?.response?.status === 401) {
+            // 401 likely means the video is restricted try again with youtubeI
+            response =
+              await window.YoutubeAntiTranslate.getVideoTitleFromYoutubeI(
+                videoId,
+              );
+            if (!response?.response?.ok || !response.data?.title) {
+              window.YoutubeAntiTranslate.logWarning(
+                `YoutubeI title request failed for video ${videoId}`,
+              );
+              shortElement.setAttribute(
+                "data-ytat-untranslated-other",
+                "checked",
+              );
+              continue;
+            }
+          } else {
+            // Mark as checked even if no oEmbed data is found
+            shortElement.setAttribute(
+              "data-ytat-untranslated-other",
+              "checked",
+            );
+            continue;
+          }
         }
 
-        const realTitle = response.title;
+        const realTitle = response.data.title;
         const currentTitle = titleElement.textContent?.trim(); // Use textContent for typical title spans
 
         if (
@@ -797,13 +888,13 @@ async function getOriginalVideoDescription(videoId) {
     videoId,
   };
 
-  const json = await cachedRequest(
+  const response = await cachedRequest(
     "https://www.youtube.com/youtubei/v1/player?prettyPrint=false",
     JSON.stringify(body),
     // As it might take too much space
     true,
   );
-  const description = json?.videoDetails?.shortDescription || null;
+  const description = response?.data?.videoDetails?.shortDescription || null;
   if (description) {
     // Cache the description for future use
     window.YoutubeAntiTranslate.setSessionCache(cacheKey, description);

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.19.8] - 2025-08-01
+
+### Fixed
+
+- Fix [#97](https://github.com/zpix1/yt-anti-translate/issues/97) video titles are not translated when oembed replies 401 on restricted video
+
 ## [1.19.7] - 2025-07-31
 
 ### Fixed
