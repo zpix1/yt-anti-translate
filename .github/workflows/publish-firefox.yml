@@ -63,6 +63,9 @@ jobs:
       - uses: actions/setup-node@v2-beta
         with:
           node-version: "18"
+      
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Download bundle artifact
         uses: actions/download-artifact@v4
