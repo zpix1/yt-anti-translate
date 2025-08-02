@@ -1,6 +1,6 @@
 //For intersect we are not switching to debounce
 //as the callback will handle multiple elements entering the sigularly
-const INTERSECTION_UPDATE_STEP_VIDEOS = 2;
+const INTERSECTION_UPDATE_STEP_VIDEOS = 0;
 let allIntersectVideoElements = null;
 const intersectionObserverOtherVideos = new IntersectionObserver(
   untranslateOtherVideosOnIntersect,
@@ -13,7 +13,7 @@ const intersectionObserverOtherVideos = new IntersectionObserver(
 
 //For intersect we are not switching to debounce
 //as the callback will handle multiple elements entering the sigularly
-const INTERSECTION_UPDATE_STEP_SHORTS = 2;
+const INTERSECTION_UPDATE_STEP_SHORTS = 0;
 let allIntersectShortElements = null;
 const intersectionObserverOtherShorts = new IntersectionObserver(
   untranslateOtherShortsOnIntersect,
@@ -637,6 +637,7 @@ async function untranslateOtherVideos(intersectElements = null) {
       document.querySelectorAll(
         window.YoutubeAntiTranslate.ALL_ARRAYS_VIDEOS_SELECTOR,
       ),
+      false,
     ),
   );
 }
@@ -799,6 +800,7 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
       document.querySelectorAll(
         window.YoutubeAntiTranslate.ALL_ARRAYS_SHORTS_SELECTOR,
       ),
+      false,
     ),
   );
 }
@@ -834,8 +836,8 @@ async function untranslate() {
   ]);
 
   // update intersect observers
-  updateObserverOtherVideosOnIntersect();
-  updateObserverOtherShortsOnIntersect();
+  //updateObserverOtherVideosOnIntersect();
+  //updateObserverOtherShortsOnIntersect();
 }
 
 // Initialize the extension
@@ -869,7 +871,7 @@ async function untranslateOtherVideosOnIntersect(entries) {
   mutationIdxVideos++;
 }
 
-updateObserverOtherVideosOnIntersect();
+//updateObserverOtherVideosOnIntersect();
 function updateObserverOtherVideosOnIntersect() {
   for (const el of allIntersectVideoElements ?? []) {
     intersectionObserverOtherVideos.unobserve(el);
@@ -909,7 +911,7 @@ async function untranslateOtherShortsOnIntersect(entries) {
   mutationIdxShorts++;
 }
 
-updateObserverOtherShortsOnIntersect();
+//updateObserverOtherShortsOnIntersect();
 function updateObserverOtherShortsOnIntersect() {
   for (const el of allIntersectShortElements ?? []) {
     intersectionObserverOtherShorts.unobserve(el);
