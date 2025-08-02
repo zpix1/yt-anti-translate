@@ -1283,6 +1283,6 @@ ytm-shorts-lockup-view-model`,
       window.YoutubeAntiTranslate.setSessionCache(cacheKey, title);
       return { response: response.response, data: { title: title } };
     }
-    return { response: response.response, data: null };
+    return { response: response?.response, data: null };
   },
 };
