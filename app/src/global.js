@@ -310,6 +310,8 @@ ytm-shorts-lockup-view-model`,
    * @param {boolean} [options.ignoreCase=true] - If true, converts to lowercase. Default true
    * @param {boolean} [options.normalizeSpaces=true] - If true, replaces consecutive whitespace with a single space. Default true
    * @param {boolean} [options.normalizeNFKC=true] - If true, applies Unicode Normalization Form Compatibility Composition (NFKC). Default true
+   * @param {boolean} [options.ignoreEmojis=true] - If true, replaces emojis with spaces. Default true
+   * @param {boolean} [options.ignoreExcalationPoints=true] - If true, removes exclamation points. Default true
    * @param {boolean} [options.trim=true] - If true, trims both leading and trailing whitespace. Default true
    * @param {boolean} [options.trimLeft=false] - If true, trims leading whitespace. Ignored if `trim` is true. Default false
    * @param {boolean} [options.trimRight=false] - If true, trims trailing whitespace. Ignored if `trim` is true. Default false
@@ -320,6 +322,8 @@ ytm-shorts-lockup-view-model`,
       ignoreCase = true,
       normalizeSpaces = true,
       normalizeNFKC = true,
+      ignoreEmojis = true,
+      ignoreExcalationPoints = true,
       trim = true,
       trimLeft = false,
       trimRight = false,
@@ -331,6 +335,16 @@ ytm-shorts-lockup-view-model`,
 
     if (normalizeNFKC) {
       str = str.normalize("NFKC");
+    }
+
+    if (ignoreEmojis) {
+      // Replace emojis with spaces (covers most emoji ranges)
+      // Use Unicode property escapes for emojis (requires ES2018+)
+      str = str.replace(/\p{Emoji_Presentation}|\p{Emoji}\uFE0F/gu, " ");
+    }
+
+    if (ignoreExcalationPoints) {
+      str = str.replace(/!/g, "");
     }
 
     if (normalizeSpaces) {
