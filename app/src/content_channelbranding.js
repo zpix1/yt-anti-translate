@@ -119,7 +119,7 @@ async function getChannelBrandingWithYoutubeI(ucid = null) {
   const body = {
     context: {
       client: {
-        clientName: "WEB",
+        clientName: window.YoutubeAntiTranslate.isMobile() ? "MWEB" : "WEB",
         clientVersion: "2.20250527.00.00",
         hl: "lo", // Using "Lao" as default that is an unsupported (but valid) language of youtube
         // That always get the original language as a result
@@ -137,7 +137,7 @@ async function getChannelBrandingWithYoutubeI(ucid = null) {
     return storedResponse;
   }
 
-  const browse = "https://www.youtube.com/youtubei/v1/browse?prettyPrint=false";
+  const browse = `https://${window.YoutubeAntiTranslate.isMobile() ? "m" : "www"}.youtube.com/youtubei/v1/browse?prettyPrint=false`;
   const response = await window.YoutubeAntiTranslate.cachedRequest(
     browse,
     JSON.stringify(body),

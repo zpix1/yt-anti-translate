@@ -1346,7 +1346,7 @@ ytm-shorts-lockup-view-model`,
     const body = {
       context: {
         client: {
-          clientName: "WEB",
+          clientName: window.YoutubeAntiTranslate.isMobile() ? "MWEB" : "WEB",
           clientVersion: "2.20250731.09.00",
         },
       },
@@ -1356,7 +1356,7 @@ ytm-shorts-lockup-view-model`,
     const headers = await this.getYoutubeIHeadersWithCredentials();
 
     const response = await this.cachedRequest(
-      "https://www.youtube.com/youtubei/v1/player?prettyPrint=false",
+      `https://${this.isMobile() ? "m" : "www"}.youtube.com/youtubei/v1/player?prettyPrint=false`,
       JSON.stringify(body),
       headers,
       false,

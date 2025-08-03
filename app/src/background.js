@@ -888,7 +888,7 @@ async function getOriginalVideoDescription(videoId) {
   const body = {
     context: {
       client: {
-        clientName: "WEB",
+        clientName: window.YoutubeAntiTranslate.isMobile() ? "MWEB" : "WEB",
         clientVersion: "2.20250527.00.00",
       },
     },
@@ -896,7 +896,7 @@ async function getOriginalVideoDescription(videoId) {
   };
 
   const response = await cachedRequest(
-    "https://www.youtube.com/youtubei/v1/player?prettyPrint=false",
+    `https://${window.YoutubeAntiTranslate.isMobile() ? "m" : "www"}.youtube.com/youtubei/v1/player?prettyPrint=false`,
     JSON.stringify(body),
     await window.YoutubeAntiTranslate.getYoutubeIHeadersWithCredentials(),
     false,
