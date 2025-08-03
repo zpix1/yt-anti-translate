@@ -898,6 +898,7 @@ async function getOriginalVideoDescription(videoId) {
   const response = await cachedRequest(
     "https://www.youtube.com/youtubei/v1/player?prettyPrint=false",
     JSON.stringify(body),
+    await window.YoutubeAntiTranslate.getYoutubeIHeadersWithCredentials(),
     // As it might take too much space
     true,
   );

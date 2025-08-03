@@ -1152,12 +1152,14 @@ ytm-shorts-lockup-view-model`,
    * Make a GET request. Its result will be cached in sessionStorage and will return same promise for parallel requests.
    * @param {string} url - The URL to fetch data from
    * @param {string} postData - Optional. If passed, will make a POST request with this data
+   * @param {object} headersData - Optional. Headers to be sent with the request, defaults to {"content-type": "application/json"}
    * @param {boolean} doNotCache - Optional. If true, the result will not be cached in sessionStorage, only same promise will be returned for parallel requests
    * @returns
    */
   cachedRequest: async function cachedRequest(
     url,
     postData = null,
+    headersData = { "content-type": "application/json" },
     doNotCache = false,
   ) {
     const cacheKey = url + "|" + postData;
@@ -1181,7 +1183,7 @@ ytm-shorts-lockup-view-model`,
       try {
         const response = await fetch(url, {
           method: postData ? "POST" : "GET",
-          headers: { "content-type": "application/json" },
+          headers: headersData,
           body: postData ? postData : undefined,
         });
         if (!response.ok) {
@@ -1265,15 +1267,18 @@ ytm-shorts-lockup-view-model`,
       context: {
         client: {
           clientName: "WEB",
-          clientVersion: "2.20250527.00.00",
+          clientVersion: "2.20250731.09.00",
         },
       },
       videoId,
     };
 
+    const headers = await this.getYoutubeIHeadersWithCredentials();
+
     const response = await this.cachedRequest(
       "https://www.youtube.com/youtubei/v1/player?prettyPrint=false",
       JSON.stringify(body),
+      headers,
       // As it might take too much space
       true,
     );
@@ -1284,5 +1289,58 @@ ytm-shorts-lockup-view-model`,
       return { response: response.response, data: { title: title } };
     }
     return { response: response?.response, data: null };
+  },
+
+  getSAPISID: function () {
+    const match = document.cookie.match(/SAPISID=([^\s;]+)/);
+    return match ? match[1] : null;
+  },
+
+  getSAPISIDHASH: async function (
+    origin = this.isMobile()
+      ? "https://m.youtube.com"
+      : "https://www.youtube.com",
+  ) {
+    const sapisid = this.getSAPISID();
+    if (!sapisid) {
+      console.warn("SAPISID cookie not found.");
+      return null;
+    }
+
+    const timestamp = Math.floor(Date.now() / 1000);
+    const message = `${timestamp} ${sapisid} ${origin}`;
+
+    // SHA1 function (uses SubtleCrypto)
+    async function sha1Hash(msg) {
+      const encoder = new TextEncoder();
+      const data = encoder.encode(msg);
+      const hashBuffer = await crypto.subtle.digest("SHA-1", data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+    }
+
+    const hash = await sha1Hash(message);
+    return `SAPISIDHASH ${timestamp}_${hash}`;
+  },
+
+  getYoutubeIHeadersWithCredentials: async function () {
+    const sapisidhash = await this.getSAPISIDHASH();
+    if (!sapisidhash) {
+      this.logWarning(
+        "getYoutubeIHeadersWithCredentials: SAPISID not found, user not logged in, returning default headers",
+      );
+      return {
+        "Content-Type": "application/json",
+      };
+    }
+    return {
+      "Content-Type": "application/json",
+      Authorization: await this.getSAPISIDHASH(),
+      Origin: this.isMobile()
+        ? "https://m.youtube.com"
+        : "https://www.youtube.com",
+      "X-Youtube-Client-Name": "1",
+      "X-Youtube-Client-Version": "2.20250731.09.00",
+    };
   },
 };
