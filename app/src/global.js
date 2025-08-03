@@ -1157,7 +1157,7 @@ ytm-shorts-lockup-view-model`,
    * @param {string} cacheDotNotatioProperty - Optional. Specify the property name to extract from the response data json for limited caching
    *                       (e.g. "title" to cache only the title of the response data or "videoDetails.title" to cache the title of the object videoDetails).
    *                       If not specified, and doNotCache is false, the whole response data will be cached
-   *                       NOTE: Must be a valid property of the response data json starting from the root level. Use 2." for nested properties."
+   *                       NOTE: Must be a valid property of the response data json starting from the root level. Use "." for nested properties.
    *                       If the property is not found, it will cache null.
    * @returns
    */
