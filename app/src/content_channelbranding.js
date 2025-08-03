@@ -141,6 +141,7 @@ async function getChannelBrandingWithYoutubeI(ucid = null) {
   const response = await window.YoutubeAntiTranslate.cachedRequest(
     browse,
     JSON.stringify(body),
+    await window.YoutubeAntiTranslate.getYoutubeIHeadersWithCredentials(),
     // As it might take too much space
     true,
   );

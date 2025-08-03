@@ -899,8 +899,8 @@ async function getOriginalVideoDescription(videoId) {
     "https://www.youtube.com/youtubei/v1/player?prettyPrint=false",
     JSON.stringify(body),
     await window.YoutubeAntiTranslate.getYoutubeIHeadersWithCredentials(),
-    // As it might take too much space
-    true,
+    false,
+    "videoDetails.shortDescription",
   );
   const description = response?.data?.videoDetails?.shortDescription || null;
   if (description) {

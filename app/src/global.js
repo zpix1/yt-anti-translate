@@ -1154,6 +1154,11 @@ ytm-shorts-lockup-view-model`,
    * @param {string} postData - Optional. If passed, will make a POST request with this data
    * @param {object} headersData - Optional. Headers to be sent with the request, defaults to {"content-type": "application/json"}
    * @param {boolean} doNotCache - Optional. If true, the result will not be cached in sessionStorage, only same promise will be returned for parallel requests
+   * @param {string} cacheDotNotatioProperty - Optional. Specify the property name to extract from the response data json for limited caching
+   *                       (e.g. "title" to cache only the title of the response data or "videoDetails.title" to cache the title of the object videoDetails).
+   *                       If not specified, and doNotCache is false, the whole response data will be cached
+   *                       NOTE: Must be a valid property of the response data json starting from the root level. Use 2." for nested properties."
+   *                       If the property is not found, it will cache null.
    * @returns
    */
   cachedRequest: async function cachedRequest(
@@ -1161,17 +1166,25 @@ ytm-shorts-lockup-view-model`,
     postData = null,
     headersData = { "content-type": "application/json" },
     doNotCache = false,
+    cacheDotNotatioProperty = null,
   ) {
     const cacheKey = url + "|" + postData;
     const storedResponse =
       window.YoutubeAntiTranslate.getSessionCache(cacheKey);
     if (storedResponse) {
+      let dataWrapper;
+      if (cacheDotNotatioProperty) {
+        dataWrapper = this.jsonHierarchy(
+          storedResponse,
+          cacheDotNotatioProperty,
+        );
+      }
       return {
         response: new Response(
-          { data: storedResponse },
+          { data: dataWrapper || storedResponse },
           { status: storedResponse.status || 200 },
         ),
-        data: storedResponse,
+        data: dataWrapper || storedResponse,
       };
     }
 
@@ -1212,7 +1225,15 @@ ytm-shorts-lockup-view-model`,
         }
         const data = await response.json();
         if (!doNotCache) {
-          window.YoutubeAntiTranslate.setSessionCache(cacheKey, data);
+          if (cacheDotNotatioProperty) {
+            window.YoutubeAntiTranslate.setSessionCache(
+              cacheKey,
+              this.getPropertyByDotNotation(data, cacheDotNotatioProperty) ||
+                null,
+            );
+          } else {
+            window.YoutubeAntiTranslate.setSessionCache(cacheKey, data);
+          }
         }
         return { response: response, data: data };
       } catch (error) {
@@ -1229,6 +1250,65 @@ ytm-shorts-lockup-view-model`,
 
     pendingRequests.set(cacheKey, requestPromise);
     return requestPromise;
+  },
+
+  /**
+   * Converts a value to a JSON hierarchy based on dot notation properties.
+   * @param {any} value - The value to convert.
+   * @param {string} dotNotationProperty - The dot notation property to create the hierarchy
+   * @returns {object} - The resulting JSON hierarchy.
+   */
+  jsonHierarchy: function (value, dotNotationProperty) {
+    // If no dots, just return { property: value }
+    if (!dotNotationProperty.includes(".")) {
+      return { [dotNotationProperty]: value };
+    }
+
+    // Split by dots
+    const keys = dotNotationProperty.split(".");
+    const result = {};
+    let current = result;
+
+    // Iterate through keys
+    keys.forEach((key, index) => {
+      if (index === keys.length - 1) {
+        // Last key: assign the value
+        current[key] = value;
+      } else {
+        // Create an empty object and go deeper
+        current[key] = {};
+        current = current[key];
+      }
+    });
+
+    return result;
+  },
+
+  /**
+   * Gets a property from a JSON object using dot notation.
+   * @param {object} json - The JSON object to search.
+   * @param {string} dotNotationProperty - The dot notation property with hierarchy to retrieve.
+   * @returns {any|null} - The value of the property or null if not found
+   * */
+  getPropertyByDotNotation: function (json, dotNotationProperty) {
+    if (!dotNotationProperty) {
+      return null;
+    }
+    if (typeof json !== "object" || json === null) {
+      return null;
+    }
+
+    const keys = dotNotationProperty.split(".");
+    let current = json;
+
+    for (const key of keys) {
+      if (current && Object.prototype.hasOwnProperty.call(current, key)) {
+        current = current[key];
+      } else {
+        return null; // Path doesn't exist
+      }
+    }
+    return current;
   },
 
   /**
@@ -1279,8 +1359,8 @@ ytm-shorts-lockup-view-model`,
       "https://www.youtube.com/youtubei/v1/player?prettyPrint=false",
       JSON.stringify(body),
       headers,
-      // As it might take too much space
-      true,
+      false,
+      "videoDetails.title",
     );
     const title = response?.data?.videoDetails?.title || null;
     if (title) {
