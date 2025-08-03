@@ -421,185 +421,191 @@ async function untranslateOtherVideos(intersectElements = null) {
     if (!otherVideos) {
       return;
     }
-    otherVideos = Array.from(otherVideos);
-    for (let i = 0; i < otherVideos.length; i++) {
-      const video = otherVideos[i];
+    const videosArray = Array.from(otherVideos);
 
-      if (!video) {
-        // Original logic used return here, seems incorrect for a loop. Changed to continue.
-        continue;
-      }
-
-      // Find link and title elements typical for standard videos
-      let linkElement =
-        video.querySelector("a#video-title-link") ||
-        video.querySelector("a#thumbnail") ||
-        video.querySelector("a.media-item-thumbnail-container") ||
-        video.querySelector("ytd-playlist-panel-video-renderer a") ||
-        video.querySelector("ytm-video-card-renderer a") ||
-        video.querySelector("a.media-item-thumbnail-container");
-      let titleElement =
-        video.querySelector("#video-title:not(.cbCustomTitle)") ||
-        video.querySelector(
-          ".compact-media-item-headline .yt-core-attributed-string",
-        ) ||
-        video.querySelector("ytd-playlist-panel-video-renderer #video-title") ||
-        video.querySelector(
-          "ytm-video-card-renderer .video-card-title .yt-core-attributed-string",
-        ) ||
-        video.querySelector(".media-item-headline .yt-core-attributed-string");
-
-      if (!linkElement || !titleElement) {
-        // Try another common pattern before giving up
-        if (!linkElement) {
-          linkElement =
-            video.querySelector("ytd-thumbnail a") ||
-            video.querySelector(`a[href*="/watch?v="]`);
+    await Promise.all(
+      videosArray.map(async (video) => {
+        if (!video) {
+          // Skip null video element
+          return;
         }
-        if (!titleElement) {
-          titleElement =
-            video.querySelector("yt-formatted-string#video-title") ||
-            video.querySelector(
-              ".yt-lockup-metadata-view-model-wiz__title>.yt-core-attributed-string",
-            ) ||
-            video.querySelector(
-              ".compact-media-item-headline .yt-core-attributed-string",
-            );
-        }
+
+        // Find link and title elements typical for standard videos
+        let linkElement =
+          video.querySelector("a#video-title-link") ||
+          video.querySelector("a#thumbnail") ||
+          video.querySelector("a.media-item-thumbnail-container") ||
+          video.querySelector("ytd-playlist-panel-video-renderer a") ||
+          video.querySelector("ytm-video-card-renderer a") ||
+          video.querySelector("a.media-item-thumbnail-container");
+        let titleElement =
+          video.querySelector("#video-title:not(.cbCustomTitle)") ||
+          video.querySelector(
+            ".compact-media-item-headline .yt-core-attributed-string",
+          ) ||
+          video.querySelector(
+            "ytd-playlist-panel-video-renderer #video-title",
+          ) ||
+          video.querySelector(
+            "ytm-video-card-renderer .video-card-title .yt-core-attributed-string",
+          ) ||
+          video.querySelector(
+            ".media-item-headline .yt-core-attributed-string",
+          );
+
         if (!linkElement || !titleElement) {
-          // console.debug(`Skipping video item, missing link or title:`, video);
-          continue; // Skip if essential elements aren't found
+          // Try another common pattern before giving up
+          if (!linkElement) {
+            linkElement =
+              video.querySelector("ytd-thumbnail a") ||
+              video.querySelector(`a[href*="/watch?v="]`);
+          }
+          if (!titleElement) {
+            titleElement =
+              video.querySelector("yt-formatted-string#video-title") ||
+              video.querySelector(
+                ".yt-lockup-metadata-view-model-wiz__title>.yt-core-attributed-string",
+              ) ||
+              video.querySelector(
+                ".compact-media-item-headline .yt-core-attributed-string",
+              );
+          }
+          if (!linkElement || !titleElement) {
+            // console.debug(`Skipping video item, missing link or title:`, video);
+            return; // Skip if essential elements aren't found
+          }
         }
-      }
 
-      // Ignore advertisement video
-      if (window.YoutubeAntiTranslate.isAdvertisementHref(linkElement.href)) {
-        continue;
-      }
+        // Ignore advertisement video
+        if (window.YoutubeAntiTranslate.isAdvertisementHref(linkElement.href)) {
+          return;
+        }
 
-      // Check if current widget is a playlist, not video
-      if (
-        // Playlists include a "list=" parameter in their href
-        linkElement.href.includes("list=") &&
-        // Playlist do not include an "index=" parameter in their href
-        // Only videos in playlists include an "index=" parameter
-        !linkElement.href.includes("index=")
-      ) {
-        continue;
-      }
-
-      // Use the link's href for oEmbed and as the key
-      // These afaik always conform to "/watch?v=id", and don't have any extra parameters, but just to be safe
-      const videoHref = window.YoutubeAntiTranslate.stripNonEssentialParams(
-        linkElement.href,
-      );
-
-      try {
-        // console.debug(`Fetching oEmbed for video:`, videoHref);
-        let response = await cachedRequest(
-          "https://www.youtube.com/oembed?url=" + videoHref,
-        );
+        // Check if current widget is a playlist, not video
         if (
-          !response ||
-          !response.response ||
-          !response.response.ok ||
-          !response.data?.title
+          // Playlists include a "list=" parameter in their href
+          linkElement.href.includes("list=") &&
+          // Playlist do not include an "index=" parameter in their href
+          // Only videos in playlists include an "index=" parameter
+          !linkElement.href.includes("index=")
         ) {
-          if (response?.response?.status === 401) {
-            // 401 likely means the video is restricted try again with youtubeI
-            const videoId = window.YoutubeAntiTranslate.extractVideoIdFromUrl(
-              videoHref.startsWith("http")
-                ? videoHref
-                : window.location.origin + videoHref,
+          return;
+        }
+
+        // Use the link's href for oEmbed and as the key
+        // These afaik always conform to "/watch?v=id", and don't have any extra parameters, but just to be safe
+        const videoHref = window.YoutubeAntiTranslate.stripNonEssentialParams(
+          linkElement.href,
+        );
+
+        try {
+          // console.debug(`Fetching oEmbed for video:`, videoHref);
+          let response = await cachedRequest(
+            "https://www.youtube.com/oembed?url=" + videoHref,
+          );
+          if (
+            !response ||
+            !response.response ||
+            !response.response.ok ||
+            !response.data?.title
+          ) {
+            if (response?.response?.status === 401) {
+              // 401 likely means the video is restricted try again with youtubeI
+              const videoId = window.YoutubeAntiTranslate.extractVideoIdFromUrl(
+                videoHref.startsWith("http")
+                  ? videoHref
+                  : window.location.origin + videoHref,
+              );
+              response =
+                await window.YoutubeAntiTranslate.getVideoTitleFromYoutubeI(
+                  videoId,
+                );
+              if (!response?.response?.ok || !response.data?.title) {
+                window.YoutubeAntiTranslate.logWarning(
+                  `YoutubeI title request failed for video ${videoId}`,
+                );
+                return;
+              }
+            } else {
+              // console.debug(`No oEmbed data for video:`, videoHref);
+              return; // Skip if no oEmbed data
+            }
+          }
+
+          const originalTitle = response.data.title;
+          // Use innerText for comparison/logging as per original logic for these elements
+          const currentTitle =
+            titleElement.innerText?.trim() || titleElement.textContent?.trim();
+
+          if (
+            originalTitle &&
+            currentTitle &&
+            !window.YoutubeAntiTranslate.isStringEqual(
+              originalTitle,
+              currentTitle,
+            )
+          ) {
+            window.YoutubeAntiTranslate.logInfo(
+              `Untranslating Video: "${currentTitle}" -> "${originalTitle}"`,
             );
-            response =
-              await window.YoutubeAntiTranslate.getVideoTitleFromYoutubeI(
-                videoId,
-              );
-            if (!response?.response?.ok || !response.data?.title) {
-              window.YoutubeAntiTranslate.logWarning(
-                `YoutubeI title request failed for video ${videoId}`,
-              );
-              continue;
+            // Update both innerText and title attribute
+            titleElement.innerText = originalTitle;
+            titleElement.title = originalTitle;
+            // Update link title attribute if it's the specific title link
+            if (linkElement.matches("a#video-title-link:not(.cbCustomTitle)")) {
+              linkElement.title = originalTitle;
             }
           } else {
-            // console.debug(`No oEmbed data for video:`, videoHref);
-            continue; // Skip if no oEmbed data
+            // console.debug(`Video title unchanged or element missing:`, { href: videoHref, originalTitle, currentTitle });
           }
-        }
 
-        const originalTitle = response.data.title;
-        // Use innerText for comparison/logging as per original logic for these elements
-        const currentTitle =
-          titleElement.innerText?.trim() || titleElement.textContent?.trim();
+          /* -------- Handle description snippet untranslation (search results, video lists) -------- */
+          if (!video.hasAttribute("data-ytat-untranslated-desc")) {
+            // Locate snippet containers
+            const snippetElements = video.querySelectorAll(
+              ".metadata-snippet-text, .metadata-snippet-text-navigation",
+            );
 
-        if (
-          originalTitle &&
-          currentTitle &&
-          !window.YoutubeAntiTranslate.isStringEqual(
-            originalTitle,
-            currentTitle,
-          )
-        ) {
-          window.YoutubeAntiTranslate.logInfo(
-            `Untranslating Video: "${currentTitle}" -> "${originalTitle}"`,
-          );
-          // Update both innerText and title attribute
-          titleElement.innerText = originalTitle;
-          titleElement.title = originalTitle;
-          // Update link title attribute if it's the specific title link
-          if (linkElement.matches("a#video-title-link:not(.cbCustomTitle)")) {
-            linkElement.title = originalTitle;
-          }
-        } else {
-          // console.debug(`Video title unchanged or element missing:`, { href: videoHref, originalTitle, currentTitle });
-        }
+            if (snippetElements && snippetElements.length > 0) {
+              const idMatch = videoHref.match(/[?&]v=([a-zA-Z0-9_-]+)/);
+              if (idMatch && idMatch[1]) {
+                const videoId = idMatch[1];
+                const originalDescription =
+                  await getOriginalVideoDescription(videoId);
 
-        /* -------- Handle description snippet untranslation (search results, video lists) -------- */
-        if (!video.hasAttribute("data-ytat-untranslated-desc")) {
-          // Locate snippet containers
-          const snippetElements = video.querySelectorAll(
-            ".metadata-snippet-text, .metadata-snippet-text-navigation",
-          );
+                if (originalDescription) {
+                  const truncated = trimDescriptionByWords(originalDescription);
 
-          if (snippetElements && snippetElements.length > 0) {
-            const idMatch = videoHref.match(/[?&]v=([a-zA-Z0-9_-]+)/);
-            if (idMatch && idMatch[1]) {
-              const videoId = idMatch[1];
-              const originalDescription =
-                await getOriginalVideoDescription(videoId);
-
-              if (originalDescription) {
-                const truncated = trimDescriptionByWords(originalDescription);
-
-                snippetElements.forEach((el) => {
-                  const currentText = el.textContent?.trim();
-                  if (
-                    truncated &&
-                    currentText &&
-                    !window.YoutubeAntiTranslate.isStringEqual(
-                      currentText,
-                      truncated,
-                    )
-                  ) {
-                    el.textContent = truncated;
-                  }
-                });
+                  snippetElements.forEach((el) => {
+                    const currentText = el.textContent?.trim();
+                    if (
+                      truncated &&
+                      currentText &&
+                      !window.YoutubeAntiTranslate.isStringEqual(
+                        currentText,
+                        truncated,
+                      )
+                    ) {
+                      el.textContent = truncated;
+                    }
+                  });
+                }
               }
             }
-          }
 
-          // Mark as processed to avoid repeated attempts
-          video.setAttribute("data-ytat-untranslated-desc", "true");
+            // Mark as processed to avoid repeated attempts
+            video.setAttribute("data-ytat-untranslated-desc", "true");
+          }
+        } catch (error) {
+          window.YoutubeAntiTranslate.logInfo(
+            `Error processing video:`,
+            videoHref,
+            error,
+          );
         }
-      } catch (error) {
-        window.YoutubeAntiTranslate.logInfo(
-          `Error processing video:`,
-          videoHref,
-          error,
-        );
-      }
-    }
+        // End of processing for this video
+      }),
+    );
   }
 
   if (intersectElements) {
@@ -622,113 +628,114 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
     if (!shortsItems) {
       return;
     }
-    shortsItems = Array.from(shortsItems);
-    for (let i = 0; i < shortsItems.length; i++) {
-      const shortElement = shortsItems[i];
+    const shortsArray = Array.from(shortsItems);
 
-      if (!shortElement) {
-        continue;
-      }
+    await Promise.all(
+      shortsArray.map(async (shortElement) => {
+        if (!shortElement) {
+          return;
+        }
 
-      // Find link element to get URL
-      const linkElement =
-        shortElement.querySelector("a.shortsLockupViewModelHostEndpoint") ||
-        shortElement.querySelector(`a[href*="/shorts/"]`);
-      if (!linkElement || !linkElement.href) {
-        // Mark to avoid re-checking non-standard items, might not have a standard link
-        shortElement.setAttribute("data-ytat-untranslated-other", "checked");
-        continue;
-      }
+        // Find link element to get URL
+        const linkElement =
+          shortElement.querySelector("a.shortsLockupViewModelHostEndpoint") ||
+          shortElement.querySelector(`a[href*="/shorts/"]`);
+        if (!linkElement || !linkElement.href) {
+          // Mark to avoid re-checking non-standard items, might not have a standard link
+          shortElement.setAttribute("data-ytat-untranslated-other", "checked");
+          return;
+        }
 
-      const videoHref = linkElement.href;
-      // Extract video ID from URLs like /shorts/VIDEO_ID
-      const videoIdMatch = videoHref.match(/shorts\/([a-zA-Z0-9_-]+)/);
-      if (!videoIdMatch || !videoIdMatch[1]) {
-        // Mark if ID can't be extracted (e.g., different URL structure)
-        shortElement.setAttribute("data-ytat-untranslated-other", "checked");
-        continue;
-      }
-      const videoId = videoIdMatch[1];
+        const videoHref = linkElement.href;
+        // Extract video ID from URLs like /shorts/VIDEO_ID
+        const videoIdMatch = videoHref.match(/shorts\/([a-zA-Z0-9_-]+)/);
+        if (!videoIdMatch || !videoIdMatch[1]) {
+          // Mark if ID can't be extracted (e.g., different URL structure)
+          shortElement.setAttribute("data-ytat-untranslated-other", "checked");
+          return;
+        }
+        const videoId = videoIdMatch[1];
 
-      // Find title element (Common patterns: #video-title inside the renderer)
-      const titleElement = shortElement.querySelector(
-        `${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}.yt-core-attributed-string--white-space-pre-wrap`,
-      );
-      if (!titleElement) {
-        // Mark if title element is missing
-        shortElement.setAttribute("data-ytat-untranslated-other", "checked");
-        continue;
-      }
+        // Find title element (Common patterns: #video-title inside the renderer)
+        const titleElement = shortElement.querySelector(
+          `${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}.yt-core-attributed-string--white-space-pre-wrap`,
+        );
+        if (!titleElement) {
+          // Mark if title element is missing
+          shortElement.setAttribute("data-ytat-untranslated-other", "checked");
+          return;
+        }
 
-      const oembedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/shorts/${videoId}`;
+        const oembedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/shorts/${videoId}`;
 
-      try {
-        let response = await cachedRequest(oembedUrl);
-        if (
-          !response ||
-          !response.response ||
-          !response.response.ok ||
-          !response.data?.title
-        ) {
-          if (response?.response?.status === 401) {
-            // 401 likely means the video is restricted try again with youtubeI
-            response =
-              await window.YoutubeAntiTranslate.getVideoTitleFromYoutubeI(
-                videoId,
-              );
-            if (!response?.response?.ok || !response.data?.title) {
-              window.YoutubeAntiTranslate.logWarning(
-                `YoutubeI title request failed for video ${videoId}`,
-              );
+        try {
+          let response = await cachedRequest(oembedUrl);
+          if (
+            !response ||
+            !response.response ||
+            !response.response.ok ||
+            !response.data?.title
+          ) {
+            if (response?.response?.status === 401) {
+              // 401 likely means the video is restricted try again with youtubeI
+              response =
+                await window.YoutubeAntiTranslate.getVideoTitleFromYoutubeI(
+                  videoId,
+                );
+              if (!response?.response?.ok || !response.data?.title) {
+                window.YoutubeAntiTranslate.logWarning(
+                  `YoutubeI title request failed for video ${videoId}`,
+                );
+                shortElement.setAttribute(
+                  "data-ytat-untranslated-other",
+                  "checked",
+                );
+                return;
+              }
+            } else {
+              // Mark as checked even if no oEmbed data is found
               shortElement.setAttribute(
                 "data-ytat-untranslated-other",
                 "checked",
               );
-              continue;
+              return;
             }
-          } else {
-            // Mark as checked even if no oEmbed data is found
-            shortElement.setAttribute(
-              "data-ytat-untranslated-other",
-              "checked",
+          }
+
+          const realTitle = response.data.title;
+          const currentTitle = titleElement.textContent?.trim(); // Use textContent for typical title spans
+
+          if (
+            realTitle &&
+            currentTitle &&
+            !window.YoutubeAntiTranslate.isStringEqual(realTitle, currentTitle)
+          ) {
+            titleElement.textContent = realTitle;
+            // Update title attribute if it exists (for tooltips)
+            if (titleElement.hasAttribute("title")) {
+              titleElement.title = realTitle;
+            }
+            const titleA = shortElement.querySelector(
+              "a.shortsLockupViewModelHostEndpoint.shortsLockupViewModelHostOutsideMetadataEndpoint",
             );
-            continue;
+            if (titleA) {
+              titleA.title = realTitle;
+            }
+            shortElement.setAttribute("data-ytat-untranslated-other", "true"); // Mark as successfully untranslated
+          } else {
+            // Mark as done even if titles match or one is missing, prevents re-checking
+            shortElement.setAttribute("data-ytat-untranslated-other", "true");
           }
-        }
-
-        const realTitle = response.data.title;
-        const currentTitle = titleElement.textContent?.trim(); // Use textContent for typical title spans
-
-        if (
-          realTitle &&
-          currentTitle &&
-          !window.YoutubeAntiTranslate.isStringEqual(realTitle, currentTitle)
-        ) {
-          titleElement.textContent = realTitle;
-          // Update title attribute if it exists (for tooltips)
-          if (titleElement.hasAttribute("title")) {
-            titleElement.title = realTitle;
-          }
-          const titleA = shortElement.querySelector(
-            "a.shortsLockupViewModelHostEndpoint.shortsLockupViewModelHostOutsideMetadataEndpoint",
+        } catch (error) {
+          window.YoutubeAntiTranslate.logInfo(
+            `Error fetching oEmbed for other Short:`,
+            videoId,
+            error,
           );
-          if (titleA) {
-            titleA.title = realTitle;
-          }
-          shortElement.setAttribute("data-ytat-untranslated-other", "true"); // Mark as successfully untranslated
-        } else {
-          // Mark as done even if titles match or one is missing, prevents re-checking
-          shortElement.setAttribute("data-ytat-untranslated-other", "true");
         }
-      } catch (error) {
-        window.YoutubeAntiTranslate.logInfo(
-          `Error fetching oEmbed for other Short:`,
-          videoId,
-          error,
-        );
-        // Do not mark on fetch error, allow retry on the next mutation check
-      }
-    }
+        // End of processing for this short
+      }),
+    );
   }
 
   if (intersectElements) {

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.19.9] - 2025-08-03
+
+### Fixed
+
+- Fix [#101](https://github.com/zpix1/yt-anti-translate/issues/101) Video titles untranslation is slow and sequential
+
 ## [1.19.8] - 2025-08-01
 
 ### Fixed
