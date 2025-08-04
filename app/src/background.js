@@ -24,7 +24,9 @@ const intersectionObserverOtherShorts = new IntersectionObserver(
   },
 );
 
-const cachedRequest = window.YoutubeAntiTranslate.cachedRequest;
+const cachedRequest = window.YoutubeAntiTranslate.cachedRequest.bind(
+  window.YoutubeAntiTranslate,
+);
 
 async function untranslateCurrentShortVideo() {
   if (
@@ -877,14 +879,6 @@ function updateObserverOtherShortsOnIntersect() {
 }
 
 async function getOriginalVideoDescription(videoId) {
-  const cacheKey = `video_description_${videoId}`;
-  const cachedDescription =
-    window.YoutubeAntiTranslate.getSessionCache(cacheKey);
-
-  if (cachedDescription) {
-    return cachedDescription; // Return cached description if available
-  }
-
   const body = {
     context: {
       client: {
@@ -902,11 +896,11 @@ async function getOriginalVideoDescription(videoId) {
     false,
     "videoDetails.shortDescription",
   );
-  const description = response?.data?.videoDetails?.shortDescription || null;
-  if (description) {
-    // Cache the description for future use
-    window.YoutubeAntiTranslate.setSessionCache(cacheKey, description);
-  }
+  const description =
+    response?.data?.["videoDetails.shortDescription"] ||
+    response?.data?.videoDetails?.shortDescription ||
+    null;
+
   return description;
 }
 

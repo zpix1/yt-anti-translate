@@ -1168,24 +1168,21 @@ ytm-shorts-lockup-view-model`,
     doNotCache = false,
     cacheDotNotationProperty = null,
   ) {
-    const cacheKey = cacheDotNotationProperty
-      ? url + "|" + postData + "|" + cacheDotNotationProperty
-      : url + "|" + postData;
+    const cacheKey = url + "|" + postData + "|" + cacheDotNotationProperty;
     const storedResponse = this.getSessionCache(cacheKey);
     if (storedResponse) {
-      let dataWrapper;
-      if (cacheDotNotationProperty) {
-        dataWrapper = this.jsonHierarchy(
-          storedResponse,
-          cacheDotNotationProperty,
-        );
-      }
       return {
         response: new Response(
-          { data: dataWrapper || storedResponse },
+          {
+            data: cacheDotNotationProperty
+              ? { [cacheDotNotationProperty]: storedResponse }
+              : storedResponse,
+          },
           { status: storedResponse.status || 200 },
         ),
-        data: dataWrapper || storedResponse,
+        data: cacheDotNotationProperty
+          ? { [cacheDotNotationProperty]: storedResponse }
+          : storedResponse,
       };
     }
 
@@ -1334,16 +1331,6 @@ ytm-shorts-lockup-view-model`,
   },
 
   getVideoTitleFromYoutubeI: async function (videoId) {
-    const cacheKey = `video_title_${videoId}`;
-    const cachedTitle = this.getSessionCache(cacheKey);
-
-    if (cachedTitle) {
-      return {
-        response: new Response({ title: cachedTitle }, { status: 200 }),
-        data: { title: cachedTitle },
-      }; // Return cached title if available
-    }
-
     const body = {
       context: {
         client: {
@@ -1363,10 +1350,11 @@ ytm-shorts-lockup-view-model`,
       false,
       "videoDetails.title",
     );
-    const title = response?.data?.videoDetails?.title || null;
+    const title =
+      response?.data?.["videoDetails.title"] ||
+      response?.data?.videoDetails?.title ||
+      null;
     if (title) {
-      // Cache the title for future use
-      this.setSessionCache(cacheKey, title);
       return { response: response.response, data: { title: title } };
     }
     return { response: response?.response, data: null };
