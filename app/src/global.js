@@ -1382,7 +1382,7 @@ ytm-shorts-lockup-view-model`,
   ) {
     const sapisid = this.getSAPISID();
     if (!sapisid) {
-      console.warn("SAPISID cookie not found.");
+      this.logWarning("SAPISID cookie not found.");
       return null;
     }
 
