@@ -1154,7 +1154,7 @@ ytm-shorts-lockup-view-model`,
    * @param {string} postData - Optional. If passed, will make a POST request with this data
    * @param {object} headersData - Optional. Headers to be sent with the request, defaults to {"content-type": "application/json"}
    * @param {boolean} doNotCache - Optional. If true, the result will not be cached in sessionStorage, only same promise will be returned for parallel requests
-   * @param {string} cacheDotNotatioProperty - Optional. Specify the property name to extract from the response data json for limited caching
+   * @param {string} cacheDotNotationProperty - Optional. Specify the property name to extract from the response data json for limited caching
    *                       (e.g. "title" to cache only the title of the response data or "videoDetails.title" to cache the title of the object videoDetails).
    *                       If not specified, and doNotCache is false, the whole response data will be cached
    *                       NOTE: Must be a valid property of the response data json starting from the root level. Use "." for nested properties.
@@ -1166,16 +1166,16 @@ ytm-shorts-lockup-view-model`,
     postData = null,
     headersData = { "content-type": "application/json" },
     doNotCache = false,
-    cacheDotNotatioProperty = null,
+    cacheDotNotationProperty = null,
   ) {
     const cacheKey = url + "|" + postData;
     const storedResponse = this.getSessionCache(cacheKey);
     if (storedResponse) {
       let dataWrapper;
-      if (cacheDotNotatioProperty) {
+      if (cacheDotNotationProperty) {
         dataWrapper = this.jsonHierarchy(
           storedResponse,
-          cacheDotNotatioProperty,
+          cacheDotNotationProperty,
         );
       }
       return {
@@ -1224,10 +1224,10 @@ ytm-shorts-lockup-view-model`,
         }
         const data = await response.json();
         if (!doNotCache) {
-          if (cacheDotNotatioProperty) {
+          if (cacheDotNotationProperty) {
             this.setSessionCache(
               cacheKey,
-              this.getPropertyByDotNotation(data, cacheDotNotatioProperty) ||
+              this.getPropertyByDotNotation(data, cacheDotNotationProperty) ||
                 null,
             );
           } else {
