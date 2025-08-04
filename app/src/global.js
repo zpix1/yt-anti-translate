@@ -1169,8 +1169,7 @@ ytm-shorts-lockup-view-model`,
     cacheDotNotatioProperty = null,
   ) {
     const cacheKey = url + "|" + postData;
-    const storedResponse =
-      window.YoutubeAntiTranslate.getSessionCache(cacheKey);
+    const storedResponse = this.getSessionCache(cacheKey);
     if (storedResponse) {
       let dataWrapper;
       if (cacheDotNotatioProperty) {
@@ -1202,19 +1201,19 @@ ytm-shorts-lockup-view-model`,
         if (!response.ok) {
           if (response.status === 404) {
             if (!doNotCache) {
-              window.YoutubeAntiTranslate.setSessionCache(cacheKey, null);
+              this.setSessionCache(cacheKey, null);
             }
             return null;
           } else if (response.status === 401) {
             if (!doNotCache) {
               if (url.includes("oembed?url=")) {
                 // 401 on youtube.com/oembed will not resolve so we actually cache a 401 response so that we do not retry
-                window.YoutubeAntiTranslate.setSessionCache(cacheKey, {
+                this.setSessionCache(cacheKey, {
                   title: undefined,
                   status: 401,
                 });
               } else {
-                window.YoutubeAntiTranslate.setSessionCache(cacheKey, null);
+                this.setSessionCache(cacheKey, null);
               }
             }
             return { response: response, data: null };
@@ -1226,21 +1225,21 @@ ytm-shorts-lockup-view-model`,
         const data = await response.json();
         if (!doNotCache) {
           if (cacheDotNotatioProperty) {
-            window.YoutubeAntiTranslate.setSessionCache(
+            this.setSessionCache(
               cacheKey,
               this.getPropertyByDotNotation(data, cacheDotNotatioProperty) ||
                 null,
             );
           } else {
-            window.YoutubeAntiTranslate.setSessionCache(cacheKey, data);
+            this.setSessionCache(cacheKey, data);
           }
         }
         return { response: response, data: data };
       } catch (error) {
-        window.YoutubeAntiTranslate.logWarning("Error fetching:", error);
+        this.logWarning("Error fetching:", error);
         // Cache null even on general fetch error to prevent immediate retries for the same failing URL
         if (!doNotCache) {
-          window.YoutubeAntiTranslate.setSessionCache(cacheKey, null);
+          this.setSessionCache(cacheKey, null);
         }
         return null;
       } finally {
@@ -1334,7 +1333,7 @@ ytm-shorts-lockup-view-model`,
 
   getVideoTitleFromYoutubeI: async function (videoId) {
     const cacheKey = `video_title_${videoId}`;
-    const cachedTitle = window.YoutubeAntiTranslate.getSessionCache(cacheKey);
+    const cachedTitle = this.getSessionCache(cacheKey);
 
     if (cachedTitle) {
       return {
@@ -1346,7 +1345,7 @@ ytm-shorts-lockup-view-model`,
     const body = {
       context: {
         client: {
-          clientName: window.YoutubeAntiTranslate.isMobile() ? "MWEB" : "WEB",
+          clientName: this.isMobile() ? "MWEB" : "WEB",
           clientVersion: "2.20250731.09.00",
         },
       },
@@ -1365,7 +1364,7 @@ ytm-shorts-lockup-view-model`,
     const title = response?.data?.videoDetails?.title || null;
     if (title) {
       // Cache the title for future use
-      window.YoutubeAntiTranslate.setSessionCache(cacheKey, title);
+      this.setSessionCache(cacheKey, title);
       return { response: response.response, data: { title: title } };
     }
     return { response: response?.response, data: null };
