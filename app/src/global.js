@@ -1414,7 +1414,7 @@ ytm-shorts-lockup-view-model`,
     }
     return {
       "Content-Type": "application/json",
-      Authorization: await this.getSAPISIDHASH(),
+      Authorization: sapisidhash,
       Origin: this.isMobile()
         ? "https://m.youtube.com"
         : "https://www.youtube.com",
