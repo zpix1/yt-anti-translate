@@ -1168,7 +1168,9 @@ ytm-shorts-lockup-view-model`,
     doNotCache = false,
     cacheDotNotationProperty = null,
   ) {
-    const cacheKey = url + "|" + postData;
+    const cacheKey = cacheDotNotationProperty
+      ? url + "|" + postData + "|" + cacheDotNotationProperty
+      : url + "|" + postData;
     const storedResponse = this.getSessionCache(cacheKey);
     if (storedResponse) {
       let dataWrapper;
