@@ -897,7 +897,7 @@ async function getOriginalVideoDescription(videoId) {
     "videoDetails.shortDescription",
   );
   const description =
-    response?.data?.["videoDetails.shortDescription"] ||
+    response?.cachedWithDotNotation ||
     response?.data?.videoDetails?.shortDescription ||
     null;
 

@@ -1159,7 +1159,8 @@ ytm-shorts-lockup-view-model`,
    *                       If not specified, and doNotCache is false, the whole response data will be cached
    *                       NOTE: Must be a valid property of the response data json starting from the root level. Use "." for nested properties.
    *                       If the property is not found, it will cache null.
-   * @returns
+   *                       When cached by this cacheDotNotationProperty, when retieved "data" will be null and value will be set in "cachedWithDotNotation" property
+   * @returns { response: Response, data: any, cachedWithDotNotation: any } - The response object and the data from the response
    */
   cachedRequest: async function cachedRequest(
     url,
@@ -1171,19 +1172,31 @@ ytm-shorts-lockup-view-model`,
     const cacheKey = url + "|" + postData + "|" + cacheDotNotationProperty;
     const storedResponse = this.getSessionCache(cacheKey);
     if (storedResponse) {
-      return {
-        response: new Response(
-          {
-            data: cacheDotNotationProperty
-              ? { [cacheDotNotationProperty]: storedResponse }
-              : storedResponse,
-          },
-          { status: storedResponse.status || 200 },
-        ),
-        data: cacheDotNotationProperty
-          ? { [cacheDotNotationProperty]: storedResponse }
-          : storedResponse,
-      };
+      if (cacheDotNotationProperty) {
+        return {
+          response: new Response(
+            {
+              data: null,
+              cachedWithDotNotation: storedResponse,
+            },
+            { status: storedResponse.status || 200 },
+          ),
+          data: null,
+          cachedWithDotNotation: storedResponse,
+        };
+      } else {
+        return {
+          response: new Response(
+            {
+              data: storedResponse,
+              cachedWithDotNotation: null,
+            },
+            { status: storedResponse.status || 200 },
+          ),
+          data: storedResponse,
+          cachedWithDotNotation: null,
+        };
+      }
     }
 
     if (pendingRequests.has(cacheKey)) {
@@ -1351,7 +1364,7 @@ ytm-shorts-lockup-view-model`,
       "videoDetails.title",
     );
     const title =
-      response?.data?.["videoDetails.title"] ||
+      response?.cachedWithDotNotation ||
       response?.data?.videoDetails?.title ||
       null;
     if (title) {
