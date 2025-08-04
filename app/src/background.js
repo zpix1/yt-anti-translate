@@ -24,7 +24,9 @@ const intersectionObserverOtherShorts = new IntersectionObserver(
   },
 );
 
-const cachedRequest = window.YoutubeAntiTranslate.cachedRequest;
+const cachedRequest = window.YoutubeAntiTranslate.cachedRequest.bind(
+  window.YoutubeAntiTranslate,
+);
 
 async function untranslateCurrentShortVideo() {
   if (
@@ -877,18 +879,10 @@ function updateObserverOtherShortsOnIntersect() {
 }
 
 async function getOriginalVideoDescription(videoId) {
-  const cacheKey = `video_description_${videoId}`;
-  const cachedDescription =
-    window.YoutubeAntiTranslate.getSessionCache(cacheKey);
-
-  if (cachedDescription) {
-    return cachedDescription; // Return cached description if available
-  }
-
   const body = {
     context: {
       client: {
-        clientName: "WEB",
+        clientName: window.YoutubeAntiTranslate.isMobile() ? "MWEB" : "WEB",
         clientVersion: "2.20250527.00.00",
       },
     },
@@ -896,16 +890,17 @@ async function getOriginalVideoDescription(videoId) {
   };
 
   const response = await cachedRequest(
-    "https://www.youtube.com/youtubei/v1/player?prettyPrint=false",
+    `https://${window.YoutubeAntiTranslate.isMobile() ? "m" : "www"}.youtube.com/youtubei/v1/player?prettyPrint=false`,
     JSON.stringify(body),
-    // As it might take too much space
-    true,
+    await window.YoutubeAntiTranslate.getYoutubeIHeadersWithCredentials(),
+    false,
+    "videoDetails.shortDescription",
   );
-  const description = response?.data?.videoDetails?.shortDescription || null;
-  if (description) {
-    // Cache the description for future use
-    window.YoutubeAntiTranslate.setSessionCache(cacheKey, description);
-  }
+  const description =
+    response?.cachedWithDotNotation ||
+    response?.data?.videoDetails?.shortDescription ||
+    null;
+
   return description;
 }
 
