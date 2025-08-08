@@ -1,6 +1,6 @@
 import { chromium, firefox, expect } from "@playwright/test";
-import path from "path";
-import { fileURLToPath } from "url";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { withExtension } from "playwright-webextext";
 import {
   newPageWithStorageStateIfItExists,

@@ -1,12 +1,12 @@
-import fs from "fs";
-import path, { dirname } from "path";
+import fs from "node:fs";
+import path, { dirname } from "node:path";
 import unzipper from "unzipper";
 import https from "https";
-import { pipeline } from "stream";
-import { promisify } from "util";
+import { pipeline } from "node:stream";
+import { promisify } from "node:util";
 
 import * as crx from "crx-util";
-import { fileURLToPath } from "url";
+import { fileURLToPath } from "node:url";
 
 const streamPipeline = promisify(pipeline);
 
