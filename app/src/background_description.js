@@ -577,7 +577,7 @@ function fetchOriginalDescription() {
     return null;
   }
 
-  return playerResponse.videoDetails?.shortDescription || null;
+  return playerResponse?.videoDetails?.shortDescription || null;
 }
 
 /**

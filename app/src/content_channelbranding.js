@@ -119,7 +119,7 @@ async function getChannelBrandingWithYoutubeI(ucid = null) {
   const body = {
     context: {
       client: {
-        clientName: "WEB",
+        clientName: window.YoutubeAntiTranslate.isMobile() ? "MWEB" : "WEB",
         clientVersion: "2.20250527.00.00",
         hl: "lo", // Using "Lao" as default that is an unsupported (but valid) language of youtube
         // That always get the original language as a result
@@ -137,23 +137,24 @@ async function getChannelBrandingWithYoutubeI(ucid = null) {
     return storedResponse;
   }
 
-  const browse = "https://www.youtube.com/youtubei/v1/browse?prettyPrint=false";
-  const json = await window.YoutubeAntiTranslate.cachedRequest(
+  const browse = `https://${window.YoutubeAntiTranslate.isMobile() ? "m" : "www"}.youtube.com/youtubei/v1/browse?prettyPrint=false`;
+  const response = await window.YoutubeAntiTranslate.cachedRequest(
     browse,
     JSON.stringify(body),
+    await window.YoutubeAntiTranslate.getYoutubeIHeadersWithCredentials(),
     // As it might take too much space
     true,
   );
 
-  if (!json) {
+  if (!response?.data) {
     window.YoutubeAntiTranslate.logWarning(
       `Failed to fetch ${browse} or parse response`,
     );
     return;
   }
 
-  const hdr = json.header?.pageHeaderRenderer;
-  const metadata = json.metadata?.channelMetadataRenderer;
+  const hdr = response.data.header?.pageHeaderRenderer;
+  const metadata = response.data.metadata?.channelMetadataRenderer;
 
   const result = {
     title: metadata?.title, // channel name

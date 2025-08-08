@@ -323,8 +323,8 @@ test.describe("YouTube Anti-Translate extension", () => {
     await page.waitForSelector("ytd-rich-grid-media");
 
     // --- Check Videos Tab ---
-    const originalVideoTitle = "I Survived The 5 Deadliest Places On Earth";
-    const translatedVideoTitle = "Я Выжил В 5 Самых Опасных Местах На Земле";
+    const originalVideoTitle = "World's Fastest Car Vs Cheetah!";
+    const translatedVideoTitle = "Самая Быстрая Машина в Мире vs Гепард!";
     const videoSelector = `ytd-rich-item-renderer:has-text("${originalVideoTitle}")`;
     const translatedVideoSelector = `ytd-rich-item-renderer:has-text("${translatedVideoTitle}")`;
 
@@ -359,8 +359,8 @@ test.describe("YouTube Anti-Translate extension", () => {
     await page.waitForTimeout(1000); // Give it a moment to load more items if needed
 
     // --- Check Shorts Tab ---
-    const originalShortTitle = "$10,000 Human Shuffleboard";
-    const translatedShortTitle = "Человеческий Шаффлборд за $10,000"; // Adjust if needed
+    const originalShortTitle = "Find This Briefcase, Win $10,000";
+    const translatedShortTitle = "Найдите Этот Портфель, Выиграй $10,000"; // Adjust if needed
     const shortSelector = `ytd-rich-item-renderer:has-text("${originalShortTitle}")`;
     const translatedShortSelector = `ytd-rich-item-renderer:has-text("${translatedShortTitle}")`;
 
