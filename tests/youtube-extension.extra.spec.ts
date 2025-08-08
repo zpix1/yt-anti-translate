@@ -11,7 +11,7 @@ import {
 import "dotenv/config";
 
 // This are tests for additional features that benefit from Youtube Data API and a APIKey provided by the user
-// OR
+// AND
 // Tests that use locale th-TH (instead of ru-RU)
 
 test.describe("YouTube Anti-Translate extension - Extras", () => {
@@ -288,7 +288,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     await context.close();
   });
 
-  test("YouTube search results channel description retain original content", async ({
+  test("YouTube search results channel author name and description retain original content", async ({
     browserNameWithExtensions,
     localeString,
   }, testInfo) => {
@@ -309,9 +309,22 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
 
     // Wait until at least one channel renderer for MrBeast appears
     const channelRenderer = page
-      .locator('ytd-channel-renderer:has-text("MrBeast")')
+      .locator('ytd-channel-renderer:has-text("@MrBeast")')
       .first();
     await expect(channelRenderer).toBeVisible({ timeout: 15000 });
+
+    // Locate the channel name element inside the renderer
+    const authorLocator = channelRenderer.locator(
+      "#channel-title yt-formatted-string",
+    );
+    await expect(authorLocator).toBeVisible({ timeout: 15000 });
+
+    const authorText = (await authorLocator.textContent()) ?? "";
+    console.log("Search result author:", authorText.trim());
+
+    // Check that original English text is present and Thai translation is absent
+    expect(authorText).toContain("MrBeast");
+    expect(authorText).not.toContain("มิสเตอร์บีสต์");
 
     // Locate the description element inside the renderer
     const descriptionLocator = channelRenderer.locator("#description");
@@ -320,9 +333,9 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     const descriptionText = (await descriptionLocator.textContent()) ?? "";
     console.log("Search result description:", descriptionText.trim());
 
-    // Check that original English text is present and Russian translation is absent
+    // Check that original English text is present and Thai translation is absent
     expect(descriptionText).toContain("SUBSCRIBE FOR A COOKIE");
-    expect(descriptionText).not.toContain("ПОДПИШИСЬ");
+    expect(descriptionText).not.toContain("ไปดู Beast Games ได้แล้ว");
 
     // Screenshot for visual verification
     await page.screenshot({
@@ -336,55 +349,55 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     await context.close();
   });
 
-  test.fixme(
-    "Non english channel description retains original content",
-    async ({ browserNameWithExtensions, localeString }, testInfo) => {
-      await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
+  test("Non english channel description retains original content", async ({
+    browserNameWithExtensions,
+    localeString,
+  }, testInfo) => {
+    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
 
-      // Launch browser with the extension
-      const context = await createBrowserContext(browserNameWithExtensions);
+    // Launch browser with the extension
+    const context = await createBrowserContext(browserNameWithExtensions);
 
-      // Open new page with auth + extension
-      const { page, consoleMessageCountContainer } = await setupPageWithAuth(
-        context,
-        browserNameWithExtensions,
-        localeString,
-      );
+    // Open new page with auth + extension
+    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
+      context,
+      browserNameWithExtensions,
+      localeString,
+    );
 
-      const channelUrl = "https://www.youtube.com/@CARTONIMORTI";
-      await loadPageAndVerifyAuth(page, channelUrl, browserNameWithExtensions);
+    const channelUrl = "https://www.youtube.com/@CARTONIMORTI";
+    await loadPageAndVerifyAuth(page, channelUrl, browserNameWithExtensions);
 
-      // Wait for the channel header to appear
-      const channelHeaderSelector =
-        "#page-header-container #page-header .page-header-view-model-wiz__page-header-headline-info";
-      await page.waitForSelector(channelHeaderSelector);
+    // Wait for the channel header to appear
+    const channelHeaderSelector =
+      "#page-header-container #page-header .page-header-view-model-wiz__page-header-headline-info";
+    await page.waitForSelector(channelHeaderSelector);
 
-      // Check channel description
-      const channelDescriptionSelector = `${channelHeaderSelector} yt-description-preview-view-model .truncated-text-wiz__truncated-text-content > .yt-core-attributed-string:nth-child(1)`;
+    // Check channel description
+    const channelDescriptionSelector = `${channelHeaderSelector} yt-description-preview-view-model .truncated-text-wiz__truncated-text-content > .yt-core-attributed-string:nth-child(1)`;
 
-      // Get the channel description
-      const brandingDescription = await page
-        .locator(channelDescriptionSelector)
-        .first()
-        .textContent();
+    // Get the channel description
+    const brandingDescription = await page
+      .locator(channelDescriptionSelector)
+      .first()
+      .textContent();
 
-      // Check that the description is in original Italian and not translated
-      expect(brandingDescription).toContain("Questi cartoni non sono animati.");
-      expect(brandingDescription).not.toContain("Very italian cartoons");
-      await expect(
-        page.locator(channelDescriptionSelector).first(),
-      ).toBeVisible();
+    // Check that the description is in original Italian and not translated
+    expect(brandingDescription).toContain("Questi cartoni non sono animati.");
+    expect(brandingDescription).not.toContain("Very italian cartoons");
+    await expect(
+      page.locator(channelDescriptionSelector).first(),
+    ).toBeVisible();
 
-      // Take a screenshot for visual verification
-      await page.screenshot({
-        path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-cartonimorti-channel-test.png`,
-      });
+    // Take a screenshot for visual verification
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-cartonimorti-channel-test.png`,
+    });
 
-      // Check console message count
-      expect(consoleMessageCountContainer.count).toBeLessThan(2000);
+    // Check console message count
+    expect(consoleMessageCountContainer.count).toBeLessThan(2000);
 
-      // Close the browser context
-      await context.close();
-    },
-  );
+    // Close the browser context
+    await context.close();
+  });
 });

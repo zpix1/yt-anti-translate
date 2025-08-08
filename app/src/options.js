@@ -41,23 +41,40 @@ function renderFooterLinks() {
     return;
   }
 
-  const commonLinks = `
-    <a target="_blank" href="https://github.com/zpix1/yt-anti-translate">Report issues</a>
-  `;
+  footer.textContent = ""; // Clear existing
 
-  if (window.YoutubeAntiTranslate.isFirefoxBasedBrowser()) {
-    footer.innerHTML = `
-      <a target="_blank" href="https://addons.mozilla.org/firefox/addon/youtube-anti-translate-mv3/">Rate extension</a> • 
-      ${commonLinks} • 
-      <a target="_blank" href="https://github.com/sponsors/namakeingo">Support developer</a>
-    `;
-  } else {
-    footer.innerHTML = `
-      <a target="_blank" href="https://chrome.google.com/webstore/detail/yt-anti-translate/ndpmhjnlfkgfalaieeneneenijondgag">Rate extension</a> • 
-      ${commonLinks} • 
-      <a target="_blank" href="https://zpix1.github.io/donate/">Support developer</a>
-    `;
-  }
+  const links = [
+    window.YoutubeAntiTranslate.isFirefoxBasedBrowser()
+      ? {
+          text: "Rate extension",
+          href: "https://addons.mozilla.org/firefox/addon/youtube-anti-translate-mv3/",
+        }
+      : {
+          text: "Rate extension",
+          href: "https://chrome.google.com/webstore/detail/yt-anti-translate/ndpmhjnlfkgfalaieeneneenijondgag",
+        },
+    {
+      text: "Report issues",
+      href: "https://github.com/zpix1/yt-anti-translate",
+    },
+    window.YoutubeAntiTranslate.isFirefoxBasedBrowser()
+      ? {
+          text: "Support developer",
+          href: "https://github.com/sponsors/namakeingo",
+        }
+      : { text: "Support developer", href: "https://zpix1.github.io/donate/" },
+  ];
+
+  links.forEach((link, i) => {
+    const a = document.createElement("a");
+    a.href = link.href;
+    a.target = "_blank";
+    a.textContent = link.text;
+    footer.appendChild(a);
+    if (i < links.length - 1) {
+      footer.appendChild(document.createTextNode(" • "));
+    }
+  });
 }
 
 const reloadActiveYouTubeTab = () => {

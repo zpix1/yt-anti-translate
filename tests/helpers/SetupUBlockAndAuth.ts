@@ -1,6 +1,6 @@
 import { chromium, firefox, expect } from "@playwright/test";
-import path from "path";
-import { fileURLToPath } from "url";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { withExtension } from "playwright-webextext";
 import {
   newPageWithStorageStateIfItExists,
@@ -92,7 +92,7 @@ export async function setupUBlockAndAuth(
         });
 
         if (!localeLoaded) {
-          await page.goto("https://www.youtube.com/@MrBeast");
+          await page.goto("https://www.youtube.com/feed/you");
 
           try {
             await page.waitForLoadState("networkidle", { timeout: 5000 });

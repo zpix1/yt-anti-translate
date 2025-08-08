@@ -1,7 +1,9 @@
 // Constants
 const DESCRIPTION_SELECTOR =
   "#description-inline-expander, ytd-expander#description, .expandable-video-description-body-main, .expandable-video-description-container, #collapsed-string, #expanded-string";
-const AUTHOR_SELECTOR = "#upload-info.ytd-video-owner-renderer";
+const AUTHOR_SELECTOR = `#upload-info.ytd-video-owner-renderer, 
+div.slim-owner-bylines > h3.slim-owner-channel-name,  
+div.cbox > a > h3.reel-player-header-channel-title`;
 const ATTRIBUTED_STRING_SELECTOR =
   "yt-attributed-string, .yt-core-attributed-string";
 const FORMATTED_STRING_SELECTOR = "yt-formatted-string";
@@ -147,58 +149,60 @@ function timeStringToSeconds(timeString) {
  * @returns {Array<{startTime:number, title:string}>} Array of chapter objects sorted by appearance.
  */
 function parseChaptersFromDescription(description) {
+  // Simplified timestamp pattern – captures [hours:]minutes:seconds
+  const TIMESTAMP_REGEX = /(\d{1,3}):(\d{2})(?::(\d{2}))?/;
+  // Characters that frequently separate timestamp and title (bullets, dashes, etc.)
+  const TRIM_CHARS_REGEX = /^[\s–—•·▪▫‣⁃:→>-]+|[\s–—•·▪▫‣⁃:→>-]+$/g;
+
   const chapters = [];
 
-  description.split("\n").forEach((line) => {
-    const trimmedLine = line.trim();
-
-    // More specific regex for YouTube chapter format:
-    // - Allows minimal decoration at start (bullets, dashes, etc.)
-    // - Timestamp must be near the beginning of the line
-    // - Must have a space/separator after timestamp before the title
-    const match = trimmedLine.match(
-      /^[\s–—•·▪▫‣⁃-]*(\d{1,2}):(\d{2})(?::(\d{2}))?\s*[–—•·▪▫‣⁃:→>-]*\s*(.+)$/,
-    );
-
-    if (match) {
-      const [, part1, part2, part3, title] = match;
-
-      // Determine hours/minutes/seconds based on the presence of the third timestamp part
-      let hours = 0;
-      let minutes = 0;
-      let seconds = 0;
-
-      if (part3 !== undefined) {
-        // Timestamp is in the form HH:MM:SS
-        hours = parseInt(part1, 10);
-        minutes = parseInt(part2, 10);
-        seconds = parseInt(part3, 10);
-      } else {
-        // Timestamp is in the form MM:SS
-        minutes = parseInt(part1, 10);
-        seconds = parseInt(part2, 10);
-      }
-
-      // Validate timestamp values
-      if (minutes >= 60 || seconds >= 60) {
-        return;
-      }
-
-      // Extract clean title
-      const cleanTitle = title.trim();
-
-      // Skip if title is too short (likely not a real chapter)
-      if (cleanTitle.length < 2) {
-        return;
-      }
-
-      const totalSeconds = hours * 3600 + minutes * 60 + seconds;
-
-      chapters.push({
-        startTime: totalSeconds,
-        title: cleanTitle,
-      });
+  description.split("\n").forEach((rawLine) => {
+    const line = rawLine.trim();
+    if (!line) {
+      return;
     }
+
+    const tsMatch = line.match(TIMESTAMP_REGEX);
+    if (!tsMatch) {
+      return; // No timestamp – not a chapter line
+    }
+
+    const [fullTs, part1, part2, part3] = tsMatch;
+    const before = line.slice(0, tsMatch.index).trim();
+    const after = line.slice(tsMatch.index + fullTs.length).trim();
+
+    // Parse time components
+    let hours = 0;
+    let minutes = 0;
+    let seconds = 0;
+    if (part3 !== undefined) {
+      hours = parseInt(part1, 10);
+      minutes = parseInt(part2, 10);
+      seconds = parseInt(part3, 10);
+    } else {
+      minutes = parseInt(part1, 10);
+      seconds = parseInt(part2, 10);
+    }
+
+    // Validate time values
+    // Always ensure seconds < 60.
+    if (seconds >= 60) {
+      return;
+    }
+    // If hours component is present (part3 defined) then minutes must be < 60.
+    if (part3 !== undefined && minutes >= 60) {
+      return;
+    }
+
+    // Decide which side of the timestamp contains the title
+    let title = after.length ? after : before;
+    title = title.replace(TRIM_CHARS_REGEX, "").trim();
+    if (title.length < 2) {
+      return; // Likely not a valid title
+    }
+
+    const totalSeconds = hours * 3600 + minutes * 60 + seconds;
+    chapters.push({ startTime: totalSeconds, title });
   });
 
   return chapters;
@@ -573,7 +577,7 @@ function fetchOriginalDescription() {
     return null;
   }
 
-  return playerResponse.videoDetails?.shortDescription || null;
+  return playerResponse?.videoDetails?.shortDescription || null;
 }
 
 /**
@@ -587,7 +591,12 @@ function fetchOriginalAuthor() {
   );
 
   const playerResponse = getPlayerResponseSafely(player);
-  if (!playerResponse) {
+  if (!playerResponse && window.YoutubeAntiTranslate.isMobile()) {
+    // Fallback for mobile layout when player response is unavailable
+    const mobileAuthor = getAuthorMobile();
+    if (mobileAuthor) {
+      return mobileAuthor;
+    }
     return null;
   }
 
@@ -623,27 +632,43 @@ function restoreOriginalDescriptionAndAuthor() {
   }
 
   if (originalAuthor) {
-    // We should skip this operation if the video player was embedded as it does not have the author above the description
-    const player = window.YoutubeAntiTranslate.getFirstVisible(
-      document.querySelectorAll(
-        window.YoutubeAntiTranslate.getPlayerSelector(),
-      ),
-    );
-    if (player && player.id === "c4-player") {
-      return;
-    }
+    handleAuthor(originalAuthor);
+  }
+}
 
-    const authorContainer = window.YoutubeAntiTranslate.getFirstVisible(
-      document.querySelectorAll(AUTHOR_SELECTOR),
-    );
+/**
+ * Restores the original (untranslated) author name only
+ */
+function restoreOriginalAuthorOnly() {
+  const originalAuthor = fetchOriginalAuthor();
 
-    if (authorContainer) {
+  if (!originalAuthor) {
+    return;
+  }
+
+  handleAuthor(originalAuthor);
+}
+
+// Author handler
+function handleAuthor(originalAuthor) {
+  // We should skip this operation if the video player was embedded as it does not have the author above the description
+  const player = window.YoutubeAntiTranslate.getFirstVisible(
+    document.querySelectorAll(window.YoutubeAntiTranslate.getPlayerSelector()),
+  );
+  if (player && player.id === "c4-player") {
+    return;
+  }
+
+  const authorContainers = window.YoutubeAntiTranslate.getAllVisibleNodes(
+    document.querySelectorAll(AUTHOR_SELECTOR),
+  );
+
+  if (authorContainers) {
+    for (const authorContainer of authorContainers) {
       updateAuthorContent(authorContainer, originalAuthor);
-    } else {
-      window.YoutubeAntiTranslate.logWarning(
-        `Video Author container not found`,
-      );
     }
+  } else {
+    window.YoutubeAntiTranslate.logWarning(`Video Author container not found`);
   }
 }
 
@@ -748,7 +773,9 @@ function updateAuthorContent(container, originalText) {
     container.querySelectorAll(FORMATTED_STRING_SELECTOR),
   );
   const snippetTextContainer = window.YoutubeAntiTranslate.getFirstVisible(
-    container.querySelectorAll(`${FORMATTED_STRING_SELECTOR} a`),
+    container.querySelectorAll(
+      `${FORMATTED_STRING_SELECTOR} a, ${ATTRIBUTED_STRING_SELECTOR}`,
+    ),
   );
 
   if (!mainTextContainer && !snippetTextContainer) {
@@ -788,6 +815,18 @@ async function handleDescriptionMutation() {
   );
   if (descriptionElement && player) {
     restoreOriginalDescriptionAndAuthor();
+  }
+
+  // On mobile the author is visible even when the description is not
+  // so we need to check separately
+  if (window.YoutubeAntiTranslate.isMobile()) {
+    const authorElement = window.YoutubeAntiTranslate.getFirstVisible(
+      document.querySelectorAll(AUTHOR_SELECTOR),
+    );
+
+    if (authorElement && player) {
+      restoreOriginalAuthorOnly();
+    }
   }
 }
 // Initialize the mutation observer for description
@@ -936,7 +975,8 @@ function setupHorizontalChaptersObserver() {
   updateHorizontalChapters();
 }
 
-function getDescriptionMobile() {
+// Extract video metadata window.ytPubsubPubsubInstance
+function extractVideoDataField(fieldName) {
   try {
     const pubsub = window.ytPubsubPubsubInstance;
     if (!pubsub) {
@@ -951,28 +991,30 @@ function getDescriptionMobile() {
       }
       visited.add(obj);
 
-      // Direct match: object contains videoData with shortDescription
-      if (obj.videoData && typeof obj.videoData.shortDescription === "string") {
-        return obj.videoData.shortDescription;
+      if (obj.videoData && typeof obj.videoData[fieldName] === "string") {
+        const videoId = obj.videoData.videoId;
+        const currentVideoId =
+          window.YoutubeAntiTranslate.extractVideoIdFromUrl(
+            document.location.href,
+          );
+
+        if (
+          videoId &&
+          typeof videoId === "string" &&
+          videoId !== currentVideoId
+        ) {
+          // If the videoId does not match the page this is an Advert
+          // Ignore Advert video data
+        } else {
+          return obj.videoData[fieldName];
+        }
       }
 
-      // Recurse into arrays and objects
-      if (Array.isArray(obj)) {
-        for (const item of obj) {
-          const res = search(item, depth + 1);
-          if (res) {
-            return res;
-          }
-        }
-      } else {
-        for (const key in obj) {
-          if (!Object.prototype.hasOwnProperty.call(obj, key)) {
-            continue;
-          }
-          const res = search(obj[key], depth + 1);
-          if (res) {
-            return res;
-          }
+      const children = Array.isArray(obj) ? obj : Object.values(obj);
+      for (const child of children) {
+        const res = search(child, depth + 1);
+        if (res) {
+          return res;
         }
       }
 
@@ -981,7 +1023,28 @@ function getDescriptionMobile() {
 
     return search(pubsub);
   } catch (err) {
-    window.YoutubeAntiTranslate?.logDebug?.("getDescriptionMobile failed", err);
+    window.YoutubeAntiTranslate?.logDebug?.(
+      `extractVideoDataField(${fieldName}) failed`,
+      err,
+    );
     return null;
   }
+}
+
+// Get Description from the VideoData
+function getDescriptionMobile() {
+  return extractVideoDataField("shortDescription");
+}
+
+// Get Author from the VideoData
+function getAuthorMobile() {
+  return extractVideoDataField("author");
+}
+
+// Export for testing (only in Node.js environment)
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = {
+    parseChaptersFromDescription,
+    findChapterByTime,
+  };
 }

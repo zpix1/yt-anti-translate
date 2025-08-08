@@ -154,7 +154,9 @@ yt-lockup-view-model,
 ytm-compact-video-renderer,
 ytm-rich-item-renderer,
 ytm-video-with-context-renderer,
-ytm-video-card-renderer`,
+ytm-video-card-renderer,
+ytm-media-item,
+ytm-playlist-video-renderer`,
   ALL_ARRAYS_SHORTS_SELECTOR: `div.style-scope.ytd-rich-item-renderer,
 ytm-shorts-lockup-view-model`,
 
@@ -1227,19 +1229,51 @@ ytm-shorts-lockup-view-model`,
    * Make a GET request. Its result will be cached in sessionStorage and will return same promise for parallel requests.
    * @param {string} url - The URL to fetch data from
    * @param {string} postData - Optional. If passed, will make a POST request with this data
+   * @param {object} headersData - Optional. Headers to be sent with the request, defaults to {"content-type": "application/json"}
    * @param {boolean} doNotCache - Optional. If true, the result will not be cached in sessionStorage, only same promise will be returned for parallel requests
-   * @returns
+   * @param {string} cacheDotNotationProperty - Optional. Specify the property name to extract from the response data json for limited caching
+   *                       (e.g. "title" to cache only the title of the response data or "videoDetails.title" to cache the title of the object videoDetails).
+   *                       If not specified, and doNotCache is false, the whole response data will be cached
+   *                       NOTE: Must be a valid property of the response data json starting from the root level. Use "." for nested properties.
+   *                       If the property is not found, it will cache null.
+   *                       When cached by this cacheDotNotationProperty, when retieved "data" will be null and value will be set in "cachedWithDotNotation" property
+   * @returns { response: Response, data: any, cachedWithDotNotation: any } - The response object and the data from the response
    */
   cachedRequest: async function cachedRequest(
     url,
     postData = null,
+    headersData = { "content-type": "application/json" },
     doNotCache = false,
+    cacheDotNotationProperty = null,
   ) {
-    const cacheKey = url + "|" + postData;
-    const storedResponse =
-      window.YoutubeAntiTranslate.getSessionCache(cacheKey);
+    const cacheKey = url + "|" + postData + "|" + cacheDotNotationProperty;
+    const storedResponse = this.getSessionCache(cacheKey);
     if (storedResponse) {
-      return storedResponse;
+      if (cacheDotNotationProperty) {
+        return {
+          response: new Response(
+            {
+              data: null,
+              cachedWithDotNotation: storedResponse,
+            },
+            { status: storedResponse.status || 200 },
+          ),
+          data: null,
+          cachedWithDotNotation: storedResponse,
+        };
+      } else {
+        return {
+          response: new Response(
+            {
+              data: storedResponse,
+              cachedWithDotNotation: null,
+            },
+            { status: storedResponse.status || 200 },
+          ),
+          data: storedResponse,
+          cachedWithDotNotation: null,
+        };
+      }
     }
 
     if (pendingRequests.has(cacheKey)) {
@@ -1250,15 +1284,28 @@ ytm-shorts-lockup-view-model`,
       try {
         const response = await fetch(url, {
           method: postData ? "POST" : "GET",
-          headers: { "content-type": "application/json" },
+          headers: headersData,
           body: postData ? postData : undefined,
         });
         if (!response.ok) {
-          if (response.status === 404 || response.status === 401) {
+          if (response.status === 404) {
             if (!doNotCache) {
-              window.YoutubeAntiTranslate.setSessionCache(cacheKey, null);
+              this.setSessionCache(cacheKey, null);
             }
             return null;
+          } else if (response.status === 401) {
+            if (!doNotCache) {
+              if (url.includes("oembed?url=")) {
+                // 401 on youtube.com/oembed will not resolve so we actually cache a 401 response so that we do not retry
+                this.setSessionCache(cacheKey, {
+                  title: undefined,
+                  status: 401,
+                });
+              } else {
+                this.setSessionCache(cacheKey, null);
+              }
+            }
+            return { response: response, data: null };
           }
           throw new Error(
             `HTTP error! status: ${response.status}, while fetching: ${url}`,
@@ -1266,14 +1313,22 @@ ytm-shorts-lockup-view-model`,
         }
         const data = await response.json();
         if (!doNotCache) {
-          window.YoutubeAntiTranslate.setSessionCache(cacheKey, data);
+          if (cacheDotNotationProperty) {
+            this.setSessionCache(
+              cacheKey,
+              this.getPropertyByDotNotation(data, cacheDotNotationProperty) ||
+                null,
+            );
+          } else {
+            this.setSessionCache(cacheKey, data);
+          }
         }
-        return data;
+        return { response: response, data: data };
       } catch (error) {
-        window.YoutubeAntiTranslate.logWarning("Error fetching:", error);
+        this.logWarning("Error fetching:", error);
         // Cache null even on general fetch error to prevent immediate retries for the same failing URL
         if (!doNotCache) {
-          window.YoutubeAntiTranslate.setSessionCache(cacheKey, null);
+          this.setSessionCache(cacheKey, null);
         }
         return null;
       } finally {
@@ -1283,5 +1338,168 @@ ytm-shorts-lockup-view-model`,
 
     pendingRequests.set(cacheKey, requestPromise);
     return requestPromise;
+  },
+
+  /**
+   * Converts a value to a JSON hierarchy based on dot notation properties.
+   * @param {any} value - The value to convert.
+   * @param {string} dotNotationProperty - The dot notation property to create the hierarchy
+   * @returns {object} - The resulting JSON hierarchy.
+   */
+  jsonHierarchy: function (value, dotNotationProperty) {
+    // If no dots, just return { property: value }
+    if (!dotNotationProperty.includes(".")) {
+      return { [dotNotationProperty]: value };
+    }
+
+    // Split by dots
+    const keys = dotNotationProperty.split(".");
+    const result = {};
+    let current = result;
+
+    // Iterate through keys
+    keys.forEach((key, index) => {
+      if (index === keys.length - 1) {
+        // Last key: assign the value
+        current[key] = value;
+      } else {
+        // Create an empty object and go deeper
+        current[key] = {};
+        current = current[key];
+      }
+    });
+
+    return result;
+  },
+
+  /**
+   * Gets a property from a JSON object using dot notation.
+   * @param {object} json - The JSON object to search.
+   * @param {string} dotNotationProperty - The dot notation property with hierarchy to retrieve.
+   * @returns {any|null} - The value of the property or null if not found
+   * */
+  getPropertyByDotNotation: function (json, dotNotationProperty) {
+    if (!dotNotationProperty) {
+      return null;
+    }
+    if (typeof json !== "object" || json === null) {
+      return null;
+    }
+
+    const keys = dotNotationProperty.split(".");
+    let current = json;
+
+    for (const key of keys) {
+      if (current && Object.prototype.hasOwnProperty.call(current, key)) {
+        current = current[key];
+      } else {
+        return null; // Path doesn't exist
+      }
+    }
+    return current;
+  },
+
+  /**
+   * Extracts the YouTube video ID from a given URL.
+   * Supports /watch?v=, /shorts/, and full URLs.
+   * @param {string} url
+   * @returns {string|null}
+   */
+  extractVideoIdFromUrl: function (url) {
+    try {
+      const u = new URL(url, window.location.origin);
+      if (u.pathname === "/watch") {
+        return u.searchParams.get("v");
+      }
+      if (u.pathname.startsWith("/shorts/")) {
+        return u.pathname.split("/")[2] || null;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  },
+
+  getVideoTitleFromYoutubeI: async function (videoId) {
+    const body = {
+      context: {
+        client: {
+          clientName: this.isMobile() ? "MWEB" : "WEB",
+          clientVersion: "2.20250731.09.00",
+        },
+      },
+      videoId,
+    };
+
+    const headers = await this.getYoutubeIHeadersWithCredentials();
+
+    const response = await this.cachedRequest(
+      `https://${this.isMobile() ? "m" : "www"}.youtube.com/youtubei/v1/player?prettyPrint=false`,
+      JSON.stringify(body),
+      headers,
+      false,
+      "videoDetails.title",
+    );
+    const title =
+      response?.cachedWithDotNotation ||
+      response?.data?.videoDetails?.title ||
+      null;
+    if (title) {
+      return { response: response.response, data: { title: title } };
+    }
+    return { response: response?.response, data: null };
+  },
+
+  getSAPISID: function () {
+    const match = document.cookie.match(/SAPISID=([^\s;]+)/);
+    return match ? match[1] : null;
+  },
+
+  getSAPISIDHASH: async function (
+    origin = this.isMobile()
+      ? "https://m.youtube.com"
+      : "https://www.youtube.com",
+  ) {
+    const sapisid = this.getSAPISID();
+    if (!sapisid) {
+      this.logWarning("SAPISID cookie not found.");
+      return null;
+    }
+
+    const timestamp = Math.floor(Date.now() / 1000);
+    const message = `${timestamp} ${sapisid} ${origin}`;
+
+    // SHA1 function (uses SubtleCrypto)
+    async function sha1Hash(msg) {
+      const encoder = new TextEncoder();
+      const data = encoder.encode(msg);
+      const hashBuffer = await crypto.subtle.digest("SHA-1", data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+    }
+
+    const hash = await sha1Hash(message);
+    return `SAPISIDHASH ${timestamp}_${hash}`;
+  },
+
+  getYoutubeIHeadersWithCredentials: async function () {
+    const sapisidhash = await this.getSAPISIDHASH();
+    if (!sapisidhash) {
+      this.logWarning(
+        "getYoutubeIHeadersWithCredentials: SAPISID not found, user not logged in, returning default headers",
+      );
+      return {
+        "Content-Type": "application/json",
+      };
+    }
+    return {
+      "Content-Type": "application/json",
+      Authorization: sapisidhash,
+      Origin: this.isMobile()
+        ? "https://m.youtube.com"
+        : "https://www.youtube.com",
+      "X-Youtube-Client-Name": "1",
+      "X-Youtube-Client-Version": "2.20250731.09.00",
+    };
   },
 };

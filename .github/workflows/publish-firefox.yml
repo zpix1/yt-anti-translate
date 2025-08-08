@@ -63,6 +63,9 @@ jobs:
       - uses: actions/setup-node@v2-beta
         with:
           node-version: "18"
+      
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Download bundle artifact
         uses: actions/download-artifact@v4
@@ -83,20 +86,48 @@ jobs:
             echo "channel=listed" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Sign and upload step
+      - name: Sign and upload step # max 10 min if human review is triggered
+        id: sign_step
+        continue-on-error: true
         run: |-
           unzip firefox-extension.zip -d .
           cd dist
-          web-ext sign --channel=${{ steps.determine-channel.outputs.channel }} --api-key="${{ secrets.AMO_JWT_ISSUER }}" --api-secret="${{ secrets.AMO_JWT_SECRET }}"
+
+          set +e  # disable fail-on-error to allow timeout exit code to be captured
+          timeout 600 \
+            web-ext sign --channel=${{ steps.determine-channel.outputs.channel }} \
+            --api-key="${{ secrets.AMO_JWT_ISSUER }}" \
+            --api-secret="${{ secrets.AMO_JWT_SECRET }}"
+          status=$?
+          set -e  # restore default fail-on-error behavior
+
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+
+      - name: Set Firefox for Android compatibility & approval_notes
+        # Also run on timeout of "Sign and upload step" so that we provide the
+        # necessary information for the AMO review team
+        if: steps.sign_step.outputs.status == '0' || steps.sign_step.outputs.status == '124'
+        run: |
+          npm install jsonwebtoken@9.0.2 dotenv@16.5.0
+          node .github/workflows/scripts/mozilla_amo_version_patch.js
+        env:
+          AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
+          AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+          VERSION: ${{ needs.build-firefox-extension.outputs.version }}
+          EXTENSION_SLUG: "youtube-anti-translate-mv3"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
 
       - name: Archive signed Firefox extension
         uses: actions/upload-artifact@v4
+        if: steps.sign_step.outputs.status == '0'
         with:
           name: youtube_anti_translate_mv3-signed.xpi
           path: dist/web-ext-artifacts/youtube_anti_translate_mv3-*.xpi
 
       - name: Update and Publish GitHub Release
         uses: ncipollo/release-action@v1
+        if: steps.sign_step.outputs.status == '0'
         with:
           allowUpdates: true
           updateOnlyUnreleased: true

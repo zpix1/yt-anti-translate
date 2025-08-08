@@ -119,9 +119,10 @@ async function getChannelBrandingWithYoutubeI(ucid = null) {
   const body = {
     context: {
       client: {
-        clientName: "WEB",
+        clientName: window.YoutubeAntiTranslate.isMobile() ? "MWEB" : "WEB",
         clientVersion: "2.20250527.00.00",
-        hl: "lo",
+        hl: "lo", // Using "Lao" as default that is an unsupported (but valid) language of youtube
+        // That always get the original language as a result
       },
     },
     browseId: ucid,
@@ -136,23 +137,24 @@ async function getChannelBrandingWithYoutubeI(ucid = null) {
     return storedResponse;
   }
 
-  const browse = "https://www.youtube.com/youtubei/v1/browse?prettyPrint=false";
-  const json = await window.YoutubeAntiTranslate.cachedRequest(
+  const browse = `https://${window.YoutubeAntiTranslate.isMobile() ? "m" : "www"}.youtube.com/youtubei/v1/browse?prettyPrint=false`;
+  const response = await window.YoutubeAntiTranslate.cachedRequest(
     browse,
     JSON.stringify(body),
+    await window.YoutubeAntiTranslate.getYoutubeIHeadersWithCredentials(),
     // As it might take too much space
     true,
   );
 
-  if (!json) {
+  if (!response?.data) {
     window.YoutubeAntiTranslate.logWarning(
       `Failed to fetch ${browse} or parse response`,
     );
     return;
   }
 
-  const hdr = json.header?.pageHeaderRenderer;
-  const metadata = json.metadata?.channelMetadataRenderer;
+  const hdr = response.data.header?.pageHeaderRenderer;
+  const metadata = response.data.metadata?.channelMetadataRenderer;
 
   const result = {
     title: metadata?.title, // channel name
@@ -644,6 +646,27 @@ function updateSearchResultDescriptionContent(container, originalBrandingData) {
   }
 }
 
+function updateSearchResultChannelAuthor(container, originalBrandingData) {
+  if (!originalBrandingData?.title) {
+    return;
+  }
+
+  const authorTextContainer = container.querySelector(
+    `#channel-title yt-formatted-string,
+    h4.compact-media-item-headline > .yt-core-attributed-string`,
+  );
+  if (!authorTextContainer) {
+    window.YoutubeAntiTranslate.logDebug(
+      `No search result channel author container found`,
+    );
+    return;
+  }
+
+  if (authorTextContainer.textContent !== originalBrandingData.title) {
+    authorTextContainer.textContent = originalBrandingData.title;
+  }
+}
+
 async function getChannelUCIDFromHref(href) {
   if (!href) {
     return null;
@@ -672,7 +695,9 @@ async function getChannelUCIDFromHref(href) {
  */
 async function restoreOriginalBrandingSearchResults() {
   const channelRenderers = window.YoutubeAntiTranslate.getAllVisibleNodes(
-    document.querySelectorAll("ytd-channel-renderer"),
+    document.querySelectorAll(
+      "ytd-channel-renderer, ytm-compact-channel-renderer",
+    ),
     true,
     20,
   );
@@ -684,7 +709,9 @@ async function restoreOriginalBrandingSearchResults() {
   const tasks = channelRenderers.map(async (renderer) => {
     const linkElement =
       renderer.querySelector("a.channel-link") ||
-      renderer.querySelector("a#main-link");
+      renderer.querySelector("a#main-link") ||
+      renderer.querySelector("a.compact-media-item-image") ||
+      renderer.querySelector("a.compact-media-item-metadata-content");
     if (!linkElement) {
       return;
     }
@@ -700,6 +727,7 @@ async function restoreOriginalBrandingSearchResults() {
     }
 
     updateSearchResultDescriptionContent(renderer, originalBrandingData);
+    updateSearchResultChannelAuthor(renderer, originalBrandingData);
   });
 
   await Promise.allSettled(tasks);
