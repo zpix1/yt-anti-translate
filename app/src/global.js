@@ -827,7 +827,7 @@ ytm-shorts-lockup-view-model`,
     // Group 6: Mention has prefix "@" and possibly space `(?:^|\s)@([\w\-]{3,100})`
     // Group 7: Mention only `([\w\-]{3,100})`
     const combinedPattern =
-      /(https?:\/\/[^\s]+)|((?:^|\s)((?:\d{1,2}:)?\d{1,2}:\d{2}))(?=\s|$)|((?:^|\s)#([\p{L}\p{N}_\p{Script=Han}-]{1,50}))|((?:^|\s)@([\w\-]{3,100}))/gu;
+      /(https?:\/\/[^\s]+)|((?:^|\s)((?:\d{1,2}:)?\d{1,2}:\d{2}))(?=\s|$)|((?:^|\s)#([A-Za-z0-9_\-\u0000-\uffff]{1,50}))|((?:^|\s)@([\w\-]{3,100}))/g;
 
     let lastIndex = 0;
     let match;
