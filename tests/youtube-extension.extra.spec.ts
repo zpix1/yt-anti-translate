@@ -101,7 +101,6 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
 
     // Allow enough time for the extension to fetch and update names
     await expect(collabItems.first()).toBeAttached({ timeout: 20000 });
-    await page.waitForTimeout(3000);
 
     const names = (await collabItems.allTextContents()).map((n) => (n || "").trim());
     expect(names.length).toBeGreaterThan(0);
