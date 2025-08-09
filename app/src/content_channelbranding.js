@@ -1,4 +1,3 @@
-/* eslint-disable no-unreachable */
 // Support both desktop and mobile YouTube layouts
 const CHANNELBRANDING_HEADER_SELECTOR =
   "#page-header-container #page-header .page-header-view-model-wiz__page-header-headline-info, .page-header-view-model-wiz__page-header-headline-info";
@@ -571,7 +570,7 @@ function updateBrandingAboutDescriptionContent(
     if (
       descriptionTextContainer.hasChildNodes() &&
       descriptionTextContainer.firstChild.textContent !==
-      formattedContent.textContent
+        formattedContent.textContent
     ) {
       window.YoutubeAntiTranslate.replaceContainerContent(
         descriptionTextContainer,
@@ -753,7 +752,9 @@ async function restoreCollaboratorsDialog() {
     return;
   }
 
-  const listItems = dialog.querySelectorAll("yt-list-item-view-model.yt-list-item-view-model-wiz");
+  const listItems = dialog.querySelectorAll(
+    "yt-list-item-view-model.yt-list-item-view-model-wiz",
+  );
   if (!listItems || listItems.length === 0) {
     return;
   }
@@ -784,7 +785,12 @@ async function restoreCollaboratorsDialog() {
     }
 
     // Replace only the first text node inside the link to preserve icons/badges
-    if (!window.YoutubeAntiTranslate.isStringEqual(linkEl.textContent?.trim(), branding.title)) {
+    if (
+      !window.YoutubeAntiTranslate.isStringEqual(
+        linkEl.textContent?.trim(),
+        branding.title,
+      )
+    ) {
       window.YoutubeAntiTranslate.replaceTextOnly(linkEl, branding.title);
     }
 
