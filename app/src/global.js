@@ -762,7 +762,9 @@ ytm-shorts-lockup-view-model`,
     const span = document.createElement("span");
     span.className = "yt-core-attributed-string--link-inherit-color";
     span.dir = "auto";
-    span.style.color = this.isDarkTheme() ? "rgb(62, 166, 255)" : "rgb(6, 95, 212)";
+    span.style.color = this.isDarkTheme()
+      ? "rgb(62, 166, 255)"
+      : "rgb(6, 95, 212)";
 
     // Create the anchor element
     const link = document.createElement("a");
@@ -780,11 +782,11 @@ ytm-shorts-lockup-view-model`,
   },
 
   /**
-  * Creates a styled link for hashtag or mention
-  * @param {"hashtag"|"mention"} type - Type of link to create
-  * @param {string} value - Hashtag (without #) or mention (without @)
-  * @returns {HTMLElement} - Span element containing the styled link
-  */
+   * Creates a styled link for hashtag or mention
+   * @param {"hashtag"|"mention"} type - Type of link to create
+   * @param {string} value - Hashtag (without #) or mention (without @)
+   * @returns {HTMLElement} - Span element containing the styled link
+   */
   createTagLink: function (type, value) {
     this.logDebug(`createTagLink called with: ${type}: ${value}`);
 
@@ -792,7 +794,9 @@ ytm-shorts-lockup-view-model`,
     const span = document.createElement("span");
     span.className = "yt-core-attributed-string--link-inherit-color";
     span.dir = "auto";
-    span.style.color = this.isDarkTheme() ? "rgb(62, 166, 255)" : "rgb(6, 95, 212)";
+    span.style.color = this.isDarkTheme()
+      ? "rgb(62, 166, 255)"
+      : "rgb(6, 95, 212)";
 
     // Create the anchor element
     const link = document.createElement("a");
@@ -808,7 +812,7 @@ ytm-shorts-lockup-view-model`,
     }
     link.target = "";
     link.setAttribute("force-new-state", "true");
-    
+
     span.appendChild(link);
     return span;
   },
@@ -829,7 +833,7 @@ ytm-shorts-lockup-view-model`,
     // Group 6: Mention has prefix "@" and possibly space `(?:^|\s)@([\w\-]{3,100})`
     // Group 7: Mention only `([\w\-]{3,100})`
     const combinedPattern =
-      /(https?:\/\/[^\s]+)|((?:^|\s)((?:\d{1,2}:)?\d{1,2}:\d{2}))(?=\s|$)|((?:^|\s)#([A-Za-z0-9_\-\u0000-\uffff]{1,50}))|((?:^|\s)@([\w\-]{3,100}))/g;
+      /(https?:\/\/[^\s]+)|((?:^|\s)((?:\d{1,2}:)?\d{1,2}:\d{2}))(?=\s|$)|((?:^|\s)#([A-Za-z0-9_\-\u0080-\u02af\u0370-\u1fff\u2e80-\u2fdf\u3040-\ufdff]{1,50}))|((?:^|\s)@([\w-]{3,100}))/g;
 
     let lastIndex = 0;
     let match;
