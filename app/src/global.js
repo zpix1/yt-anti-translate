@@ -189,48 +189,102 @@ ytm-shorts-lockup-view-model`,
    * Creates a debounced version of a function that will be executed at most once
    * during the given wait interval. The wrapped function is invoked immediately
    * on the first call and then suppressed for the remainder of the interval so
-   * that the real function runs **no more than once every `waitMinMs` milliseconds**.
+   * that the real function runs no more than once every `wait` milliseconds.
    *
-   * Uses `requestAnimationFrame` to align with the browser's repaint cycle.
+   * Uses `requestAnimationFrame` when the tab is visible, and falls back to
+   * `setTimeout` when the document is hidden or `rAF` is unavailable.
    *
    * @param {Function} func - The function to debounce/throttle.
-   * @param {number} waitMinMs - The minimum time between invocations in milliseconds.
+   * @param {number} wait - The minimum time between invocations in milliseconds.
    * @returns {Function} A debounced function.
    */
   debounce: function (func, wait = 30) {
     let isScheduled = false;
     let lastExecTime = 0;
+    let rafId = 0;
+    let timeoutId = 0;
+    let lastArgs = null;
+    let lastContext = null;
 
-    function tick(time, context, args) {
-      if (!isScheduled) {
+    const clearScheduled = () => {
+      if (typeof cancelAnimationFrame === "function" && rafId) {
+        cancelAnimationFrame(rafId);
+        rafId = 0;
+      }
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        timeoutId = 0;
+      }
+    };
+
+    const run = (context, args, now) => {
+      func.apply(context, args);
+      lastExecTime = now;
+      isScheduled = false;
+      clearScheduled();
+    };
+
+    const schedule = (context, args) => {
+      lastContext = context;
+      lastArgs = args;
+      if (isScheduled) {
         return;
       }
+      isScheduled = true;
 
-      const elapsed = time - lastExecTime;
+      const scheduleWithTimeout = () => {
+        const now =
+          typeof performance !== "undefined" && performance.now
+            ? performance.now()
+            : Date.now();
+        const remaining = Math.max(0, wait - (now - lastExecTime));
+        timeoutId = setTimeout(() => {
+          const ts =
+            typeof performance !== "undefined" && performance.now
+              ? performance.now()
+              : Date.now();
+          run(lastContext, lastArgs, ts);
+        }, remaining);
+      };
 
-      if (elapsed >= wait) {
-        func.apply(context, args);
-        lastExecTime = time;
-        isScheduled = false; // allow next schedule
-      } else {
-        requestAnimationFrame((t) => tick(t, context, args));
-      }
-    }
+      const useRaf =
+        typeof document !== "undefined" &&
+        !document.hidden &&
+        typeof requestAnimationFrame === "function";
 
-    return function (...args) {
-      if (!isScheduled) {
-        isScheduled = true;
-        requestAnimationFrame((time) => {
-          if (lastExecTime === 0) {
-            // first invocation: run immediately
-            func.apply(this, args);
-            lastExecTime = time;
-            isScheduled = false;
+      if (useRaf) {
+        rafId = requestAnimationFrame((time) => {
+          const now =
+            typeof time === "number"
+              ? time
+              : typeof performance !== "undefined" && performance.now
+                ? performance.now()
+                : Date.now();
+          const elapsed = now - lastExecTime;
+          if (elapsed >= wait) {
+            run(lastContext, lastArgs, now);
           } else {
-            tick(time, this, args);
+            // Fallback to timeout for precise delay and to survive backgrounding
+            clearScheduled();
+            scheduleWithTimeout();
           }
         });
+      } else {
+        scheduleWithTimeout();
       }
+    };
+
+    return function (...args) {
+      const now =
+        typeof performance !== "undefined" && performance.now
+          ? performance.now()
+          : Date.now();
+      if (lastExecTime === 0) {
+        // First invocation: run immediately
+        run(this, args, now);
+        return;
+      }
+      schedule(this, args);
     };
   },
 

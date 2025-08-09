@@ -63,6 +63,66 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     );
   });
 
+  test("Collaborators popup on video opens via #upload-info and retains original names (th-TH)", async ({
+    browserNameWithExtensions,
+    localeString,
+  }, testInfo) => {
+    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
+
+    const context = await createBrowserContext(browserNameWithExtensions);
+
+    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
+      context,
+      browserNameWithExtensions,
+      localeString,
+    );
+
+    // Navigate to the provided video
+    await loadPageAndVerifyAuth(
+      page,
+      "https://www.youtube.com/watch?v=Z4hVGCWH1Kc",
+      browserNameWithExtensions,
+    );
+
+    // Wait for the upload info block, scroll into view, and click as requested
+    const uploadInfo = page.locator("#channel-name").first();
+    await expect(uploadInfo).toBeVisible({ timeout: 20000 });
+    await uploadInfo.scrollIntoViewIfNeeded();
+    await uploadInfo.click();
+    try {
+      await page.waitForLoadState("networkidle", { timeout: 5000 });
+    } catch {}
+    await page.waitForTimeout(1000);
+
+    // Expect a dialog to appear listing collaborators
+    const collabItems = page.locator(
+      "yt-dialog-view-model .yt-list-item-view-model-wiz__title-wrapper a.yt-core-attributed-string__link",
+    );
+
+    // Allow enough time for the extension to fetch and update names
+    await expect(collabItems.first()).toBeAttached({ timeout: 20000 });
+
+    const names = (await collabItems.allTextContents()).map((n) =>
+      (n || "").trim(),
+    );
+    expect(names.length).toBeGreaterThan(0);
+
+    // Validate that collaborator names are not in Thai (i.e., un-translated)
+    const thaiRegex = /[\u0E00-\u0E7F]/;
+    for (const name of names) {
+      expect(thaiRegex.test(name)).toBeFalsy();
+    }
+
+    // Screenshot for visual verification
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-collaborators-dialog-from-upload-info-test.png`,
+    });
+
+    expect(consoleMessageCountContainer.count).toBeLessThan(2000);
+
+    await context.close();
+  });
+
   async function channelBrandingAboutTest(
     context: BrowserContext | Browser,
     browserNameWithExtensions: string,

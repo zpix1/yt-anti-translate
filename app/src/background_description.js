@@ -600,7 +600,7 @@ function fetchOriginalAuthor() {
     return null;
   }
 
-  return playerResponse.videoDetails?.author || null;
+  return playerResponse?.videoDetails?.author || null;
 }
 
 /**
