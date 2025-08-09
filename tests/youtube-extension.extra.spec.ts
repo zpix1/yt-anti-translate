@@ -91,18 +91,20 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     await uploadInfo.click();
     try {
       await page.waitForLoadState("networkidle", { timeout: 5000 });
-    } catch { }
+    } catch {}
     await page.waitForTimeout(1000);
 
     // Expect a dialog to appear listing collaborators
     const collabItems = page.locator(
-      'yt-dialog-view-model .yt-list-item-view-model-wiz__title-wrapper a.yt-core-attributed-string__link',
+      "yt-dialog-view-model .yt-list-item-view-model-wiz__title-wrapper a.yt-core-attributed-string__link",
     );
 
     // Allow enough time for the extension to fetch and update names
     await expect(collabItems.first()).toBeAttached({ timeout: 20000 });
 
-    const names = (await collabItems.allTextContents()).map((n) => (n || "").trim());
+    const names = (await collabItems.allTextContents()).map((n) =>
+      (n || "").trim(),
+    );
     expect(names.length).toBeGreaterThan(0);
 
     // Validate that collaborator names are not in Thai (i.e., un-translated)
@@ -182,7 +184,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
       .click();
     try {
       await page.waitForLoadState("networkidle", { timeout: 5000 });
-    } catch { }
+    } catch {}
     await page.waitForTimeout(500);
 
     // --- Check About Popup ---
@@ -219,7 +221,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
       .click();
     try {
       await page.waitForLoadState("networkidle", { timeout: 5000 });
-    } catch { }
+    } catch {}
     await page.waitForTimeout(500);
 
     // --- Open About Popup via more links ---
@@ -233,7 +235,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
       .click();
     try {
       await page.waitForLoadState("networkidle", { timeout: 5000 });
-    } catch { }
+    } catch {}
     await page.waitForTimeout(500);
 
     // --- Check About A second time via the moreLinks Popup ---
@@ -270,7 +272,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
       .click();
     try {
       await page.waitForLoadState("networkidle", { timeout: 5000 });
-    } catch { }
+    } catch {}
     await page.waitForTimeout(500);
 
     // Take a screenshot for visual verification
