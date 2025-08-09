@@ -759,7 +759,7 @@ async function restoreCollaboratorsDialog() {
     return;
   }
 
-  const tasks = listItems.map(async (item) => {
+  const tasks = Array.from(listItems).map(async (item) => {
     if (item.getAttribute("data-ytat-collab-untranslated") === "true") {
       return;
     }
