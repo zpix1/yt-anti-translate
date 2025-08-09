@@ -167,6 +167,7 @@ async function untranslateCurrentVideo() {
     originalNodeSelector,
     () => document.location.href,
     "div",
+    false,
     true,
   );
 }
@@ -255,6 +256,7 @@ async function untranslateCurrentMobileFeaturedVideoChannel() {
     originalNodeSelector,
     (el) => el.closest("a").href,
     "span",
+    false,
     true,
   );
 }
@@ -265,6 +267,7 @@ async function untranslateCurrentMobileFeaturedVideoChannel() {
  * @param {string} originalNodeSelector
  * @param {Function} getUrl
  * @param {string} createElementTag
+ * @param {boolean} requirePlayer
  * @param {boolean} shouldSetDocumentTitle
  * @returns
  */
@@ -273,9 +276,11 @@ async function createOrUpdateUntranslatedFakeNode(
   originalNodeSelector,
   getUrl,
   createElementTag,
+  requirePlayer = true,
   shouldSetDocumentTitle = false,
 ) {
   if (
+    !requirePlayer ||
     window.YoutubeAntiTranslate.getFirstVisible(
       document.querySelectorAll(
         window.YoutubeAntiTranslate.getPlayerSelector(),
