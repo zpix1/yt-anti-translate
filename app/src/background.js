@@ -484,13 +484,7 @@ async function untranslateOtherVideos(intersectElements = null) {
         }
 
         // Check if current widget is a playlist, not video
-        if (
-          // Playlists include a "list=" parameter in their href
-          linkElement.href.includes("list=") &&
-          // Playlist do not include an "index=" parameter in their href
-          // Only videos in playlists include an "index=" parameter
-          !linkElement.href.includes("index=")
-        ) {
+        if (video.querySelector('a[href*="/playlist?"]')) {
           return;
         }
 
