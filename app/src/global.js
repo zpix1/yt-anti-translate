@@ -740,6 +740,15 @@ ytm-shorts-lockup-view-model`,
   },
 
   /**
+   * Gets current theme
+   * link color in dark theme: rgb(62, 166, 255)
+   * link color in light theme: rgb(6, 95, 212)
+   */
+  isDarkTheme: function () {
+    return document.documentElement.hasAttribute("dark");
+  },
+
+  /**
    * Creates a timecode link element with proper YouTube styling
    * @param {string} timecode - Timecode string (e.g., "05:36")
    * @returns {HTMLElement} - Span element containing the timecode link
@@ -753,7 +762,9 @@ ytm-shorts-lockup-view-model`,
     const span = document.createElement("span");
     span.className = "yt-core-attributed-string--link-inherit-color";
     span.dir = "auto";
-    span.style.color = "rgb(62, 166, 255)";
+    span.style.color = this.isDarkTheme()
+      ? "rgb(62, 166, 255)"
+      : "rgb(6, 95, 212)";
 
     // Create the anchor element
     const link = document.createElement("a");
@@ -771,6 +782,42 @@ ytm-shorts-lockup-view-model`,
   },
 
   /**
+   * Creates a styled link for hashtag or mention
+   * @param {"hashtag"|"mention"} type - Type of link to create
+   * @param {string} value - Hashtag (without #) or mention (without @)
+   * @returns {HTMLElement} - Span element containing the styled link
+   */
+  createTagLink: function (type, value) {
+    this.logDebug(`createTagLink called with: ${type}: ${value}`);
+
+    // Create the container span
+    const span = document.createElement("span");
+    span.className = "yt-core-attributed-string--link-inherit-color";
+    span.dir = "auto";
+    span.style.color = this.isDarkTheme()
+      ? "rgb(62, 166, 255)"
+      : "rgb(6, 95, 212)";
+
+    // Create the anchor element
+    const link = document.createElement("a");
+    link.className =
+      "yt-core-attributed-string__link yt-core-attributed-string__link--call-to-action-color";
+    link.tabIndex = "0";
+    if (type === "hashtag") {
+      link.href = `/hashtag/${encodeURIComponent(value)}`;
+      link.textContent = `#${value}`;
+    } else if (type === "mention") {
+      link.href = `/@${value}`;
+      link.textContent = `@${value}`;
+    }
+    link.target = "";
+    link.setAttribute("force-new-state", "true");
+
+    span.appendChild(link);
+    return span;
+  },
+
+  /**
    * Converts URLs and timecodes in text to clickable links
    * @param {string} text - Text that may contain URLs and timecodes
    * @returns {HTMLElement} - Span element with clickable links
@@ -781,8 +828,12 @@ ytm-shorts-lockup-view-model`,
     // Group 1: URL (https?:\/\/[^\s]+)
     // Group 2: Full timecode match including preceding space/start of line `(?:^|\s)((?:\d{1,2}:)?\d{1,2}:\d{2})`
     // Group 3: The actual timecode `(\d{1,2}:)?\d{1,2}:\d{2}`
+    // Group 4: Hashtag has prefix "#" and possibly space `(?:^|\s)#([\p{L}\p{N}_\p{Script=Han}-]{1,50})`
+    // Group 5: Hashtag only `#([\p{L}\p{N}_\p{Script=Han}-]{1,50})`
+    // Group 6: Mention has prefix "@" and possibly space `(?:^|\s)@([\w\-]{3,100})`
+    // Group 7: Mention only `([\w\-]{3,100})`
     const combinedPattern =
-      /(https?:\/\/[^\s]+)|((?:^|\s)((?:\d{1,2}:)?\d{1,2}:\d{2}))(?=\s|$)/g;
+      /(https?:\/\/[^\s]+)|((?:^|\s)((?:\d{1,2}:)?\d{1,2}:\d{2}))(?=\s|$)|((?:^|\s)#([A-Za-z0-9_\-\u0080-\u02af\u0370-\u1fff\u2e80-\u2fdf\u3040-\ufdff]{1,50}))|((?:^|\s)@([\w-]{3,100}))/g;
 
     let lastIndex = 0;
     let match;
@@ -792,6 +843,10 @@ ytm-shorts-lockup-view-model`,
       const urlMatch = match[1];
       const timecodeFullMatch = match[2]; // e.g., " 1:23:45" or "1:23:45" if at start
       const timecodeValue = match[3]; // e.g., "1:23:45"
+      const hashtagFullMatch = match[4]; // e.g., " #hashtag" or "#hashtag" if at start
+      const hashtag = match[5]; // e.g., "hashtag"
+      const mentionFullMatch = match[6]; // e.g., " @username" or "@username" if at start
+      const mention = match[7]; // e.g., "username"
 
       // Add text segment before the match
       if (match.index > lastIndex) {
@@ -818,6 +873,32 @@ ytm-shorts-lockup-view-model`,
         // Update lastIndex based on the full match length (including potential space)
         lastIndex = match.index + timecodeFullMatch.length;
         combinedPattern.lastIndex = lastIndex; // Important: update regex lastIndex
+        linkCount++;
+      } else if (hashtag) {
+        // It's a hashtag
+        // Add preceding space if it exists in hashtagFullMatch
+        if (hashtagFullMatch.startsWith(" ")) {
+          container.appendChild(document.createTextNode(" "));
+        }
+
+        const hashtagLink = this.createTagLink("hashtag", hashtag);
+        container.appendChild(hashtagLink);
+
+        lastIndex = match.index + hashtagFullMatch.length;
+        combinedPattern.lastIndex = lastIndex;
+        linkCount++;
+      } else if (mention) {
+        // It's a mention
+        // Add preceding space if it exists in mentionFullMatch
+        if (mentionFullMatch.startsWith(" ")) {
+          container.appendChild(document.createTextNode(" "));
+        }
+
+        const mentionLink = this.createTagLink("mention", mention);
+        container.appendChild(mentionLink);
+
+        lastIndex = match.index + mentionFullMatch.length;
+        combinedPattern.lastIndex = lastIndex;
         linkCount++;
       }
       // No else needed, as the regex ensures either group 1 or group 3 matched
