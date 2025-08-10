@@ -477,11 +477,7 @@ ytm-shorts-lockup-view-model`,
     const removeExclamationMarks = settings.removeExclamationMarks ?? false;
     const removeEmojis = settings.removeEmojis ?? false;
 
-    if ( 
-         titleFormatting === "0" &&
-         !removeExclamationMarks &&
-         !removeEmojis
-       ) {
+    if (titleFormatting === "0" && !removeExclamationMarks && !removeEmojis) {
       return inputStr;
     }
 
