@@ -18,9 +18,12 @@ It is much easier to use than its analogues (such as [YoutubeAutotranslateCancel
 
 - Restores original video titles on YouTube (Title Anti-Translation)
 - Restores original video descriptions on YouTube (can be toggled in settings "Untranslate description")
+- Restores original video chapters
 - Disables automatic audio (dubbing) translation (can be toggled in settings "Untranslate audio track")
 - Restores original channel branding header and about on YouTube (can be toggled in settings "Untranslate channel branding")
+- Restores original channels' names almost everywhere
 - Untranslates YouTube Shorts audio and titles
+- Works on m.youtube.com too (some mobile features are still unsupported and/or experimental)
 - Works automatically without any configuration
 
 ### Enhanced Features Reliability Option
