@@ -24,7 +24,7 @@ describe("YoutubeAntiTranslate.debounce", () => {
     vi.useFakeTimers();
     installRAFStub();
     // Ensure default visibility unless the test overrides it
-    Object.defineProperty(document, "hidden", {
+    Object.defineProperty(document, "visible", {
       value: false,
       configurable: true,
     });
@@ -37,6 +37,8 @@ describe("YoutubeAntiTranslate.debounce", () => {
 
   it("executes immediately and throttles subsequent calls when document is visible", () => {
     const fn = vi.fn();
+    const rafSpy = vi.spyOn(global, "requestAnimationFrame");
+
     const debounced = debounce(fn, 30);
 
     // First call runs immediately
@@ -54,6 +56,9 @@ describe("YoutubeAntiTranslate.debounce", () => {
     vi.advanceTimersByTime(20); // total 35ms > 30ms
     vi.runOnlyPendingTimers();
     expect(fn).toHaveBeenCalledTimes(2);
+
+    // Should have called requestAnimationFrame
+    expect(rafSpy).toHaveBeenCalled();
   });
 
   it("falls back to setTimeout when document is hidden", () => {
