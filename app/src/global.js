@@ -189,102 +189,64 @@ ytm-shorts-lockup-view-model`,
    * Creates a debounced version of a function that will be executed at most once
    * during the given wait interval. The wrapped function is invoked immediately
    * on the first call and then suppressed for the remainder of the interval so
-   * that the real function runs no more than once every `wait` milliseconds.
+   * that the real function runs **no more than once every `waitMinMs` milliseconds**.
    *
-   * Uses `requestAnimationFrame` when the tab is visible, and falls back to
-   * `setTimeout` when the document is hidden or `rAF` is unavailable.
+   * Uses `requestAnimationFrame` to align with the browser's repaint cycle.
    *
    * @param {Function} func - The function to debounce/throttle.
-   * @param {number} wait - The minimum time between invocations in milliseconds.
+   * @param {number} waitMinMs - The minimum time between invocations in milliseconds.
    * @returns {Function} A debounced function.
    */
   debounce: function (func, wait = 30) {
     let isScheduled = false;
     let lastExecTime = 0;
-    let rafId = 0;
-    let timeoutId = 0;
-    let lastArgs = null;
-    let lastContext = null;
-
-    const clearScheduled = () => {
-      if (typeof cancelAnimationFrame === "function" && rafId) {
-        cancelAnimationFrame(rafId);
-        rafId = 0;
-      }
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-        timeoutId = 0;
-      }
-    };
-
-    const run = (context, args, now) => {
-      func.apply(context, args);
-      lastExecTime = now;
-      isScheduled = false;
-      clearScheduled();
-    };
-
-    const schedule = (context, args) => {
-      lastContext = context;
-      lastArgs = args;
-      if (isScheduled) {
-        return;
-      }
-      isScheduled = true;
-
-      const scheduleWithTimeout = () => {
-        const now =
-          typeof performance !== "undefined" && performance.now
-            ? performance.now()
-            : Date.now();
-        const remaining = Math.max(0, wait - (now - lastExecTime));
-        timeoutId = setTimeout(() => {
-          const ts =
-            typeof performance !== "undefined" && performance.now
+    // Helper to schedule the next frame. Falls back to setTimeout when the
+    // document is in the background where requestAnimationFrame callbacks are
+    // throttled or do not fire at all.
+    function schedule(callback) {
+      if (document.hidden || typeof requestAnimationFrame === "undefined") {
+        return setTimeout(() => {
+          const now =
+            typeof performance !== "undefined" &&
+            typeof performance.now === "function"
               ? performance.now()
               : Date.now();
-          run(lastContext, lastArgs, ts);
-        }, remaining);
-      };
-
-      const useRaf =
-        typeof document !== "undefined" &&
-        !document.hidden &&
-        typeof requestAnimationFrame === "function";
-
-      if (useRaf) {
-        rafId = requestAnimationFrame((time) => {
-          const now =
-            typeof time === "number"
-              ? time
-              : typeof performance !== "undefined" && performance.now
-                ? performance.now()
-                : Date.now();
-          const elapsed = now - lastExecTime;
-          if (elapsed >= wait) {
-            run(lastContext, lastArgs, now);
-          } else {
-            // Fallback to timeout for precise delay and to survive backgrounding
-            clearScheduled();
-            scheduleWithTimeout();
-          }
-        });
-      } else {
-        scheduleWithTimeout();
+          callback(now);
+        }, 16); // Approx. one frame at 60fps
       }
-    };
+      return requestAnimationFrame(callback);
+    }
 
-    return function (...args) {
-      const now =
-        typeof performance !== "undefined" && performance.now
-          ? performance.now()
-          : Date.now();
-      if (lastExecTime === 0) {
-        // First invocation: run immediately
-        run(this, args, now);
+    function tick(time, context, args) {
+      if (!isScheduled) {
         return;
       }
-      schedule(this, args);
+
+      const elapsed = time - lastExecTime;
+
+      if (elapsed >= wait) {
+        func.apply(context, args);
+        lastExecTime = time;
+        isScheduled = false; // allow next schedule
+      } else {
+        schedule((t) => tick(t, context, args));
+      }
+    }
+
+    return function (...args) {
+      if (!isScheduled) {
+        isScheduled = true;
+        schedule((time) => {
+          if (lastExecTime === 0) {
+            // first invocation: run immediately
+            func.apply(this, args);
+            lastExecTime = time;
+            isScheduled = false;
+          } else {
+            tick(time, this, args);
+          }
+        });
+      }
     };
   },
 
