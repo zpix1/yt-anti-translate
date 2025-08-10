@@ -233,6 +233,50 @@
       .options:has(#audio-checkbox:not(:checked)) .option:nth-child(2) {
         opacity: 0.5;
       }
+
+      #title-formatting-label {
+        display: block;
+        margin-top: 10px;
+        padding-top: 5px;
+      }
+
+      #title-formatting {
+        margin-top: 4px;
+        margin-bottom: 2px;
+        width: 100%;
+        padding: 5px 8px;
+        font-size: 13px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        background-color: #f0f0f0;
+        color: #333;
+        box-sizing: border-box;
+        cursor: pointer;
+      }
+
+      #title-formatting:hover {
+        background-color: #e0e0e0;
+      }
+
+      #title-formatting:focus {
+        outline: none;
+        border-color: #008cba;
+      }
+
+      /* Dark mode match */
+      @media (prefers-color-scheme: dark) {
+        #title-formatting {
+          background-color: #2a2a2a;
+          color: #f0f0f0;
+          border: 1px solid #555;
+        }
+        #title-formatting:hover {
+          background-color: #3a3a3a;
+        }
+        #title-formatting:focus {
+          border-color: #66d9ef;
+        }
+      }
     </style>
   </head>
 
@@ -285,6 +329,25 @@
               </span>
               <input id="api-key-input" type="password" placeholder="Enter API key" />
               <button id="save-api-key-button" class="simple-button"><span id="save-api-key-text">Save API Key</span></button>
+            </div>
+            <div data-type="selector" data-sync="titleFormatting">
+              <label id="title-formatting-label"class="optionLabel" for="title-formatting">Untranslated titles formatting:</label>
+              <select id="title-formatting">
+                <option value="0">disabled</option>
+                <option value="1">Title Case</option>
+                <option value="2">Sentence case</option>
+                <option value="3">lower case</option>
+                <option value="4">First letter uppercase</option>
+                <option value="5">Capitalize Words</option>
+              </select>
+            </div>
+            <div class="option">
+              <span>Remove emojis from untranslated titles</span>
+              <input id="remove-emojis-checkbox" type="checkbox" />
+            </div>
+            <div class="option">
+              <span>Remove exclamation marks from untranslated titles</span>
+              <input id="remove-exclamation-marks-checkbox" type="checkbox" />
             </div>
           </details>
         </div>

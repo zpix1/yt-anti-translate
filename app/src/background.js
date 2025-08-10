@@ -110,7 +110,8 @@ async function untranslateCurrentShortVideo() {
         window.YoutubeAntiTranslate.logInfo(
           `Untranslating Short title: "${currentTitle}" -> "${realTitle}"`,
         );
-        translatedTitleElement.textContent = realTitle;
+        translatedTitleElement.textContent =
+          window.YoutubeAntiTranslate.formatString(realTitle);
         translatedTitleElement.setAttribute("data-ytat-untranslated", "true"); // Mark as done
 
         // Update page title too
@@ -118,11 +119,11 @@ async function untranslateCurrentShortVideo() {
           document.title = window.YoutubeAntiTranslate.stringReplaceWithOptions(
             document.title,
             currentTitle,
-            realTitle,
+            window.YoutubeAntiTranslate.formatString(realTitle),
           );
         } else {
           // Fallback if exact match fails (e.g. " Shorts" suffix)
-          document.title = `${realTitle} #shorts`; // Adjust format as needed
+          document.title = `${window.YoutubeAntiTranslate.formatString(realTitle)} #shorts`; // Adjust format as needed
         }
       } else {
         // Mark as done even if titles match or one is missing, to prevent re-checking
@@ -394,7 +395,8 @@ async function createOrUpdateUntranslatedFakeNode(
         existingDeArrowNode.textContent,
       )
     ) {
-      existingDeArrowNode.textContent = realTitle;
+      existingDeArrowNode.textContent =
+        window.YoutubeAntiTranslate.formatString(realTitle);
       if (window.YoutubeAntiTranslate.isVisible(existingDeArrowNode)) {
         return;
       }
@@ -415,7 +417,7 @@ async function createOrUpdateUntranslatedFakeNode(
         document.title = window.YoutubeAntiTranslate.stringReplaceWithOptions(
           document.title,
           cachedOldTitle,
-          realTitle,
+          window.YoutubeAntiTranslate.formatString(realTitle),
         );
       }
     }
@@ -451,7 +453,8 @@ async function createOrUpdateUntranslatedFakeNode(
       }
       newFakeNode.className = translatedElement.className;
       newFakeNode.id = fakeNodeID;
-      newFakeNode.textContent = realTitle;
+      newFakeNode.textContent =
+        window.YoutubeAntiTranslate.formatString(realTitle);
       if (!existingFakeNode) {
         newFakeNode.style.visibility =
           translatedElement.style?.visibility ?? "visible";
@@ -466,7 +469,8 @@ async function createOrUpdateUntranslatedFakeNode(
       translatedElement.style.visibility = "hidden";
       translatedElement.style.display = "none";
     } else if (fakeNode) {
-      fakeNode.textContent = realTitle;
+      fakeNode.textContent =
+        window.YoutubeAntiTranslate.formatString(realTitle);
     }
   }
 }
@@ -628,9 +632,11 @@ async function untranslateOtherVideos(intersectElements = null) {
                   currentTitle,
                 )
               ) {
+                const title =
+                  window.YoutubeAntiTranslate.formatString(originalTitle);
                 // Update both innerText and title attribute
-                titleElement.innerText = originalTitle;
-                titleElement.title = originalTitle;
+                titleElement.innerText = title;
+                titleElement.title = title;
                 if (!titleElement.classList.contains("cbCustomTitle")) {
                   titleElement.setAttribute(
                     "data-ytat-title_before_untranslate",
@@ -642,7 +648,8 @@ async function untranslateOtherVideos(intersectElements = null) {
               if (
                 linkElement.matches("a#video-title-link:not(.cbCustomTitle)")
               ) {
-                linkElement.title = originalTitle;
+                linkElement.title =
+                  window.YoutubeAntiTranslate.formatString(originalTitle);
               }
             } else {
               // console.debug(`Video title unchanged or element missing:`, { href: videoHref, originalTitle, currentTitle });
@@ -838,7 +845,8 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
                   currentTitle,
                 )
               ) {
-                titleElement.textContent = realTitle;
+                titleElement.textContent =
+                  window.YoutubeAntiTranslate.formatString(realTitle);
                 if (!titleElement.classList.contains("cbCustomTitle")) {
                   titleElement.setAttribute(
                     "data-ytat-title_before_untranslate",
@@ -848,7 +856,8 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
               }
               // Update title attribute if it exists (for tooltips)
               if (titleElement.hasAttribute("title")) {
-                titleElement.title = realTitle;
+                titleElement.title =
+                  window.YoutubeAntiTranslate.formatString(realTitle);
               }
               const titleA = shortElement.querySelector(
                 "a.shortsLockupViewModelHostEndpoint.shortsLockupViewModelHostOutsideMetadataEndpoint:not(.shortsLockupViewModelHostMetadataSubhead)",
@@ -871,7 +880,8 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
                     currentTitle,
                   )
                 ) {
-                  titleA.title = realTitle;
+                  titleA.title =
+                    window.YoutubeAntiTranslate.formatString(realTitle);
                 }
               }
               shortElement.setAttribute("data-ytat-untranslated-other", "true"); // Mark as successfully untranslated
