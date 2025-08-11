@@ -442,7 +442,7 @@ async function untranslateOtherVideos(intersectElements = null) {
           video.querySelector('a[href*="/playlist?"]') ||
           window.YoutubeAntiTranslate.getFirstVisible(
             video.querySelector(
-              "yt-collections-stack.collections-stack-wiz > .collections-stack-wiz__collection-stack1",
+              "yt-collection-thumbnail-view-model, .media-item-thumbnail-container.stacked",
             ),
           )
         ) {
