@@ -437,6 +437,18 @@ async function untranslateOtherVideos(intersectElements = null) {
           return;
         }
 
+        // Check if current widget is a playlist, not video
+        if (
+          video.querySelector('a[href*="/playlist?"]') ||
+          window.YoutubeAntiTranslate.getFirstVisible(
+            video.querySelector(
+              "yt-collections-stack.collections-stack-wiz > .collections-stack-wiz__collection-stack1",
+            ),
+          )
+        ) {
+          return;
+        }
+
         // Find link and title elements typical for standard videos
         let linkElement =
           video.querySelector("a#video-title-link") ||
@@ -485,16 +497,6 @@ async function untranslateOtherVideos(intersectElements = null) {
 
         // Ignore advertisement video
         if (window.YoutubeAntiTranslate.isAdvertisementHref(linkElement.href)) {
-          return;
-        }
-
-        // Check if current widget is a playlist, not video
-        if (
-          video.querySelector('a[href*="/playlist?"]') ||
-          window.YoutubeAntiTranslate.isVisible(
-            video.querySelector("yt-collections-stack.collections-stack-wiz"),
-          )
-        ) {
           return;
         }
 
