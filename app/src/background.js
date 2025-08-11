@@ -491,7 +491,9 @@ async function untranslateOtherVideos(intersectElements = null) {
         // Check if current widget is a playlist, not video
         if (
           video.querySelector('a[href*="/playlist?"]') ||
-          video.querySelector("yt-collections-stack.collections-stack-wiz")
+          window.YoutubeAntiTranslate.isVisible(
+             video.querySelector("yt-collections-stack.collections-stack-wiz")
+          )
         ) {
           return;
         }
