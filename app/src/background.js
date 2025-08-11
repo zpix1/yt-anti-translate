@@ -1,6 +1,6 @@
 //For intersect we are not switching to debounce
 //as the callback will handle multiple elements entering the sigularly
-const INTERSECTION_UPDATE_STEP_VIDEOS = 1;
+const INTERSECTION_UPDATE_STEP_VIDEOS = 2;
 let allIntersectVideoElements = null;
 const intersectionObserverOtherVideos = new IntersectionObserver(
   untranslateOtherVideosOnIntersect,
@@ -13,7 +13,7 @@ const intersectionObserverOtherVideos = new IntersectionObserver(
 
 //For intersect we are not switching to debounce
 //as the callback will handle multiple elements entering the sigularly
-const INTERSECTION_UPDATE_STEP_SHORTS = 1;
+const INTERSECTION_UPDATE_STEP_SHORTS = 2;
 let allIntersectShortElements = null;
 const intersectionObserverOtherShorts = new IntersectionObserver(
   untranslateOtherShortsOnIntersect,
