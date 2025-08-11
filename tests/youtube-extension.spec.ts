@@ -260,14 +260,18 @@ test.describe("YouTube Anti-Translate extension", () => {
     await page.waitForTimeout(1000);
 
     // Verify hashtag link is exist
-    const hashtagLinks = page.locator("#description-inline-expander:visible a[href^='/hashtag/']");
+    const hashtagLinks = page.locator(
+      "#description-inline-expander:visible a[href^='/hashtag/']",
+    );
     const hashtagCount = await hashtagLinks.count();
     expect(hashtagCount).toBeGreaterThan(0);
     console.log("Hashtag links count:", hashtagCount);
 
     // Get the first hashtag，verify href
     const firstHashtagHref = await hashtagLinks.first().getAttribute("href");
-    expect(firstHashtagHref).toBe("/hashtag/%E6%AD%8C%E3%81%A3%E3%81%A6%E3%81%BF%E3%81%9F");
+    expect(firstHashtagHref).toBe(
+      "/hashtag/%E6%AD%8C%E3%81%A3%E3%81%A6%E3%81%BF%E3%81%9F",
+    );
 
     // Take a screenshot
     await page.screenshot({
@@ -310,7 +314,9 @@ test.describe("YouTube Anti-Translate extension", () => {
     await page.waitForTimeout(1000);
 
     // Verify mention link is exist
-    const mentionLinks = page.locator("#description-inline-expander:visible a[href^='/@']");
+    const mentionLinks = page.locator(
+      "#description-inline-expander:visible a[href^='/@']",
+    );
     const mentionCount = await mentionLinks.count();
     expect(mentionCount).toBeGreaterThan(0);
     console.log("Mention links count:", mentionCount);
