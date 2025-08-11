@@ -492,7 +492,7 @@ async function untranslateOtherVideos(intersectElements = null) {
         if (
           video.querySelector('a[href*="/playlist?"]') ||
           window.YoutubeAntiTranslate.isVisible(
-             video.querySelector("yt-collections-stack.collections-stack-wiz"),
+            video.querySelector("yt-collections-stack.collections-stack-wiz"),
           )
         ) {
           return;
