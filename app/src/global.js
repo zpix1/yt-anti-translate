@@ -310,6 +310,8 @@ ytm-shorts-lockup-view-model`,
    * @param {boolean} [options.ignoreCase=true] - If true, converts to lowercase. Default true
    * @param {boolean} [options.normalizeSpaces=true] - If true, replaces consecutive whitespace with a single space. Default true
    * @param {boolean} [options.normalizeNFKC=true] - If true, applies Unicode Normalization Form Compatibility Composition (NFKC). Default true
+   * @param {boolean} [options.ignoreEmojis=true] - If true, replaces emojis with spaces. Default true
+   * @param {boolean} [options.ignoreExcalationPoints=true] - If true, removes exclamation points. Default true
    * @param {boolean} [options.trim=true] - If true, trims both leading and trailing whitespace. Default true
    * @param {boolean} [options.trimLeft=false] - If true, trims leading whitespace. Ignored if `trim` is true. Default false
    * @param {boolean} [options.trimRight=false] - If true, trims trailing whitespace. Ignored if `trim` is true. Default false
@@ -320,6 +322,8 @@ ytm-shorts-lockup-view-model`,
       ignoreCase = true,
       normalizeSpaces = true,
       normalizeNFKC = true,
+      ignoreEmojis = true,
+      ignoreExcalationPoints = true,
       trim = true,
       trimLeft = false,
       trimRight = false,
@@ -331,6 +335,16 @@ ytm-shorts-lockup-view-model`,
 
     if (normalizeNFKC) {
       str = str.normalize("NFKC");
+    }
+
+    if (ignoreEmojis) {
+      // Replace emojis with spaces (covers most emoji ranges)
+      // Use Unicode property escapes for emojis (requires ES2018+)
+      str = str.replace(/\p{Emoji_Presentation}|\p{Emoji}\uFE0F/gu, " ");
+    }
+
+    if (ignoreExcalationPoints) {
+      str = str.replace(/!/g, "");
     }
 
     if (normalizeSpaces) {
@@ -448,6 +462,69 @@ ytm-shorts-lockup-view-model`,
     }
 
     return processedInput.replace(regex, replacement);
+  },
+
+  formatString: function (inputStr) {
+    if (!inputStr) {
+      return inputStr;
+    }
+
+    // Retrieve settings
+    const settings = this.getSettings();
+
+    // Extract options (with safe defaults)
+    const titleFormatting = settings.titleFormatting || "0";
+    const removeExclamationMarks = settings.removeExclamationMarks ?? false;
+    const removeEmojis = settings.removeEmojis ?? false;
+
+    if (titleFormatting === "0" && !removeExclamationMarks && !removeEmojis) {
+      return inputStr;
+    }
+
+    // Process with normalization, emoji removal, and exclamation removal
+    let processed = this.processString(inputStr, {
+      ignoreCase: false, // we'll handle casing in titleFormatting
+      normalizeSpaces: true,
+      normalizeNFKC: true,
+      ignoreEmojis: removeEmojis,
+      ignoreExcalationPoints: removeExclamationMarks,
+      trim: true,
+    });
+
+    // Step 2: Apply title formatting
+    switch (String(titleFormatting)) {
+      case "1": // Title Case
+        processed = processed
+          .toLowerCase()
+          .replace(/\p{L}[\p{L}\p{M}]*/gu, (word, offset, fullStr) => {
+            const isFirst = offset === 0;
+            const isLast = offset + word.length === fullStr.length;
+            if (isFirst || isLast || word.length > 3) {
+              return word.charAt(0).toUpperCase() + word.slice(1);
+            }
+            return word;
+          });
+        break;
+      case "2": // Sentence case
+        processed =
+          processed.charAt(0).toUpperCase() + processed.slice(1).toLowerCase();
+        break;
+      case "3": // lower case
+        processed = processed.toLowerCase();
+        break;
+      case "4": // First letter uppercase (rest unchanged)
+        processed = processed.charAt(0).toUpperCase() + processed.slice(1);
+        break;
+      case "5": // Capitalize Words (capitalize first letter of every word, no exceptions)
+        processed = processed.replace(
+          /\b\w+\b/g,
+          (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase(),
+        );
+        break;
+      // "0" or any unknown value means "disabled" → leave as processed from step 1
+    }
+
+    return processed;
   },
 
   /**
@@ -1224,10 +1301,36 @@ ytm-shorts-lockup-view-model`,
     return null;
   },
   getSettings: function () {
-    const element = document.querySelector(
-      'script[type="module"][data-ytantitranslatesettings]',
-    );
-    return JSON.parse(element?.dataset?.ytantitranslatesettings ?? "{}");
+    if (
+      chrome === undefined ||
+      chrome.storage === undefined ||
+      chrome.storage.sync === undefined ||
+      chrome.storage.sync.get === undefined
+    ) {
+      const element = document.querySelector(
+        'script[type="module"][data-ytantitranslatesettings]',
+      );
+      return JSON.parse(element?.dataset?.ytantitranslatesettings ?? "{}");
+    } else {
+      chrome.storage.sync.get(
+        {
+          disabled: false,
+          autoreloadOption: true,
+          untranslateAudio: true,
+          untranslateAudioOnlyAI: false,
+          untranslateDescription: true,
+          untranslateChannelBranding: true,
+          untranslateNotification: true,
+          youtubeDataApiKey: null,
+          titleFormatting: "0",
+          removeEmojis: false,
+          removeExclamationMarks: false,
+        },
+        function (items) {
+          return items;
+        },
+      );
+    }
   },
   /**
    * Make a GET request. Its result will be cached in sessionStorage and will return same promise for parallel requests.

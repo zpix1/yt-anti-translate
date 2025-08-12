@@ -104,6 +104,9 @@ function saveOptions() {
       untranslateChannelBranding: true,
       untranslateNotification: true,
       youtubeDataApiKey: null,
+      titleFormatting: "0",
+      removeEmojis: false,
+      removeExclamationMarks: false,
     },
     function (items) {
       const disabled = !items.disabled;
@@ -140,6 +143,9 @@ function loadOptions() {
       untranslateChannelBranding: true,
       untranslateNotification: true,
       youtubeDataApiKey: null,
+      titleFormatting: "0",
+      removeEmojis: false,
+      removeExclamationMarks: false,
     },
     function (items) {
       document.getElementById("disable-button").innerText = items.disabled
@@ -166,6 +172,11 @@ function loadOptions() {
       document.getElementById("notification-checkbox").checked =
         items.untranslateNotification;
       document.getElementById("api-key-input").value = items.youtubeDataApiKey;
+      document.getElementById("title-formatting").value = items.titleFormatting;
+      document.getElementById("remove-emojis-checkbox").checked =
+        items.removeEmojis;
+      document.getElementById("remove-exclamation-marks-checkbox").checked =
+        items.removeExclamationMarks;
     },
   );
 }
@@ -184,6 +195,11 @@ function checkboxUpdate() {
       ).checked,
       untranslateNotification: document.getElementById("notification-checkbox")
         .checked,
+      titleFormatting: document.getElementById("title-formatting").value,
+      removeEmojis: document.getElementById("remove-emojis-checkbox").checked,
+      removeExclamationMarks: document.getElementById(
+        "remove-exclamation-marks-checkbox",
+      ).checked,
     },
     () => {
       reloadActiveYouTubeTab();
@@ -255,6 +271,15 @@ function addListeners() {
   document
     .getElementById("save-api-key-button")
     .addEventListener("click", apiKeyUpdate);
+  document
+    .getElementById("title-formatting")
+    .addEventListener("change", checkboxUpdate);
+  document
+    .getElementById("remove-emojis-checkbox")
+    .addEventListener("click", checkboxUpdate);
+  document
+    .getElementById("remove-exclamation-marks-checkbox")
+    .addEventListener("click", checkboxUpdate);
 }
 
 document.addEventListener("DOMContentLoaded", renderFooterLinks);

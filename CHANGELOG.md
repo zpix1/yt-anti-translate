@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Fix [#82](https://github.com/zpix1/yt-anti-translate/issues/82) Not all titles are being "un-translated" / DeArrow extension interfering with this extension
+
 ## [1.19.9] - 2025-08-03
 
 ### Fixed

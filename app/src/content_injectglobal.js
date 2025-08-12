@@ -1,9 +1,19 @@
 // Load global.js in page environment
+
 // This is separate so that it can be injected early as it is needed by other scripts
 chrome.storage.sync.get(
   {
     disabled: false,
+    autoreloadOption: true,
+    untranslateAudio: true,
     untranslateAudioOnlyAI: false,
+    untranslateDescription: true,
+    untranslateChannelBranding: true,
+    untranslateNotification: true,
+    youtubeDataApiKey: null,
+    titleFormatting: "0",
+    removeEmojis: false,
+    removeExclamationMarks: false,
   },
   async function (items) {
     if (!items.disabled) {
