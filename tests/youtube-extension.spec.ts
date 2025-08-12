@@ -228,6 +228,115 @@ test.describe("YouTube Anti-Translate extension", () => {
     await context.close();
   });
 
+  test("YouTube hashtags in description work correctly with Anti-Translate extension", async ({
+    browserNameWithExtensions,
+    localeString,
+  }, testInfo) => {
+    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
+
+    // Launch browser with the extension
+    const context = await createBrowserContext(browserNameWithExtensions);
+
+    // Create a new page
+    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
+      context,
+      browserNameWithExtensions,
+      localeString,
+    );
+
+    // Load a video known to have hashtags in the description
+    await loadPageAndVerifyAuth(
+      page,
+      "https://www.youtube.com/watch?v=_6D-rEAZhqI",
+      browserNameWithExtensions,
+    );
+
+    // Wait for the video page to fully load
+    await page.waitForSelector("ytd-watch-metadata");
+
+    // Expand the description if it's collapsed
+    const moreButton = page.locator("#expand");
+    await moreButton.first().click();
+    await page.waitForTimeout(1000);
+
+    // Verify hashtag link is exist
+    const hashtagLinks = page.locator(
+      "#description-inline-expander:visible a[href^='/hashtag/']",
+    );
+    const hashtagCount = await hashtagLinks.count();
+    expect(hashtagCount).toBeGreaterThan(0);
+    console.log("Hashtag links count:", hashtagCount);
+
+    // Get the first hashtag，verify href
+    const firstHashtagHref = await hashtagLinks.first().getAttribute("href");
+    expect(firstHashtagHref).toBe(
+      "/hashtag/%E6%AD%8C%E3%81%A3%E3%81%A6%E3%81%BF%E3%81%9F",
+    );
+
+    // Take a screenshot
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-hashtag-test.png`,
+    });
+
+    // Check console message count
+    expect(consoleMessageCountContainer.count).toBeLessThan(2000);
+
+    // Close the browser context
+    await context.close();
+  });
+
+  test("YouTube mentions in description work correctly with Anti-Translate extension", async ({
+    browserNameWithExtensions,
+    localeString,
+  }, testInfo) => {
+    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
+
+    const context = await createBrowserContext(browserNameWithExtensions);
+    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
+      context,
+      browserNameWithExtensions,
+      localeString,
+    );
+
+    // Load a video known to have mentions in the description
+    await loadPageAndVerifyAuth(
+      page,
+      "https://www.youtube.com/watch?v=krzXfKSJFQ8",
+      browserNameWithExtensions,
+    );
+
+    // Wait for the video page to fully load
+    await page.waitForSelector("ytd-watch-metadata");
+
+    // Expand the description if it's collapsed
+    const moreButton = page.locator("#expand");
+    await moreButton.first().click();
+    await page.waitForTimeout(1000);
+
+    // Verify mention link is exist
+    const mentionLinks = page.locator(
+      "#description-inline-expander:visible a[href^='/@']",
+    );
+    const mentionCount = await mentionLinks.count();
+    expect(mentionCount).toBeGreaterThan(0);
+    console.log("Mention links count:", mentionCount);
+
+    // Get the first mention, verify href
+    const firstMentionHref = await mentionLinks.first().getAttribute("href");
+    expect(firstMentionHref).toBe("/@AitsukiNakuru");
+
+    // Take a screenshot
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-mention-test.png`,
+    });
+
+    // Check console message count
+    expect(consoleMessageCountContainer.count).toBeLessThan(2000);
+
+    // Close the browser context
+    await context.close();
+  });
+
   test("YouTube Shorts title is not translated with Anti-Translate extension", async ({
     browserNameWithExtensions,
     localeString,
