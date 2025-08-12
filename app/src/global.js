@@ -200,6 +200,22 @@ ytm-shorts-lockup-view-model`,
   debounce: function (func, wait = 30) {
     let isScheduled = false;
     let lastExecTime = 0;
+    // Helper to schedule the next frame. Falls back to setTimeout when the
+    // document is in the background where requestAnimationFrame callbacks are
+    // throttled or do not fire at all.
+    function schedule(callback) {
+      if (document.hidden || typeof requestAnimationFrame === "undefined") {
+        return setTimeout(() => {
+          const now =
+            typeof performance !== "undefined" &&
+            typeof performance.now === "function"
+              ? performance.now()
+              : Date.now();
+          callback(now);
+        }, 16); // Approx. one frame at 60fps
+      }
+      return requestAnimationFrame(callback);
+    }
 
     function tick(time, context, args) {
       if (!isScheduled) {
@@ -213,14 +229,14 @@ ytm-shorts-lockup-view-model`,
         lastExecTime = time;
         isScheduled = false; // allow next schedule
       } else {
-        requestAnimationFrame((t) => tick(t, context, args));
+        schedule((t) => tick(t, context, args));
       }
     }
 
     return function (...args) {
       if (!isScheduled) {
         isScheduled = true;
-        requestAnimationFrame((time) => {
+        schedule((time) => {
           if (lastExecTime === 0) {
             // first invocation: run immediately
             func.apply(this, args);

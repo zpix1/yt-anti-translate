@@ -1,4 +1,3 @@
-/* eslint-disable no-unreachable */
 // Support both desktop and mobile YouTube layouts
 const CHANNELBRANDING_HEADER_SELECTOR =
   "#page-header-container #page-header .page-header-view-model-wiz__page-header-headline-info, .page-header-view-model-wiz__page-header-headline-info";
@@ -599,9 +598,17 @@ async function untranslateBranding() {
   if (isChannelPage) {
     const brandingHeaderPromise = restoreOriginalBrandingHeader();
     const brandingAboutPromise = restoreOriginalBrandingAbout();
-    await Promise.all([brandingHeaderPromise, brandingAboutPromise]);
+    const collaboratorsPromise = restoreCollaboratorsDialog();
+    await Promise.all([
+      brandingHeaderPromise,
+      brandingAboutPromise,
+      collaboratorsPromise,
+    ]);
   } else {
-    await restoreOriginalBrandingSearchResults();
+    await Promise.all([
+      restoreOriginalBrandingSearchResults(),
+      restoreCollaboratorsDialog(),
+    ]);
   }
 }
 
@@ -728,6 +735,66 @@ async function restoreOriginalBrandingSearchResults() {
 
     updateSearchResultDescriptionContent(renderer, originalBrandingData);
     updateSearchResultChannelAuthor(renderer, originalBrandingData);
+  });
+
+  await Promise.allSettled(tasks);
+}
+
+/**
+ * Restores original channel names in the collaborators popup dialog.
+ */
+async function restoreCollaboratorsDialog() {
+  // Find any open dialog that lists channels
+  const dialog = window.YoutubeAntiTranslate.getFirstVisible(
+    document.querySelectorAll("yt-dialog-view-model"),
+  );
+  if (!dialog) {
+    return;
+  }
+
+  const listItems = dialog.querySelectorAll(
+    "yt-list-item-view-model.yt-list-item-view-model-wiz",
+  );
+  if (!listItems || listItems.length === 0) {
+    return;
+  }
+
+  const tasks = Array.from(listItems).map(async (item) => {
+    if (item.getAttribute("data-ytat-collab-untranslated") === "true") {
+      return;
+    }
+
+    // Anchor that contains the channel name (bold title area)
+    const linkEl =
+      item.querySelector(
+        ".yt-list-item-view-model-wiz__title-wrapper a.yt-core-attributed-string__link",
+      ) || item.querySelector("a.yt-core-attributed-string__link");
+    if (!linkEl) {
+      return;
+    }
+
+    const href = linkEl.getAttribute("href");
+    const ucid = await getChannelUCIDFromHref(href);
+    if (!ucid) {
+      return;
+    }
+
+    const branding = await getChannelBrandingWithYoutubeI(ucid);
+    if (!branding || !branding.title) {
+      return;
+    }
+
+    // Replace only the first text node inside the link to preserve icons/badges
+    if (
+      !window.YoutubeAntiTranslate.isStringEqual(
+        linkEl.textContent?.trim(),
+        branding.title,
+      )
+    ) {
+      window.YoutubeAntiTranslate.replaceTextOnly(linkEl, branding.title);
+    }
+
+    item.setAttribute("data-ytat-collab-untranslated", "true");
   });
 
   await Promise.allSettled(tasks);

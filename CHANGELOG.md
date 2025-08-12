@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.19.10] - 2025-08-08
+
+### New Feature
+
+- [#105](https://github.com/zpix1/yt-anti-translate/issues/105) Untranslate channel names on Collaborators pop-up
+
+### Fixed
+
+- Fix [#106](https://github.com/zpix1/yt-anti-translate/issues/106) document title doesn't get untranslated when tab is backgrounded
+- Fix [#109](https://github.com/zpix1/yt-anti-translate/issues/109) issues with videos in playlists
+- Fix [#108](https://github.com/zpix1/yt-anti-translate/issues/108) issues with title untranslating without player available
+
 ## [1.19.9] - 2025-08-03
 
 ### Fixed
