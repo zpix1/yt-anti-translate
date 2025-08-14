@@ -63,6 +63,9 @@ jobs:
       - uses: actions/setup-node@v2-beta
         with:
           node-version: "18"
+      
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Download bundle artifact
         uses: actions/download-artifact@v4
@@ -72,11 +75,6 @@ jobs:
       - name: Install web-ext cli
         run: |-
           npm install --global web-ext
-          ls
-
-      - name: Install jwtool
-        run: |-
-          npm install --global jsonwebtoken
           ls
 
       - name: Determine channel
@@ -94,54 +92,31 @@ jobs:
         run: |-
           unzip firefox-extension.zip -d .
           cd dist
+
+          set +e  # disable fail-on-error to allow timeout exit code to be captured
           timeout 600 \
             web-ext sign --channel=${{ steps.determine-channel.outputs.channel }} \
             --api-key="${{ secrets.AMO_JWT_ISSUER }}" \
             --api-secret="${{ secrets.AMO_JWT_SECRET }}"
+          status=$?
+          set -e  # restore default fail-on-error behavior
 
-          echo "status=$?" >> "$GITHUB_OUTPUT"
+          echo "status=$status" >> "$GITHUB_OUTPUT"
 
-      - name: Set Firefox for Android compatibility
-        if: steps.sign_step.outputs.status == '0'
+      - name: Set Firefox for Android compatibility & approval_notes
+        # Also run on timeout of "Sign and upload step" so that we provide the
+        # necessary information for the AMO review team
+        if: steps.sign_step.outputs.status == '0' || steps.sign_step.outputs.status == '124'
         run: |
-          node <<'EOF'
-          const jwt = require('jsonwebtoken');
-          const { execSync } = require('child_process');
-          const issuedAt = Math.floor(Date.now() / 1000);
-          const payload = {
-            iss: process.env.AMO_JWT_ISSUER,
-            jti: Math.random().toString(),
-            iat: issuedAt,
-            exp: issuedAt + 60,
-          };
-          const secret = process.env.AMO_JWT_SECRET;
-          const token = jwt.sign(payload, secret, { algorithm: 'HS256' });
-
-          const version = process.env.VERSION;
-          const slug = process.env.EXTENSION_SLUG;
-          const data = JSON.stringify({
-            compatibility: {
-              firefox: { min: "109.0", max: "*" },
-              android: { min: "120.0", max: "*" }
-            }
-          });
-
-          const curlCmd = [
-            'curl', '-X', 'PATCH',
-            `"https://addons.mozilla.org/api/v5/addons/addon/${slug}/versions/${version}/"`,
-            '-H', `"Authorization: JWT ${token}"`,
-            '-H', '"Content-Type: application/json"',
-            '--data', `'${data}'`
-          ].join(' ');
-
-          console.log(`[INFO] Running: ${curlCmd}`);
-          execSync(curlCmd, { stdio: 'inherit' });
-          EOF
+          npm install jsonwebtoken@9.0.2 dotenv@16.5.0
+          node .github/workflows/scripts/mozilla_amo_version_patch.js
         env:
           AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
           AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
           VERSION: ${{ needs.build-firefox-extension.outputs.version }}
           EXTENSION_SLUG: "youtube-anti-translate-mv3"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
 
       - name: Archive signed Firefox extension
         uses: actions/upload-artifact@v4

@@ -1,7 +1,7 @@
 {
   "name": "YouTube Anti Translate",
   "author": "zpix1",
-  "version": "1.19.6",
+  "version": "1.19.10",
   "description": "A small extension to disable YouTube video titles/audio/descriptions autotranslation.",
   "manifest_version": 3,
   "browser_specific_settings": {
@@ -42,7 +42,10 @@
   "action": {
     "default_popup": "pages/popup.html"
   },
-  "options_page": "pages/popup.html",
+  "options_ui": {
+    "page": "pages/popup.html",
+    "open_in_tab": true
+  },
   "permissions": ["storage"],
   "host_permissions": ["*://*.youtube.com/*"],
   "icons": {

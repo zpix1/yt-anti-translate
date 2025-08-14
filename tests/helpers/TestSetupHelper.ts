@@ -8,14 +8,14 @@ import {
   Page,
   devices,
 } from "@playwright/test";
-import path, { dirname } from "path";
+import path, { dirname } from "node:path";
 import { withExtension } from "playwright-webextext";
 import {
   newPageWithStorageStateIfItExists,
   findLoginButton,
 } from "./AuthStorageHelper";
 import { setupUBlockAndAuth } from "./SetupUBlockAndAuth";
-import { fileURLToPath } from "url";
+import { fileURLToPath } from "node:url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);

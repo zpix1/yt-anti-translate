@@ -149,58 +149,60 @@ function timeStringToSeconds(timeString) {
  * @returns {Array<{startTime:number, title:string}>} Array of chapter objects sorted by appearance.
  */
 function parseChaptersFromDescription(description) {
+  // Simplified timestamp pattern – captures [hours:]minutes:seconds
+  const TIMESTAMP_REGEX = /(\d{1,3}):(\d{2})(?::(\d{2}))?/;
+  // Characters that frequently separate timestamp and title (bullets, dashes, etc.)
+  const TRIM_CHARS_REGEX = /^[\s–—•·▪▫‣⁃:→>-]+|[\s–—•·▪▫‣⁃:→>-]+$/g;
+
   const chapters = [];
 
-  description.split("\n").forEach((line) => {
-    const trimmedLine = line.trim();
-
-    // More specific regex for YouTube chapter format:
-    // - Allows minimal decoration at start (bullets, dashes, etc.)
-    // - Timestamp must be near the beginning of the line
-    // - Must have a space/separator after timestamp before the title
-    const match = trimmedLine.match(
-      /^[\s–—•·▪▫‣⁃-]*(\d{1,2}):(\d{2})(?::(\d{2}))?\s*[–—•·▪▫‣⁃:→>-]*\s*(.+)$/,
-    );
-
-    if (match) {
-      const [, part1, part2, part3, title] = match;
-
-      // Determine hours/minutes/seconds based on the presence of the third timestamp part
-      let hours = 0;
-      let minutes = 0;
-      let seconds = 0;
-
-      if (part3 !== undefined) {
-        // Timestamp is in the form HH:MM:SS
-        hours = parseInt(part1, 10);
-        minutes = parseInt(part2, 10);
-        seconds = parseInt(part3, 10);
-      } else {
-        // Timestamp is in the form MM:SS
-        minutes = parseInt(part1, 10);
-        seconds = parseInt(part2, 10);
-      }
-
-      // Validate timestamp values
-      if (minutes >= 60 || seconds >= 60) {
-        return;
-      }
-
-      // Extract clean title
-      const cleanTitle = title.trim();
-
-      // Skip if title is too short (likely not a real chapter)
-      if (cleanTitle.length < 2) {
-        return;
-      }
-
-      const totalSeconds = hours * 3600 + minutes * 60 + seconds;
-
-      chapters.push({
-        startTime: totalSeconds,
-        title: cleanTitle,
-      });
+  description.split("\n").forEach((rawLine) => {
+    const line = rawLine.trim();
+    if (!line) {
+      return;
     }
+
+    const tsMatch = line.match(TIMESTAMP_REGEX);
+    if (!tsMatch) {
+      return; // No timestamp – not a chapter line
+    }
+
+    const [fullTs, part1, part2, part3] = tsMatch;
+    const before = line.slice(0, tsMatch.index).trim();
+    const after = line.slice(tsMatch.index + fullTs.length).trim();
+
+    // Parse time components
+    let hours = 0;
+    let minutes = 0;
+    let seconds = 0;
+    if (part3 !== undefined) {
+      hours = parseInt(part1, 10);
+      minutes = parseInt(part2, 10);
+      seconds = parseInt(part3, 10);
+    } else {
+      minutes = parseInt(part1, 10);
+      seconds = parseInt(part2, 10);
+    }
+
+    // Validate time values
+    // Always ensure seconds < 60.
+    if (seconds >= 60) {
+      return;
+    }
+    // If hours component is present (part3 defined) then minutes must be < 60.
+    if (part3 !== undefined && minutes >= 60) {
+      return;
+    }
+
+    // Decide which side of the timestamp contains the title
+    let title = after.length ? after : before;
+    title = title.replace(TRIM_CHARS_REGEX, "").trim();
+    if (title.length < 2) {
+      return; // Likely not a valid title
+    }
+
+    const totalSeconds = hours * 3600 + minutes * 60 + seconds;
+    chapters.push({ startTime: totalSeconds, title });
   });
 
   return chapters;
@@ -575,7 +577,7 @@ function fetchOriginalDescription() {
     return null;
   }
 
-  return playerResponse.videoDetails?.shortDescription || null;
+  return playerResponse?.videoDetails?.shortDescription || null;
 }
 
 /**
@@ -598,7 +600,7 @@ function fetchOriginalAuthor() {
     return null;
   }
 
-  return playerResponse.videoDetails?.author || null;
+  return playerResponse?.videoDetails?.author || null;
 }
 
 /**
@@ -1037,4 +1039,12 @@ function getDescriptionMobile() {
 // Get Author from the VideoData
 function getAuthorMobile() {
   return extractVideoDataField("author");
+}
+
+// Export for testing (only in Node.js environment)
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = {
+    parseChaptersFromDescription,
+    findChapterByTime,
+  };
 }
