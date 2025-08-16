@@ -32,7 +32,7 @@ const globalJsCopy = {
     INFO: 3,
     DEBUG: 4,
   },
-  currentLogLevel: 2, // Default to WARN
+  currentLogLevel: 4, // Default to WARN
 
   /**
    * Sets the current log level.
@@ -135,7 +135,7 @@ const globalJsCopy = {
   },
 };
 
-async function getOriginalVideoResponse(videoId) {
+async function getUntranslatedVideoResponse(videoId) {
   const cacheKey = `video_response_mobile_${videoId}`;
   if (videoResponseCache.has(cacheKey)) {
     return videoResponseCache.get(cacheKey); // Return cached description if available
@@ -193,11 +193,6 @@ async function getOriginalVideoResponse(videoId) {
 }
 
 (() => {
-  // Simple logging function
-  function log(message) {
-    console.log(`[YoutubeAntiTranslate] ${message}`);
-  }
-
   // Store the original ytInitialPlayerResponse
   let originalPlayerResponse = null;
   let untranslatedPlayerResponse = null;
@@ -212,7 +207,9 @@ async function getOriginalVideoResponse(videoId) {
     // Check if ytInitialPlayerResponse already exists
     if (window.ytInitialPlayerResponse) {
       originalPlayerResponse = window.ytInitialPlayerResponse;
-      log("Found existing ytInitialPlayerResponse, storing original");
+      globalJsCopy.logDebug(
+        "Found existing ytInitialPlayerResponse, storing original",
+      );
     }
 
     // Set up property descriptor to intercept access
@@ -232,19 +229,26 @@ async function getOriginalVideoResponse(videoId) {
         }
 
         const videoId = globalJsCopy.getCurrentVideoId();
-        return getOriginalVideoResponse(videoId).then((response) => {
-          untranslatedPlayerResponse = response?.bodyJson;
+        if (!videoId) {
+          return originalPlayerResponse;
+        }
+        return getUntranslatedVideoResponse(videoId).then((response) => {
+          untranslatedPlayerResponse = response?.bodyJson || null;
           return untranslatedPlayerResponse;
         });
       },
       set(value) {
-        log("ytInitialPlayerResponse being set - storing original");
+        globalJsCopy.logDebug(
+          "ytInitialPlayerResponse being set - storing original",
+        );
         originalPlayerResponse = value;
       },
     });
 
     isIntercepted = true;
-    log("ytInitialPlayerResponse interception setup complete");
+    globalJsCopy.logDebug(
+      "ytInitialPlayerResponse interception setup complete",
+    );
   }
 
   function createRewriter(origFetch) {
@@ -262,7 +266,7 @@ async function getOriginalVideoResponse(videoId) {
 
       try {
         const videoId = globalJsCopy.getCurrentVideoId();
-        const origResponse = await getOriginalVideoResponse(videoId);
+        const origResponse = await getUntranslatedVideoResponse(videoId);
 
         const responseJson = origResponse.bodyJson;
 
@@ -288,18 +292,20 @@ async function getOriginalVideoResponse(videoId) {
     try {
       setupPlayerResponseInterception();
     } catch (error) {
-      log(`Error setting up player response interception: ${error.message}`);
+      globalJsCopy.logError(
+        `Error setting up player response interception: ${error.message}`,
+      );
     }
 
     /* 4-a. wrap whatever fetch exists right now (likely the native one) */
-    log("installing wrapper around current window.fetch");
+    globalJsCopy.logDebug("installing wrapper around current window.fetch");
     window.fetch = createRewriter(window.fetch.bind(window));
 
     /* 4-b. if YouTube later replaces fetch with ytNetworkFetch, re-wrap it */
     Object.defineProperty(window, "ytNetworkFetch", {
       configurable: true,
       set(fn) {
-        log("ytNetworkFetch assigned → wrapping it too");
+        globalJsCopy.logDebug("ytNetworkFetch assigned → wrapping it too");
         window.fetch = createRewriter(fn);
       },
       get() {
@@ -310,7 +316,9 @@ async function getOriginalVideoResponse(videoId) {
     /* 4-c. if ytNetworkFetch was already present before our script ran,
             wrap it immediately (covers the 'parsed-but-not-executed' case) */
     if (window.ytNetworkFetch) {
-      log("ytNetworkFetch pre-existing → wrapping immediately");
+      globalJsCopy.logDebug(
+        "ytNetworkFetch pre-existing → wrapping immediately",
+      );
       window.fetch = createRewriter(window.ytNetworkFetch);
     }
   })();
