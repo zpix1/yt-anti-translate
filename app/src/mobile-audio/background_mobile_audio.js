@@ -135,7 +135,7 @@ const globalJsCopy = {
   },
 };
 
-async function getUntranslatedVideoResponse(videoId) {
+async function getUntranslatedVideoResponseAsync(videoId) {
   const cacheKey = `video_response_mobile_${videoId}`;
   if (videoResponseCache.has(cacheKey)) {
     return videoResponseCache.get(cacheKey); // Return cached description if available
@@ -172,15 +172,8 @@ async function getUntranslatedVideoResponse(videoId) {
   const clonedResponse = response.clone();
   const json = await clonedResponse.json();
 
-  if (json?.playerAds && json?.playerAds?.length > 0) {
-    json.playerAds = [];
-  }
-  if (json?.adSlots && json?.adSlots.length > 0) {
-    json.adSlots = [];
-  }
-  if (json?.adBreakHeartbeatParams) {
-    json.adBreakHeartbeatParams = null;
-  }
+  // Ads do not properly work with this response so we are clearing the content of the response
+  clearAdsProperties(json);
 
   // Add a self identification property
   json.ytAntiTranslate = true;
@@ -341,15 +334,8 @@ const sync = {
 
     const json = JSON.parse(response.responseText);
 
-    if (json?.playerAds && json?.playerAds?.length > 0) {
-      json.playerAds = [];
-    }
-    if (json?.adSlots && json?.adSlots.length > 0) {
-      json.adSlots = [];
-    }
-    if (json?.adBreakHeartbeatParams) {
-      json.adBreakHeartbeatParams = null;
-    }
+    // Ads do not properly work with this response so we are clearing the content of the response
+    clearAdsProperties(json);
 
     // Add a self identification property
     json.ytAntiTranslate = true;
@@ -436,7 +422,7 @@ const sync = {
 
       try {
         const videoId = globalJsCopy.getCurrentVideoId();
-        const origResponse = await getUntranslatedVideoResponse(videoId);
+        const origResponse = await getUntranslatedVideoResponseAsync(videoId);
 
         const responseJson = origResponse.bodyJson;
 
@@ -493,3 +479,14 @@ const sync = {
     }
   })();
 })();
+function clearAdsProperties(json) {
+  if (json?.playerAds && json?.playerAds?.length > 0) {
+    json.playerAds = [];
+  }
+  if (json?.adSlots && json?.adSlots.length > 0) {
+    json.adSlots = [];
+  }
+  if (json?.adBreakHeartbeatParams) {
+    json.adBreakHeartbeatParams = null;
+  }
+}
