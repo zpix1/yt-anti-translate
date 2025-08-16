@@ -20,41 +20,6 @@
  *
  * For licensing inquiries, contact: dczpix@gmail.com
  */
-// const ORIGINAL_TRANSLATIONS = [
-//   "original", // English (en)
-//   "оригинал", // Russian (ru_RU)
-//   "オリジナル", // Japanese (ja_JP)
-//   "原始", // Chinese Simplified (zh_CN)
-//   "원본", // Korean (ko_KR)
-//   "origineel", // Dutch (nl_NL)
-//   "original", // Spanish (es_ES) / Portuguese (pt_BR)
-//   "originale", // Italian (it_IT) / French (fr_FR)
-//   "original", // German (de_DE)
-//   "oryginał", // Polish (pl_PL)
-//   "původní", // Czech (cs_CZ)
-//   "αρχικό", // Greek (el_GR)
-//   "orijinal", // Turkish (tr_TR)
-//   "原創", // Traditional Chinese (zh_TW)
-//   "gốc", // Vietnamese (vi_VN)
-//   "asli", // Indonesian (id_ID)
-//   "מקורי", // Hebrew (he_IL)
-//   "أصلي", // Arabic (ar_EG)
-//   "मूल", // Hindi (hi_IN)
-//   "मूळ", // Marathi (mr_IN)
-//   "ਪ੍ਰਮਾਣਿਕ", // Punjabi (pa_IN)
-//   "అసలు", // Telugu (te_IN)
-//   "மூலம்", // Tamil (ta_IN)
-//   "মূল", // Bengali (bn_BD)
-//   "അസലി", // Malayalam (ml_IN)
-//   "ต้นฉบับ", // Thai (th_TH)
-// ];
-
-// function getSettings() {
-//   const element = document.querySelector(
-//     'script[type="module"][data-ytantitranslatesettings]',
-//   );
-//   return JSON.parse(element?.dataset?.ytantitranslatesettings ?? "{}");
-// }
 
 const videoResponseCache = new Map();
 
@@ -228,139 +193,6 @@ async function getOriginalVideoResponse(videoId, bodyInput = null) {
   return { bodyJson: json, response: response };
 }
 
-// // Helper: parse track id and extract useful information
-// function getTrackInfo(track) {
-//   const defaultInfo = {
-//     isOriginal: false,
-//     language: null,
-//     isDubbed: false,
-//     isAI: false,
-//   };
-
-//   if (!track || !track.id || typeof track.id !== "string") {
-//     return defaultInfo;
-//   }
-
-//   const parts = track.id.split(";");
-//   if (parts.length < 2) {
-//     return defaultInfo;
-//   }
-
-//   try {
-//     const decoded = atob(parts[1]);
-
-//     const isOriginal = decoded.includes("original");
-//     const isAI = decoded.includes("dubbed-auto");
-//     const isDubbed = decoded.includes("dubbed") || isAI;
-
-//     const langMatch = decoded.match(/lang..([-a-zA-Z]+)/);
-//     const language = langMatch ? langMatch[1].toLowerCase() : null;
-
-//     return { isOriginal, language, isDubbed, isAI };
-//   } catch {
-//     // If decoding fails, return defaults
-//     return defaultInfo;
-//   }
-// }
-
-// // Helper: detect original track using either name translations or base64 id decoding
-// function isOriginalTrack(track, languageFieldName) {
-//   if (!track) {
-//     return false;
-//   }
-
-//   // Check by readable name first (uses UI language)
-//   if (
-//     languageFieldName &&
-//     track[languageFieldName] &&
-//     track[languageFieldName].name
-//   ) {
-//     const trackName = track[languageFieldName].name.toLowerCase();
-//     for (const originalWord of ORIGINAL_TRANSLATIONS) {
-//       if (trackName.includes(originalWord.toLowerCase())) {
-//         return true;
-//       }
-//     }
-//   }
-
-//   // Fallback: check by decoding the id
-//   return getTrackInfo(track).isOriginal;
-// }
-
-// async function getOriginalAdaptiveFormats(adaptiveFormats, videoId) {
-//   if (!adaptiveFormats || !Array.isArray(adaptiveFormats)) {
-//     return [{}];
-//   }
-
-//   const untranslatedResponse = await getOriginalVideoResponse(videoId);
-
-//   if (
-//     !untranslatedResponse ||
-//     !untranslatedResponse.streamingData ||
-//     !untranslatedResponse.streamingData.adaptiveFormats
-//   ) {
-//     return adaptiveFormats;
-//   }
-
-//   const videoTracks = adaptiveFormats.filter((format) => {
-//     if (!format.audioTrack || typeof format.audioTrack !== "object") {
-//       return true; // Keep formats without audioTrack
-//     }
-//     return false;
-//   });
-
-//   const untranslatedAudioTracks =
-//     untranslatedResponse.streamingData.adaptiveFormats.filter((format) => {
-//       if (!format.audioTrack || typeof format.audioTrack !== "object") {
-//         return false; // Skip formats without audioTrack so that merge later does not repeat them
-//       }
-//       return true; // Keep formats with audioTrack
-//     });
-
-//   return [...videoTracks, ...untranslatedAudioTracks];
-// }
-
-// function getOriginalAdaptiveFormats(adaptiveFormats) {
-//   if (!adaptiveFormats || !Array.isArray(adaptiveFormats)) {
-//     return [{}];
-//   }
-
-//   const originalTracks = adaptiveFormats.filter((format) => {
-//     if (!format.audioTrack || typeof format.audioTrack !== "object") {
-//       return true; // Keep formats without audioTrack
-//     }
-
-//     // Check if the format.audioTrack is original
-//     return isOriginalTrack(format.audioTrack, "displayName");
-//   });
-
-//   const properDubbedTracks = adaptiveFormats.filter((format) => {
-//     if (!format.audioTrack || typeof format.audioTrack !== "object") {
-//       return false; // Skip formats without audioTrack so that merge later does not repeat them
-//     }
-
-//     // Check if the format.audioTrack is dubbed or AI
-//     const trackInfo = getTrackInfo(format.audioTrack);
-//     return !trackInfo.isAI && !trackInfo.isOriginal;
-//   });
-
-//   if (originalTracks.length === 0 && properDubbedTracks.length === 0) {
-//     return [{}];
-//   }
-
-//   if (properDubbedTracks.length > 0) {
-//     if (getSettings()?.untranslateAudioOnlyAI) {
-//       // merge both arrays and return
-//       return [...originalTracks, ...properDubbedTracks];
-//     } else {
-//       // return only original tracks
-//       return originalTracks;
-//     }
-//   }
-// }
-
-//let untranslatedResponse = null;
-
 (() => {
   // Simple logging function
   function log(message) {
@@ -370,40 +202,6 @@ async function getOriginalVideoResponse(videoId, bodyInput = null) {
   // Store the original ytInitialPlayerResponse
   let originalPlayerResponse = null;
   let isIntercepted = false;
-
-  // async function getModifiedPlayerResponse(original) {
-  //   if (!original) {
-  //     return original;
-  //   }
-
-  //   try {
-  //     // Create a deep copy to avoid modifying the original
-  //     const modified = JSON.parse(JSON.stringify(original));
-
-  //     // Replace streamingData.adaptiveFormats with custom data
-  //     if (
-  //       modified.streamingData &&
-  //       modified.streamingData.adaptiveFormats &&
-  //       (!modified.streamingData.adaptiveFormatsUntranslated ||
-  //         modified.streamingData.adaptiveFormatsUntranslated === false)
-  //     ) {
-  //       log(
-  //         "Modifying streamingData.adaptiveFormats in ytInitialPlayerResponse",
-  //       );
-  //       modified.streamingData.adaptiveFormats =
-  //         await getOriginalAdaptiveFormats(
-  //           modified.streamingData.adaptiveFormats,
-  //           modified.videoDetails.videoId,
-  //         );
-  //       modified.streamingData.adaptiveFormatsUntranslated = true; // Mark as untranslated
-  //     }
-
-  //     return modified;
-  //   } catch (error) {
-  //     log(`Error modifying player response: ${error.message}`);
-  //     return original;
-  //   }
-  // }
 
   // Intercept window['ytInitialPlayerResponse']
   function setupPlayerResponseInterception() {
@@ -435,17 +233,6 @@ async function getOriginalVideoResponse(videoId, bodyInput = null) {
         log("ytInitialPlayerResponse being set - storing original");
         originalPlayerResponse = value;
       },
-      // async get() {
-      //   log("ytInitialPlayerResponse accessed - returning modified version");
-      //   return await getModifiedPlayerResponse(
-      //     untranslatedResponse || originalPlayerResponse,
-      //   );
-      // },
-      // async set(value) {
-      //   log("ytInitialPlayerResponse being set - storing original");
-      //   originalPlayerResponse = value;
-      //   untranslatedResponse = await getModifiedPlayerResponse(value);
-      // },
     });
 
     isIntercepted = true;
@@ -453,33 +240,6 @@ async function getOriginalVideoResponse(videoId, bodyInput = null) {
   }
 
   function createRewriter(origFetch) {
-    async function parseBody(input) {
-      let bodyJson = null;
-      try {
-        bodyJson = await input.json();
-      } catch {
-        /* empty */
-      }
-
-      if (bodyJson) {
-        return bodyJson;
-      }
-      // Read JSON body if present
-      if (typeof input.body === "string") {
-        bodyJson = JSON.parse(input.body);
-      } else if (input.body instanceof ReadableStream) {
-        const reader = input.body.getReader();
-        const chunks = [];
-        let done, value;
-        while ((({ done, value } = await reader.read()), !done)) {
-          chunks.push(value);
-        }
-        const decoder = new TextDecoder();
-        const bodyString = decoder.decode(chunks[0]);
-        bodyJson = JSON.parse(bodyString);
-      }
-      return bodyJson;
-    }
     return async function (input, init = {}) {
       const url = typeof input === "string" ? input : input.url;
 
@@ -492,34 +252,9 @@ async function getOriginalVideoResponse(videoId, bodyInput = null) {
         return origFetch(input, init);
       }
 
-      // save body so that it can be reaccessed later
-      const bodyClone = await parseBody(input);
-
-      //log(`Processing YouTube mobile player API request: ${url}`);
-      //const response = await origFetch(input, init);
-
-      // Only process JSON responses that might contain streamingData
-      // const contentType = response.headers.get("content-type");
-      // if (!contentType || !contentType.includes("application/json")) {
-      //   return response;
-      // }
-
       try {
-        // Clone the response to read the body
-        // const responseClone = response.clone();
-        // const jsonTranslatedData = await responseClone.json();
-
-        // Check if this response contains streamingData.adaptiveFormats
-        // if (
-        //   jsonTranslatedData.streamingData &&
-        //   jsonTranslatedData.streamingData.adaptiveFormats
-        // ) {
-        //   globalJsCopy.logDebug(
-        //     `Found streamingData.adaptiveFormats, replacing with original data response`,
-        //   );
-
         const videoId = globalJsCopy.getCurrentVideoId();
-        const origResponse = await getOriginalVideoResponse(videoId, null);
+        const origResponse = await getOriginalVideoResponse(videoId);
 
         const responseJson = origResponse.bodyJson;
 
@@ -533,11 +268,8 @@ async function getOriginalVideoResponse(videoId, bodyInput = null) {
           headers: origResponse.response.headers,
         });
         return modifiedResponse;
-        // } else {
-        //   return response;
-        // }
       } catch {
-        return null;
+        return origFetch(input, init);
       }
     };
   }
