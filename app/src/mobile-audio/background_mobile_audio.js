@@ -135,7 +135,7 @@ const globalJsCopy = {
   },
 };
 
-async function getOriginalVideoResponse(videoId, bodyInput = null) {
+async function getOriginalVideoResponse(videoId) {
   const cacheKey = `video_response_mobile_${videoId}`;
   if (videoResponseCache.has(cacheKey)) {
     return videoResponseCache.get(cacheKey); // Return cached description if available
@@ -144,18 +144,17 @@ async function getOriginalVideoResponse(videoId, bodyInput = null) {
   const body = {
     context: {
       client: {
-        clientName: bodyInput?.context?.client?.clientName || "MWEB",
-        clientVersion:
-          bodyInput?.context?.client?.clientVersion || "2.20250730.01.00",
+        clientName: "MWEB",
+        clientVersion: "2.20250730.01.00",
         originalUrl: document.location.href,
         hl: "lo", // Using "Lao" as default that is an unsupported (but valid) language of youtube
         // That always get the original language as a result
         gl: null,
-        visitorData: bodyInput?.context?.visitorData || null,
+        visitorData: null,
       },
     },
-    playbackContext: bodyInput?.playbackContext || null,
-    serviceIntegrityDimensions: bodyInput?.serviceIntegrityDimensions || null,
+    playbackContext: null,
+    serviceIntegrityDimensions: null,
     videoId,
   };
 
@@ -201,6 +200,7 @@ async function getOriginalVideoResponse(videoId, bodyInput = null) {
 
   // Store the original ytInitialPlayerResponse
   let originalPlayerResponse = null;
+  let untranslatedPlayerResponse = null;
   let isIntercepted = false;
 
   // Intercept window['ytInitialPlayerResponse']
@@ -220,14 +220,22 @@ async function getOriginalVideoResponse(videoId, bodyInput = null) {
       configurable: true,
       enumerable: true,
       get() {
+        if (
+          untranslatedPlayerResponse &&
+          untranslatedPlayerResponse.ytAntiTranslate
+        ) {
+          return untranslatedPlayerResponse;
+        }
+
         if (originalPlayerResponse && originalPlayerResponse.ytAntiTranslate) {
           return originalPlayerResponse;
         }
 
         const videoId = globalJsCopy.getCurrentVideoId();
-        return getOriginalVideoResponse(videoId).then(
-          (response) => response?.bodyJson || originalPlayerResponse,
-        );
+        return getOriginalVideoResponse(videoId).then((response) => {
+          untranslatedPlayerResponse = response?.bodyJson;
+          return untranslatedPlayerResponse;
+        });
       },
       set(value) {
         log("ytInitialPlayerResponse being set - storing original");
