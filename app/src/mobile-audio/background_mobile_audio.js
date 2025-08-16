@@ -192,6 +192,176 @@ async function getUntranslatedVideoResponse(videoId) {
   return { bodyJson: json, response: response };
 }
 
+const sync = {
+  post: function (url, headers, body) {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", url, false); // `false` = synchronous
+    for (const key in headers) {
+      xhr.setRequestHeader(key, headers[key]);
+    }
+    xhr.send(body);
+    return {
+      status: xhr.status,
+      responseText: xhr.responseText,
+    };
+  },
+
+  // Minimal synchronous SHA-1 implementation
+  sha1: function (msg) {
+    function rotl(n, s) {
+      return (n << s) | (n >>> (32 - s));
+    }
+    function toHex(val) {
+      return (val >>> 0).toString(16).padStart(8, "0");
+    }
+
+    const msgBytes = new TextEncoder().encode(msg);
+    const words = [];
+    for (let i = 0; i < msgBytes.length; i++) {
+      words[i >> 2] |= msgBytes[i] << (24 - (i % 4) * 8);
+    }
+    const bitLen = msgBytes.length * 8;
+    words[bitLen >> 5] |= 0x80 << (24 - (bitLen % 32));
+    words[(((bitLen + 64) >> 9) << 4) + 15] = bitLen;
+
+    let h0 = 0x67452301;
+    let h1 = 0xefcdab89;
+    let h2 = 0x98badcfe;
+    let h3 = 0x10325476;
+    let h4 = 0xc3d2e1f0;
+
+    for (let i = 0; i < words.length; i += 16) {
+      const w = words.slice(i, i + 16);
+      for (let t = 16; t < 80; t++) {
+        w[t] = rotl(w[t - 3] ^ w[t - 8] ^ w[t - 14] ^ w[t - 16], 1);
+      }
+
+      let a = h0,
+        b = h1,
+        c = h2,
+        d = h3,
+        e = h4;
+      for (let t = 0; t < 80; t++) {
+        const f =
+          t < 20
+            ? (b & c) | (~b & d)
+            : t < 40
+              ? b ^ c ^ d
+              : t < 60
+                ? (b & c) | (b & d) | (c & d)
+                : b ^ c ^ d;
+        const k =
+          t < 20
+            ? 0x5a827999
+            : t < 40
+              ? 0x6ed9eba1
+              : t < 60
+                ? 0x8f1bbcdc
+                : 0xca62c1d6;
+        const temp = (rotl(a, 5) + f + e + k + w[t]) >>> 0;
+        e = d;
+        d = c;
+        c = rotl(b, 30) >>> 0;
+        b = a;
+        a = temp;
+      }
+
+      h0 = (h0 + a) >>> 0;
+      h1 = (h1 + b) >>> 0;
+      h2 = (h2 + c) >>> 0;
+      h3 = (h3 + d) >>> 0;
+      h4 = (h4 + e) >>> 0;
+    }
+
+    return toHex(h0) + toHex(h1) + toHex(h2) + toHex(h3) + toHex(h4);
+  },
+
+  getSAPISIDHASH: function (origin = "https://m.youtube.com") {
+    const sapisid = globalJsCopy.getSAPISID();
+    if (!sapisid) {
+      globalJsCopy.logWarning("SAPISID cookie not found.");
+      return null;
+    }
+
+    const timestamp = Math.floor(Date.now() / 1000);
+    const message = `${timestamp} ${sapisid} ${origin}`;
+    const hash = sync.sha1(message);
+    return `SAPISIDHASH ${timestamp}_${hash}`;
+  },
+
+  getYoutubeIHeadersWithCredentials: function () {
+    const sapisidhash = sync.getSAPISIDHASH();
+    if (!sapisidhash) {
+      globalJsCopy.logWarning(
+        "getYoutubeIHeadersWithCredentials: SAPISID not found, user not logged in, returning default headers",
+      );
+      return {
+        "Content-Type": "application/json",
+      };
+    }
+    return {
+      "Content-Type": "application/json",
+      Authorization: sapisidhash,
+      Origin: "https://m.youtube.com",
+      "X-Youtube-Client-Name": "1",
+      "X-Youtube-Client-Version": "2.20250730.01.00",
+    };
+  },
+
+  getUntranslatedVideoResponse: function (videoId) {
+    const cacheKey = `video_response_mobile_${videoId}`;
+    if (videoResponseCache.has(cacheKey)) {
+      return videoResponseCache.get(cacheKey); // Return cached description if available
+    }
+
+    const body = {
+      context: {
+        client: {
+          clientName: "MWEB",
+          clientVersion: "2.20250730.01.00",
+          originalUrl: document.location.href,
+          hl: "lo", // Using "Lao" as default that is an unsupported (but valid) language of youtube
+          // That always get the original language as a result
+          gl: null,
+          visitorData: null,
+        },
+      },
+      playbackContext: null,
+      serviceIntegrityDimensions: null,
+      videoId,
+    };
+
+    const headers = sync.getYoutubeIHeadersWithCredentials();
+
+    const response = sync.post(
+      "https://m.youtube.com/youtubei/v1/player?prettyPrint=false&yt-anti-translate=true",
+      headers,
+      JSON.stringify(body),
+    );
+
+    const json = JSON.parse(response.responseText);
+
+    if (json?.playerAds && json?.playerAds?.length > 0) {
+      json.playerAds = [];
+    }
+    if (json?.adSlots && json?.adSlots.length > 0) {
+      json.adSlots = [];
+    }
+    if (json?.adBreakHeartbeatParams) {
+      json.adBreakHeartbeatParams = null;
+    }
+
+    // Add a self identification property
+    json.ytAntiTranslate = true;
+
+    if (json) {
+      videoResponseCache.set(cacheKey, { bodyJson: json, response: response }); // Cache the player response for future use
+    }
+
+    return { bodyJson: json, response: response };
+  },
+};
+
 (() => {
   // Store the original ytInitialPlayerResponse
   let originalPlayerResponse = null;
@@ -217,10 +387,7 @@ async function getUntranslatedVideoResponse(videoId) {
       configurable: true,
       enumerable: true,
       get() {
-        if (
-          untranslatedPlayerResponse &&
-          untranslatedPlayerResponse.ytAntiTranslate
-        ) {
+        if (untranslatedPlayerResponse) {
           return untranslatedPlayerResponse;
         }
 
@@ -232,10 +399,13 @@ async function getUntranslatedVideoResponse(videoId) {
         if (!videoId) {
           return originalPlayerResponse;
         }
-        return getUntranslatedVideoResponse(videoId).then((response) => {
-          untranslatedPlayerResponse = response?.bodyJson || null;
-          return untranslatedPlayerResponse;
-        });
+        const response = sync.getUntranslatedVideoResponse(videoId);
+        untranslatedPlayerResponse = response?.bodyJson || null;
+        globalJsCopy.logDebug(
+          "Untranslated player response fetched",
+          untranslatedPlayerResponse,
+        );
+        return untranslatedPlayerResponse;
       },
       set(value) {
         globalJsCopy.logDebug(
