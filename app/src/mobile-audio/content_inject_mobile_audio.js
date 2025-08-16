@@ -5,7 +5,6 @@ chrome.storage.sync.get(
     untranslateAudio: true,
     untranslateDescription: true,
     untranslateNotification: true,
-    untranslateAudioOnlyAI: false,
   },
   async function (items) {
     if (
@@ -15,7 +14,6 @@ chrome.storage.sync.get(
     ) {
       const mobileAudioScript = document.createElement("script");
       mobileAudioScript.type = "module";
-      mobileAudioScript.dataset.ytantitranslatesettings = JSON.stringify(items);
       mobileAudioScript.src = chrome.runtime.getURL(
         "src/mobile-audio/background_mobile_audio.js",
       );
