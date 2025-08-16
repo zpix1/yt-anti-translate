@@ -170,7 +170,7 @@ const globalJsCopy = {
   },
 };
 
-async function getOriginalVideoResponse(videoId) {
+async function getOriginalVideoResponse(videoId, bodyInput = null) {
   const cacheKey = `video_response_mobile_${videoId}`;
   if (videoResponseCache.has(cacheKey)) {
     return videoResponseCache.get(cacheKey); // Return cached description if available
@@ -179,13 +179,18 @@ async function getOriginalVideoResponse(videoId) {
   const body = {
     context: {
       client: {
-        clientName: "MWEB",
-        clientVersion: "2.20250730.01.00",
-        hl: "en", // Using "Lao" as default that is an unsupported (but valid) language of youtube
-        gl: null,
+        clientName: bodyInput?.context?.client?.clientName || "MWEB",
+        clientVersion:
+          bodyInput?.context?.client?.clientVersion || "2.20250730.01.00",
+        originalUrl: document.location.href,
+        hl: "lo", // Using "Lao" as default that is an unsupported (but valid) language of youtube
         // That always get the original language as a result
+        gl: null,
+        visitorData: bodyInput?.context?.visitorData || null,
       },
     },
+    playbackContext: bodyInput?.playbackContext || null,
+    serviceIntegrityDimensions: bodyInput?.serviceIntegrityDimensions || null,
     videoId,
   };
 
@@ -200,22 +205,27 @@ async function getOriginalVideoResponse(videoId) {
     },
   );
 
-  const json = await response.json();
-  if (json) {
-    videoResponseCache.set(cacheKey, json); // Cache the player response for future use
-  }
+  const clonedResponse = response.clone();
+  const json = await clonedResponse.json();
 
-  if (json.playerAds && json.playerAds.length > 0) {
+  if (json?.playerAds && json?.playerAds?.length > 0) {
     json.playerAds = [];
   }
-  if (json.adSlots && json.adSlots.length > 0) {
+  if (json?.adSlots && json?.adSlots.length > 0) {
     json.adSlots = [];
   }
-  if (json.adBreakHeartbeatParams) {
+  if (json?.adBreakHeartbeatParams) {
     json.adBreakHeartbeatParams = null;
   }
 
-  return json;
+  // Add a self identification property
+  json.ytAntiTranslate = true;
+
+  if (json) {
+    videoResponseCache.set(cacheKey, { bodyJson: json, response: response }); // Cache the player response for future use
+  }
+
+  return { bodyJson: json, response: response };
 }
 
 // // Helper: parse track id and extract useful information
@@ -412,16 +422,14 @@ async function getOriginalVideoResponse(videoId) {
       configurable: true,
       enumerable: true,
       get() {
-        const videoId = globalJsCopy.getCurrentVideoId();
-        if (videoId) {
-          return getOriginalVideoResponse(videoId, true)
-            .then((response) => {
-              const jsonResponse = response;
-              return jsonResponse;
-            })
-            .catch(() => originalPlayerResponse);
+        if (originalPlayerResponse && originalPlayerResponse.ytAntiTranslate) {
+          return originalPlayerResponse;
         }
-        return originalPlayerResponse;
+
+        const videoId = globalJsCopy.getCurrentVideoId();
+        return getOriginalVideoResponse(videoId).then(
+          (response) => response?.bodyJson || originalPlayerResponse,
+        );
       },
       set(value) {
         log("ytInitialPlayerResponse being set - storing original");
@@ -445,33 +453,33 @@ async function getOriginalVideoResponse(videoId) {
   }
 
   function createRewriter(origFetch) {
-    // async function parseBody(input) {
-    //   let bodyJson = null;
-    //   try {
-    //     bodyJson = input.json();
-    //   } catch {
-    //     /* empty */
-    //   }
+    async function parseBody(input) {
+      let bodyJson = null;
+      try {
+        bodyJson = await input.json();
+      } catch {
+        /* empty */
+      }
 
-    //   if (bodyJson) {
-    //     return bodyJson;
-    //   }
-    //   // Read JSON body if present
-    //   if (typeof input.body === "string") {
-    //     bodyJson = JSON.parse(input.body);
-    //   } else if (input.body instanceof ReadableStream) {
-    //     const reader = input.body.getReader();
-    //     const chunks = [];
-    //     let done, value;
-    //     while ((({ done, value } = await reader.read()), !done)) {
-    //       chunks.push(value);
-    //     }
-    //     const decoder = new TextDecoder();
-    //     const bodyString = decoder.decode(chunks[0]);
-    //     bodyJson = JSON.parse(bodyString);
-    //   }
-    //   return bodyJson;
-    // }
+      if (bodyJson) {
+        return bodyJson;
+      }
+      // Read JSON body if present
+      if (typeof input.body === "string") {
+        bodyJson = JSON.parse(input.body);
+      } else if (input.body instanceof ReadableStream) {
+        const reader = input.body.getReader();
+        const chunks = [];
+        let done, value;
+        while ((({ done, value } = await reader.read()), !done)) {
+          chunks.push(value);
+        }
+        const decoder = new TextDecoder();
+        const bodyString = decoder.decode(chunks[0]);
+        bodyJson = JSON.parse(bodyString);
+      }
+      return bodyJson;
+    }
     return async function (input, init = {}) {
       const url = typeof input === "string" ? input : input.url;
 
@@ -484,47 +492,52 @@ async function getOriginalVideoResponse(videoId) {
         return origFetch(input, init);
       }
 
-      log(`Processing YouTube mobile player API request: ${url}`);
-      const response = await origFetch(input, init);
+      // save body so that it can be reaccessed later
+      const bodyClone = await parseBody(input);
+
+      //log(`Processing YouTube mobile player API request: ${url}`);
+      //const response = await origFetch(input, init);
 
       // Only process JSON responses that might contain streamingData
-      const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        return response;
-      }
+      // const contentType = response.headers.get("content-type");
+      // if (!contentType || !contentType.includes("application/json")) {
+      //   return response;
+      // }
 
       try {
         // Clone the response to read the body
-        const responseClone = response.clone();
-        const jsonTranslatedData = await responseClone.json();
+        // const responseClone = response.clone();
+        // const jsonTranslatedData = await responseClone.json();
 
         // Check if this response contains streamingData.adaptiveFormats
-        if (
-          jsonTranslatedData.streamingData &&
-          jsonTranslatedData.streamingData.adaptiveFormats
-        ) {
-          globalJsCopy.logDebug(
-            `Found streamingData.adaptiveFormats, replacing with original data response`,
-          );
+        // if (
+        //   jsonTranslatedData.streamingData &&
+        //   jsonTranslatedData.streamingData.adaptiveFormats
+        // ) {
+        //   globalJsCopy.logDebug(
+        //     `Found streamingData.adaptiveFormats, replacing with original data response`,
+        //   );
 
-          const videoId = globalJsCopy.getCurrentVideoId();
-          const responseJson = await getOriginalVideoResponse(videoId);
+        const videoId = globalJsCopy.getCurrentVideoId();
+        const origResponse = await getOriginalVideoResponse(videoId, null);
 
-          if (window.ytInitialPlayerResponse !== undefined) {
-            window.ytInitialPlayerResponse = responseJson;
-          }
-          // Create a new response with modified JSON
-          const modifiedResponse = new Response(JSON.stringify(responseJson), {
-            status: response.status,
-            statusText: response.statusText,
-            headers: response.headers,
-          });
-          return modifiedResponse;
-        } else {
-          return response;
+        const responseJson = origResponse.bodyJson;
+
+        if (window.ytInitialPlayerResponse !== undefined) {
+          window.ytInitialPlayerResponse = responseJson;
         }
+        // Create a new response with modified JSON
+        const modifiedResponse = new Response(JSON.stringify(responseJson), {
+          status: origResponse.response.status,
+          statusText: origResponse.response.statusText,
+          headers: origResponse.response.headers,
+        });
+        return modifiedResponse;
+        // } else {
+        //   return response;
+        // }
       } catch {
-        return response;
+        return null;
       }
     };
   }
