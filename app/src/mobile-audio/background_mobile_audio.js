@@ -142,10 +142,10 @@ const globalJsCopy = {
 };
 
 async function getUntranslatedVideoResponseAsync(videoId) {
-  const cacheKey = `sync_video_response_mobile_${videoId}`;
-  if (videoResponseCache.has(cacheKey)) {
-    return videoResponseCache.get(cacheKey); // Return cached description if available
-  }
+  // const cacheKey = `sync_video_response_mobile_${videoId}`;
+  // if (videoResponseCache.has(cacheKey)) {
+  //   return videoResponseCache.get(cacheKey); // Return cached description if available
+  // }
 
   const body = {
     context: {
@@ -164,7 +164,7 @@ async function getUntranslatedVideoResponseAsync(videoId) {
     videoId,
   };
 
-  const headers = await globalJsCopy.getYoutubeIHeadersWithCredentials();
+  const headers = globalJsCopy.getYoutubeIHeadersWithCredentials();
 
   globalJsCopy.logDebug("Fetching untransalted video response", {
     url: "https://m.youtube.com/youtubei/v1/player?prettyPrint=false&yt-anti-translate=true",
@@ -172,17 +172,76 @@ async function getUntranslatedVideoResponseAsync(videoId) {
     body,
   });
 
-  const response = await fetch(
-    "https://m.youtube.com/youtubei/v1/player?prettyPrint=false&yt-anti-translate=true",
-    {
-      method: "POST",
-      headers: headers,
-      body: JSON.stringify(body),
-    },
-  );
+  const url =
+    "https://m.youtube.com/youtubei/v1/player?prettyPrint=false&yt-anti-translate=true";
 
-  const clonedResponse = response.clone();
-  const json = await clonedResponse.json();
+  const { response, json } = await new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    try {
+      xhr.open("POST", url, true);
+      xhr.withCredentials = true;
+      for (const [key, value] of Object.entries(headers || {})) {
+        try {
+          xhr.setRequestHeader(key, value);
+        } catch {
+          // Ignore forbidden/unsafe headers
+        }
+      }
+    } catch (e) {
+      return reject(e);
+    }
+
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState !== 4) return;
+      let parsedJson = null;
+      try {
+        parsedJson = JSON.parse(xhr.responseText || "null");
+      } catch {
+        parsedJson = null;
+      }
+
+      const rawHeaders = xhr.getAllResponseHeaders() || "";
+      const headersMap = {};
+      rawHeaders
+        .trim()
+        .split(/\r?\n/)
+        .forEach((line) => {
+          const idx = line.indexOf(":");
+          if (idx > -1) {
+            const key = line.slice(0, idx).trim().toLowerCase();
+            const value = line.slice(idx + 1).trim();
+            headersMap[key] = value;
+          }
+        });
+
+      const headersLike = {
+        forEach(callback) {
+          Object.keys(headersMap).forEach((key) =>
+            callback(headersMap[key], key),
+          );
+        },
+      };
+
+      resolve({
+        response: {
+          status: xhr.status,
+          statusText: xhr.statusText,
+          headers: headersLike,
+        },
+        json: parsedJson,
+      });
+    };
+
+    xhr.onerror = function () {
+      reject(new Error("Network error during XMLHttpRequest"));
+    };
+
+    try {
+      xhr.send(JSON.stringify(body));
+    } catch (e) {
+      reject(e);
+    }
+  });
 
   // Ads do not properly work with this response so we are clearing the content of the response
   clearAdsProperties(json);
@@ -190,15 +249,18 @@ async function getUntranslatedVideoResponseAsync(videoId) {
   // Add a self identification property
   json.ytAntiTranslate = true;
 
-  if (json) {
-    videoResponseCache.set(cacheKey, { bodyJson: json, response: response }); // Cache the player response for future use
-  }
+  // if (json) {
+  //   videoResponseCache.set(cacheKey, { bodyJson: json, response: response }); // Cache the player response for future use
+  // }
+
+  console.log("responseJson", json, response);
 
   return { bodyJson: json, response: response };
 }
 
 const sync = {
   post: function (url, headers, body) {
+    return;
     const xhr = new XMLHttpRequest();
     xhr.open("POST", url, false); // `false` = synchronous
     for (const key in headers) {
@@ -314,10 +376,10 @@ const sync = {
   },
 
   getUntranslatedVideoResponse: function (videoId) {
-    const cacheKey = `video_response_mobile_${videoId}`;
-    if (videoResponseCache.has(cacheKey)) {
-      return videoResponseCache.get(cacheKey); // Return cached description if available
-    }
+    // const cacheKey = `video_response_mobile_${videoId}`;
+    // if (videoResponseCache.has(cacheKey)) {
+    //   return videoResponseCache.get(cacheKey); // Return cached description if available
+    // }
 
     const body = {
       context: {
@@ -352,9 +414,9 @@ const sync = {
     // Add a self identification property
     json.ytAntiTranslate = true;
 
-    if (json) {
-      videoResponseCache.set(cacheKey, { bodyJson: json, response: response }); // Cache the player response for future use
-    }
+    // if (json) {
+    //   videoResponseCache.set(cacheKey, { bodyJson: json, response: response }); // Cache the player response for future use
+    // }
 
     return { bodyJson: json, response: response };
   },
@@ -363,7 +425,7 @@ const sync = {
 (() => {
   // Store the original ytInitialPlayerResponse
   let originalPlayerResponse = null;
-  let untranslatedPlayerResponse = null;
+  // let untranslatedPlayerResponse = null;
   let isIntercepted = false;
 
   // Intercept window['ytInitialPlayerResponse']
@@ -381,33 +443,38 @@ const sync = {
     }
 
     // Set up property descriptor to intercept access
+    let intercepted_ytInitialPlayerResponse = false;
     Object.defineProperty(window, "ytInitialPlayerResponse", {
       configurable: true,
       enumerable: true,
       get() {
-        // Uncomment to tes XMLHttpRequest interception, while it don't work for me and returns video error (while it returns audio in english in network tab)
-        // globalJsCopy.logDebug("ytInitialPlayerResponse being get");
-        // originalPlayerResponse.streamingData.formats = null;
-        // originalPlayerResponse.streamingData.serverAbrStreamingUrl = null;
-        // originalPlayerResponse.streamingData.adaptiveFormats = null;
-        // return originalPlayerResponse;
-        if (untranslatedPlayerResponse) {
-          return untranslatedPlayerResponse;
-        }
-        if (originalPlayerResponse && originalPlayerResponse.ytAntiTranslate) {
+        if (intercepted_ytInitialPlayerResponse) {
           return originalPlayerResponse;
         }
-        const videoId = globalJsCopy.getCurrentVideoId();
-        if (!videoId) {
-          return originalPlayerResponse;
-        }
-        const response = sync.getUntranslatedVideoResponse(videoId);
-        untranslatedPlayerResponse = response?.bodyJson || null;
-        globalJsCopy.logDebug(
-          "Untranslated player response fetched",
-          untranslatedPlayerResponse,
-        );
-        return untranslatedPlayerResponse;
+        intercepted_ytInitialPlayerResponse = true;
+        // Uncomment to test XMLHttpRequest interception, while it don't work for me and returns video error (while it returns audio in english in network tab)
+        globalJsCopy.logDebug("ytInitialPlayerResponse being get");
+        originalPlayerResponse.streamingData.formats = null;
+        originalPlayerResponse.streamingData.serverAbrStreamingUrl = null;
+        originalPlayerResponse.streamingData.adaptiveFormats = null;
+        return originalPlayerResponse;
+        // if (untranslatedPlayerResponse) {
+        //   return untranslatedPlayerResponse;
+        // }
+        // if (originalPlayerResponse && originalPlayerResponse.ytAntiTranslate) {
+        //   return originalPlayerResponse;
+        // }
+        // const videoId = globalJsCopy.getCurrentVideoId();
+        // if (!videoId) {
+        //   return originalPlayerResponse;
+        // }
+        // const response = sync.getUntranslatedVideoResponse(videoId);
+        // untranslatedPlayerResponse = response?.bodyJson || null;
+        // globalJsCopy.logDebug(
+        //   "Untranslated player response fetched",
+        //   untranslatedPlayerResponse,
+        // );
+        // return untranslatedPlayerResponse;
       },
       set(value) {
         globalJsCopy.logDebug(
@@ -493,8 +560,11 @@ const sync = {
         (async () => {
           try {
             const videoId = globalJsCopy.getCurrentVideoId();
-            const origResponse = sync.get(videoId);
+            const origResponse =
+              await getUntranslatedVideoResponseAsync(videoId);
             const responseJson = origResponse.bodyJson;
+
+            console.log("responseJson", responseJson);
 
             if (window.ytInitialPlayerResponse !== undefined) {
               window.ytInitialPlayerResponse = responseJson;
