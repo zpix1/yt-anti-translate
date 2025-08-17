@@ -100,6 +100,11 @@ const globalJsCopy = {
     }
 
     const timestamp = Math.floor(Date.now() / 1000);
+    this.logDebug("getSAPISIDHASH", {
+      timestamp,
+      sapisid,
+      origin,
+    });
     const message = `${timestamp} ${sapisid} ${origin}`;
 
     // SHA1 function (uses SubtleCrypto)
@@ -129,6 +134,7 @@ const globalJsCopy = {
       "Content-Type": "application/json",
       Authorization: sapisidhash,
       Origin: "https://m.youtube.com",
+      priority: "u=0, i",
       "X-Youtube-Client-Name": "1",
       "X-Youtube-Client-Version": "2.20250730.01.00",
     };
@@ -136,7 +142,7 @@ const globalJsCopy = {
 };
 
 async function getUntranslatedVideoResponseAsync(videoId) {
-  const cacheKey = `video_response_mobile_${videoId}`;
+  const cacheKey = `sync_video_response_mobile_${videoId}`;
   if (videoResponseCache.has(cacheKey)) {
     return videoResponseCache.get(cacheKey); // Return cached description if available
   }
@@ -159,6 +165,12 @@ async function getUntranslatedVideoResponseAsync(videoId) {
   };
 
   const headers = await globalJsCopy.getYoutubeIHeadersWithCredentials();
+
+  globalJsCopy.logDebug("Fetching untransalted video response", {
+    url: "https://m.youtube.com/youtubei/v1/player?prettyPrint=false&yt-anti-translate=true",
+    headers: headers,
+    body,
+  });
 
   const response = await fetch(
     "https://m.youtube.com/youtubei/v1/player?prettyPrint=false&yt-anti-translate=true",
@@ -373,14 +385,18 @@ const sync = {
       configurable: true,
       enumerable: true,
       get() {
+        // Uncomment to tes XMLHttpRequest interception, while it don't work for me and returns video error (while it returns audio in english in network tab)
+        // globalJsCopy.logDebug("ytInitialPlayerResponse being get");
+        // originalPlayerResponse.streamingData.formats = null;
+        // originalPlayerResponse.streamingData.serverAbrStreamingUrl = null;
+        // originalPlayerResponse.streamingData.adaptiveFormats = null;
+        // return originalPlayerResponse;
         if (untranslatedPlayerResponse) {
           return untranslatedPlayerResponse;
         }
-
         if (originalPlayerResponse && originalPlayerResponse.ytAntiTranslate) {
           return originalPlayerResponse;
         }
-
         const videoId = globalJsCopy.getCurrentVideoId();
         if (!videoId) {
           return originalPlayerResponse;
@@ -414,7 +430,7 @@ const sync = {
       // Only process requests to the specific YouTube mobile player API
       if (
         !url ||
-        !url.includes("m.youtube.com/youtubei/v1/player") ||
+        !url.includes("/youtubei/v1/player") ||
         url.includes("yt-anti-translate=true")
       ) {
         return origFetch(input, init);
@@ -422,7 +438,7 @@ const sync = {
 
       try {
         const videoId = globalJsCopy.getCurrentVideoId();
-        const origResponse = await getUntranslatedVideoResponseAsync(videoId);
+        const origResponse = sync.getUntranslatedVideoResponse(videoId);
 
         const responseJson = origResponse.bodyJson;
 
@@ -436,9 +452,125 @@ const sync = {
           headers: origResponse.response.headers,
         });
         return modifiedResponse;
-      } catch {
+      } catch (error) {
+        globalJsCopy.logError(
+          `Error fetching untransalted video response: ${error?.message || error}`,
+        );
         return origFetch(input, init);
       }
+    };
+  }
+
+  function installXMLHttpRequestInterceptor() {
+    const OriginalOpen = XMLHttpRequest.prototype.open;
+    const OriginalSend = XMLHttpRequest.prototype.send;
+
+    XMLHttpRequest.prototype.open = function () {
+      const method = (arguments[0] || "GET").toString().toUpperCase();
+      const url = arguments[1] || "";
+      const isAsync = arguments[2] !== false;
+      this.__ytat = this.__ytat || {};
+      this.__ytat.method = method;
+      this.__ytat.url = url;
+      this.__ytat.async = isAsync;
+      return OriginalOpen.apply(this, arguments);
+    };
+
+    XMLHttpRequest.prototype.send = function (body) {
+      const context = this.__ytat || {};
+      const url = context.url || "";
+      globalJsCopy.logDebug("XMLHttpRequest headers", {
+        headers: this.getAllResponseHeaders(),
+        method: context.method,
+        url: context.url,
+        async: context.async,
+      });
+      globalJsCopy.logDebug("XMLHttpRequest being sent", url);
+      if (
+        url.includes("/youtubei/v1/player") &&
+        !url.includes("yt-anti-translate=true")
+      ) {
+        (async () => {
+          try {
+            const videoId = globalJsCopy.getCurrentVideoId();
+            const origResponse = sync.get(videoId);
+            const responseJson = origResponse.bodyJson;
+
+            if (window.ytInitialPlayerResponse !== undefined) {
+              window.ytInitialPlayerResponse = responseJson;
+            }
+
+            const headersMap = {};
+            origResponse.response?.headers?.forEach((value, key) => {
+              headersMap[key.toLowerCase()] = value;
+            });
+
+            const jsonText = JSON.stringify(responseJson);
+            const finalResponse =
+              this.responseType === "json" ? responseJson : jsonText;
+
+            try {
+              Object.defineProperty(this, "readyState", {
+                configurable: true,
+                value: 4,
+              });
+              Object.defineProperty(this, "status", {
+                configurable: true,
+                value: origResponse.response.status,
+              });
+              Object.defineProperty(this, "statusText", {
+                configurable: true,
+                value: origResponse.response.statusText,
+              });
+              Object.defineProperty(this, "response", {
+                configurable: true,
+                value: finalResponse,
+              });
+              Object.defineProperty(this, "responseText", {
+                configurable: true,
+                value: jsonText,
+              });
+              this.getResponseHeader = function (name) {
+                return headersMap[(name || "").toLowerCase()] || null;
+              };
+              this.getAllResponseHeaders = function () {
+                return Object.entries(headersMap)
+                  .map(([k, v]) => `${k}: ${v}`)
+                  .join("\r\n");
+              };
+            } catch (defineErr) {
+              globalJsCopy.logDebug(
+                "Could not define XMLHttpRequest response properties",
+                defineErr,
+              );
+            }
+
+            try {
+              if (typeof this.onreadystatechange === "function") {
+                this.onreadystatechange();
+              }
+              if (typeof this.onload === "function") {
+                this.onload();
+              }
+              if (typeof this.dispatchEvent === "function") {
+                this.dispatchEvent(new Event("readystatechange"));
+                this.dispatchEvent(new Event("load"));
+                this.dispatchEvent(new Event("loadend"));
+              }
+            } catch (eventErr) {
+              globalJsCopy.logDebug("Dispatching XHR events failed", eventErr);
+            }
+          } catch (error) {
+            globalJsCopy.logError(
+              `XMLHttpRequest interception failed: ${error?.message || error}`,
+            );
+            return OriginalSend.call(this, body);
+          }
+        })();
+        return; // prevent the original network request
+      }
+
+      return OriginalSend.call(this, body);
     };
   }
 
@@ -456,6 +588,16 @@ const sync = {
     /* 4-a. wrap whatever fetch exists right now (likely the native one) */
     globalJsCopy.logDebug("installing wrapper around current window.fetch");
     window.fetch = createRewriter(window.fetch.bind(window));
+
+    // 4-a.1. also intercept XMLHttpRequest flows
+    try {
+      globalJsCopy.logDebug("installing interceptor for XMLHttpRequest");
+      installXMLHttpRequestInterceptor();
+    } catch (error) {
+      globalJsCopy.logError(
+        `Error installing XMLHttpRequest interceptor: ${error?.message || error}`,
+      );
+    }
 
     /* 4-b. if YouTube later replaces fetch with ytNetworkFetch, re-wrap it */
     Object.defineProperty(window, "ytNetworkFetch", {
