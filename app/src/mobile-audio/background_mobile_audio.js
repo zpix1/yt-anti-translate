@@ -92,6 +92,15 @@ const globalJsCopy = {
     return match ? match[1] : null;
   },
 
+  // SHA1 function (uses SubtleCrypto)
+  sha1Hash: async function (msg) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(msg);
+    const hashBuffer = await crypto.subtle.digest("SHA-1", data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+  },
+
   getSAPISIDHASH: async function (origin = "https://m.youtube.com") {
     const sapisid = this.getSAPISID();
     if (!sapisid) {
@@ -102,16 +111,7 @@ const globalJsCopy = {
     const timestamp = Math.floor(Date.now() / 1000);
     const message = `${timestamp} ${sapisid} ${origin}`;
 
-    // SHA1 function (uses SubtleCrypto)
-    async function sha1Hash(msg) {
-      const encoder = new TextEncoder();
-      const data = encoder.encode(msg);
-      const hashBuffer = await crypto.subtle.digest("SHA-1", data);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-    }
-
-    const hash = await sha1Hash(message);
+    const hash = await this.sha1Hash(message);
     return `SAPISIDHASH ${timestamp}_${hash} SAPISIDHASH1 ${timestamp}_${hash} SAPISIDHASH2 ${timestamp}_${hash}`;
   },
 
@@ -211,13 +211,13 @@ const sync = {
     }
 
     const msgBytes = new TextEncoder().encode(msg);
-    const words = [];
-    for (let i = 0; i < msgBytes.length; i++) {
+    const l = msgBytes.length;
+    const words = new Array((((l + 8) >> 6) + 1) * 16).fill(0);
+    for (let i = 0; i < l; i++) {
       words[i >> 2] |= msgBytes[i] << (24 - (i % 4) * 8);
     }
-    const bitLen = msgBytes.length * 8;
-    words[bitLen >> 5] |= 0x80 << (24 - (bitLen % 32));
-    words[(((bitLen + 64) >> 9) << 4) + 15] = bitLen;
+    words[l >> 2] |= 0x80 << (24 - (l % 4) * 8);
+    words[words.length - 1] = l * 8;
 
     let h0 = 0x67452301;
     let h1 = 0xefcdab89;
@@ -268,7 +268,9 @@ const sync = {
       h4 = (h4 + e) >>> 0;
     }
 
-    return toHex(h0) + toHex(h1) + toHex(h2) + toHex(h3) + toHex(h4);
+    return (toHex(h0) + toHex(h1) + toHex(h2) + toHex(h3) + toHex(h4))
+      .toLowerCase()
+      .replace(/\$/, "");
   },
 
   getSAPISIDHASH: function (origin = "https://m.youtube.com") {
@@ -298,6 +300,7 @@ const sync = {
       "Content-Type": "application/json",
       Authorization: sapisidhash,
       Origin: "https://m.youtube.com",
+      priority: "u=0, i",
       "X-Youtube-Client-Name": "1",
       "X-Youtube-Client-Version": "2.20250730.01.00",
     };
@@ -491,4 +494,12 @@ function clearAdsProperties(json) {
   if (json?.adBreakHeartbeatParams) {
     json.adBreakHeartbeatParams = null;
   }
+}
+
+// Export for testing (only in Node.js environment)
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = {
+    sync,
+    globalJsCopy,
+  };
 }
