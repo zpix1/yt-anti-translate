@@ -268,9 +268,13 @@ const sync = {
       h4 = (h4 + e) >>> 0;
     }
 
-    return (toHex(h0) + toHex(h1) + toHex(h2) + toHex(h3) + toHex(h4))
-      .toLowerCase()
-      .replace(/\$/, "");
+    return (
+      toHex(h0) +
+      toHex(h1) +
+      toHex(h2) +
+      toHex(h3) +
+      toHex(h4)
+    ).toLowerCase();
   },
 
   getSAPISIDHASH: function (origin = "https://m.youtube.com") {
