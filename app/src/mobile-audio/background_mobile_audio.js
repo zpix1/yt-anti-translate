@@ -112,7 +112,7 @@ const globalJsCopy = {
     }
 
     const hash = await sha1Hash(message);
-    return `SAPISIDHASH ${timestamp}_${hash}`;
+    return `SAPISIDHASH ${timestamp}_${hash} SAPISIDHASH1 ${timestamp}_${hash} SAPISIDHASH2 ${timestamp}_${hash}`;
   },
 
   getYoutubeIHeadersWithCredentials: async function () {
@@ -136,7 +136,7 @@ const globalJsCopy = {
 };
 
 async function getUntranslatedVideoResponseAsync(videoId) {
-  const cacheKey = `video_response_mobile_${videoId}`;
+  const cacheKey = `video_response_mobile_async_${videoId}`;
   if (videoResponseCache.has(cacheKey)) {
     return videoResponseCache.get(cacheKey); // Return cached description if available
   }
@@ -166,6 +166,7 @@ async function getUntranslatedVideoResponseAsync(videoId) {
       method: "POST",
       headers: headers,
       body: JSON.stringify(body),
+      credentials: "include", // Ensure cookies and correct Origin are sent
     },
   );
 
@@ -189,6 +190,7 @@ const sync = {
   post: function (url, headers, body) {
     const xhr = new XMLHttpRequest();
     xhr.open("POST", url, false); // `false` = synchronous
+    xhr.withCredentials = true; // Ensure cookies and credentials are sent
     for (const key in headers) {
       xhr.setRequestHeader(key, headers[key]);
     }
@@ -279,7 +281,7 @@ const sync = {
     const timestamp = Math.floor(Date.now() / 1000);
     const message = `${timestamp} ${sapisid} ${origin}`;
     const hash = sync.sha1(message);
-    return `SAPISIDHASH ${timestamp}_${hash}`;
+    return `SAPISIDHASH ${timestamp}_${hash} SAPISIDHASH1 ${timestamp}_${hash} SAPISIDHASH2 ${timestamp}_${hash}`;
   },
 
   getYoutubeIHeadersWithCredentials: function () {
@@ -302,7 +304,7 @@ const sync = {
   },
 
   getUntranslatedVideoResponse: function (videoId) {
-    const cacheKey = `video_response_mobile_${videoId}`;
+    const cacheKey = `video_response_mobile_sync_${videoId}`;
     if (videoResponseCache.has(cacheKey)) {
       return videoResponseCache.get(cacheKey); // Return cached description if available
     }
