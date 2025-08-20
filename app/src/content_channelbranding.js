@@ -693,7 +693,8 @@ async function getChannelUCIDFromHref(href) {
     if (!handle.startsWith("@")) {
       handle = href.includes("/@") ? `@${handle}` : handle;
     }
-    return await lookupChannelId(handle);
+    // href is URL encoded, so we need to decode it
+    return await lookupChannelId(decodeURIComponent(handle));
   }
   return null;
 }
