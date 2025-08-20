@@ -91,7 +91,8 @@ async function getChannelUCID() {
     const match = window.location.pathname.match(/\/user\/([^/?]+)/);
     handle = match ? `${match[1]}` : null;
   }
-  return await lookupChannelId(handle);
+  // location.pathname is URL encoded, so we need to decode it
+  return await lookupChannelId(decodeURIComponent(handle));
 }
 
 /**
