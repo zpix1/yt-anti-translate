@@ -1306,6 +1306,7 @@ ytm-shorts-lockup-view-model`,
           method: postData ? "POST" : "GET",
           headers: headersData,
           body: postData ? postData : undefined,
+          credentials: headersData?.Authorization ? "include" : "same-origin",
         });
         if (!response.ok) {
           if (response.status === 404) {
@@ -1515,9 +1516,6 @@ ytm-shorts-lockup-view-model`,
     return {
       "Content-Type": "application/json",
       Authorization: sapisidhash,
-      Origin: this.isMobile()
-        ? "https://m.youtube.com"
-        : "https://www.youtube.com",
       "X-Youtube-Client-Name": "1",
       "X-Youtube-Client-Version": "2.20250731.09.00",
     };

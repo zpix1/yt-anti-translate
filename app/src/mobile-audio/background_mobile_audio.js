@@ -165,7 +165,7 @@ async function getUntranslatedVideoResponseAsync(videoId) {
       method: "POST",
       headers: headers,
       body: JSON.stringify(body),
-      credentials: "include", // Ensure cookies and correct Origin are sent
+      credentials: headers?.Authorization ? "include" : "same-origin",
     },
   );
 
@@ -189,7 +189,7 @@ const sync = {
   post: function (url, headers, body) {
     const xhr = new XMLHttpRequest();
     xhr.open("POST", url, false); // `false` = synchronous
-    xhr.withCredentials = true; // Ensure cookies and credentials are sent
+    xhr.withCredentials = headers?.Authorization ? true : false; // Ensure cookies and credentials are sent
     for (const key in headers) {
       xhr.setRequestHeader(key, headers[key]);
     }
