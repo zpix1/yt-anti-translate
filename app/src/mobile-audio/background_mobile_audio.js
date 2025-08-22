@@ -355,6 +355,19 @@ const sync = {
   },
 };
 
+/**
+ * Fallback function for untranslated audio video responses having only 360p option.
+ * The fallback option will empty the streamingdata.adaptiveFormats array
+ * forcing youtube to use the 360p format as fallback
+ * @param {*} playerResponse
+ */
+function getUntranslated360pFallback(playerResponse) {
+  if (playerResponse?.streamingData?.adaptiveFormats) {
+    playerResponse.streamingData.adaptiveFormats = [{}];
+  }
+  return playerResponse;
+}
+
 (() => {
   // Store the original ytInitialPlayerResponse
   let originalPlayerResponse = null;
@@ -398,6 +411,15 @@ const sync = {
           "Untranslated player response fetched",
           untranslatedPlayerResponse,
         );
+
+        if (
+          !untranslatedPlayerResponse ||
+          !untranslatedPlayerResponse.streamingData ||
+          !untranslatedPlayerResponse.streamingData.adaptiveFormats
+        ) {
+          return getUntranslated360pFallback(originalPlayerResponse);
+        }
+
         return untranslatedPlayerResponse;
       },
       set(value) {
@@ -437,6 +459,32 @@ const sync = {
         const origResponse = await getUntranslatedVideoResponseAsync(videoId);
 
         const responseJson = origResponse.bodyJson;
+
+        globalJsCopy.logDebug(
+          "Untranslated player response fetched",
+          responseJson,
+        );
+
+        if (
+          !responseJson ||
+          !responseJson.streamingData ||
+          !responseJson.streamingData.adaptiveFormats
+        ) {
+          const origResponse = await origFetch(input, init);
+          const origResponseJson = origResponse ? origResponse.json() : null;
+          const modifiedOrigResponse =
+            getUntranslated360pFallback(origResponseJson);
+
+          const origModifiedResponse = new Response(
+            JSON.stringify(modifiedOrigResponse),
+            {
+              status: origResponse.response.status,
+              statusText: origResponse.response.statusText,
+              headers: origResponse.response.headers,
+            },
+          );
+          return origModifiedResponse;
+        }
 
         if (window.ytInitialPlayerResponse !== undefined) {
           window.ytInitialPlayerResponse = responseJson;
