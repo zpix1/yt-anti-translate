@@ -128,7 +128,6 @@ const globalJsCopy = {
     return {
       "Content-Type": "application/json",
       Authorization: sapisidhash,
-      Origin: "https://m.youtube.com",
       "X-Youtube-Client-Name": "1",
       "X-Youtube-Client-Version": "2.20250730.01.00",
     };
@@ -303,7 +302,6 @@ const sync = {
     return {
       "Content-Type": "application/json",
       Authorization: sapisidhash,
-      Origin: "https://m.youtube.com",
       priority: "u=0, i",
       "X-Youtube-Client-Name": "1",
       "X-Youtube-Client-Version": "2.20250730.01.00",
