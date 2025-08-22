@@ -16,6 +16,17 @@ const CHANNEL_LOCATION_REGEXES = [
  * @returns {string} channel UCID
  */
 async function lookupChannelId(query) {
+  if (!query) {
+    return null;
+  }
+
+  let decodedQuery;
+  try {
+    decodedQuery = decodeURIComponent(query);
+  } catch {
+    decodedQuery = query;
+  }
+
   // build the request body ──
   const body = {
     context: {
@@ -24,7 +35,7 @@ async function lookupChannelId(query) {
         clientVersion: "2.20250527.00.00",
       },
     },
-    query,
+    query: decodedQuery,
     // "EgIQAg==" = filter=channels  (protobuf: {12: {1:2}})
     params: "EgIQAg==",
   };
@@ -39,21 +50,22 @@ async function lookupChannelId(query) {
   }
 
   const search = "https://www.youtube.com/youtubei/v1/search?prettyPrint=false";
-  const res = await fetch(search, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(body),
-  });
+  const result = await window.YoutubeAntiTranslate.cachedRequest(
+    search,
+    JSON.stringify(body),
+    { "content-type": "application/json" },
+    true,
+  );
 
-  if (!res.ok) {
+  if (!result || !result.response || !result.response.ok) {
     window.YoutubeAntiTranslate.logInfo(
       `Failed to fetch ${search}:`,
-      res.statusText,
+      result?.response?.statusText || "Unknown error",
     );
     return;
   }
 
-  const json = await res.json();
+  const json = result.data;
 
   const channelUcid =
     json.contents?.twoColumnSearchResultsRenderer?.primaryContents
