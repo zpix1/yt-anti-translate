@@ -426,7 +426,12 @@ const sync = {
         !url.includes("m.youtube.com/youtubei/v1/player") ||
         url.includes("yt-anti-translate=true")
       ) {
-        return origFetch(input, init);
+        try {
+          return origFetch(input, init);
+        } catch {
+          /* empty catch */
+          // If we are executing YouTube requests as they are, we do not care if they fail
+        }
       }
 
       try {
@@ -446,7 +451,12 @@ const sync = {
         });
         return modifiedResponse;
       } catch {
-        return origFetch(input, init);
+        try {
+          return origFetch(input, init);
+        } catch {
+          /* empty catch */
+          // If we are executing YouTube requests as they are, we do not care if they fail
+        }
       }
     };
   }
