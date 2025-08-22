@@ -112,7 +112,7 @@ const globalJsCopy = {
     const message = `${timestamp} ${sapisid} ${origin}`;
 
     const hash = await this.sha1Hash(message);
-    return `SAPISIDHASH ${timestamp}_${hash} SAPISIDHASH1 ${timestamp}_${hash} SAPISIDHASH2 ${timestamp}_${hash}`;
+    return `SAPISIDHASH ${timestamp}_${hash} SAPISID1HASH ${timestamp}_${hash} SAPISID3HASH ${timestamp}_${hash}`;
   },
 
   getYoutubeIHeadersWithCredentials: async function () {
@@ -287,7 +287,7 @@ const sync = {
     const timestamp = Math.floor(Date.now() / 1000);
     const message = `${timestamp} ${sapisid} ${origin}`;
     const hash = sync.sha1(message);
-    return `SAPISIDHASH ${timestamp}_${hash} SAPISIDHASH1 ${timestamp}_${hash} SAPISIDHASH2 ${timestamp}_${hash}`;
+    return `SAPISIDHASH ${timestamp}_${hash} SAPISID1HASH ${timestamp}_${hash} SAPISID3HASH ${timestamp}_${hash}`;
   },
 
   getYoutubeIHeadersWithCredentials: function () {
