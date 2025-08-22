@@ -406,19 +406,20 @@ function getUntranslated360pFallback(playerResponse) {
           return originalPlayerResponse;
         }
         const response = sync.getUntranslatedVideoResponse(videoId);
+
+        if (
+          !response?.bodyJson ||
+          !response?.bodyJson.streamingData ||
+          !response?.bodyJson.streamingData.adaptiveFormats
+        ) {
+          return getUntranslated360pFallback(originalPlayerResponse);
+        }
+
         untranslatedPlayerResponse = response?.bodyJson || null;
         globalJsCopy.logDebug(
           "Untranslated player response fetched",
           untranslatedPlayerResponse,
         );
-
-        if (
-          !untranslatedPlayerResponse ||
-          !untranslatedPlayerResponse.streamingData ||
-          !untranslatedPlayerResponse.streamingData.adaptiveFormats
-        ) {
-          return getUntranslated360pFallback(originalPlayerResponse);
-        }
 
         return untranslatedPlayerResponse;
       },
