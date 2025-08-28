@@ -450,7 +450,7 @@ async function untranslateOtherVideos(intersectElements = null) {
         }
 
         // Find link and title elements typical for standard videos
-        let linkElement =
+          let linkElement =
           video.querySelector("a#video-title-link") ||
           video.querySelector("a#thumbnail") ||
           video.querySelector("a.media-item-thumbnail-container") ||
@@ -458,6 +458,7 @@ async function untranslateOtherVideos(intersectElements = null) {
           video.querySelector("ytm-video-card-renderer a") ||
           video.querySelector("a.media-item-thumbnail-container");
         let titleElement =
+          video.querySelector("h3.yt-lockup-metadata-view-model__heading-reset > a > span") ||
           video.querySelector("#video-title:not(.cbCustomTitle)") ||
           video.querySelector(
             ".compact-media-item-headline .yt-core-attributed-string",
