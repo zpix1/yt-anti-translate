@@ -453,6 +453,7 @@ async function untranslateOtherVideos(intersectElements = null) {
           let linkElement =
           video.querySelector("a#video-title-link") ||
           video.querySelector("a#thumbnail") ||
+          video.querySelector("a.yt-lockup-metadata-view-model__title") ||
           video.querySelector("a.media-item-thumbnail-container") ||
           video.querySelector("ytd-playlist-panel-video-renderer a") ||
           video.querySelector("ytm-video-card-renderer a") ||
