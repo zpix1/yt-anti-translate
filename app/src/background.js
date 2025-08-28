@@ -450,7 +450,7 @@ async function untranslateOtherVideos(intersectElements = null) {
         }
 
         // Find link and title elements typical for standard videos
-          let linkElement =
+        let linkElement =
           video.querySelector("a#video-title-link") ||
           video.querySelector("a#thumbnail") ||
           video.querySelector("a.yt-lockup-metadata-view-model__title") ||
