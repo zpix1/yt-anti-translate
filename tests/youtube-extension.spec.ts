@@ -763,7 +763,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     );
     // Locate the elements with the text "Popular Shorts"
     const popularShortsLocator = page.locator(
-      'div.yt-lockup-metadata-view-model-wiz__text-container > h3 > a > span:has-text("Popular Shorts")',
+      '.yt-lockup-metadata-view-model__heading-reset span:has-text("Popular Shorts")',
     );
 
     // Assert that at least one matching element exists
