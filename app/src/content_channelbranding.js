@@ -1,6 +1,6 @@
 // Support both desktop and mobile YouTube layouts
 const CHANNELBRANDING_HEADER_SELECTOR =
-  "#page-header-container #page-header .page-header-view-model-wiz__page-header-headline-info, .page-header-view-model-wiz__page-header-headline-info, #page-header";
+  "#page-header-container #page-header .page-header-view-model-wiz__page-header-headline-info, .page-header-view-model-wiz__page-header-headline-info, .page-header-view-model__page-header-headline-info, .yt-page-header-view-model__page-header-headline-info, #page-header";
 const CHANNELBRANDING_ABOUT_SELECTOR =
   "ytd-engagement-panel-section-list-renderer, ytm-engagement-panel-section-list-renderer";
 const CHANNEL_LOCATION_REGEXES = [
