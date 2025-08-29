@@ -456,7 +456,6 @@ async function untranslateOtherVideos(intersectElements = null) {
           video.querySelector("a.media-item-thumbnail-container") ||
           video.querySelector("ytd-playlist-panel-video-renderer a") ||
           video.querySelector("ytm-video-card-renderer a") ||
-          video.querySelector("a.media-item-thumbnail-container") ||
           video.querySelector("a.yt-lockup-metadata-view-model__title");
         let titleElement =
           video.querySelector("#video-title:not(.cbCustomTitle)") ||
