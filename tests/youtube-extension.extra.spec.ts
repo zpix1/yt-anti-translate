@@ -96,7 +96,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
 
     // Expect a dialog to appear listing collaborators
     const collabItems = page.locator(
-      "yt-dialog-view-model .yt-list-item-view-model-wiz__title-wrapper a.yt-core-attributed-string__link",
+      "yt-dialog-view-model .yt-list-item-view-model__text-wrapper a.yt-core-attributed-string__link",
     );
 
     // Allow enough time for the extension to fetch and update names

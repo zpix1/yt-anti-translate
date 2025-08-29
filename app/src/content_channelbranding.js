@@ -765,7 +765,7 @@ async function restoreCollaboratorsDialog() {
   }
 
   const listItems = dialog.querySelectorAll(
-    "yt-list-item-view-model.yt-list-item-view-model-wiz",
+    "yt-list-item-view-model .yt-list-item-view-model__text-wrapper",
   );
   if (!listItems || listItems.length === 0) {
     return;
@@ -779,7 +779,7 @@ async function restoreCollaboratorsDialog() {
     // Anchor that contains the channel name (bold title area)
     const linkEl =
       item.querySelector(
-        ".yt-list-item-view-model-wiz__title-wrapper a.yt-core-attributed-string__link",
+        ".yt-list-item-view-model__text-wrapper a.yt-core-attributed-string__link",
       ) || item.querySelector("a.yt-core-attributed-string__link");
     if (!linkEl) {
       return;
