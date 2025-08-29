@@ -96,7 +96,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
 
     // Expect a dialog to appear listing collaborators
     const collabItems = page.locator(
-      "yt-dialog-view-model .yt-list-item-view-model-wiz__title-wrapper a.yt-core-attributed-string__link",
+      "yt-dialog-view-model .yt-list-item-view-model__text-wrapper a.yt-core-attributed-string__link",
     );
 
     // Allow enough time for the extension to fetch and update names
@@ -138,8 +138,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     await loadPageAndVerifyAuth(page, "https://www.youtube.com/@MrBeast");
 
     // Wait for the video grid to appear
-    const channelHeaderSelector =
-      "#page-header-container #page-header .page-header-view-model-wiz__page-header-headline-info";
+    const channelHeaderSelector = "#page-header-container #page-header";
     await page.waitForSelector(channelHeaderSelector);
 
     // --- Check Branding Title ---
@@ -158,7 +157,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     await expect(page.locator(channelTitleSelector)).toBeVisible();
 
     // --- Check Branding Description
-    const channelDescriptionSelector = `${channelHeaderSelector} yt-description-preview-view-model .truncated-text-wiz__truncated-text-content > .yt-core-attributed-string:nth-child(1)`;
+    const channelDescriptionSelector = `${channelHeaderSelector} yt-description-preview-view-model .yt-truncated-text__truncated-text-content > .yt-core-attributed-string:nth-child(1)`;
 
     console.log("Checking Channel header for original description...");
     // Get the channel branding header description
@@ -180,7 +179,9 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
       "Clicking '..more' button on description to open About Popup...",
     );
     await page
-      .locator(`${channelHeaderSelector} .truncated-text-wiz__absolute-button`)
+      .locator(
+        `${channelHeaderSelector} truncated-text .yt-truncated-text__absolute-button`,
+      )
       .click();
     try {
       await page.waitForLoadState("networkidle", { timeout: 5000 });
@@ -429,12 +430,11 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     await loadPageAndVerifyAuth(page, channelUrl, browserNameWithExtensions);
 
     // Wait for the channel header to appear
-    const channelHeaderSelector =
-      "#page-header-container #page-header .page-header-view-model-wiz__page-header-headline-info";
+    const channelHeaderSelector = "#page-header-container #page-header";
     await page.waitForSelector(channelHeaderSelector);
 
     // Check channel description
-    const channelDescriptionSelector = `${channelHeaderSelector} yt-description-preview-view-model .truncated-text-wiz__truncated-text-content > .yt-core-attributed-string:nth-child(1)`;
+    const channelDescriptionSelector = `${channelHeaderSelector} yt-description-preview-view-model .yt-truncated-text__truncated-text-content > .yt-core-attributed-string:nth-child(1)`;
 
     // Get the channel description
     const brandingDescription = await page

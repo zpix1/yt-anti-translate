@@ -99,11 +99,13 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Get the full screen footer video title
     const fullStreenVideoTitleFooter = await page
-      .locator(
-        "ytd-player .html5-video-player div.ytp-fullerscreen-edu-text#yt-anti-translate-fake-node-fullscreen-edu",
-      )
+      .locator(".ytp-title-text .ytp-title-fullerscreen-link")
+      .nth(1)
       .textContent();
-    console.log("Head Link Video title:", fullStreenVideoTitleFooter?.trim());
+    console.log(
+      "Full Screen Head Link Video title:",
+      fullStreenVideoTitleFooter?.trim(),
+    );
 
     // Check that the title is in English and not in Russian
     expect(fullStreenVideoTitleFooter).toContain(
@@ -761,7 +763,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     );
     // Locate the elements with the text "Popular Shorts"
     const popularShortsLocator = page.locator(
-      'div.yt-lockup-metadata-view-model-wiz__text-container > h3 > a > span:has-text("Popular Shorts")',
+      '.yt-lockup-metadata-view-model__heading-reset span:has-text("Popular Shorts")',
     );
 
     // Assert that at least one matching element exists

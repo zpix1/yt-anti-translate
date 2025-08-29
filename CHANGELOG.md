@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.19.12] - 2025-08-29
+
+- [#122](https://github.com/zpix1/yt-anti-translate/issues/122) YouTube classes change
+
 ## [1.19.11] - 2025-08-20
 
 - [#117](https://github.com/zpix1/yt-anti-translate/issues/117) Untranslate channel branding unicode issue
