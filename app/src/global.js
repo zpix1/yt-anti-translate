@@ -1306,6 +1306,7 @@ ytm-shorts-lockup-view-model`,
           method: postData ? "POST" : "GET",
           headers: headersData,
           body: postData ? postData : undefined,
+          credentials: headersData?.Authorization ? "include" : "same-origin",
         });
         if (!response.ok) {
           if (response.status === 404) {
@@ -1475,6 +1476,15 @@ ytm-shorts-lockup-view-model`,
     return match ? match[1] : null;
   },
 
+  // SHA1 function (uses SubtleCrypto)
+  sha1Hash: async function (msg) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(msg);
+    const hashBuffer = await crypto.subtle.digest("SHA-1", data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+  },
+
   getSAPISIDHASH: async function (
     origin = this.isMobile()
       ? "https://m.youtube.com"
@@ -1489,17 +1499,8 @@ ytm-shorts-lockup-view-model`,
     const timestamp = Math.floor(Date.now() / 1000);
     const message = `${timestamp} ${sapisid} ${origin}`;
 
-    // SHA1 function (uses SubtleCrypto)
-    async function sha1Hash(msg) {
-      const encoder = new TextEncoder();
-      const data = encoder.encode(msg);
-      const hashBuffer = await crypto.subtle.digest("SHA-1", data);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-    }
-
-    const hash = await sha1Hash(message);
-    return `SAPISIDHASH ${timestamp}_${hash}`;
+    const hash = await this.sha1Hash(message);
+    return `SAPISIDHASH ${timestamp}_${hash} SAPISID1HASH ${timestamp}_${hash} SAPISID3HASH ${timestamp}_${hash}`;
   },
 
   getYoutubeIHeadersWithCredentials: async function () {
@@ -1515,9 +1516,6 @@ ytm-shorts-lockup-view-model`,
     return {
       "Content-Type": "application/json",
       Authorization: sapisidhash,
-      Origin: this.isMobile()
-        ? "https://m.youtube.com"
-        : "https://www.youtube.com",
       "X-Youtube-Client-Name": "1",
       "X-Youtube-Client-Version": "2.20250731.09.00",
     };
