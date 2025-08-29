@@ -453,13 +453,12 @@ async function untranslateOtherVideos(intersectElements = null) {
         let linkElement =
           video.querySelector("a#video-title-link") ||
           video.querySelector("a#thumbnail") ||
-          video.querySelector("a.yt-lockup-metadata-view-model__title") ||
           video.querySelector("a.media-item-thumbnail-container") ||
           video.querySelector("ytd-playlist-panel-video-renderer a") ||
           video.querySelector("ytm-video-card-renderer a") ||
-          video.querySelector("a.media-item-thumbnail-container");
+          video.querySelector("a.media-item-thumbnail-container") ||
+          video.querySelector("a.yt-lockup-metadata-view-model__title");
         let titleElement =
-          video.querySelector("h3.yt-lockup-metadata-view-model__heading-reset > a > span") ||
           video.querySelector("#video-title:not(.cbCustomTitle)") ||
           video.querySelector(
             ".compact-media-item-headline .yt-core-attributed-string",
@@ -472,6 +471,9 @@ async function untranslateOtherVideos(intersectElements = null) {
           ) ||
           video.querySelector(
             ".media-item-headline .yt-core-attributed-string",
+          ) ||
+          video.querySelector(
+            ".yt-lockup-metadata-view-model__heading-reset .yt-core-attributed-string",
           );
 
         if (!linkElement || !titleElement) {
