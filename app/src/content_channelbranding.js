@@ -669,7 +669,8 @@ function updateSearchResultChannelAuthor(container, originalBrandingData) {
 
   const authorTextContainer = container.querySelector(
     `#channel-title yt-formatted-string,
-    h4.compact-media-item-headline > .yt-core-attributed-string`,
+    h4.compact-media-item-headline > .yt-core-attributed-string,
+    h4.YtmCompactMediaItemHeadline > .yt-core-attributed-string`,
   );
   if (!authorTextContainer) {
     window.YoutubeAntiTranslate.logDebug(
@@ -727,7 +728,13 @@ async function restoreOriginalBrandingSearchResults() {
       renderer.querySelector("a.channel-link") ||
       renderer.querySelector("a#main-link") ||
       renderer.querySelector("a.compact-media-item-image") ||
-      renderer.querySelector("a.compact-media-item-metadata-content");
+      renderer.querySelector("a.YtmCompactMediaItemImage") ||
+      renderer.querySelector("a.compact-media-item-metadata-content") ||
+      renderer.querySelector("a.YtmCompactMediaItemMetadataContent") ||
+      renderer.querySelector("a[href*='/channel/']") ||
+      renderer.querySelector("a[href*='/c/']") ||
+      renderer.querySelector("a[href*='/@']") ||
+      renderer.querySelector("a[href*='/user/']");
     if (!linkElement) {
       return;
     }

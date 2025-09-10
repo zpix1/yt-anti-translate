@@ -463,6 +463,9 @@ async function untranslateOtherVideos(intersectElements = null) {
             ".compact-media-item-headline .yt-core-attributed-string",
           ) ||
           video.querySelector(
+            ".YtmCompactMediaItemHeadline .yt-core-attributed-string",
+          ) ||
+          video.querySelector(
             "ytd-playlist-panel-video-renderer #video-title",
           ) ||
           video.querySelector(
@@ -490,6 +493,9 @@ async function untranslateOtherVideos(intersectElements = null) {
               ) ||
               video.querySelector(
                 ".compact-media-item-headline .yt-core-attributed-string",
+              ) ||
+              video.querySelector(
+                ".YtmCompactMediaItemHeadline .yt-core-attributed-string",
               );
           }
           if (!linkElement || !titleElement) {
