@@ -499,7 +499,14 @@ ytm-shorts-lockup-view-model`,
       style.display === "none" ||
       style.visibility === "hidden" ||
       style.visibility === "collapse" ||
-      parseFloat(style.opacity) === 0
+      parseFloat(style.opacity) === 0 ||
+      element.closest(
+        `[hidden], [style*="display:none"], 
+        [style*="visibility:hidden"], 
+        [style*="visibility:collapse"], 
+        [style*="opacity: 0"]`,
+      ) // This is needed when any of the parent elements is invisible
+      // when closest is truthy it means that one of its parents is invisible
     ) {
       return false;
     }
