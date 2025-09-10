@@ -317,6 +317,17 @@ async function createOrUpdateUntranslatedFakeNode(
     if (window.YoutubeAntiTranslate.isAdvertisementHref(getUrlForElement)) {
       return;
     }
+
+    const videoId = window.YoutubeAntiTranslate.extractVideoIdFromUrl(
+      getUrlForElement.startsWith("http")
+        ? getUrlForElement
+        : window.location.origin + getUrlForElement,
+    );
+
+    if (!videoId) {
+      // If the link is not a video/short do not ptoceed further
+      return;
+    }
     let response = await cachedRequest(
       "https://www.youtube.com/oembed?url=" + getUrlForElement,
     );
@@ -328,11 +339,6 @@ async function createOrUpdateUntranslatedFakeNode(
     ) {
       if (response?.response?.status === 401) {
         // 401 likely means the video is restricted try again with youtubeI
-        const videoId = window.YoutubeAntiTranslate.extractVideoIdFromUrl(
-          getUrlForElement.startsWith("http")
-            ? getUrlForElement
-            : window.location.origin + getUrlForElement,
-        );
         response =
           await window.YoutubeAntiTranslate.getVideoTitleFromYoutubeI(videoId);
         if (!response?.response?.ok || !response.data?.title) {
