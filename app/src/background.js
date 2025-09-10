@@ -662,7 +662,8 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
         // Find link element to get URL
         const linkElement =
           shortElement.querySelector("a.shortsLockupViewModelHostEndpoint") ||
-          shortElement.querySelector(`a[href*="/shorts/"]`);
+          shortElement.querySelector(`a[href*="/shorts/"]`) ||
+          shortElement.querySelector(`a[href*="/watch?v="]`); // This is for compatibility with [No YouTube Shorts](https://addons.mozilla.org/en-US/firefox/addon/no-youtube-shorts/)
         if (!linkElement || !linkElement.href) {
           // Mark to avoid re-checking non-standard items, might not have a standard link
           shortElement.setAttribute("data-ytat-untranslated-other", "checked");
@@ -671,7 +672,9 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
 
         const videoHref = linkElement.href;
         // Extract video ID from URLs like /shorts/VIDEO_ID
-        const videoIdMatch = videoHref.match(/shorts\/([a-zA-Z0-9_-]+)/);
+        const videoIdMatch =
+          videoHref.match(/shorts\/([a-zA-Z0-9_-]+)/) ||
+          videoHref.match(/[?&]v=([a-zA-Z0-9_-]+)/); // This is for compatibility with [No YouTube Shorts](https://addons.mozilla.org/en-US/firefox/addon/no-youtube-shorts/)
         if (!videoIdMatch || !videoIdMatch[1]) {
           // Mark if ID can't be extracted (e.g., different URL structure)
           shortElement.setAttribute("data-ytat-untranslated-other", "checked");
