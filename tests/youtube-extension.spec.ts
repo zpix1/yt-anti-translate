@@ -866,7 +866,20 @@ test.describe("YouTube Anti-Translate extension", () => {
     await page.goto("https://www.youtube.com/embed/iLU0CE2c2HQ");
 
     // Wait for the video to load
-    await page.waitForSelector("video", { timeout: 10000 });
+    try {
+      await page.waitForSelector("video", { timeout: 10000 });
+    } catch {
+      await page.waitForSelector(
+        "div.ytp-error-content-wrap-subreason > span:has-text('153')",
+        { timeout: 10000 },
+      );
+      // If we hit a 153 error (playback not available) then skip the rest of the test
+      console.log(
+        "Video playback not available, skipping the rest of the test.",
+      );
+      await context.close();
+      testInfo.skip();
+    }
 
     await page.click("#movie_player > div.ytp-cued-thumbnail-overlay > button");
 
