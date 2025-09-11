@@ -135,7 +135,7 @@ export default defineConfig<TestOptions>({
       testMatch: /.*extension-mobile\.extra\.spec\.ts/,
       use: {
         browserNameWithExtensions: "chromium",
-        localeString: "ru-RU",
+        localeString: "th-TH",
         ...devices["Pixel 5"],
         contextOptions: {
           permissions: ["clipboard-read", "clipboard-write"],

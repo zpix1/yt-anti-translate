@@ -45,7 +45,7 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
 
     // Locate the channel name element inside the renderer
     const authorLocator = channelRenderer.locator(
-      "h4.compact-media-item-headline > .yt-core-attributed-string",
+      "h4.compact-media-item-headline > .yt-core-attributed-string, h4.YtmCompactMediaItemHeadline > .yt-core-attributed-string",
     );
     await expect(authorLocator).toBeVisible({ timeout: 15000 });
 
