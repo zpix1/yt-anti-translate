@@ -1,14 +1,15 @@
 // Constants
 const DESCRIPTION_SELECTOR =
-  "#description-inline-expander, ytd-expander#description, .expandable-video-description-body-main, .expandable-video-description-container, #collapsed-string, #expanded-string";
+  "#description-inline-expander, ytd-expander#description, .expandable-video-description-body-main, .expandable-video-description-container, #collapsed-string, #expanded-string, #anchored-panel ytd-text-inline-expander";
 const AUTHOR_SELECTOR = `#upload-info.ytd-video-owner-renderer, 
 ytm-slim-owner-renderer div.slim-owner-bylines,  
-div.cbox > a > h3.reel-player-header-channel-title`;
+div.cbox > a.reel-player-header-channel-endpoint.cbox`;
 const ATTRIBUTED_STRING_SELECTOR = "yt-attributed-string";
 
 const ATTRIBUTED_STRING_CLASS_SELECTOR = ".yt-core-attributed-string";
 const FORMATTED_STRING_SELECTOR = "yt-formatted-string";
-const SNIPPET_TEXT_SELECTOR = "#attributed-snippet-text";
+const SNIPPET_TEXT_SELECTOR =
+  "#attributed-snippet-text, #formatted-snippet-text, #plain-snippet-text";
 const HORIZONTAL_CHAPTERS_SELECTOR =
   "ytd-horizontal-card-list-renderer, ytd-macro-markers-list-renderer";
 const CHAPTER_ITEM_SELECTOR = "ytd-macro-markers-list-item-renderer";
@@ -729,7 +730,10 @@ function updateDescriptionContent(container, originalText) {
 
   // Check each container independently
   const mainNeedsUpdate = mainTextContainer
-    ? needsUpdate(mainTextContainer)
+    ? !mainTextContainer.closest(
+        SNIPPET_TEXT_SELECTOR,
+      ) /*mainTextContainer selector can include the children of snippetTextContainer so make sure that snippetTextContainer is not a parent*/ &&
+      needsUpdate(mainTextContainer)
     : false;
   const snippetNeedsUpdate = snippetTextContainer
     ? needsUpdate(snippetTextContainer)
@@ -777,7 +781,8 @@ function updateAuthorContent(container, originalText) {
   const singularChannelNameTextContainer =
     window.YoutubeAntiTranslate.getFirstVisible(
       container.querySelectorAll(
-        `#channel-name ${FORMATTED_STRING_SELECTOR} a, #channel-name ${ATTRIBUTED_STRING_SELECTOR}, #channel-name ${ATTRIBUTED_STRING_CLASS_SELECTOR}, .slim-owner-channel-name > ${ATTRIBUTED_STRING_CLASS_SELECTOR}`,
+        `#channel-name ${FORMATTED_STRING_SELECTOR} a, #channel-name ${ATTRIBUTED_STRING_SELECTOR}, #channel-name ${ATTRIBUTED_STRING_CLASS_SELECTOR}, .slim-owner-channel-name > ${ATTRIBUTED_STRING_CLASS_SELECTOR}, 
+        .reel-player-header-channel-title > ${ATTRIBUTED_STRING_CLASS_SELECTOR}`,
       ),
     );
   const multipleChannelNameContainers =
