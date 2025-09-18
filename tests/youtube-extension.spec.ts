@@ -1,3 +1,5 @@
+/* eslint-disable  @typescript-eslint/no-explicit-any */
+
 import { expect } from "@playwright/test";
 import { test } from "../playwright.config";
 import {
@@ -722,7 +724,10 @@ test.describe("YouTube Anti-Translate extension", () => {
      * @param currentVideoId - the video id that could be of an advert
      * @returns a new short audio track and video id
      */
-    async function IfAdvertThenReturnNext(currentTrack, currentVideoId) {
+    async function IfAdvertThenReturnNext(
+      currentTrack: any,
+      currentVideoId: string | null,
+    ) {
       if (
         currentTrack[getTrackLanguageFieldObjectName(currentTrack)!]?.name ===
         "Default"

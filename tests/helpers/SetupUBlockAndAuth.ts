@@ -96,13 +96,17 @@ export async function setupUBlockAndAuth(
 
           try {
             await page.waitForLoadState("networkidle", { timeout: 5000 });
-          } catch {}
+          } catch {
+            // empty
+          }
 
           // Sometimes youtube redirects to consent page so wait 2 seconds before proceeding
           await page.waitForTimeout(2000);
           try {
             await page.waitForLoadState("networkidle", { timeout: 5000 });
-          } catch {}
+          } catch {
+            // empty
+          }
 
           await handleYoutubeConsent(page);
 

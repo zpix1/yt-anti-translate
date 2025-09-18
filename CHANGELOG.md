@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix [#124](https://github.com/zpix1/yt-anti-translate/issues/124) Incompatible with 'No YouTube Shorts'
 - Fix [#115](https://github.com/zpix1/yt-anti-translate/issues/115) Title duplication when videos with similar titles watched one immediatly after another
 - Fix [#128](https://github.com/zpix1/yt-anti-translate/issues/128) Shorts Untranslation is unreliable
+- Fix [#132](https://github.com/zpix1/yt-anti-translate/issues/132)
 - Handle short player description
 
 ## [1.19.12] - 2025-08-29

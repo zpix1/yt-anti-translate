@@ -91,7 +91,9 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     await uploadInfo.click();
     try {
       await page.waitForLoadState("networkidle", { timeout: 5000 });
-    } catch {}
+    } catch {
+      // empty
+    }
     await page.waitForTimeout(1000);
 
     // Expect a dialog to appear listing collaborators
@@ -185,7 +187,9 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
       .click();
     try {
       await page.waitForLoadState("networkidle", { timeout: 5000 });
-    } catch {}
+    } catch {
+      // empty
+    }
     await page.waitForTimeout(500);
 
     // --- Check About Popup ---
@@ -222,7 +226,9 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
       .click();
     try {
       await page.waitForLoadState("networkidle", { timeout: 5000 });
-    } catch {}
+    } catch {
+      // empty
+    }
     await page.waitForTimeout(500);
 
     // --- Open About Popup via more links ---
@@ -236,7 +242,9 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
       .click();
     try {
       await page.waitForLoadState("networkidle", { timeout: 5000 });
-    } catch {}
+    } catch {
+      // empty
+    }
     await page.waitForTimeout(500);
 
     // --- Check About A second time via the moreLinks Popup ---
@@ -273,7 +281,9 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
       .click();
     try {
       await page.waitForLoadState("networkidle", { timeout: 5000 });
-    } catch {}
+    } catch {
+      // empty
+    }
     await page.waitForTimeout(500);
 
     // Take a screenshot for visual verification
