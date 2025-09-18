@@ -2,10 +2,11 @@
 const DESCRIPTION_SELECTOR =
   "#description-inline-expander, ytd-expander#description, .expandable-video-description-body-main, .expandable-video-description-container, #collapsed-string, #expanded-string";
 const AUTHOR_SELECTOR = `#upload-info.ytd-video-owner-renderer, 
-div.slim-owner-bylines > h3.slim-owner-channel-name,  
+ytm-slim-owner-renderer div.slim-owner-bylines,  
 div.cbox > a > h3.reel-player-header-channel-title`;
-const ATTRIBUTED_STRING_SELECTOR =
-  "yt-attributed-string, .yt-core-attributed-string";
+const ATTRIBUTED_STRING_SELECTOR = "yt-attributed-string";
+
+const ATTRIBUTED_STRING_CLASS_SELECTOR = ".yt-core-attributed-string";
 const FORMATTED_STRING_SELECTOR = "yt-formatted-string";
 const SNIPPET_TEXT_SELECTOR = "#attributed-snippet-text";
 const HORIZONTAL_CHAPTERS_SELECTOR =
@@ -682,7 +683,7 @@ function updateDescriptionContent(container, originalText) {
   // Find the text containers
   const mainTextContainer = window.YoutubeAntiTranslate.getFirstVisible(
     container.querySelectorAll(
-      `${ATTRIBUTED_STRING_SELECTOR}, ${FORMATTED_STRING_SELECTOR}`,
+      `${ATTRIBUTED_STRING_SELECTOR}, ${ATTRIBUTED_STRING_CLASS_SELECTOR}, ${FORMATTED_STRING_SELECTOR}`,
     ),
   );
   const snippetTextContainer = window.YoutubeAntiTranslate.getFirstVisible(
@@ -769,16 +770,28 @@ function updateDescriptionContent(container, originalText) {
  */
 function updateAuthorContent(container, originalText) {
   // Find the text containers
-  const mainTextContainer = window.YoutubeAntiTranslate.getFirstVisible(
-    container.querySelectorAll(FORMATTED_STRING_SELECTOR),
-  );
-  const snippetTextContainer = window.YoutubeAntiTranslate.getFirstVisible(
-    container.querySelectorAll(
-      `${FORMATTED_STRING_SELECTOR} a, ${ATTRIBUTED_STRING_SELECTOR}`,
-    ),
-  );
+  const singularChannelNameTitleContainer =
+    window.YoutubeAntiTranslate.getFirstVisible(
+      container.querySelectorAll(`#channel-name ${FORMATTED_STRING_SELECTOR}`),
+    );
+  const singularChannelNameTextContainer =
+    window.YoutubeAntiTranslate.getFirstVisible(
+      container.querySelectorAll(
+        `#channel-name ${FORMATTED_STRING_SELECTOR} a, #channel-name ${ATTRIBUTED_STRING_SELECTOR}, #channel-name ${ATTRIBUTED_STRING_CLASS_SELECTOR}, .slim-owner-channel-name > ${ATTRIBUTED_STRING_CLASS_SELECTOR}`,
+      ),
+    );
+  const multipleChannelNameContainers =
+    window.YoutubeAntiTranslate.getFirstVisible(
+      container.querySelectorAll(
+        `#attributed-channel-name ${ATTRIBUTED_STRING_CLASS_SELECTOR} a > span`,
+      ),
+    );
 
-  if (!mainTextContainer && !snippetTextContainer) {
+  if (
+    !singularChannelNameTitleContainer &&
+    !singularChannelNameTextContainer &&
+    !multipleChannelNameContainers
+  ) {
     window.YoutubeAntiTranslate.logWarning(
       `No video author text containers found`,
     );
@@ -786,22 +799,32 @@ function updateAuthorContent(container, originalText) {
   }
 
   // Update both containers if they exist
-  if (mainTextContainer) {
-    if (mainTextContainer.title !== originalText) {
-      mainTextContainer.title = originalText;
+  if (singularChannelNameTitleContainer) {
+    if (singularChannelNameTitleContainer.title !== originalText) {
+      singularChannelNameTitleContainer.title = originalText;
     }
   }
 
-  if (snippetTextContainer) {
-    if (snippetTextContainer.innerText !== originalText) {
+  if (singularChannelNameTextContainer) {
+    if (singularChannelNameTextContainer.innerText !== originalText) {
       const storeStyleDisplay =
-        snippetTextContainer.parentElement.style.display;
-      snippetTextContainer.parentElement.style.display = "none";
-      snippetTextContainer.innerText = originalText;
+        singularChannelNameTextContainer.parentElement.style.display;
+      singularChannelNameTextContainer.parentElement.style.display = "none";
+      singularChannelNameTextContainer.innerText = originalText;
       // Force reflow
       setTimeout(() => {
-        snippetTextContainer.parentElement.style.display = storeStyleDisplay;
+        singularChannelNameTextContainer.parentElement.style.display =
+          storeStyleDisplay;
       }, 50);
+    }
+  }
+
+  if (multipleChannelNameContainers) {
+    const firstTextNode = window.YoutubeAntiTranslate.getFirstTextNode(
+      multipleChannelNameContainers,
+    );
+    if (firstTextNode && firstTextNode.textContent !== originalText) {
+      firstTextNode.textContent = originalText;
     }
   }
 }

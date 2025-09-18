@@ -970,7 +970,7 @@ ytm-shorts-lockup-view-model`,
   },
 
   /**
-   * Replace the first text note of the element
+   * Replace the first text node of the element
    * Any other node is retained as is
    * @param {HTMLElement} element - The element to update
    * @param {string} replaceText - The new text to insert
@@ -985,6 +985,20 @@ ytm-shorts-lockup-view-model`,
         node.textContent = replaceText;
         this.logDebug(`replaceTextOnly: replaced first text node`);
         break; // stop after updating the first text node
+      }
+    }
+  },
+
+  /**
+   * Get the first text node of the element
+   * Any other node is retained as is
+   * @param {HTMLElement} element - The element to inspect
+   */
+  getFirstTextNode: function (element) {
+    // Loop through child nodes to find the first text node
+    for (const node of element.childNodes) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        return node;
       }
     }
   },
