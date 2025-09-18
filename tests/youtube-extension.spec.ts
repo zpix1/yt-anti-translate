@@ -362,7 +362,8 @@ test.describe("YouTube Anti-Translate extension", () => {
     );
 
     // Wait for the shorts title element to be present
-    const shortsTitleSelector = "yt-shorts-video-title-view-model > h2 > span";
+    const shortsTitleSelector =
+      "#yt-anti-translate-fake-node-current-short-video";
     await page.waitForSelector(shortsTitleSelector);
 
     // Get the title text
@@ -445,7 +446,9 @@ test.describe("YouTube Anti-Translate extension", () => {
       await originalVideo.scrollIntoViewIfNeeded();
       try {
         await page.waitForLoadState("networkidle", { timeout: 5000 });
-      } catch {}
+      } catch {
+        // empty
+      }
     }
     const translatedVideo = page.locator(translatedVideoSelector).first();
     if (await translatedVideo.isVisible()) {
@@ -453,7 +456,9 @@ test.describe("YouTube Anti-Translate extension", () => {
       await translatedVideo.scrollIntoViewIfNeeded();
       try {
         await page.waitForLoadState("networkidle", { timeout: 5000 });
-      } catch {}
+      } catch {
+        // empty
+      }
     }
 
     console.log("Checking Videos tab for original title...");
@@ -466,7 +471,9 @@ test.describe("YouTube Anti-Translate extension", () => {
     await page.locator("#tabsContent").getByText("Shorts").click();
     try {
       await page.waitForLoadState("networkidle", { timeout: 5000 });
-    } catch {}
+    } catch {
+      // empty
+    }
     await page.waitForTimeout(1000); // Give it a moment to load more items if needed
 
     // --- Check Shorts Tab ---
@@ -483,7 +490,9 @@ test.describe("YouTube Anti-Translate extension", () => {
       await originalShort.scrollIntoViewIfNeeded();
       try {
         await page.waitForLoadState("networkidle", { timeout: 5000 });
-      } catch {}
+      } catch {
+        // empty
+      }
     }
     const translatedShort = page.locator(translatedShortSelector).first();
     if (await translatedShort.isVisible()) {
@@ -491,7 +500,9 @@ test.describe("YouTube Anti-Translate extension", () => {
       await translatedShort.scrollIntoViewIfNeeded();
       try {
         await page.waitForLoadState("networkidle", { timeout: 5000 });
-      } catch {}
+      } catch {
+        // empty
+      }
     }
     await page.waitForTimeout(1000); // Give it a moment to load more items if needed
 
@@ -506,7 +517,9 @@ test.describe("YouTube Anti-Translate extension", () => {
     await page.locator("#tabsContent").getByText("Видео").click();
     try {
       await page.waitForLoadState("networkidle", { timeout: 5000 });
-    } catch {}
+    } catch {
+      // empty
+    }
     await page.waitForSelector(
       "ytd-rich-grid-media >> ytd-thumbnail-overlay-time-status-renderer:not([overlay-style='SHORTS'])",
       { state: "visible" },
@@ -562,7 +575,9 @@ test.describe("YouTube Anti-Translate extension", () => {
       await firstShort.click();
       try {
         await page.waitForLoadState("networkidle", { timeout: 5000 });
-      } catch {}
+      } catch {
+        // empty
+      }
     }
     await page.waitForTimeout(2000);
 
@@ -620,7 +635,9 @@ test.describe("YouTube Anti-Translate extension", () => {
       await buttonDown.click();
       try {
         await page.waitForLoadState("networkidle", { timeout: 5000 });
-      } catch {}
+      } catch {
+        // empty
+      }
     }
     await page.waitForTimeout(2000);
 
@@ -659,7 +676,9 @@ test.describe("YouTube Anti-Translate extension", () => {
       await buttonDown2.click();
       try {
         await page.waitForLoadState("networkidle", { timeout: 5000 });
-      } catch {}
+      } catch {
+        // empty
+      }
     }
     await page.waitForTimeout(2000);
 
@@ -699,7 +718,8 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     /**
      * If Track name is "Default" that is always an advert
-     * @param currentTrack the audio track that could be of an advert
+     * @param currentTrack - the audio track that could be of an advert
+     * @param currentVideoId - the video id that could be of an advert
      * @returns a new short audio track and video id
      */
     async function IfAdvertThenReturnNext(currentTrack, currentVideoId) {
@@ -715,7 +735,9 @@ test.describe("YouTube Anti-Translate extension", () => {
           await buttonDown2.click();
           try {
             await page.waitForLoadState("networkidle", { timeout: 5000 });
-          } catch {}
+          } catch {
+            // empty
+          }
         }
         await page.waitForTimeout(2000);
 
