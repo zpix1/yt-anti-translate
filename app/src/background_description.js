@@ -474,8 +474,8 @@ function setupChapters(originalDescription) {
     });
 
     if (shouldUpdate) {
-      // Debounce updates
-      setTimeout(updateTooltipChapter, 16); // ~60fps instead of immediate
+      // This cannot be debounced as YouTube updates an every mouse move along timeline [#132](https://github.com/zpix1/yt-anti-translate/issues/132)
+      updateTooltipChapter();
     }
   });
 
