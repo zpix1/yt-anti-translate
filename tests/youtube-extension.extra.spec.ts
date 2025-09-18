@@ -85,9 +85,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     );
 
     // Wait for the upload info block, scroll into view, and click as requested
-    const uploadInfo = page
-      .locator("#attributed-channel-name, #channel-name")
-      .first();
+    const uploadInfo = page.locator("#attributed-channel-name").first();
     await expect(uploadInfo).toBeVisible({ timeout: 20000 });
     await uploadInfo.scrollIntoViewIfNeeded();
     await uploadInfo.click();
@@ -104,7 +102,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     // Allow enough time for the extension to fetch and update names
     await expect(collabItems.first()).toBeAttached({ timeout: 20000 });
 
-    const names = (await collabItems.allTextContents()).map((n) =>
+    const names = (await collabItems.allTextContents()).map((n: string) =>
       (n || "").trim(),
     );
     expect(names.length).toBeGreaterThan(0);
