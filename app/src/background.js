@@ -28,118 +28,73 @@ const cachedRequest = window.YoutubeAntiTranslate.cachedRequest.bind(
   window.YoutubeAntiTranslate,
 );
 
+// Changes main short title on "/shorts/shortid" pages
 async function untranslateCurrentShortVideo() {
-  if (
-    window.YoutubeAntiTranslate.getFirstVisible(
-      document.querySelectorAll(
-        window.YoutubeAntiTranslate.getPlayerSelector(),
-      ),
-    )
-  ) {
-    if (!window.location.pathname.startsWith("/shorts/")) {
-      return; // Should not happen if called correctly, but safety first
-    }
+  const fakeNodeID = "yt-anti-translate-fake-node-current-short-video";
+  const originalNodeSelector = `yt-shorts-video-title-view-model > h2 > span:not(#${fakeNodeID})`;
+  const originalNodePartialSelector = `span:not(#${fakeNodeID})`;
 
-    // Selector based on user example: <span class="yt-core-attributed-string ytReelMultiFormatLinkViewModelTitle yt-core-attributed-string--white-space-pre-wrap" role="text"><span class="" style="">TITLE</span></span>
-    const shortsTitleSelector = "yt-shorts-video-title-view-model > h2 > span";
-    const translatedTitleElement = window.YoutubeAntiTranslate.getFirstVisible(
-      document.querySelectorAll(shortsTitleSelector),
-    );
-
-    if (!translatedTitleElement) {
-      // console.debug(` Shorts title element not found using selector:`, shortsTitleSelector);
-      return;
-    }
-
-    // Check if already untranslated to avoid redundant work
-    if (translatedTitleElement.hasAttribute("data-ytat-untranslated")) {
-      return;
-    }
-
-    const videoId = window.location.pathname.split("/")[2];
-    if (!videoId) {
-      window.YoutubeAntiTranslate.logWarning(
-        `Could not extract Shorts video ID from URL:`,
-        window.location.href,
-      );
-      return;
-    }
-
-    const oembedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/shorts/${videoId}`;
-
-    try {
-      // console.debug(`Fetching oEmbed for Short:`, videoId);
-      let response = await cachedRequest(oembedUrl);
-      if (
-        !response ||
-        !response.response ||
-        !response.response.ok ||
-        !response.data?.title
-      ) {
-        if (response?.response?.status === 401) {
-          // 401 likely means the video is restricted try again with youtubeI
-          response =
-            await window.YoutubeAntiTranslate.getVideoTitleFromYoutubeI(
-              videoId,
-            );
-          if (!response?.response?.ok || !response.data?.title) {
-            window.YoutubeAntiTranslate.logWarning(
-              `YoutubeI title request failed for video ${videoId}`,
-            );
-            return;
-          }
-        } else {
-          // console.debug(` No oEmbed data for Short:`, videoId);
-          // Mark as checked even if no data, to prevent retrying unless element changes
-          translatedTitleElement.setAttribute(
-            "data-ytat-untranslated",
-            "checked",
-          );
-          return;
-        }
-      }
-
-      const realTitle = response.data.title;
-      const currentTitle = translatedTitleElement.textContent?.trim();
-
-      if (
-        realTitle &&
-        currentTitle &&
-        !window.YoutubeAntiTranslate.isStringEqual(realTitle, currentTitle)
-      ) {
-        window.YoutubeAntiTranslate.logInfo(
-          `Untranslating Short title: "${currentTitle}" -> "${realTitle}"`,
-        );
-        translatedTitleElement.textContent = realTitle;
-        translatedTitleElement.setAttribute("data-ytat-untranslated", "true"); // Mark as done
-
-        // Update page title too
-        if (document.title.includes(currentTitle)) {
-          document.title = window.YoutubeAntiTranslate.stringReplaceWithOptions(
-            document.title,
-            currentTitle,
-            realTitle,
-          );
-        } else {
-          // Fallback if exact match fails (e.g. " Shorts" suffix)
-          document.title = `${realTitle} #shorts`; // Adjust format as needed
-        }
-      } else {
-        // Mark as done even if titles match or one is missing, to prevent re-checking
-        translatedTitleElement.setAttribute("data-ytat-untranslated", "true");
-      }
-    } catch (error) {
-      window.YoutubeAntiTranslate.logWarning(
-        `Error fetching oEmbed for Short:`,
-        videoId,
-        error,
-      );
-      // Don't mark as done on fetch error, allow retry
-    }
-  }
+  await createOrUpdateUntranslatedFakeNode(
+    fakeNodeID,
+    originalNodeSelector,
+    originalNodePartialSelector,
+    () => document.location.href,
+    "span",
+    true,
+    true,
+  );
 }
 
-// Changes main short title on "/shorts/shortid" pages
+// Changes short title on "/shorts/shortid" pages inside of the Description Panel
+async function untranslateCurrentShortVideoDescriptionPanel() {
+  const fakeNodeID =
+    "yt-anti-translate-fake-node-current-short-video-description-panel";
+  const originalNodeSelector = `#anchored-panel ytd-video-description-header-renderer > #title > yt-formatted-string:not(#${fakeNodeID})`;
+  const originalNodePartialSelector = `span:not(#${fakeNodeID})`;
+
+  await createOrUpdateUntranslatedFakeNode(
+    fakeNodeID,
+    originalNodeSelector,
+    originalNodePartialSelector,
+    () => document.location.href,
+    "span",
+    false,
+  );
+}
+
+function getShortUrlFromSource() {
+  if (window.YoutubeAntiTranslate.isMobile()) {
+    const sourceUrl = document.location.href;
+    // example https://m.youtube.com/source/50G0kIty7Cg/shorts?bp=etc...
+    // extract source video id from url
+    const match = sourceUrl.match(/\/source\/([^\\]+)\/shorts/);
+    if (match) {
+      const sourceVideoId = match[1];
+      return `https://m.youtube.com/shorts/${sourceVideoId}`;
+    }
+  }
+  return document.location.href;
+}
+
+// Changes short title on "/shorts/shortid" pages inside of the Short Engagement Panel
+async function untranslateCurrentShortVideoEngagementPanel() {
+  const fakeNodeID =
+    "yt-anti-translate-fake-node-current-short-video-engagement-panel";
+  const originalNodeSelector = `#anchored-panel #header yt-dynamic-text-view-model > h1 > span:not(#${fakeNodeID}), ytm-browse yt-dynamic-text-view-model > h1 > span:not(#${fakeNodeID})`;
+  const originalNodePartialSelector = `span:not(#${fakeNodeID})`;
+
+  await createOrUpdateUntranslatedFakeNode(
+    fakeNodeID,
+    originalNodeSelector,
+    originalNodePartialSelector,
+    getShortUrlFromSource,
+    "span",
+    false,
+    window.YoutubeAntiTranslate.isMobile(),
+  );
+}
+
+// Changes featured video link title on "/shorts/shortid" pages
 async function untranslateCurrentShortVideoLinks() {
   const fakeNodeID = "yt-anti-translate-fake-node-current-short-video-links";
   const originalNodeSelector = `.ytReelMultiFormatLinkViewModelEndpoint span${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}>span:not(#${fakeNodeID})`;
@@ -161,15 +116,8 @@ async function untranslateCurrentVideo() {
     return;
   }
 
-  // const videoId = window.YoutubeAntiTranslate.extractVideoIdFromUrl(
-  //   document.location.href,
-  // );
-  // if (!videoId) {
-  //   return;
-  // }
-
   const fakeNodeID = "yt-anti-translate-fake-node-current-video";
-  const originalNodeSelector = /*`ytd-watch-metadata[video-id="${videoId}"]*/ `#title > h1 > yt-formatted-string:not(#${fakeNodeID}), .slim-video-information-title .yt-core-attributed-string:not(#${fakeNodeID})`;
+  const originalNodeSelector = `#title > h1 > yt-formatted-string:not(#${fakeNodeID}), .slim-video-information-title .yt-core-attributed-string:not(#${fakeNodeID})`;
   const originalNodePartialSelector = `yt-formatted-string:not(#${fakeNodeID}), .yt-core-attributed-string:not(#${fakeNodeID})`;
 
   await createOrUpdateUntranslatedFakeNode(
@@ -813,6 +761,10 @@ async function untranslate() {
     untranslateCurrentChannelEmbeddedVideoTitle();
   const otherVideosPromise = untranslateOtherVideos();
   const currentShortPromise = untranslateCurrentShortVideo();
+  const currentShortEngagementPanelPromise =
+    untranslateCurrentShortVideoEngagementPanel();
+  const currentShortDescriptionPanelPromise =
+    untranslateCurrentShortVideoDescriptionPanel();
   const currentShortVideoLinksPromise = untranslateCurrentShortVideoLinks();
   const otherShortsPromise = untranslateOtherShortsVideos(); // Call the new function
   const currentMobileVideoDescriptionPromise =
@@ -828,6 +780,8 @@ async function untranslate() {
     channelEmbeddedVideoPromise,
     otherVideosPromise,
     currentShortPromise,
+    currentShortEngagementPanelPromise,
+    currentShortDescriptionPanelPromise,
     currentShortVideoLinksPromise,
     otherShortsPromise,
     currentMobileVideoDescriptionPromise,
