@@ -143,10 +143,12 @@ async function untranslateCurrentShortVideo() {
 async function untranslateCurrentShortVideoLinks() {
   const fakeNodeID = "yt-anti-translate-fake-node-current-short-video-links";
   const originalNodeSelector = `.ytReelMultiFormatLinkViewModelEndpoint span${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}>span:not(#${fakeNodeID})`;
+  const originalNodePartialSelector = `span:not(#${fakeNodeID})`;
 
   await createOrUpdateUntranslatedFakeNode(
     fakeNodeID,
     originalNodeSelector,
+    originalNodePartialSelector,
     (el) => el?.parentElement?.parentElement?.parentElement?.href,
     "span",
     false,
@@ -159,12 +161,21 @@ async function untranslateCurrentVideo() {
     return;
   }
 
+  // const videoId = window.YoutubeAntiTranslate.extractVideoIdFromUrl(
+  //   document.location.href,
+  // );
+  // if (!videoId) {
+  //   return;
+  // }
+
   const fakeNodeID = "yt-anti-translate-fake-node-current-video";
-  const originalNodeSelector = `#title > h1 > yt-formatted-string:not(#${fakeNodeID}), .slim-video-information-title .yt-core-attributed-string:not(#${fakeNodeID})`;
+  const originalNodeSelector = /*`ytd-watch-metadata[video-id="${videoId}"]*/ `#title > h1 > yt-formatted-string:not(#${fakeNodeID}), .slim-video-information-title .yt-core-attributed-string:not(#${fakeNodeID})`;
+  const originalNodePartialSelector = `yt-formatted-string:not(#${fakeNodeID}), .yt-core-attributed-string:not(#${fakeNodeID})`;
 
   await createOrUpdateUntranslatedFakeNode(
     fakeNodeID,
     originalNodeSelector,
+    originalNodePartialSelector,
     () => document.location.href,
     "div",
     false,
@@ -177,10 +188,12 @@ async function untranslateCurrentVideo() {
 async function untranslateCurrentVideoHeadLink() {
   const fakeNodeID = "yt-anti-translate-fake-node-video-head-link";
   const originalNodeSelector = `${window.YoutubeAntiTranslate.getPlayerSelector()} a.ytp-title-link:not(#${fakeNodeID})`;
+  const originalNodePartialSelector = `a.ytp-title-link:not(#${fakeNodeID})`;
 
   await createOrUpdateUntranslatedFakeNode(
     fakeNodeID,
     originalNodeSelector,
+    originalNodePartialSelector,
     (el) => {
       const videoLinkHead = el.href;
       if (!videoLinkHead || videoLinkHead.trim() === "") {
@@ -200,10 +213,12 @@ async function untranslateCurrentVideoFullScreenEdu() {
 
   const fakeNodeID = "yt-anti-translate-fake-node-fullscreen-edu";
   const originalNodeSelector = `${window.YoutubeAntiTranslate.getPlayerSelector()} div.ytp-fullerscreen-edu-text:not(#${fakeNodeID})`;
+  const originalNodePartialSelector = `div.ytp-fullerscreen-edu-text:not(#${fakeNodeID})`;
 
   await createOrUpdateUntranslatedFakeNode(
     fakeNodeID,
     originalNodeSelector,
+    originalNodePartialSelector,
     () => document.location.href,
     "div",
     false,
@@ -215,10 +230,12 @@ async function untranslateCurrentVideoFullScreenEdu() {
 async function untranslateCurrentChannelEmbeddedVideoTitle() {
   const fakeNodeID = "yt-anti-translate-fake-node-channel-embedded-title";
   const originalNodeSelector = `div.ytd-channel-video-player-renderer #metadata-container.ytd-channel-video-player-renderer a:not(#${fakeNodeID})`;
+  const originalNodePartialSelector = `a:not(#${fakeNodeID})`;
 
   await createOrUpdateUntranslatedFakeNode(
     fakeNodeID,
     originalNodeSelector,
+    originalNodePartialSelector,
     (el) => el.href,
     "a",
     false,
@@ -232,10 +249,12 @@ async function untranslateCurrentMobileVideoDescriptionHeader() {
   }
   const fakeNodeID = "yt-anti-translate-fake-node-mobile-video-description";
   const originalNodeSelector = `ytm-video-description-header-renderer .title > span.yt-core-attributed-string:not(#${fakeNodeID})`;
+  const originalNodePartialSelector = `span.yt-core-attributed-string:not(#${fakeNodeID})`;
 
   await createOrUpdateUntranslatedFakeNode(
     fakeNodeID,
     originalNodeSelector,
+    originalNodePartialSelector,
     () => document.location.href,
     "span",
     true,
@@ -250,10 +269,12 @@ async function untranslateCurrentMobileFeaturedVideoChannel() {
   const fakeNodeID =
     "yt-anti-translate-fake-node-mobile-featured-video-channel";
   const originalNodeSelector = `ytm-channel-featured-video-renderer > a > h3 > span.yt-core-attributed-string:not(#${fakeNodeID})`;
+  const originalNodePartialSelector = `span.yt-core-attributed-string:not(#${fakeNodeID})`;
 
   await createOrUpdateUntranslatedFakeNode(
     fakeNodeID,
     originalNodeSelector,
+    originalNodePartialSelector,
     (el) => el.closest("a").href,
     "span",
     false,
@@ -265,6 +286,7 @@ async function untranslateCurrentMobileFeaturedVideoChannel() {
  * Create or Updates and untranslated fake node for the translated element
  * @param {string} fakeNodeID
  * @param {string} originalNodeSelector
+ * @param {string} originalNodePartialSelector
  * @param {Function} getUrl
  * @param {string} createElementTag
  * @param {boolean} requirePlayer
@@ -274,6 +296,7 @@ async function untranslateCurrentMobileFeaturedVideoChannel() {
 async function createOrUpdateUntranslatedFakeNode(
   fakeNodeID,
   originalNodeSelector,
+  originalNodePartialSelector,
   getUrl,
   createElementTag,
   requirePlayer = true,
@@ -358,40 +381,40 @@ async function createOrUpdateUntranslatedFakeNode(
       return;
     }
 
-    const oldTitle = translatedElement?.textContent ?? fakeNode?.textContent;
+    const oldTitle =
+      translatedElement?.textContent ??
+      (fakeNode
+        ? fakeNode.parentElement
+            ?.querySelector(originalNodePartialSelector)
+            ?.textContent?.trim() === ""
+          ? null
+          : fakeNode.parentElement?.querySelector(originalNodePartialSelector)
+              ?.textContent
+        : null);
 
     if (shouldSetDocumentTitle) {
-      // This is sometimes skipped on first update as youtube translate the document title late; so we use a cached oldTitle
-      const cachedOldTitle =
-        window.YoutubeAntiTranslate.getSessionCache(
-          `${fakeNodeID}_${getUrlForElement}`,
-        ) ?? oldTitle;
-
       if (
-        !window.YoutubeAntiTranslate.isStringEqual(realTitle, cachedOldTitle)
+        window.YoutubeAntiTranslate.doesStringInclude(document.title, oldTitle)
       ) {
         document.title = window.YoutubeAntiTranslate.stringReplaceWithOptions(
           document.title,
-          cachedOldTitle,
+          oldTitle,
           realTitle,
         );
       }
     }
 
     if (
-      window.YoutubeAntiTranslate.isStringEqual(realTitle, oldTitle) ||
       window.YoutubeAntiTranslate.isStringEqual(
         fakeNode?.textContent,
         realTitle,
       )
     ) {
       return;
-    } else {
-      // cache old title for future reference
-      window.YoutubeAntiTranslate.setSessionCache(
-        `${fakeNodeID}_${getUrlForElement}`,
-        oldTitle,
-      );
+    }
+
+    if (window.YoutubeAntiTranslate.isStringEqual(realTitle, oldTitle)) {
+      return;
     }
 
     window.YoutubeAntiTranslate.logInfo(
@@ -410,6 +433,7 @@ async function createOrUpdateUntranslatedFakeNode(
       newFakeNode.className = translatedElement.className;
       newFakeNode.id = fakeNodeID;
       newFakeNode.textContent = realTitle;
+      newFakeNode.setAttribute("video-id", videoId);
       if (!existingFakeNode) {
         newFakeNode.style.visibility =
           translatedElement.style?.visibility ?? "visible";
@@ -425,6 +449,7 @@ async function createOrUpdateUntranslatedFakeNode(
       translatedElement.style.display = "none";
     } else if (fakeNode) {
       fakeNode.textContent = realTitle;
+      fakeNode.setAttribute("video-id", videoId);
     }
   }
 }
