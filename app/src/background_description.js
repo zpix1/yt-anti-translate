@@ -566,7 +566,7 @@ function getPlayerResponseSafely(playerEl) {
  *
  * @returns {string|null} The original description or null if it cannot be retrieved.
  */
-function fetchOriginalDescription() {
+async function fetchOriginalDescription() {
   const player = window.YoutubeAntiTranslate.getFirstVisible(
     document.querySelectorAll(window.YoutubeAntiTranslate.getPlayerSelector()),
   );
@@ -574,14 +574,18 @@ function fetchOriginalDescription() {
   const playerResponse = getPlayerResponseSafely(player);
   if (!playerResponse && window.YoutubeAntiTranslate.isMobile()) {
     // Fallback for mobile layout when player response is unavailable
-    const mobileDescription = getDescriptionMobile();
+    const mobileDescription = await getDescriptionMobile();
     if (mobileDescription) {
       return mobileDescription;
     }
     return null;
   }
 
-  return playerResponse?.videoDetails?.shortDescription || null;
+  return (
+    playerResponse?.videoDetails?.shortDescription ||
+    playerResponse?.videoDetails?.title ||
+    null
+  );
 }
 
 /**
@@ -611,8 +615,8 @@ function fetchOriginalAuthor() {
  * Restores the original (untranslated) description and author name in the DOM and
  * triggers the chapters replacement logic.
  */
-function restoreOriginalDescriptionAndAuthor() {
-  const originalDescription = fetchOriginalDescription();
+async function restoreOriginalDescriptionAndAuthor() {
+  const originalDescription = await fetchOriginalDescription();
   const originalAuthor = fetchOriginalAuthor();
 
   if (!originalDescription && !originalAuthor) {
@@ -735,6 +739,12 @@ function updateDescriptionContent(container, originalText) {
     ? !mainTextContainer.closest(
         SNIPPET_TEXT_SELECTOR,
       ) /*mainTextContainer selector can include the children of snippetTextContainer so make sure that snippetTextContainer is not a parent*/ &&
+      !mainTextContainer.querySelector(
+        "#description-placeholder",
+      ) /*ignore placeholder*/ &&
+      !mainTextContainer.querySelector(
+        '[style="color: rgb(170, 170, 170);"',
+      ) /*ignore grey text*/ &&
       needsUpdate(mainTextContainer)
     : false;
   const snippetNeedsUpdate = snippetTextContainer
@@ -844,7 +854,7 @@ async function handleDescriptionMutation() {
     document.querySelectorAll(window.YoutubeAntiTranslate.getPlayerSelector()),
   );
   if (descriptionElement && player) {
-    restoreOriginalDescriptionAndAuthor();
+    await restoreOriginalDescriptionAndAuthor();
   }
 
   // On mobile the author is visible even when the description is not
@@ -1061,9 +1071,46 @@ function extractVideoDataField(fieldName) {
   }
 }
 
+// Get Title using oembed for mobile
+async function getTitleMobile(url) {
+  const videoId = window.YoutubeAntiTranslate.extractVideoIdFromUrl(url);
+  if (!videoId) {
+    return null;
+  }
+
+  let response = await window.YoutubeAntiTranslate.cachedRequest(
+    `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}`,
+  );
+  if (
+    !response ||
+    !response.response ||
+    !response.response.ok ||
+    !response.data?.title
+  ) {
+    if (response?.response?.status === 401) {
+      // 401 likely means the video is restricted try again with youtubeI
+      response =
+        await window.YoutubeAntiTranslate.getVideoTitleFromYoutubeI(videoId);
+      if (!response?.response?.ok || !response.data?.title) {
+        window.YoutubeAntiTranslate.logWarning(
+          `YoutubeI title request failed for video ${videoId}`,
+        );
+        return;
+      }
+    } else {
+      return;
+    }
+  }
+
+  return response.data.title;
+}
+
 // Get Description from the VideoData
-function getDescriptionMobile() {
-  return extractVideoDataField("shortDescription");
+async function getDescriptionMobile() {
+  return (
+    extractVideoDataField("shortDescription") ||
+    (await getTitleMobile(document.location.href))
+  );
 }
 
 // Get Author from the VideoData

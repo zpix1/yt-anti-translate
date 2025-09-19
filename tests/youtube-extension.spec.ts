@@ -150,6 +150,66 @@ test.describe("YouTube Anti-Translate extension", () => {
     await context.close();
   });
 
+  test("Prevents current video description to fallback to translated title", async ({
+    browserNameWithExtensions,
+    localeString,
+  }, testInfo) => {
+    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
+
+    // Launch browser with the extension
+    const context = await createBrowserContext(browserNameWithExtensions);
+
+    // Create a new page
+    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
+      context,
+      browserNameWithExtensions,
+      localeString,
+    );
+
+    await loadPageAndVerifyAuth(
+      page,
+      "https://www.youtube.com/watch?v=50G0kIty7Cg",
+      browserNameWithExtensions,
+    );
+
+    // Wait for the video page to fully load
+    await page.waitForSelector("ytd-watch-metadata");
+
+    // Expand the description if it's collapsed
+    const moreButton = page.locator(
+      "#description-inline-expander ytd-text-inline-expander #expand",
+    );
+    if (await moreButton.isVisible()) {
+      await moreButton.click();
+      // Wait for the description to expand
+      await page.waitForTimeout(1000);
+    }
+
+    // Get the description text
+    const descriptionText = await page
+      .locator("#description-inline-expander:visible")
+      .textContent();
+    console.log("Description text:", descriptionText?.trim());
+
+    await page
+      .locator("#description-inline-expander:visible")
+      .scrollIntoViewIfNeeded();
+    // Check that the description contains the original English title as fallback and not the Russian title translation fallback
+    expect(descriptionText).toContain("Answer The Call, Win $10,000");
+    expect(descriptionText).not.toContain("Ответь На Звонок, Выиграй $10,000");
+
+    // Take a screenshot for visual verification
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-extension-test-description-fallback.png`,
+    });
+
+    // Check console message count
+    expect(consoleMessageCountContainer.count).toBeLessThan(2000);
+
+    // Close the browser context
+    await context.close();
+  });
+
   test("YouTube timecode links in description work correctly with Anti-Translate extension", async ({
     browserNameWithExtensions,
     localeString,

@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix [#128](https://github.com/zpix1/yt-anti-translate/issues/128) Shorts Untranslation is unreliable
 - Fix [#132](https://github.com/zpix1/yt-anti-translate/issues/132)
 - Handle short player description
+- Handle fallback to title inside of description
 
 ## [1.19.12] - 2025-08-29
 
