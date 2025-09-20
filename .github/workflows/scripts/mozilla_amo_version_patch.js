@@ -35,7 +35,7 @@ const draftReleaseBody = await getDraftReleaseBody(version);
 let [versionReleaseNotes, notesForApprovers] = draftReleaseBody.split(
   "\r\n---\r\n",
 ) || ["", ""];
-if (notesForApprovers === "") {
+if (!notesForApprovers || notesForApprovers === "") {
   [versionReleaseNotes, notesForApprovers] = draftReleaseBody.split(
     "\n---\n",
   ) || ["", ""];
