@@ -1,5 +1,5 @@
 //For intersect we are not switching to debounce
-//as the callback will handle multiple elements entering the sigularly
+//as the callback will handle multiple elements entering them sigularly
 const INTERSECTION_UPDATE_STEP_VIDEOS = 2;
 let allIntersectVideoElements = null;
 const intersectionObserverOtherVideos = new IntersectionObserver(
@@ -12,7 +12,7 @@ const intersectionObserverOtherVideos = new IntersectionObserver(
 );
 
 //For intersect we are not switching to debounce
-//as the callback will handle multiple elements entering the sigularly
+//as the callback will handle multiple elements entering them sigularly
 const INTERSECTION_UPDATE_STEP_SHORTS = 2;
 let allIntersectShortElements = null;
 const intersectionObserverOtherShorts = new IntersectionObserver(
@@ -172,6 +172,29 @@ async function untranslateCurrentVideoFullScreenEdu() {
     false,
   );
 }
+async function untranslateCurrentEmbeddedVideoMobileFullScreen() {
+  const fakeNodeID =
+    "yt-anti-translate-fake-node-embedded-mobilefullscreen-title";
+  const originalNodeSelector = `#player-controls a.ytmVideoInfoVideoTitle > span.yt-core-attributed-string:not(#${fakeNodeID})`;
+  const originalNodePartialSelector = `span.yt-core-attributed-string:not(#${fakeNodeID})`;
+
+  const authorFakeNodeID = `${fakeNodeID}-author`;
+  const videoAuthorSelector = `#player-controls a.ytmVideoInfoChannelTitle > span.yt-core-attributed-string:not(#${authorFakeNodeID})`;
+
+  await createOrUpdateUntranslatedFakeNode(
+    fakeNodeID,
+    originalNodeSelector,
+    originalNodePartialSelector,
+    () =>
+      document.querySelector(`#player-controls a.ytmVideoInfoVideoTitle`)?.href,
+    "div",
+    false,
+    true,
+    videoAuthorSelector,
+    authorFakeNodeID,
+    "span",
+  );
+}
 
 // For channel ("/@MrBeast") pages, for the pinned video's title **under** the video player
 // See "docs/Figure 1.png"
@@ -231,7 +254,7 @@ async function untranslateCurrentMobileFeaturedVideoChannel() {
 }
 
 /**
- * Create or Updates and untranslated fake node for the translated element
+ * Create or Updates an untranslated fake node for the translated element with a video title
  * @param {string} fakeNodeID
  * @param {string} originalNodeSelector
  * @param {string} originalNodePartialSelector
@@ -239,6 +262,9 @@ async function untranslateCurrentMobileFeaturedVideoChannel() {
  * @param {string} createElementTag
  * @param {boolean} requirePlayer
  * @param {boolean} shouldSetDocumentTitle
+ * @param {string} videoAuthorSelector
+ * @param {string} authorFakeNodeID
+ * @param {string} authorCreateElementTag
  * @returns
  */
 async function createOrUpdateUntranslatedFakeNode(
@@ -249,6 +275,9 @@ async function createOrUpdateUntranslatedFakeNode(
   createElementTag,
   requirePlayer = true,
   shouldSetDocumentTitle = false,
+  videoAuthorSelector = null,
+  authorFakeNodeID = null,
+  authorCreateElementTag = null,
 ) {
   if (
     !requirePlayer ||
@@ -329,6 +358,15 @@ async function createOrUpdateUntranslatedFakeNode(
       return;
     }
 
+    if (videoAuthorSelector && authorFakeNodeID && authorCreateElementTag) {
+      await createOrUpdateUntranslatedFakeNodeAuthor(
+        response.data.author_name,
+        videoAuthorSelector,
+        authorFakeNodeID,
+        authorCreateElementTag,
+      );
+    }
+
     let oldTitle = translatedElement?.textContent;
 
     if (!oldTitle && fakeNode) {
@@ -405,6 +443,80 @@ async function createOrUpdateUntranslatedFakeNode(
   }
 }
 
+/**
+ * Helper function used by `createOrUpdateUntranslatedFakeNode`
+ * Create or Updates an untranslated fake node for the translated element with a video author
+ * @param {string} realAuthor
+ * @param {string} videoAuthorSelector
+ * @param {string} authorFakeNodeID
+ * @param {string} authorCreateElementTag
+ * @returns
+ */
+async function createOrUpdateUntranslatedFakeNodeAuthor(
+  realAuthor,
+  videoAuthorSelector,
+  authorFakeNodeID,
+  authorCreateElementTag,
+) {
+  const translatedElement = window.YoutubeAntiTranslate.getFirstVisible(
+    document.querySelectorAll(videoAuthorSelector),
+  );
+
+  const fakeNode = document.querySelector(`#${authorFakeNodeID}`);
+
+  if (
+    (!fakeNode || !fakeNode.textContent) &&
+    (!translatedElement || !translatedElement.textContent)
+  ) {
+    return;
+  }
+
+  if (!realAuthor || (!translatedElement && !fakeNode)) {
+    return;
+  }
+
+  const oldAuthor = translatedElement?.textContent || fakeNode?.textContent;
+
+  if (
+    window.YoutubeAntiTranslate.isStringEqual(fakeNode?.textContent, realAuthor)
+  ) {
+    return;
+  }
+
+  window.YoutubeAntiTranslate.logInfo(
+    `translated author to "${realAuthor}" from "${oldAuthor}"`,
+  );
+
+  if (!fakeNode && translatedElement) {
+    // Not sure why, but even tho we checked already 'fakeNode', 'existingFakeNode' still return a value of initialization
+    const existingFakeNode = translatedElement.parentElement.querySelector(
+      `#${authorFakeNodeID}`,
+    );
+    const newFakeNode = document.createElement(authorCreateElementTag);
+    if (translatedElement.href) {
+      newFakeNode.href = translatedElement.href;
+    }
+    newFakeNode.className = translatedElement.className;
+    newFakeNode.id = authorFakeNodeID;
+    newFakeNode.textContent = realAuthor;
+    if (!existingFakeNode) {
+      newFakeNode.style.visibility =
+        translatedElement.style?.visibility ?? "visible";
+      newFakeNode.style.display = translatedElement.style?.display ?? "block";
+      translatedElement.after(newFakeNode);
+    } else {
+      newFakeNode.style.visibility =
+        existingFakeNode.style?.visibility ?? "visible";
+      newFakeNode.style.display = existingFakeNode.style?.display ?? "block";
+      existingFakeNode.replaceWith(newFakeNode);
+    }
+    translatedElement.style.visibility = "hidden";
+    translatedElement.style.display = "none";
+  } else if (fakeNode) {
+    fakeNode.textContent = realAuthor;
+  }
+}
+
 async function untranslateOtherVideos(intersectElements = null) {
   async function untranslateOtherVideosArray(otherVideos) {
     if (!otherVideos) {
@@ -436,11 +548,13 @@ async function untranslateOtherVideos(intersectElements = null) {
           video.querySelector("a#video-title-link") ||
           video.querySelector("a#thumbnail") ||
           video.querySelector("a.media-item-thumbnail-container") ||
+          video.querySelector("div.media-item-metadata > a") ||
           video.querySelector("ytd-playlist-panel-video-renderer a") ||
           video.querySelector("ytm-video-card-renderer a") ||
           video.querySelector("a.yt-lockup-metadata-view-model__title") ||
           (video.matches("a.ytp-videowall-still") ? video : null) ||
-          (video.matches("a.ytp-ce-covering-overlay") ? video : null);
+          (video.matches("a.ytp-ce-covering-overlay") ? video : null) ||
+          (video.matches("a.ytp-suggestion-link") ? video : null);
         let titleElement =
           video.querySelector("#video-title:not(.cbCustomTitle)") ||
           video.querySelector(
@@ -459,10 +573,14 @@ async function untranslateOtherVideos(intersectElements = null) {
             ".media-item-headline .yt-core-attributed-string",
           ) ||
           video.querySelector(
+            "div.media-item-metadata > a > h3.media-item-headline",
+          ) ||
+          video.querySelector(
             ".yt-lockup-metadata-view-model__heading-reset .yt-core-attributed-string",
           ) ||
           video.querySelector("span.ytp-videowall-still-info-title") ||
-          video.querySelector("div.ytp-ce-video-title");
+          video.querySelector("div.ytp-ce-video-title") ||
+          video.querySelector("div.ytp-suggestion-title");
 
         if (!linkElement || !titleElement) {
           // Try another common pattern before giving up
@@ -778,6 +896,8 @@ async function untranslate() {
     untranslateCurrentMobileVideoDescriptionHeader();
   const currentMobileFeaturedVideoChannel =
     untranslateCurrentMobileFeaturedVideoChannel();
+  const currentEmbeddedVideoMobileFullScreenPromise =
+    untranslateCurrentEmbeddedVideoMobileFullScreen();
 
   // Wait for all promises to resolve concurrently
   await Promise.all([
@@ -793,6 +913,7 @@ async function untranslate() {
     otherShortsPromise,
     currentMobileVideoDescriptionPromise,
     currentMobileFeaturedVideoChannel,
+    currentEmbeddedVideoMobileFullScreenPromise,
   ]);
 
   // update intersect observers

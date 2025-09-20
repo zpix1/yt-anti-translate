@@ -15,13 +15,22 @@
   },
   "content_scripts": [
     {
-      "matches": ["*://*.youtube.com/*"],
-      "js": ["src/global.js", "src/content_injectglobal.js"],
+      "matches": ["*://*.youtube.com/*", "*://*.youtube-nocookie.com/*"],
+      "js": ["src/content_injectglobal.js"],
       "run_at": "document_end"
     },
     {
+      "matches": ["*://*.youtube.com/*", "*://*.youtube-nocookie.com/*"],
+      "js": ["src/global.js"],
+      "run_at": "document_end"
+    },
+    {
+      "matches": ["*://*.youtube.com/*", "*://*.youtube-nocookie.com/*"],
+      "js": ["src/content_start.js"]
+    },
+    {
       "matches": ["*://*.youtube.com/*"],
-      "js": ["src/content_start.js", "src/content_channelbranding.js"]
+      "js": ["src/content_channelbranding.js"]
     },
     {
       "matches": ["*://m.youtube.com/*"],
@@ -39,7 +48,7 @@
         "src/background_notifications.js",
         "src/mobile-audio/background_mobile_audio.js"
       ],
-      "matches": ["*://*.youtube.com/*"]
+      "matches": ["*://*.youtube.com/*", "*://*.youtube-nocookie.com/*"]
     }
   ],
   "action": {
@@ -50,7 +59,7 @@
     "open_in_tab": true
   },
   "permissions": ["storage"],
-  "host_permissions": ["*://*.youtube.com/*"],
+  "host_permissions": ["*://*.youtube.com/*", "*://*.youtube-nocookie.com/*"],
   "icons": {
     "48": "icon48.png"
   }
