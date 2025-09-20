@@ -12,7 +12,7 @@ const authFileLocationBase = path.join(__dirname, "../../playwright/.auth/");
 const authFileName = "user.json";
 
 import "dotenv/config";
-import { Page } from "@playwright/test";
+import { Browser, BrowserContext, Page } from "@playwright/test";
 
 /**
  * @param {BrowserContext} context
@@ -21,7 +21,7 @@ import { Page } from "@playwright/test";
  * @returns
  */
 export async function newPageWithStorageStateIfItExists(
-  context: any,
+  context: BrowserContext,
   browserName: string,
   locale: string,
 ) {
@@ -83,9 +83,9 @@ export async function newPageWithStorageStateIfItExists(
     }
   };
 
-  // Healper to load auth storage if fresh
+  // Helper to load auth storage if fresh
   const loadStorage = async (
-    context: any,
+    context: Browser | BrowserContext,
     storageFile: any,
     isLocaleLoadedTrue: boolean,
     maxHours: number,
@@ -115,7 +115,7 @@ export async function newPageWithStorageStateIfItExists(
         };
       }
       return {
-        page: await context.newPage({ storageState: storageFile }),
+        page: await (context as Browser).newPage({ storageState: storageFile }),
         localeLoaded: isLocaleLoadedTrue,
       };
     }
@@ -164,7 +164,7 @@ export async function newPageWithStorageStateIfItExists(
  * @param {Page} page
  * @returns {Locator|null}
  */
-export async function findLoginButton(page: any) {
+export async function findLoginButton(page: Page) {
   console.log(`[AuthStorage] Searching for login button`);
   const possibleLabels = ["Sign in", "Войти", "ลงชื่อเข้าใช้"];
   for (const label of possibleLabels) {
@@ -182,13 +182,13 @@ export async function findLoginButton(page: any) {
 }
 
 /**
- * @param {Browser} context
+ * @param {BrowserContext} context
  * @param {Page} page
  * @param {string} browserName
  * @param {string} locale
  */
 export async function handleGoogleLogin(
-  context: any,
+  context: BrowserContext,
   page: Page,
   browserName: string,
   locale: string,

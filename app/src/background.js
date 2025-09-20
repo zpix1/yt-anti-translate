@@ -296,7 +296,7 @@ async function createOrUpdateUntranslatedFakeNode(
     );
 
     if (!videoId) {
-      // If the link is not a video/short do not ptoceed further
+      // If the link is not a video/short do not proceed further
       return;
     }
     let response = await cachedRequest(
@@ -329,16 +329,19 @@ async function createOrUpdateUntranslatedFakeNode(
       return;
     }
 
-    const oldTitle =
-      translatedElement?.textContent ??
-      (fakeNode
-        ? fakeNode.parentElement
-            ?.querySelector(originalNodePartialSelector)
-            ?.textContent?.trim() === ""
+    let oldTitle = translatedElement?.textContent;
+
+    if (!oldTitle && fakeNode) {
+      // If we don't have the translated element, try to find the hidden translated element from the fakeNode parent
+      const hiddenTranslatedElement = fakeNode.parentElement?.querySelector(
+        originalNodePartialSelector,
+      );
+      // Get the translated title only if it's not empty
+      oldTitle =
+        hiddenTranslatedElement?.textContent?.trim() === ""
           ? null
-          : fakeNode.parentElement?.querySelector(originalNodePartialSelector)
-              ?.textContent
-        : null);
+          : hiddenTranslatedElement?.textContent;
+    }
 
     if (shouldSetDocumentTitle) {
       if (

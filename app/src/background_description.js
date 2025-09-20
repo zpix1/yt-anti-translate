@@ -475,7 +475,7 @@ function setupChapters(originalDescription) {
 
     if (shouldUpdate) {
       // YouTube updates tooltip text on every mouse move along timeline [#132](https://github.com/zpix1/yt-anti-translate/issues/132)
-      // debounce using requestAnimationFrame cause setTimeout is too slow and no debounce at all is laggy
+      // debounce using requestAnimationFrame because setTimeout is too slow and no debounce at all is laggy
       // requestAnimationFrame only works with tab visible but that's acceptable for this use case as user won't be able to use the tooltip when tab is not visible
       requestAnimationFrame(updateTooltipChapter);
     }
