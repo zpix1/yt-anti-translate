@@ -66,7 +66,9 @@ const data = {
 
 (async () => {
   try {
-    console.log(`[INFO] Sending PATCH request to AMO API...`);
+    console.log(
+      `[INFO] Sending PATCH request to AMO API... PATCH https://addons.mozilla.org/api/v5/addons/addon/${slug}/versions/${version}/`,
+    );
 
     const res = await fetch(
       `https://addons.mozilla.org/api/v5/addons/addon/${slug}/versions/${version}/`,

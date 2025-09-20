@@ -7,11 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.19.13] - 2025-09-xx
+
+### New Feature
+
+- [#66](https://github.com/zpix1/yt-anti-translate/issues/66) Untranslate End Screen Mosaic inside the Player
+
+### Fixed
+
+- Fix video author translation on videos with multiple authors
+- Fix author search result untranslation
+- Fix `isVisible` function when any of the parents is invisible
+- Fix [#116](https://github.com/zpix1/yt-anti-translate/issues/116) Unnecessary error 404 network calls to YT oembed API
+- Fix [#124](https://github.com/zpix1/yt-anti-translate/issues/124) Incompatible with 'No YouTube Shorts'
+- Fix [#115](https://github.com/zpix1/yt-anti-translate/issues/115) Title duplication when videos with similar titles watched one immediatly after another
+- Fix [#128](https://github.com/zpix1/yt-anti-translate/issues/128) Shorts Untranslation is unreliable
+- Fix [#132](https://github.com/zpix1/yt-anti-translate/issues/132)
+- Handle short player description
+- Handle fallback to title inside of description
+
 ## [1.19.12] - 2025-08-29
+
+### Fixed
 
 - [#122](https://github.com/zpix1/yt-anti-translate/issues/122) YouTube classes change
 
 ## [1.19.11] - 2025-08-20
+
+### Fixed
 
 - [#117](https://github.com/zpix1/yt-anti-translate/issues/117) Untranslate channel branding unicode issue
 

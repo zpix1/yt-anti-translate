@@ -1,3 +1,4 @@
+/* eslint-disable  @typescript-eslint/no-explicit-any */
 import fs from "node:fs";
 import path, { dirname } from "node:path";
 import unzipper from "unzipper";
@@ -20,7 +21,7 @@ const destDirExtension = path.join(__dirname, "../testDist");
 /** Function to copy files and directories recursively
  * @param {JSON} configObject - The object to be passed and inserted into the start.js file to set the chome.storage settings
  **/
-export function handleTestDistribution(configObject) {
+export function handleTestDistribution(configObject: any) {
   //Function to copy files and directories recursively
   function copyFiles(src: string, dest: string) {
     const stats = fs.statSync(src);
@@ -75,7 +76,7 @@ export function handleTestDistribution(configObject) {
  * Downloads and extracts the uBlock Origin extension from Mozilla Add-ons,
  * unless the correct version is already present.
  */
-export async function downloadAndExtractUBlock(browserName) {
+export async function downloadAndExtractUBlock(browserName: string) {
   let uBlockUri, expectedVersion, destDirUBlock;
   switch (browserName) {
     case "chromium":

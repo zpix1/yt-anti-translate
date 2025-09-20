@@ -156,7 +156,9 @@ ytm-rich-item-renderer,
 ytm-video-with-context-renderer,
 ytm-video-card-renderer,
 ytm-media-item,
-ytm-playlist-video-renderer`,
+ytm-playlist-video-renderer,
+a.ytp-videowall-still,
+a.ytp-ce-covering-overlay`,
   ALL_ARRAYS_SHORTS_SELECTOR: `div.style-scope.ytd-rich-item-renderer,
 ytm-shorts-lockup-view-model`,
 
@@ -502,6 +504,27 @@ ytm-shorts-lockup-view-model`,
       parseFloat(style.opacity) === 0
     ) {
       return false;
+    }
+
+    // Check computed style for ancestors
+    // DOM traversal and style computation should not have performance impact but limit to a max depth of 25 to be safe
+    // DevTools Performance analysis shows no time difference with or without this code
+    // This is needed when any of the parent elements is invisible
+    let parent = element.parentElement;
+    let depth = 0;
+    const MAX_PARENT_DEPTH = 25;
+    while (parent && depth < MAX_PARENT_DEPTH) {
+      const parentStyle = getComputedStyle(parent);
+      if (
+        parentStyle.display === "none" ||
+        parentStyle.visibility === "hidden" ||
+        parentStyle.visibility === "collapse" ||
+        parseFloat(parentStyle.opacity) === 0
+      ) {
+        return false;
+      }
+      parent = parent.parentElement;
+      depth++;
     }
 
     if (shouldCheckViewport) {
@@ -963,7 +986,7 @@ ytm-shorts-lockup-view-model`,
   },
 
   /**
-   * Replace the first text note of the element
+   * Replace the first text node of the element
    * Any other node is retained as is
    * @param {HTMLElement} element - The element to update
    * @param {string} replaceText - The new text to insert
@@ -978,6 +1001,20 @@ ytm-shorts-lockup-view-model`,
         node.textContent = replaceText;
         this.logDebug(`replaceTextOnly: replaced first text node`);
         break; // stop after updating the first text node
+      }
+    }
+  },
+
+  /**
+   * Get the first text node of the element
+   * Any other node is retained as is
+   * @param {HTMLElement} element - The element to inspect
+   */
+  getFirstTextNode: function (element) {
+    // Loop through child nodes to find the first text node
+    for (const node of element.childNodes) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        return node;
       }
     }
   },

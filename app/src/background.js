@@ -28,125 +28,82 @@ const cachedRequest = window.YoutubeAntiTranslate.cachedRequest.bind(
   window.YoutubeAntiTranslate,
 );
 
-async function untranslateCurrentShortVideo() {
-  if (
-    window.YoutubeAntiTranslate.getFirstVisible(
-      document.querySelectorAll(
-        window.YoutubeAntiTranslate.getPlayerSelector(),
-      ),
-    )
-  ) {
-    if (!window.location.pathname.startsWith("/shorts/")) {
-      return; // Should not happen if called correctly, but safety first
-    }
-
-    // Selector based on user example: <span class="yt-core-attributed-string ytReelMultiFormatLinkViewModelTitle yt-core-attributed-string--white-space-pre-wrap" role="text"><span class="" style="">TITLE</span></span>
-    const shortsTitleSelector = "yt-shorts-video-title-view-model > h2 > span";
-    const translatedTitleElement = window.YoutubeAntiTranslate.getFirstVisible(
-      document.querySelectorAll(shortsTitleSelector),
-    );
-
-    if (!translatedTitleElement) {
-      // console.debug(` Shorts title element not found using selector:`, shortsTitleSelector);
-      return;
-    }
-
-    // Check if already untranslated to avoid redundant work
-    if (translatedTitleElement.hasAttribute("data-ytat-untranslated")) {
-      return;
-    }
-
-    const videoId = window.location.pathname.split("/")[2];
-    if (!videoId) {
-      window.YoutubeAntiTranslate.logWarning(
-        `Could not extract Shorts video ID from URL:`,
-        window.location.href,
-      );
-      return;
-    }
-
-    const oembedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/shorts/${videoId}`;
-
-    try {
-      // console.debug(`Fetching oEmbed for Short:`, videoId);
-      let response = await cachedRequest(oembedUrl);
-      if (
-        !response ||
-        !response.response ||
-        !response.response.ok ||
-        !response.data?.title
-      ) {
-        if (response?.response?.status === 401) {
-          // 401 likely means the video is restricted try again with youtubeI
-          response =
-            await window.YoutubeAntiTranslate.getVideoTitleFromYoutubeI(
-              videoId,
-            );
-          if (!response?.response?.ok || !response.data?.title) {
-            window.YoutubeAntiTranslate.logWarning(
-              `YoutubeI title request failed for video ${videoId}`,
-            );
-            return;
-          }
-        } else {
-          // console.debug(` No oEmbed data for Short:`, videoId);
-          // Mark as checked even if no data, to prevent retrying unless element changes
-          translatedTitleElement.setAttribute(
-            "data-ytat-untranslated",
-            "checked",
-          );
-          return;
-        }
-      }
-
-      const realTitle = response.data.title;
-      const currentTitle = translatedTitleElement.textContent?.trim();
-
-      if (
-        realTitle &&
-        currentTitle &&
-        !window.YoutubeAntiTranslate.isStringEqual(realTitle, currentTitle)
-      ) {
-        window.YoutubeAntiTranslate.logInfo(
-          `Untranslating Short title: "${currentTitle}" -> "${realTitle}"`,
-        );
-        translatedTitleElement.textContent = realTitle;
-        translatedTitleElement.setAttribute("data-ytat-untranslated", "true"); // Mark as done
-
-        // Update page title too
-        if (document.title.includes(currentTitle)) {
-          document.title = window.YoutubeAntiTranslate.stringReplaceWithOptions(
-            document.title,
-            currentTitle,
-            realTitle,
-          );
-        } else {
-          // Fallback if exact match fails (e.g. " Shorts" suffix)
-          document.title = `${realTitle} #shorts`; // Adjust format as needed
-        }
-      } else {
-        // Mark as done even if titles match or one is missing, to prevent re-checking
-        translatedTitleElement.setAttribute("data-ytat-untranslated", "true");
-      }
-    } catch (error) {
-      window.YoutubeAntiTranslate.logWarning(
-        `Error fetching oEmbed for Short:`,
-        videoId,
-        error,
-      );
-      // Don't mark as done on fetch error, allow retry
-    }
-  }
-}
-
 // Changes main short title on "/shorts/shortid" pages
-async function untranslateCurrentShortVideoLinks() {
-  const fakeNodeID = "yt-anti-translate-fake-node-current-short-video-links";
-  const originalNodeSelector = `.ytReelMultiFormatLinkViewModelEndpoint span${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}>span:not(#${fakeNodeID})`;
+async function untranslateCurrentShortVideo() {
+  const fakeNodeID = "yt-anti-translate-fake-node-current-short-video";
+  const originalNodeSelector = `yt-shorts-video-title-view-model > h2 > span:not(#${fakeNodeID})`;
+  const originalNodePartialSelector = `span:not(#${fakeNodeID})`;
 
   await createOrUpdateUntranslatedFakeNode(
     fakeNodeID,
     originalNodeSelector,
+    originalNodePartialSelector,
+    () => document.location.href,
+    "span",
+    true,
+    true,
+  );
+}
+
+// Changes short title on "/shorts/shortid" pages inside of the Description Panel
+async function untranslateCurrentShortVideoDescriptionPanel() {
+  const fakeNodeID =
+    "yt-anti-translate-fake-node-current-short-video-description-panel";
+  const originalNodeSelector = `#anchored-panel ytd-video-description-header-renderer > #title > yt-formatted-string:not(#${fakeNodeID})`;
+  const originalNodePartialSelector = `span:not(#${fakeNodeID})`;
+
+  await createOrUpdateUntranslatedFakeNode(
+    fakeNodeID,
+    originalNodeSelector,
+    originalNodePartialSelector,
+    () => document.location.href,
+    "span",
+    false,
+  );
+}
+
+function getShortUrlFromSource() {
+  if (window.YoutubeAntiTranslate.isMobile()) {
+    const sourceUrl = document.location.href;
+    // example https://m.youtube.com/source/50G0kIty7Cg/shorts?bp=etc...
+    // extract source video id from url
+    const match = sourceUrl.match(/\/source\/([^\\]+)\/shorts/);
+    if (match) {
+      const sourceVideoId = match[1];
+      return `https://m.youtube.com/shorts/${sourceVideoId}`;
+    }
+  }
+  return document.location.href;
+}
+
+// Changes short title on "/shorts/shortid" pages inside of the Short Engagement Panel
+async function untranslateCurrentShortVideoEngagementPanel() {
+  const fakeNodeID =
+    "yt-anti-translate-fake-node-current-short-video-engagement-panel";
+  const originalNodeSelector = `#anchored-panel #header yt-dynamic-text-view-model > h1 > span:not(#${fakeNodeID}), ytm-browse yt-dynamic-text-view-model > h1 > span:not(#${fakeNodeID})`;
+  const originalNodePartialSelector = `span:not(#${fakeNodeID})`;
+
+  await createOrUpdateUntranslatedFakeNode(
+    fakeNodeID,
+    originalNodeSelector,
+    originalNodePartialSelector,
+    getShortUrlFromSource,
+    "span",
+    false,
+    window.YoutubeAntiTranslate.isMobile(),
+  );
+}
+
+// Changes featured video link title on "/shorts/shortid" pages
+async function untranslateCurrentShortVideoLinks() {
+  const fakeNodeID = "yt-anti-translate-fake-node-current-short-video-links";
+  const originalNodeSelector = `.ytReelMultiFormatLinkViewModelEndpoint span${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}>span:not(#${fakeNodeID})`;
+  const originalNodePartialSelector = `span:not(#${fakeNodeID})`;
+
+  await createOrUpdateUntranslatedFakeNode(
+    fakeNodeID,
+    originalNodeSelector,
+    originalNodePartialSelector,
     (el) => el?.parentElement?.parentElement?.parentElement?.href,
     "span",
     false,
@@ -161,10 +118,12 @@ async function untranslateCurrentVideo() {
 
   const fakeNodeID = "yt-anti-translate-fake-node-current-video";
   const originalNodeSelector = `#title > h1 > yt-formatted-string:not(#${fakeNodeID}), .slim-video-information-title .yt-core-attributed-string:not(#${fakeNodeID})`;
+  const originalNodePartialSelector = `yt-formatted-string:not(#${fakeNodeID}), .yt-core-attributed-string:not(#${fakeNodeID})`;
 
   await createOrUpdateUntranslatedFakeNode(
     fakeNodeID,
     originalNodeSelector,
+    originalNodePartialSelector,
     () => document.location.href,
     "div",
     false,
@@ -177,10 +136,12 @@ async function untranslateCurrentVideo() {
 async function untranslateCurrentVideoHeadLink() {
   const fakeNodeID = "yt-anti-translate-fake-node-video-head-link";
   const originalNodeSelector = `${window.YoutubeAntiTranslate.getPlayerSelector()} a.ytp-title-link:not(#${fakeNodeID})`;
+  const originalNodePartialSelector = `a.ytp-title-link:not(#${fakeNodeID})`;
 
   await createOrUpdateUntranslatedFakeNode(
     fakeNodeID,
     originalNodeSelector,
+    originalNodePartialSelector,
     (el) => {
       const videoLinkHead = el.href;
       if (!videoLinkHead || videoLinkHead.trim() === "") {
@@ -200,10 +161,12 @@ async function untranslateCurrentVideoFullScreenEdu() {
 
   const fakeNodeID = "yt-anti-translate-fake-node-fullscreen-edu";
   const originalNodeSelector = `${window.YoutubeAntiTranslate.getPlayerSelector()} div.ytp-fullerscreen-edu-text:not(#${fakeNodeID})`;
+  const originalNodePartialSelector = `div.ytp-fullerscreen-edu-text:not(#${fakeNodeID})`;
 
   await createOrUpdateUntranslatedFakeNode(
     fakeNodeID,
     originalNodeSelector,
+    originalNodePartialSelector,
     () => document.location.href,
     "div",
     false,
@@ -215,10 +178,12 @@ async function untranslateCurrentVideoFullScreenEdu() {
 async function untranslateCurrentChannelEmbeddedVideoTitle() {
   const fakeNodeID = "yt-anti-translate-fake-node-channel-embedded-title";
   const originalNodeSelector = `div.ytd-channel-video-player-renderer #metadata-container.ytd-channel-video-player-renderer a:not(#${fakeNodeID})`;
+  const originalNodePartialSelector = `a:not(#${fakeNodeID})`;
 
   await createOrUpdateUntranslatedFakeNode(
     fakeNodeID,
     originalNodeSelector,
+    originalNodePartialSelector,
     (el) => el.href,
     "a",
     false,
@@ -232,10 +197,12 @@ async function untranslateCurrentMobileVideoDescriptionHeader() {
   }
   const fakeNodeID = "yt-anti-translate-fake-node-mobile-video-description";
   const originalNodeSelector = `ytm-video-description-header-renderer .title > span.yt-core-attributed-string:not(#${fakeNodeID})`;
+  const originalNodePartialSelector = `span.yt-core-attributed-string:not(#${fakeNodeID})`;
 
   await createOrUpdateUntranslatedFakeNode(
     fakeNodeID,
     originalNodeSelector,
+    originalNodePartialSelector,
     () => document.location.href,
     "span",
     true,
@@ -250,10 +217,12 @@ async function untranslateCurrentMobileFeaturedVideoChannel() {
   const fakeNodeID =
     "yt-anti-translate-fake-node-mobile-featured-video-channel";
   const originalNodeSelector = `ytm-channel-featured-video-renderer > a > h3 > span.yt-core-attributed-string:not(#${fakeNodeID})`;
+  const originalNodePartialSelector = `span.yt-core-attributed-string:not(#${fakeNodeID})`;
 
   await createOrUpdateUntranslatedFakeNode(
     fakeNodeID,
     originalNodeSelector,
+    originalNodePartialSelector,
     (el) => el.closest("a").href,
     "span",
     false,
@@ -265,6 +234,7 @@ async function untranslateCurrentMobileFeaturedVideoChannel() {
  * Create or Updates and untranslated fake node for the translated element
  * @param {string} fakeNodeID
  * @param {string} originalNodeSelector
+ * @param {string} originalNodePartialSelector
  * @param {Function} getUrl
  * @param {string} createElementTag
  * @param {boolean} requirePlayer
@@ -274,6 +244,7 @@ async function untranslateCurrentMobileFeaturedVideoChannel() {
 async function createOrUpdateUntranslatedFakeNode(
   fakeNodeID,
   originalNodeSelector,
+  originalNodePartialSelector,
   getUrl,
   createElementTag,
   requirePlayer = true,
@@ -317,6 +288,17 @@ async function createOrUpdateUntranslatedFakeNode(
     if (window.YoutubeAntiTranslate.isAdvertisementHref(getUrlForElement)) {
       return;
     }
+
+    const videoId = window.YoutubeAntiTranslate.extractVideoIdFromUrl(
+      getUrlForElement.startsWith("http")
+        ? getUrlForElement
+        : window.location.origin + getUrlForElement,
+    );
+
+    if (!videoId) {
+      // If the link is not a video/short do not proceed further
+      return;
+    }
     let response = await cachedRequest(
       "https://www.youtube.com/oembed?url=" + getUrlForElement,
     );
@@ -328,11 +310,6 @@ async function createOrUpdateUntranslatedFakeNode(
     ) {
       if (response?.response?.status === 401) {
         // 401 likely means the video is restricted try again with youtubeI
-        const videoId = window.YoutubeAntiTranslate.extractVideoIdFromUrl(
-          getUrlForElement.startsWith("http")
-            ? getUrlForElement
-            : window.location.origin + getUrlForElement,
-        );
         response =
           await window.YoutubeAntiTranslate.getVideoTitleFromYoutubeI(videoId);
         if (!response?.response?.ok || !response.data?.title) {
@@ -352,40 +329,43 @@ async function createOrUpdateUntranslatedFakeNode(
       return;
     }
 
-    const oldTitle = translatedElement?.textContent ?? fakeNode?.textContent;
+    let oldTitle = translatedElement?.textContent;
+
+    if (!oldTitle && fakeNode) {
+      // If we don't have the translated element, try to find the hidden translated element from the fakeNode parent
+      const hiddenTranslatedElement = fakeNode.parentElement?.querySelector(
+        originalNodePartialSelector,
+      );
+      // Get the translated title only if it's not empty
+      oldTitle =
+        hiddenTranslatedElement?.textContent?.trim() === ""
+          ? null
+          : hiddenTranslatedElement?.textContent;
+    }
 
     if (shouldSetDocumentTitle) {
-      // This is sometimes skipped on first update as youtube translate the document title late; so we use a cached oldTitle
-      const cachedOldTitle =
-        window.YoutubeAntiTranslate.getSessionCache(
-          `${fakeNodeID}_${getUrlForElement}`,
-        ) ?? oldTitle;
-
       if (
-        !window.YoutubeAntiTranslate.isStringEqual(realTitle, cachedOldTitle)
+        window.YoutubeAntiTranslate.doesStringInclude(document.title, oldTitle)
       ) {
         document.title = window.YoutubeAntiTranslate.stringReplaceWithOptions(
           document.title,
-          cachedOldTitle,
+          oldTitle,
           realTitle,
         );
       }
     }
 
     if (
-      window.YoutubeAntiTranslate.isStringEqual(realTitle, oldTitle) ||
       window.YoutubeAntiTranslate.isStringEqual(
         fakeNode?.textContent,
         realTitle,
       )
     ) {
       return;
-    } else {
-      // cache old title for future reference
-      window.YoutubeAntiTranslate.setSessionCache(
-        `${fakeNodeID}_${getUrlForElement}`,
-        oldTitle,
-      );
+    }
+
+    if (window.YoutubeAntiTranslate.isStringEqual(realTitle, oldTitle)) {
+      return;
     }
 
     window.YoutubeAntiTranslate.logInfo(
@@ -404,6 +384,7 @@ async function createOrUpdateUntranslatedFakeNode(
       newFakeNode.className = translatedElement.className;
       newFakeNode.id = fakeNodeID;
       newFakeNode.textContent = realTitle;
+      newFakeNode.setAttribute("video-id", videoId);
       if (!existingFakeNode) {
         newFakeNode.style.visibility =
           translatedElement.style?.visibility ?? "visible";
@@ -419,6 +400,7 @@ async function createOrUpdateUntranslatedFakeNode(
       translatedElement.style.display = "none";
     } else if (fakeNode) {
       fakeNode.textContent = realTitle;
+      fakeNode.setAttribute("video-id", videoId);
     }
   }
 }
@@ -456,11 +438,16 @@ async function untranslateOtherVideos(intersectElements = null) {
           video.querySelector("a.media-item-thumbnail-container") ||
           video.querySelector("ytd-playlist-panel-video-renderer a") ||
           video.querySelector("ytm-video-card-renderer a") ||
-          video.querySelector("a.yt-lockup-metadata-view-model__title");
+          video.querySelector("a.yt-lockup-metadata-view-model__title") ||
+          (video.matches("a.ytp-videowall-still") ? video : null) ||
+          (video.matches("a.ytp-ce-covering-overlay") ? video : null);
         let titleElement =
           video.querySelector("#video-title:not(.cbCustomTitle)") ||
           video.querySelector(
             ".compact-media-item-headline .yt-core-attributed-string",
+          ) ||
+          video.querySelector(
+            ".YtmCompactMediaItemHeadline .yt-core-attributed-string",
           ) ||
           video.querySelector(
             "ytd-playlist-panel-video-renderer #video-title",
@@ -473,7 +460,9 @@ async function untranslateOtherVideos(intersectElements = null) {
           ) ||
           video.querySelector(
             ".yt-lockup-metadata-view-model__heading-reset .yt-core-attributed-string",
-          );
+          ) ||
+          video.querySelector("span.ytp-videowall-still-info-title") ||
+          video.querySelector("div.ytp-ce-video-title");
 
         if (!linkElement || !titleElement) {
           // Try another common pattern before giving up
@@ -490,6 +479,9 @@ async function untranslateOtherVideos(intersectElements = null) {
               ) ||
               video.querySelector(
                 ".compact-media-item-headline .yt-core-attributed-string",
+              ) ||
+              video.querySelector(
+                ".YtmCompactMediaItemHeadline .yt-core-attributed-string",
               );
           }
           if (!linkElement || !titleElement) {
@@ -650,7 +642,8 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
         // Find link element to get URL
         const linkElement =
           shortElement.querySelector("a.shortsLockupViewModelHostEndpoint") ||
-          shortElement.querySelector(`a[href*="/shorts/"]`);
+          shortElement.querySelector(`a[href*="/shorts/"]`) ||
+          shortElement.querySelector(`a[href*="/watch?v="]`); // This is for compatibility with [No YouTube Shorts](https://addons.mozilla.org/en-US/firefox/addon/no-youtube-shorts/)
         if (!linkElement || !linkElement.href) {
           // Mark to avoid re-checking non-standard items, might not have a standard link
           shortElement.setAttribute("data-ytat-untranslated-other", "checked");
@@ -659,7 +652,9 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
 
         const videoHref = linkElement.href;
         // Extract video ID from URLs like /shorts/VIDEO_ID
-        const videoIdMatch = videoHref.match(/shorts\/([a-zA-Z0-9_-]+)/);
+        const videoIdMatch =
+          videoHref.match(/shorts\/([a-zA-Z0-9_-]+)/) ||
+          videoHref.match(/[?&]v=([a-zA-Z0-9_-]+)/); // This is for compatibility with [No YouTube Shorts](https://addons.mozilla.org/en-US/firefox/addon/no-youtube-shorts/)
         if (!videoIdMatch || !videoIdMatch[1]) {
           // Mark if ID can't be extracted (e.g., different URL structure)
           shortElement.setAttribute("data-ytat-untranslated-other", "checked");
@@ -773,6 +768,10 @@ async function untranslate() {
     untranslateCurrentChannelEmbeddedVideoTitle();
   const otherVideosPromise = untranslateOtherVideos();
   const currentShortPromise = untranslateCurrentShortVideo();
+  const currentShortEngagementPanelPromise =
+    untranslateCurrentShortVideoEngagementPanel();
+  const currentShortDescriptionPanelPromise =
+    untranslateCurrentShortVideoDescriptionPanel();
   const currentShortVideoLinksPromise = untranslateCurrentShortVideoLinks();
   const otherShortsPromise = untranslateOtherShortsVideos(); // Call the new function
   const currentMobileVideoDescriptionPromise =
@@ -788,6 +787,8 @@ async function untranslate() {
     channelEmbeddedVideoPromise,
     otherVideosPromise,
     currentShortPromise,
+    currentShortEngagementPanelPromise,
+    currentShortDescriptionPanelPromise,
     currentShortVideoLinksPromise,
     otherShortsPromise,
     currentMobileVideoDescriptionPromise,

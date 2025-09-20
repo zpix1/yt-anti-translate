@@ -44,7 +44,7 @@ jobs:
         id: get_version
         run: |
           VERSION=$(jq -r .version app/manifest.json)
-          echo "version=$VERSION" >> $GITHUB_ENV
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "tag=v$VERSION" >> $GITHUB_OUTPUT
 
       - name: Archive firefox-extension artifact
@@ -60,12 +60,12 @@ jobs:
     needs: build-firefox-extension
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - uses: actions/setup-node@v2-beta
         with:
           node-version: "18"
-      
-      - name: Checkout
-        uses: actions/checkout@v4
 
       - name: Download bundle artifact
         uses: actions/download-artifact@v4

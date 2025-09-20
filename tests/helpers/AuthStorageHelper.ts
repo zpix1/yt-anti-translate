@@ -1,3 +1,4 @@
+/* eslint-disable  @typescript-eslint/no-explicit-any */
 import fs from "node:fs";
 import * as OTPAuth from "otpauth";
 import path from "node:path";
@@ -11,7 +12,7 @@ const authFileLocationBase = path.join(__dirname, "../../playwright/.auth/");
 const authFileName = "user.json";
 
 import "dotenv/config";
-import { Page } from "@playwright/test";
+import { Browser, BrowserContext, Page } from "@playwright/test";
 
 /**
  * @param {BrowserContext} context
@@ -20,7 +21,7 @@ import { Page } from "@playwright/test";
  * @returns
  */
 export async function newPageWithStorageStateIfItExists(
-  context,
+  context: BrowserContext,
   browserName: string,
   locale: string,
 ) {
@@ -68,7 +69,7 @@ export async function newPageWithStorageStateIfItExists(
   }
 
   // Helper to load cookies from file and add them to context
-  const loadCookies = async (context, filePath) => {
+  const loadCookies = async (context: any, filePath: string) => {
     console.log(`[AuthStorage] Loading cookies from: ${filePath}`);
     const content = fs.readFileSync(filePath, "utf-8");
     const storageState = JSON.parse(content);
@@ -82,12 +83,12 @@ export async function newPageWithStorageStateIfItExists(
     }
   };
 
-  // Healper to load auth storage if fresh
+  // Helper to load auth storage if fresh
   const loadStorage = async (
-    context,
-    storageFile,
-    isLocaleLoadedTrue,
-    maxHours,
+    context: Browser | BrowserContext,
+    storageFile: any,
+    isLocaleLoadedTrue: boolean,
+    maxHours: number,
   ) => {
     console.log(`[AuthStorage] Checking storage freshness for: ${storageFile}`);
     const stats = fs.statSync(storageFile);
@@ -114,7 +115,7 @@ export async function newPageWithStorageStateIfItExists(
         };
       }
       return {
-        page: await context.newPage({ storageState: storageFile }),
+        page: await (context as Browser).newPage({ storageState: storageFile }),
         localeLoaded: isLocaleLoadedTrue,
       };
     }
@@ -163,7 +164,7 @@ export async function newPageWithStorageStateIfItExists(
  * @param {Page} page
  * @returns {Locator|null}
  */
-export async function findLoginButton(page) {
+export async function findLoginButton(page: Page) {
   console.log(`[AuthStorage] Searching for login button`);
   const possibleLabels = ["Sign in", "Войти", "ลงชื่อเข้าใช้"];
   for (const label of possibleLabels) {
@@ -181,13 +182,13 @@ export async function findLoginButton(page) {
 }
 
 /**
- * @param {Browser} context
+ * @param {BrowserContext} context
  * @param {Page} page
  * @param {string} browserName
  * @param {string} locale
  */
 export async function handleGoogleLogin(
-  context,
+  context: BrowserContext,
   page: Page,
   browserName: string,
   locale: string,
@@ -304,7 +305,7 @@ export async function handleGoogleLogin(
     console.log(`[AuthStorage] Avatar button not found`);
   }
 
-  async function continueLoginSteps(page) {
+  async function continueLoginSteps(page: any) {
     console.log(`[AuthStorage] Continuing with Google login steps`);
 
     try {
@@ -386,7 +387,7 @@ export async function handleGoogleLogin(
   console.log(`[AuthStorage] Google login handling completed`);
 }
 
-function generateOTP(secret) {
+function generateOTP(secret: string) {
   console.log(`[AuthStorage] Generating OTP with provided secret`);
   const totp = new OTPAuth.TOTP({
     secret: secret,

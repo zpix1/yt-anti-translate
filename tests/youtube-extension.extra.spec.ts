@@ -85,13 +85,15 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     );
 
     // Wait for the upload info block, scroll into view, and click as requested
-    const uploadInfo = page.locator("#channel-name").first();
+    const uploadInfo = page.locator("#attributed-channel-name").first();
     await expect(uploadInfo).toBeVisible({ timeout: 20000 });
     await uploadInfo.scrollIntoViewIfNeeded();
     await uploadInfo.click();
     try {
       await page.waitForLoadState("networkidle", { timeout: 5000 });
-    } catch {}
+    } catch {
+      // empty
+    }
     await page.waitForTimeout(1000);
 
     // Expect a dialog to appear listing collaborators
@@ -102,7 +104,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     // Allow enough time for the extension to fetch and update names
     await expect(collabItems.first()).toBeAttached({ timeout: 20000 });
 
-    const names = (await collabItems.allTextContents()).map((n) =>
+    const names = (await collabItems.allTextContents()).map((n: string) =>
       (n || "").trim(),
     );
     expect(names.length).toBeGreaterThan(0);
@@ -185,7 +187,9 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
       .click();
     try {
       await page.waitForLoadState("networkidle", { timeout: 5000 });
-    } catch {}
+    } catch {
+      // empty
+    }
     await page.waitForTimeout(500);
 
     // --- Check About Popup ---
@@ -222,7 +226,9 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
       .click();
     try {
       await page.waitForLoadState("networkidle", { timeout: 5000 });
-    } catch {}
+    } catch {
+      // empty
+    }
     await page.waitForTimeout(500);
 
     // --- Open About Popup via more links ---
@@ -236,7 +242,9 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
       .click();
     try {
       await page.waitForLoadState("networkidle", { timeout: 5000 });
-    } catch {}
+    } catch {
+      // empty
+    }
     await page.waitForTimeout(500);
 
     // --- Check About A second time via the moreLinks Popup ---
@@ -273,7 +281,9 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
       .click();
     try {
       await page.waitForLoadState("networkidle", { timeout: 5000 });
-    } catch {}
+    } catch {
+      // empty
+    }
     await page.waitForTimeout(500);
 
     // Take a screenshot for visual verification
