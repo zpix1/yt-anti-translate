@@ -501,16 +501,30 @@ ytm-shorts-lockup-view-model`,
       style.display === "none" ||
       style.visibility === "hidden" ||
       style.visibility === "collapse" ||
-      parseFloat(style.opacity) === 0 ||
-      element.closest(
-        `[hidden], [style*="display:none"], 
-        [style*="visibility:hidden"], 
-        [style*="visibility:collapse"], 
-        [style*="opacity: 0"]`,
-      ) // This is needed when any of the parent elements is invisible
-      // when closest is truthy it means that one of its parents is invisible
+      parseFloat(style.opacity) === 0
     ) {
       return false;
+    }
+
+    // Check computed style for ancestors
+    // DOM traversal and style computation should not have performance impact but limit to a max depth of 25 to be safe
+    // DevTools Performance analysis shows no time difference with or without this code
+    // This is needed when any of the parent elements is invisible
+    let parent = element.parentElement;
+    let depth = 0;
+    const MAX_PARENT_DEPTH = 25;
+    while (parent && depth < MAX_PARENT_DEPTH) {
+      const parentStyle = getComputedStyle(parent);
+      if (
+        parentStyle.display === "none" ||
+        parentStyle.visibility === "hidden" ||
+        parentStyle.visibility === "collapse" ||
+        parseFloat(parentStyle.opacity) === 0
+      ) {
+        return false;
+      }
+      parent = parent.parentElement;
+      depth++;
     }
 
     if (shouldCheckViewport) {
