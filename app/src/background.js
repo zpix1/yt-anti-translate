@@ -539,7 +539,7 @@ async function untranslateOtherVideos(intersectElements = null) {
           return;
         }
 
-        // Check if current widget is a playlist, not video
+        // Check if current widget is a playlist, not a video
         if (
           video.querySelector('a[href*="/playlist?"]') ||
           window.YoutubeAntiTranslate.getFirstVisible(
@@ -762,6 +762,18 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
     await Promise.all(
       shortsArray.map(async (shortElement) => {
         if (!shortElement) {
+          return;
+        }
+
+        // Check if current widget is a playlist, not a video
+        if (
+          shortElement.querySelector('a[href*="/playlist?"]') ||
+          window.YoutubeAntiTranslate.getFirstVisible(
+            shortElement.querySelector(
+              "yt-collection-thumbnail-view-model, .media-item-thumbnail-container.stacked",
+            ),
+          )
+        ) {
           return;
         }
 

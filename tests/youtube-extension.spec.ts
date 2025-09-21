@@ -669,7 +669,7 @@ test.describe("YouTube Anti-Translate extension", () => {
       const video = document.querySelector(
         "#shorts-player",
       ) as HTMLVideoElement & {
-        getAudioTrack?: () => Promise<unknown>;
+        getAudioTrack?: () => Promise<any>;
         getPlayerResponse?: () => Promise<PlayerResponse>;
       };
       return [
@@ -710,7 +710,7 @@ test.describe("YouTube Anti-Translate extension", () => {
       const video = document.querySelector(
         "#shorts-player",
       ) as HTMLVideoElement & {
-        getAudioTrack?: () => Promise<unknown>;
+        getAudioTrack?: () => Promise<any>;
         getPlayerResponse?: () => Promise<PlayerResponse>;
       };
       return [
@@ -751,7 +751,7 @@ test.describe("YouTube Anti-Translate extension", () => {
       const video = document.querySelector(
         "#shorts-player",
       ) as HTMLVideoElement & {
-        getAudioTrack?: () => Promise<unknown>;
+        getAudioTrack?: () => Promise<any>;
         getPlayerResponse?: () => Promise<PlayerResponse>;
       };
       return [
@@ -786,8 +786,8 @@ test.describe("YouTube Anti-Translate extension", () => {
      */
     async function IfAdvertThenReturnNext(
       currentTrack: any,
-      currentVideoId: string | null,
-    ) {
+      currentVideoId: string | undefined,
+    ): Promise<[any, string | undefined]> {
       if (
         currentTrack[getTrackLanguageFieldObjectName(currentTrack)!]?.name ===
         "Default"
@@ -813,7 +813,7 @@ test.describe("YouTube Anti-Translate extension", () => {
           const video = document.querySelector(
             "#shorts-player",
           ) as HTMLVideoElement & {
-            getAudioTrack?: () => Promise<unknown>;
+            getAudioTrack?: () => Promise<any>;
             getPlayerResponse?: () => Promise<PlayerResponse>;
           };
           return [
@@ -827,7 +827,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     }
   });
 
-  test("YouTube playlist page contains Popular Shorts playlist", async ({
+  test("YouTube channel playlist page contains 'Popular Shorts' playlist", async ({
     browserNameWithExtensions,
     localeString,
   }, testInfo) => {
@@ -860,6 +860,124 @@ test.describe("YouTube Anti-Translate extension", () => {
     // Take a screenshot for visual verification
     await page.screenshot({
       path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-playlists-test.png`,
+    });
+
+    // Check console message count
+    expect(consoleMessageCountContainer.count).toBeLessThan(2000);
+
+    // Close the browser context
+    await context.close();
+  });
+
+  test("YouTube owned feed playlists page contains 'owned-playlist-playwright-test' playlist", async ({
+    browserNameWithExtensions,
+    localeString,
+  }, testInfo) => {
+    /**
+     * NOTE WELL
+     * This test requires the account in use to have a playlist named "owned-playlist-playwright-test" with at least one video in it.
+     * If missing you must create it manually as part of setting up the test account.
+     */
+
+    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
+
+    // Launch browser with the extension
+    const context = await createBrowserContext(browserNameWithExtensions);
+
+    // Create a new page
+    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
+      context,
+      browserNameWithExtensions,
+      localeString,
+    );
+
+    await loadPageAndVerifyAuth(
+      page,
+      "https://www.youtube.com/feed/playlists",
+      browserNameWithExtensions,
+    );
+
+    // Wait for the video grid to appear
+    await page.waitForSelector("ytd-rich-item-renderer");
+
+    // --- Check Videos Tab ---
+    const originalPlaylistTitle = "owned-playlist-playwright-test";
+    const videoSelector = `ytd-rich-item-renderer:has-text("${originalPlaylistTitle}")`;
+
+    const originalPlaylist = page.locator(videoSelector).first();
+    if (await originalPlaylist.isVisible()) {
+      await page.mouse.wheel(0, 500);
+      await originalPlaylist.scrollIntoViewIfNeeded();
+      try {
+        await page.waitForLoadState("networkidle", { timeout: 5000 });
+      } catch {
+        // empty
+      }
+    }
+
+    console.log("Checking Videos tab for original title...");
+    await expect(originalPlaylist).toBeVisible();
+    console.log("Original video title found.");
+
+    // Take a screenshot for visual verification
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-owned-playlists-test.png`,
+    });
+
+    // Check console message count
+    expect(consoleMessageCountContainer.count).toBeLessThan(2000);
+
+    // Close the browser context
+    await context.close();
+  });
+
+  test("YouTube search results page contains NileRed 'Popular Shorts' playlist", async ({
+    browserNameWithExtensions,
+    localeString,
+  }, testInfo) => {
+    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
+
+    // Launch browser with the extension
+    const context = await createBrowserContext(browserNameWithExtensions);
+
+    // Create a new page
+    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
+      context,
+      browserNameWithExtensions,
+      localeString,
+    );
+
+    await loadPageAndVerifyAuth(
+      page,
+      "https://www.youtube.com/results?search_query=nilered+popular+shorts",
+      browserNameWithExtensions,
+    );
+
+    // Wait for the video grid to appear
+    await page.waitForSelector("yt-lockup-view-model");
+
+    // --- Check Videos Tab ---
+    const originalPlaylistTitle = "Popular Shorts";
+    const videoSelector = `yt-lockup-view-model:has-text("${originalPlaylistTitle}")`;
+
+    const originalPlaylist = page.locator(videoSelector).first();
+    if (await originalPlaylist.isVisible()) {
+      await page.mouse.wheel(0, 500);
+      await originalPlaylist.scrollIntoViewIfNeeded();
+      try {
+        await page.waitForLoadState("networkidle", { timeout: 5000 });
+      } catch {
+        // empty
+      }
+    }
+
+    console.log("Checking Videos tab for original title...");
+    await expect(originalPlaylist).toBeVisible();
+    console.log("Original video title found.");
+
+    // Take a screenshot for visual verification
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-search-result-playlist-test.png`,
     });
 
     // Check console message count
@@ -996,7 +1114,7 @@ test.describe("YouTube Anti-Translate extension", () => {
       const video = document.querySelector(
         "#movie_player",
       ) as HTMLVideoElement & {
-        getAudioTrack?: () => Promise<unknown>;
+        getAudioTrack?: () => Promise<any>;
       };
       return await video?.getAudioTrack?.();
     });

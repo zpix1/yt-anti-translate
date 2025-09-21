@@ -21,7 +21,7 @@ import { Browser, BrowserContext, Page } from "@playwright/test";
  * @returns
  */
 export async function newPageWithStorageStateIfItExists(
-  context: BrowserContext,
+  context: Browser | BrowserContext,
   browserName: string,
   locale: string,
 ) {
