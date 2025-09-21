@@ -17,16 +17,18 @@
     {
       "matches": ["*://*.youtube.com/*", "*://*.youtube-nocookie.com/*"],
       "js": ["src/content_injectglobal.js"],
-      "run_at": "document_end"
+      "run_at": "document_end",
+      "all_frames": true
     },
     {
-      "matches": ["*://*.youtube.com/*", "*://*.youtube-nocookie.com/*"],
+      "matches": ["*://*.youtube.com/*"],
       "js": ["src/global.js"],
       "run_at": "document_end"
     },
     {
       "matches": ["*://*.youtube.com/*", "*://*.youtube-nocookie.com/*"],
-      "js": ["src/content_start.js"]
+      "js": ["src/content_start.js"],
+      "all_frames": true
     },
     {
       "matches": ["*://*.youtube.com/*"],

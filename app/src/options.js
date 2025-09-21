@@ -20,9 +20,19 @@ async function checkPermissions() {
     return;
   }
 
-  const hasPermanent = await hasPermanentHostPermission("*://*.youtube.com/*");
+  const hasPermanentYouTube = await hasPermanentHostPermission(
+    "*://*.youtube.com/*",
+  );
 
-  if (!hasPermanent) {
+  if (!hasPermanentYouTube) {
+    permissionWarning.style.display = "block";
+  }
+
+  const hasPermanentYouTubeNoCookie = await hasPermanentHostPermission(
+    "*://*.youtube-nocookie.com/*",
+  );
+
+  if (!hasPermanentYouTubeNoCookie) {
     permissionWarning.style.display = "block";
   }
 }
@@ -88,6 +98,14 @@ const reloadActiveYouTubeTab = () => {
     const tab = tabs[0];
     if (tab && tab.url && tab.url.match(/^.*youtube\.com\/.*$/)) {
       chrome.tabs.reload(tab.id);
+    }
+  });
+
+  // Send a message to `content_start.js` to trigger reload in the content script
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    const tab = tabs[0];
+    if (tab && tab.id) {
+      chrome.tabs.sendMessage(tab.id, { type: "reload" });
     }
   });
 };

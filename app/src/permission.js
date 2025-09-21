@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
   button.addEventListener("click", async () => {
     try {
       const granted = await chrome.permissions.request({
-        origins: ["*://*.youtube.com/*"],
+        origins: ["*://*.youtube.com/*", "*://*.youtube-nocookie.com/*"],
       });
 
       if (granted) {

@@ -422,6 +422,9 @@ async function createOrUpdateUntranslatedFakeNode(
         newFakeNode.href = translatedElement.href;
       }
       newFakeNode.className = translatedElement.className;
+      newFakeNode.target = translatedElement.target;
+      newFakeNode.tabIndex = translatedElement.tabIndex;
+      newFakeNode["data-sessionlink"] = translatedElement["data-sessionlink"];
       newFakeNode.id = fakeNodeID;
       newFakeNode.textContent = realTitle;
       newFakeNode.setAttribute("video-id", videoId);
@@ -499,6 +502,9 @@ async function createOrUpdateUntranslatedFakeNodeAuthor(
       newFakeNode.href = translatedElement.href;
     }
     newFakeNode.className = translatedElement.className;
+    newFakeNode.target = translatedElement.target;
+    newFakeNode.tabIndex = translatedElement.tabIndex;
+    newFakeNode["data-sessionlink"] = translatedElement["data-sessionlink"];
     newFakeNode.id = authorFakeNodeID;
     newFakeNode.textContent = realAuthor;
     if (!existingFakeNode) {

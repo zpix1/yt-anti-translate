@@ -43,3 +43,10 @@ chrome.storage.sync.get(
     }
   },
 );
+
+// Listen for reload messages from the extension (chrome.runtime messaging)
+chrome.runtime.onMessage.addListener((message) => {
+  if (message && message.type === "reload") {
+    window.location.reload();
+  }
+});
