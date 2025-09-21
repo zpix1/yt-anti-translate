@@ -131,7 +131,7 @@ async function untranslateCurrentVideo() {
   );
 }
 
-// For channel ("/@MrBeast") pages, for the pinned video's title **in** the video player
+// For channel ("/@MrBeast") pages or embedded videos, video's title **in** the video player
 // See "docs/Figure 2.png"
 async function untranslateCurrentVideoHeadLink() {
   const fakeNodeID = "yt-anti-translate-fake-node-video-head-link";
@@ -151,6 +151,8 @@ async function untranslateCurrentVideoHeadLink() {
     },
     "a",
     false,
+    document.location.href.includes("youtube-nocookie.com") ||
+      document.location.href.includes("youtube.com/embed/"),
   );
 }
 
