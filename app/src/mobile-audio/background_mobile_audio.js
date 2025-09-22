@@ -185,175 +185,175 @@ async function getUntranslatedVideoResponseAsync(videoId) {
   return { bodyJson: json, response: response };
 }
 
-const sync = {
-  post: function (url, headers, body) {
-    const xhr = new XMLHttpRequest();
-    xhr.open("POST", url, false); // `false` = synchronous
-    xhr.withCredentials = headers?.Authorization ? true : false; // Ensure cookies and credentials are sent
-    for (const key in headers) {
-      xhr.setRequestHeader(key, headers[key]);
-    }
-    xhr.send(body);
-    return {
-      status: xhr.status,
-      responseText: xhr.responseText,
-    };
-  },
+// const sync = {
+//   post: function (url, headers, body) {
+//     const xhr = new XMLHttpRequest();
+//     xhr.open("POST", url, false); // `false` = synchronous
+//     xhr.withCredentials = headers?.Authorization ? true : false; // Ensure cookies and credentials are sent
+//     for (const key in headers) {
+//       xhr.setRequestHeader(key, headers[key]);
+//     }
+//     xhr.send(body);
+//     return {
+//       status: xhr.status,
+//       responseText: xhr.responseText,
+//     };
+//   },
 
-  // Minimal synchronous SHA-1 implementation
-  sha1: function (msg) {
-    function rotl(n, s) {
-      return (n << s) | (n >>> (32 - s));
-    }
-    function toHex(val) {
-      return (val >>> 0).toString(16).padStart(8, "0");
-    }
+//   // Minimal synchronous SHA-1 implementation
+//   sha1: function (msg) {
+//     function rotl(n, s) {
+//       return (n << s) | (n >>> (32 - s));
+//     }
+//     function toHex(val) {
+//       return (val >>> 0).toString(16).padStart(8, "0");
+//     }
 
-    const msgBytes = new TextEncoder().encode(msg);
-    const l = msgBytes.length;
-    const words = new Array((((l + 8) >> 6) + 1) * 16).fill(0);
-    for (let i = 0; i < l; i++) {
-      words[i >> 2] |= msgBytes[i] << (24 - (i % 4) * 8);
-    }
-    words[l >> 2] |= 0x80 << (24 - (l % 4) * 8);
-    words[words.length - 1] = l * 8;
+//     const msgBytes = new TextEncoder().encode(msg);
+//     const l = msgBytes.length;
+//     const words = new Array((((l + 8) >> 6) + 1) * 16).fill(0);
+//     for (let i = 0; i < l; i++) {
+//       words[i >> 2] |= msgBytes[i] << (24 - (i % 4) * 8);
+//     }
+//     words[l >> 2] |= 0x80 << (24 - (l % 4) * 8);
+//     words[words.length - 1] = l * 8;
 
-    let h0 = 0x67452301;
-    let h1 = 0xefcdab89;
-    let h2 = 0x98badcfe;
-    let h3 = 0x10325476;
-    let h4 = 0xc3d2e1f0;
+//     let h0 = 0x67452301;
+//     let h1 = 0xefcdab89;
+//     let h2 = 0x98badcfe;
+//     let h3 = 0x10325476;
+//     let h4 = 0xc3d2e1f0;
 
-    for (let i = 0; i < words.length; i += 16) {
-      const w = words.slice(i, i + 16);
-      for (let t = 16; t < 80; t++) {
-        w[t] = rotl(w[t - 3] ^ w[t - 8] ^ w[t - 14] ^ w[t - 16], 1);
-      }
+//     for (let i = 0; i < words.length; i += 16) {
+//       const w = words.slice(i, i + 16);
+//       for (let t = 16; t < 80; t++) {
+//         w[t] = rotl(w[t - 3] ^ w[t - 8] ^ w[t - 14] ^ w[t - 16], 1);
+//       }
 
-      let a = h0,
-        b = h1,
-        c = h2,
-        d = h3,
-        e = h4;
-      for (let t = 0; t < 80; t++) {
-        const f =
-          t < 20
-            ? (b & c) | (~b & d)
-            : t < 40
-              ? b ^ c ^ d
-              : t < 60
-                ? (b & c) | (b & d) | (c & d)
-                : b ^ c ^ d;
-        const k =
-          t < 20
-            ? 0x5a827999
-            : t < 40
-              ? 0x6ed9eba1
-              : t < 60
-                ? 0x8f1bbcdc
-                : 0xca62c1d6;
-        const temp = (rotl(a, 5) + f + e + k + w[t]) >>> 0;
-        e = d;
-        d = c;
-        c = rotl(b, 30) >>> 0;
-        b = a;
-        a = temp;
-      }
+//       let a = h0,
+//         b = h1,
+//         c = h2,
+//         d = h3,
+//         e = h4;
+//       for (let t = 0; t < 80; t++) {
+//         const f =
+//           t < 20
+//             ? (b & c) | (~b & d)
+//             : t < 40
+//               ? b ^ c ^ d
+//               : t < 60
+//                 ? (b & c) | (b & d) | (c & d)
+//                 : b ^ c ^ d;
+//         const k =
+//           t < 20
+//             ? 0x5a827999
+//             : t < 40
+//               ? 0x6ed9eba1
+//               : t < 60
+//                 ? 0x8f1bbcdc
+//                 : 0xca62c1d6;
+//         const temp = (rotl(a, 5) + f + e + k + w[t]) >>> 0;
+//         e = d;
+//         d = c;
+//         c = rotl(b, 30) >>> 0;
+//         b = a;
+//         a = temp;
+//       }
 
-      h0 = (h0 + a) >>> 0;
-      h1 = (h1 + b) >>> 0;
-      h2 = (h2 + c) >>> 0;
-      h3 = (h3 + d) >>> 0;
-      h4 = (h4 + e) >>> 0;
-    }
+//       h0 = (h0 + a) >>> 0;
+//       h1 = (h1 + b) >>> 0;
+//       h2 = (h2 + c) >>> 0;
+//       h3 = (h3 + d) >>> 0;
+//       h4 = (h4 + e) >>> 0;
+//     }
 
-    return (
-      toHex(h0) +
-      toHex(h1) +
-      toHex(h2) +
-      toHex(h3) +
-      toHex(h4)
-    ).toLowerCase();
-  },
+//     return (
+//       toHex(h0) +
+//       toHex(h1) +
+//       toHex(h2) +
+//       toHex(h3) +
+//       toHex(h4)
+//     ).toLowerCase();
+//   },
 
-  getSAPISIDHASH: function (origin = "https://m.youtube.com") {
-    const sapisid = globalJsCopy.getSAPISID();
-    if (!sapisid) {
-      globalJsCopy.logWarning("SAPISID cookie not found.");
-      return null;
-    }
+//   getSAPISIDHASH: function (origin = "https://m.youtube.com") {
+//     const sapisid = globalJsCopy.getSAPISID();
+//     if (!sapisid) {
+//       globalJsCopy.logWarning("SAPISID cookie not found.");
+//       return null;
+//     }
 
-    const timestamp = Math.floor(Date.now() / 1000);
-    const message = `${timestamp} ${sapisid} ${origin}`;
-    const hash = sync.sha1(message);
-    return `SAPISIDHASH ${timestamp}_${hash} SAPISID1HASH ${timestamp}_${hash} SAPISID3HASH ${timestamp}_${hash}`;
-  },
+//     const timestamp = Math.floor(Date.now() / 1000);
+//     const message = `${timestamp} ${sapisid} ${origin}`;
+//     const hash = sync.sha1(message);
+//     return `SAPISIDHASH ${timestamp}_${hash} SAPISID1HASH ${timestamp}_${hash} SAPISID3HASH ${timestamp}_${hash}`;
+//   },
 
-  getYoutubeIHeadersWithCredentials: function () {
-    const sapisidhash = sync.getSAPISIDHASH();
-    if (!sapisidhash) {
-      globalJsCopy.logWarning(
-        "getYoutubeIHeadersWithCredentials: SAPISID not found, user not logged in, returning default headers",
-      );
-      return {
-        "Content-Type": "application/json",
-      };
-    }
-    return {
-      "Content-Type": "application/json",
-      Authorization: sapisidhash,
-      priority: "u=0, i",
-      "X-Youtube-Client-Name": "1",
-      "X-Youtube-Client-Version": "2.20250730.01.00",
-    };
-  },
+//   getYoutubeIHeadersWithCredentials: function () {
+//     const sapisidhash = sync.getSAPISIDHASH();
+//     if (!sapisidhash) {
+//       globalJsCopy.logWarning(
+//         "getYoutubeIHeadersWithCredentials: SAPISID not found, user not logged in, returning default headers",
+//       );
+//       return {
+//         "Content-Type": "application/json",
+//       };
+//     }
+//     return {
+//       "Content-Type": "application/json",
+//       Authorization: sapisidhash,
+//       priority: "u=0, i",
+//       "X-Youtube-Client-Name": "1",
+//       "X-Youtube-Client-Version": "2.20250730.01.00",
+//     };
+//   },
 
-  getUntranslatedVideoResponse: function (videoId) {
-    const cacheKey = `video_response_mobile_sync_${videoId}`;
-    if (videoResponseCache.has(cacheKey)) {
-      return videoResponseCache.get(cacheKey); // Return cached description if available
-    }
+//   getUntranslatedVideoResponse: function (videoId) {
+//     const cacheKey = `video_response_mobile_sync_${videoId}`;
+//     if (videoResponseCache.has(cacheKey)) {
+//       return videoResponseCache.get(cacheKey); // Return cached description if available
+//     }
 
-    const body = {
-      context: {
-        client: {
-          clientName: "MWEB",
-          clientVersion: "2.20250730.01.00",
-          originalUrl: document.location.href,
-          hl: "lo", // Using "Lao" as default that is an unsupported (but valid) language of youtube
-          // That always get the original language as a result
-          gl: null,
-          visitorData: null,
-        },
-      },
-      playbackContext: null,
-      serviceIntegrityDimensions: null,
-      videoId,
-    };
+//     const body = {
+//       context: {
+//         client: {
+//           clientName: "MWEB",
+//           clientVersion: "2.20250730.01.00",
+//           originalUrl: document.location.href,
+//           hl: "lo", // Using "Lao" as default that is an unsupported (but valid) language of youtube
+//           // That always get the original language as a result
+//           gl: null,
+//           visitorData: null,
+//         },
+//       },
+//       playbackContext: null,
+//       serviceIntegrityDimensions: null,
+//       videoId,
+//     };
 
-    const headers = sync.getYoutubeIHeadersWithCredentials();
+//     const headers = sync.getYoutubeIHeadersWithCredentials();
 
-    const response = sync.post(
-      "https://m.youtube.com/youtubei/v1/player?prettyPrint=false&yt-anti-translate=true",
-      headers,
-      JSON.stringify(body),
-    );
+//     const response = sync.post(
+//       "https://m.youtube.com/youtubei/v1/player?prettyPrint=false&yt-anti-translate=true",
+//       headers,
+//       JSON.stringify(body),
+//     );
 
-    const json = JSON.parse(response.responseText);
+//     const json = JSON.parse(response.responseText);
 
-    // Ads do not properly work with this response so we are clearing the content of the response
-    clearAdsProperties(json);
+//     // Ads do not properly work with this response so we are clearing the content of the response
+//     clearAdsProperties(json);
 
-    // Add a self identification property
-    json.ytAntiTranslate = true;
+//     // Add a self identification property
+//     json.ytAntiTranslate = true;
 
-    if (json) {
-      videoResponseCache.set(cacheKey, { bodyJson: json, response: response }); // Cache the player response for future use
-    }
+//     if (json) {
+//       videoResponseCache.set(cacheKey, { bodyJson: json, response: response }); // Cache the player response for future use
+//     }
 
-    return { bodyJson: json, response: response };
-  },
-};
+//     return { bodyJson: json, response: response };
+//   },
+// };
 
 /**
  * Fallback function for untranslated audio video responses having only 360p option.
@@ -371,7 +371,6 @@ function getUntranslated360pFallback(playerResponse) {
 (() => {
   // Store the original ytInitialPlayerResponse
   let originalPlayerResponse = null;
-  let untranslatedPlayerResponse = null;
   let isIntercepted = false;
 
   // Intercept window['ytInitialPlayerResponse']
@@ -393,35 +392,17 @@ function getUntranslated360pFallback(playerResponse) {
       configurable: true,
       enumerable: true,
       get() {
-        if (untranslatedPlayerResponse) {
-          return untranslatedPlayerResponse;
-        }
-
         if (originalPlayerResponse && originalPlayerResponse.ytAntiTranslate) {
           return originalPlayerResponse;
         }
 
-        const videoId = globalJsCopy.getCurrentVideoId();
-        if (!videoId) {
-          return originalPlayerResponse;
-        }
-        const response = sync.getUntranslatedVideoResponse(videoId);
-
-        if (
-          !response?.bodyJson ||
-          !response?.bodyJson.streamingData ||
-          !response?.bodyJson.streamingData.adaptiveFormats
-        ) {
-          return getUntranslated360pFallback(originalPlayerResponse);
-        }
-
-        untranslatedPlayerResponse = response?.bodyJson || null;
         globalJsCopy.logDebug(
-          "Untranslated player response fetched",
-          untranslatedPlayerResponse,
+          "ytInitialPlayerResponse getter called - overriding to empty formats",
         );
-
-        return untranslatedPlayerResponse;
+        originalPlayerResponse.streamingData.formats = null;
+        originalPlayerResponse.streamingData.serverAbrStreamingUrl = null;
+        originalPlayerResponse.streamingData.adaptiveFormats = null;
+        return originalPlayerResponse;
       },
       set(value) {
         globalJsCopy.logDebug(
@@ -508,6 +489,122 @@ function getUntranslated360pFallback(playerResponse) {
     };
   }
 
+  function installXMLHttpRequestInterceptor() {
+    const OriginalOpen = XMLHttpRequest.prototype.open;
+    const OriginalSend = XMLHttpRequest.prototype.send;
+
+    XMLHttpRequest.prototype.open = function () {
+      const method = (arguments[0] || "GET").toString().toUpperCase();
+      const url = arguments[1] || "";
+      const isAsync = arguments[2] !== false;
+      this.__ytat = this.__ytat || {};
+      this.__ytat.method = method;
+      this.__ytat.url = url;
+      this.__ytat.async = isAsync;
+      return OriginalOpen.apply(this, arguments);
+    };
+
+    XMLHttpRequest.prototype.send = function (body) {
+      const context = this.__ytat || {};
+      const url = context.url || "";
+      globalJsCopy.logDebug("XMLHttpRequest headers", {
+        headers: this.getAllResponseHeaders(),
+        method: context.method,
+        url: context.url,
+        async: context.async,
+      });
+      globalJsCopy.logDebug("XMLHttpRequest being sent", url);
+      if (
+        url.includes("/youtubei/v1/player") &&
+        !url.includes("yt-anti-translate=true")
+      ) {
+        (async () => {
+          try {
+            const videoId = globalJsCopy.getCurrentVideoId();
+            const origResponse =
+              await getUntranslatedVideoResponseAsync(videoId);
+            const responseJson = origResponse.bodyJson;
+
+            console.log("responseJson", responseJson);
+
+            if (window.ytInitialPlayerResponse !== undefined) {
+              window.ytInitialPlayerResponse = responseJson;
+            }
+
+            const headersMap = {};
+            origResponse.response?.headers?.forEach((value, key) => {
+              headersMap[key.toLowerCase()] = value;
+            });
+
+            const jsonText = JSON.stringify(responseJson);
+            const finalResponse =
+              this.responseType === "json" ? responseJson : jsonText;
+
+            try {
+              Object.defineProperty(this, "readyState", {
+                configurable: true,
+                value: 4,
+              });
+              Object.defineProperty(this, "status", {
+                configurable: true,
+                value: origResponse.response.status,
+              });
+              Object.defineProperty(this, "statusText", {
+                configurable: true,
+                value: origResponse.response.statusText,
+              });
+              Object.defineProperty(this, "response", {
+                configurable: true,
+                value: finalResponse,
+              });
+              Object.defineProperty(this, "responseText", {
+                configurable: true,
+                value: jsonText,
+              });
+              this.getResponseHeader = function (name) {
+                return headersMap[(name || "").toLowerCase()] || null;
+              };
+              this.getAllResponseHeaders = function () {
+                return Object.entries(headersMap)
+                  .map(([k, v]) => `${k}: ${v}`)
+                  .join("\r\n");
+              };
+            } catch (defineErr) {
+              globalJsCopy.logDebug(
+                "Could not define XMLHttpRequest response properties",
+                defineErr,
+              );
+            }
+
+            try {
+              if (typeof this.onreadystatechange === "function") {
+                this.onreadystatechange();
+              }
+              if (typeof this.onload === "function") {
+                this.onload();
+              }
+              if (typeof this.dispatchEvent === "function") {
+                this.dispatchEvent(new Event("readystatechange"));
+                this.dispatchEvent(new Event("load"));
+                this.dispatchEvent(new Event("loadend"));
+              }
+            } catch (eventErr) {
+              globalJsCopy.logDebug("Dispatching XHR events failed", eventErr);
+            }
+          } catch (error) {
+            globalJsCopy.logError(
+              `XMLHttpRequest interception failed: ${error?.message || error}`,
+            );
+            return OriginalSend.call(this, body);
+          }
+        })();
+        return; // prevent the original network request
+      }
+
+      return OriginalSend.call(this, body);
+    };
+  }
+
   /* -----------------------------  4  INSTALL  ----------------------------- */
   (function install() {
     // Set up ytInitialPlayerResponse interception first
@@ -522,6 +619,16 @@ function getUntranslated360pFallback(playerResponse) {
     /* 4-a. wrap whatever fetch exists right now (likely the native one) */
     globalJsCopy.logDebug("installing wrapper around current window.fetch");
     window.fetch = createRewriter(window.fetch.bind(window));
+
+    // 4-a.1. also intercept XMLHttpRequest flows
+    try {
+      globalJsCopy.logDebug("installing interceptor for XMLHttpRequest");
+      installXMLHttpRequestInterceptor();
+    } catch (error) {
+      globalJsCopy.logError(
+        `Error installing XMLHttpRequest interceptor: ${error?.message || error}`,
+      );
+    }
 
     /* 4-b. if YouTube later replaces fetch with ytNetworkFetch, re-wrap it */
     Object.defineProperty(window, "ytNetworkFetch", {
@@ -557,10 +664,10 @@ function clearAdsProperties(json) {
   }
 }
 
-// Export for testing (only in Node.js environment)
-if (typeof module !== "undefined" && module.exports) {
-  module.exports = {
-    sync,
-    globalJsCopy,
-  };
-}
+// // Export for testing (only in Node.js environment)
+// if (typeof module !== "undefined" && module.exports) {
+//   module.exports = {
+//     sync,
+//     globalJsCopy,
+//   };
+// }
