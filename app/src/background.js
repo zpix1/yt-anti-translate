@@ -543,7 +543,7 @@ async function untranslateOtherVideos(intersectElements = null) {
         if (
           video.querySelector('a[href*="/playlist?"]') ||
           window.YoutubeAntiTranslate.getFirstVisible(
-            video.querySelector(
+            video.querySelectorAll(
               "yt-collection-thumbnail-view-model, .media-item-thumbnail-container.stacked",
             ),
           )
@@ -770,17 +770,17 @@ async function untranslateOtherVideos(intersectElements = null) {
                   const authorsElement = video.querySelector(
                     `#channel-info yt-formatted-string > a.yt-simple-endpoint`,
                   );
-                  if (authorsElement) {
-                    const currentAuthorsText = authorsElement.textContent;
-                    const currentAuthorsTextWithoutMain = currentAuthorsText
-                      .replace(mainAuthor, "")
-                      .trim();
-                    // Slice in 2 parts with space get the "and" part
-                    const currentAuthorAnd = currentAuthorsTextWithoutMain
-                      .slice(0, currentAuthorsTextWithoutMain.indexOf(" "))
-                      .trim();
-
-                    authorsElement.textContent = `${mainAuthor} ${currentAuthorAnd} ${collaboratorAuthorsOnly[0]}`;
+                  if (
+                    authorsElement &&
+                    !authorsElement.textContent.includes(
+                      "collaboratorAuthorsOnly[0]",
+                    )
+                  ) {
+                    const localizedAnd =
+                      window.YoutubeAntiTranslate.getLocalizedAnd(
+                        document.documentElement.lang,
+                      );
+                    authorsElement.textContent = `${mainAuthor} ${localizedAnd} ${collaboratorAuthorsOnly[0]}`;
                   }
                 }
               }
@@ -833,7 +833,7 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
         if (
           shortElement.querySelector('a[href*="/playlist?"]') ||
           window.YoutubeAntiTranslate.getFirstVisible(
-            shortElement.querySelector(
+            shortElement.querySelectorAll(
               "yt-collection-thumbnail-view-model, .media-item-thumbnail-container.stacked",
             ),
           )

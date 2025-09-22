@@ -61,7 +61,7 @@ function setupNotificationTitlesObserver() {
 
   // Wait for the notification popup to appear in the DOM
   const dropdown = window.YoutubeAntiTranslate.getFirstVisible(
-    document.querySelector(
+    document.querySelectorAll(
       'ytd-popup-container tp-yt-iron-dropdown[vertical-align="top"]',
     ),
   );

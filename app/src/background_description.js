@@ -618,8 +618,9 @@ function fetchOriginalAuthor() {
 async function restoreOriginalDescriptionAndAuthor() {
   const originalDescription = await fetchOriginalDescription();
   const originalAuthor = fetchOriginalAuthor();
+  const originalTitle = await getTitle(document.location.href);
 
-  if (!originalDescription && !originalAuthor) {
+  if (!originalDescription && !originalAuthor && !originalTitle) {
     return;
   }
 
@@ -640,25 +641,25 @@ async function restoreOriginalDescriptionAndAuthor() {
   }
 
   if (originalAuthor) {
-    handleAuthor(originalAuthor);
+    await handleAuthor(originalAuthor, originalTitle);
   }
 }
 
 /**
  * Restores the original (untranslated) author name only
  */
-function restoreOriginalAuthorOnly() {
+async function restoreOriginalAuthorOnly() {
   const originalAuthor = fetchOriginalAuthor();
 
   if (!originalAuthor) {
     return;
   }
 
-  handleAuthor(originalAuthor);
+  await handleAuthor(originalAuthor);
 }
 
 // Author handler
-function handleAuthor(originalAuthor) {
+async function handleAuthor(originalAuthor, originalTitle = null) {
   // We should skip this operation if the video player was embedded as it does not have the author above the description
   const player = window.YoutubeAntiTranslate.getFirstVisible(
     document.querySelectorAll(window.YoutubeAntiTranslate.getPlayerSelector()),
@@ -677,6 +678,23 @@ function handleAuthor(originalAuthor) {
     }
   } else {
     window.YoutubeAntiTranslate.logWarning(`Video Author container not found`);
+  }
+
+  if (originalTitle) {
+    const avatarStack = window.YoutubeAntiTranslate.getFirstVisible(
+      document.querySelectorAll("#owner #avatar-stack"),
+    );
+    if (avatarStack) {
+      await updateCollaboratorAuthors(
+        avatarStack,
+        originalAuthor,
+        originalTitle,
+      );
+    } else {
+      window.YoutubeAntiTranslate.logWarning(
+        "Video Avatar Stack container not found",
+      );
+    }
   }
 }
 
@@ -848,6 +866,90 @@ function updateAuthorContent(container, originalText) {
     );
     if (firstTextNode && firstTextNode.textContent !== originalText) {
       firstTextNode.textContent = originalText;
+    }
+  }
+}
+
+async function updateCollaboratorAuthors(avatarStack, originalAuthor) {
+  const avatarStackImages = avatarStack.querySelectorAll("yt-avatar-shape img");
+
+  const authors = [];
+
+  if (avatarStackImages) {
+    for (const avatarImage of avatarStackImages) {
+      const imgSrc = avatarImage.src;
+      if (!imgSrc || imgSrc.trim() === "") {
+        continue;
+      }
+
+      const originalTitle = await fetchOriginalDescription();
+
+      const originalCollaborators =
+        await window.YoutubeAntiTranslate.getOriginalCollaboratorsItemsWithYoutubeI(
+          originalTitle,
+        );
+
+      const originalItem = originalCollaborators?.find(
+        (item) => item.avatarImage === avatarImage.src,
+      );
+      if (!originalItem) {
+        continue;
+      }
+
+      authors.push(originalItem.name);
+    }
+
+    if (authors.length > 0) {
+      const mainAuthor = originalAuthor;
+      // Remove main author from collaborators list
+      const collaboratorAuthorsOnly = authors.filter(
+        (name) => name !== mainAuthor,
+      );
+
+      if (collaboratorAuthorsOnly && collaboratorAuthorsOnly.length === 1) {
+        const multipleChannelNameContainer =
+          window.YoutubeAntiTranslate.getFirstVisible(
+            avatarStack
+              .closest("#owner")
+              .querySelectorAll(
+                `#attributed-channel-name ${ATTRIBUTED_STRING_CLASS_SELECTOR} a > span`,
+              ),
+          );
+        if (
+          multipleChannelNameContainer &&
+          !multipleChannelNameContainer.textContent.includes(
+            collaboratorAuthorsOnly[0],
+          )
+        ) {
+          const localizedAnd = window.YoutubeAntiTranslate.getLocalizedAnd(
+            document.documentElement.lang,
+          );
+          replaceTextNodeContent(
+            multipleChannelNameContainer,
+            1,
+            `${localizedAnd} ${collaboratorAuthorsOnly[0]}`,
+          );
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Replaces the content of a specific text node within a container.
+ * @param {*} container - The parent element containing text nodes.
+ * @param {*} textNodeIndex - The index of the text node to replace. 0-based.
+ * @param {*} newText - The new text content to set.
+ */
+function replaceTextNodeContent(container, textNodeIndex, newText) {
+  const textNodes = Array.from(container.childNodes).filter(
+    (node) => node.nodeType === Node.TEXT_NODE,
+  );
+
+  if (textNodes.length > textNodeIndex) {
+    const targetTextNode = textNodes[textNodeIndex];
+    if (targetTextNode.textContent !== newText) {
+      targetTextNode.textContent = newText;
     }
   }
 }
@@ -1077,8 +1179,8 @@ function extractVideoDataField(fieldName) {
   }
 }
 
-// Get Title using oembed for mobile
-async function getTitleMobile(url) {
+// Get Title using oembed
+async function getTitle(url) {
   const videoId = window.YoutubeAntiTranslate.extractVideoIdFromUrl(url);
   if (!videoId) {
     return null;
@@ -1115,7 +1217,7 @@ async function getTitleMobile(url) {
 async function getDescriptionMobile() {
   return (
     extractVideoDataField("shortDescription") ||
-    (await getTitleMobile(document.location.href))
+    (await getTitle(document.location.href))
   );
 }
 

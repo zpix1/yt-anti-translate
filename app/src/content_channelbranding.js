@@ -399,7 +399,7 @@ function updateBrandingHeaderDescriptionContent(
     // When width is lower than 528px the text container is outside the main container
     if (!descriptionTextContainer) {
       descriptionTextContainer = window.YoutubeAntiTranslate.getFirstVisible(
-        document.querySelector(selector),
+        document.querySelectorAll(selector),
       );
     }
 
