@@ -742,9 +742,15 @@ function updateDescriptionContent(container, originalText) {
       !mainTextContainer.querySelector(
         "#description-placeholder",
       ) /*ignore placeholder*/ &&
-      !mainTextContainer.querySelector(
-        '[style="color: rgb(170, 170, 170);"',
-      ) /*ignore grey text*/ &&
+      (!window.YoutubeAntiTranslate.isMobile ||
+        (window.YoutubeAntiTranslate.isDarkTheme() &&
+          !mainTextContainer.querySelector(
+            '[style="color: rgb(170, 170, 170);"]',
+          )) ||
+        (!window.YoutubeAntiTranslate.isDarkTheme() &&
+          !mainTextContainer.querySelector(
+            '[style="color: rgb(96, 96, 96);"]',
+          ))) /*ignore grey text on mobile*/ &&
       needsUpdate(mainTextContainer)
     : false;
   const snippetNeedsUpdate = snippetTextContainer

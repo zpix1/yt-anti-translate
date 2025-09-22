@@ -786,7 +786,7 @@ ytm-shorts-lockup-view-model`,
    * link color in light theme: rgb(6, 95, 212)
    */
   isDarkTheme: function () {
-    return document.documentElement.hasAttribute("dark");
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
   },
 
   /**

@@ -689,7 +689,10 @@ async function untranslateOtherVideos(intersectElements = null) {
           }
 
           /* -------- Handle description snippet untranslation (search results, video lists) -------- */
-          if (!video.hasAttribute("data-ytat-untranslated-desc")) {
+          if (
+            !video.getAttribute("data-ytat-untranslated-desc") ===
+            document.location.href
+          ) {
             // Locate snippet containers
             const snippetElements = video.querySelectorAll(
               ".metadata-snippet-text, .metadata-snippet-text-navigation",
@@ -723,7 +726,10 @@ async function untranslateOtherVideos(intersectElements = null) {
             }
 
             // Mark as processed to avoid repeated attempts
-            video.setAttribute("data-ytat-untranslated-desc", "true");
+            video.setAttribute(
+              "data-ytat-untranslated-desc",
+              document.location.href,
+            );
           }
         } catch (error) {
           window.YoutubeAntiTranslate.logInfo(
