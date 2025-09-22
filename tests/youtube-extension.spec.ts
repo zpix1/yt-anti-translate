@@ -1141,4 +1141,94 @@ test.describe("YouTube Anti-Translate extension", () => {
     // Close the browser context
     await context.close();
   });
+
+  test("Works on youtube-nocookie videos", async ({
+    browserNameWithExtensions,
+    localeString,
+  }, testInfo) => {
+    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
+
+    // Launch browser with the extension
+    const context = await createBrowserContext(browserNameWithExtensions);
+
+    // Create a new page with the extension already authenticated
+    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
+      context,
+      browserNameWithExtensions,
+      localeString,
+    );
+
+    await page.goto("https://www.youtube-nocookie.com/embed/iLU0CE2c2HQ");
+
+    // Wait for the video to load
+    try {
+      await page.waitForSelector("video", { timeout: 10000 });
+    } catch {
+      await page.waitForSelector(
+        "div.ytp-error-content-wrap-subreason > span:has-text('153')",
+        { timeout: 10000 },
+      );
+      // If we hit a 153 error (playback not available) then skip the rest of the test
+      console.log(
+        "Video playback not available, skipping the rest of the test.",
+      );
+      await context.close();
+      testInfo.skip();
+    }
+
+    await page.click("#movie_player > div.ytp-cued-thumbnail-overlay > button");
+
+    await expect(
+      page.locator("#movie_player > div.ytp-cued-thumbnail-overlay > button"),
+    ).not.toBeVisible();
+    await page.waitForTimeout(2000);
+
+    function getTrackLanguageFieldObjectName(track: object) {
+      let languageFieldName: string;
+
+      for (const [fieldName, field] of Object.entries(track)) {
+        if (field && typeof field === "object" && field.name) {
+          languageFieldName = fieldName;
+          break;
+        }
+      }
+      if (!languageFieldName!) {
+        return;
+      } else {
+        return languageFieldName;
+      }
+    }
+
+    // Check that audio track is set to original
+    const currentTrack = await page.evaluate(async () => {
+      const video = document.querySelector(
+        "#movie_player",
+      ) as HTMLVideoElement & {
+        getAudioTrack?: () => Promise<any>;
+      };
+      return await video?.getAudioTrack?.();
+    });
+
+    expect(currentTrack).toBeTruthy();
+
+    // Check original track is the selected one
+    const trackLanguageField = getTrackLanguageFieldObjectName(currentTrack);
+    if (trackLanguageField) {
+      expect(currentTrack[trackLanguageField]?.name).toContain("оригинал");
+    }
+
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-nocookie-test.png`,
+    });
+
+    await expect(
+      page.locator(".ytp-title-link.yt-uix-sessionlink"),
+    ).toContainText("NAJTAŃSZY DYSK PCIe 5.0 – MA TO SENS W 2025?");
+
+    // Check console message count
+    expect(consoleMessageCountContainer.count).toBeLessThan(2000);
+
+    // Close the browser context
+    await context.close();
+  });
 });
