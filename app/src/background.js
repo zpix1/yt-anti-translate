@@ -785,6 +785,9 @@ async function untranslateOtherVideos(intersectElements = null) {
                 const authorsElement = video.querySelector(
                   `#channel-info yt-formatted-string > a.yt-simple-endpoint, div.media-item-metadata .YtmBadgeAndBylineRendererHost span${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}`,
                 );
+                const authorsTooltipElement = video.querySelector(
+                  `#channel-info .ytd-channel-name #tooltip`,
+                );
                 if (
                   authorsElement &&
                   !authorsElement.textContent.includes(
@@ -795,7 +798,12 @@ async function untranslateOtherVideos(intersectElements = null) {
                     window.YoutubeAntiTranslate.getLocalizedAnd(
                       document.documentElement.lang,
                     );
-                  authorsElement.textContent = `${mainAuthor} ${localizedAnd} ${collaboratorAuthorsOnly[0]}`;
+                  const untranslatedAuthorText = `${mainAuthor} ${localizedAnd} ${collaboratorAuthorsOnly[0]}`;
+                  authorsElement.textContent = untranslatedAuthorText;
+                  // Update tooltip if exists
+                  if (authorsTooltipElement) {
+                    authorsTooltipElement.textContent = untranslatedAuthorText;
+                  }
                 }
               }
             }

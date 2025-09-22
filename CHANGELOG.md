@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.19.14] - 2025-09-xx
+
+### New Feature
+
+- [#135](https://github.com/zpix1/yt-anti-translate/issues/135) Untranslate Collaborator authors on search and watch
+- [#119](https://github.com/zpix1/yt-anti-translate/issues/119) Untranslate Embeded videos outside of YouTube (e.g. On filmot.com) - iFrame support
+- [#57](https://github.com/zpix1/yt-anti-translate/issues/57) Add support for youtube-nocookie.com
+
+### Fixed
+
+- [#60](https://github.com/zpix1/yt-anti-translate/issues/60#issuecomment-3316129585) Titles of playlists inside of user feed changed to the title of the first video on them. again
+- [#137](https://github.com/zpix1/yt-anti-translate/issues/137) Videos description in searches sometimes shows older videos description
+
 ## [1.19.13] - 2025-09-20
 
 ### New Feature
