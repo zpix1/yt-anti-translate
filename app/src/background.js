@@ -734,7 +734,7 @@ async function untranslateOtherVideos(intersectElements = null) {
 
             const authors = [];
 
-            if (avatarStacks) {
+            if (avatarStacks && avatarStacks.length > 0) {
               for (const avatarImage of avatarStacks) {
                 const imgSrc = avatarImage.src;
                 if (!imgSrc || imgSrc.trim() === "") {
@@ -755,33 +755,47 @@ async function untranslateOtherVideos(intersectElements = null) {
 
                 authors.push(originalItem.name);
               }
-
-              if (authors.length > 0) {
-                const mainAuthor = response.data.author_name;
-                // Remove main author from collaborators list
-                const collaboratorAuthorsOnly = authors.filter(
-                  (name) => name !== mainAuthor,
+            } else {
+              // Falback using video id filtered list
+              const originalCollaborators =
+                await window.YoutubeAntiTranslate.getOriginalCollaboratorsItemsWithYoutubeI(
+                  originalTitle,
                 );
+              const originalItems = originalCollaborators?.filter(
+                (item) => item.videoId === videoId,
+              );
+              if (originalItems && originalItems.length > 0) {
+                for (const originalItem of originalItems) {
+                  authors.push(originalItem.name);
+                }
+              }
+            }
 
+            if (authors.length > 0) {
+              const mainAuthor = response.data.author_name;
+              // Remove main author from collaborators list
+              const collaboratorAuthorsOnly = authors.filter(
+                (name) => name !== mainAuthor,
+              );
+
+              if (
+                collaboratorAuthorsOnly &&
+                collaboratorAuthorsOnly.length === 1
+              ) {
+                const authorsElement = video.querySelector(
+                  `#channel-info yt-formatted-string > a.yt-simple-endpoint, div.media-item-metadata .YtmBadgeAndBylineRendererHost span${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}`,
+                );
                 if (
-                  collaboratorAuthorsOnly &&
-                  collaboratorAuthorsOnly.length === 1
+                  authorsElement &&
+                  !authorsElement.textContent.includes(
+                    collaboratorAuthorsOnly[0],
+                  )
                 ) {
-                  const authorsElement = video.querySelector(
-                    `#channel-info yt-formatted-string > a.yt-simple-endpoint`,
-                  );
-                  if (
-                    authorsElement &&
-                    !authorsElement.textContent.includes(
-                      "collaboratorAuthorsOnly[0]",
-                    )
-                  ) {
-                    const localizedAnd =
-                      window.YoutubeAntiTranslate.getLocalizedAnd(
-                        document.documentElement.lang,
-                      );
-                    authorsElement.textContent = `${mainAuthor} ${localizedAnd} ${collaboratorAuthorsOnly[0]}`;
-                  }
+                  const localizedAnd =
+                    window.YoutubeAntiTranslate.getLocalizedAnd(
+                      document.documentElement.lang,
+                    );
+                  authorsElement.textContent = `${mainAuthor} ${localizedAnd} ${collaboratorAuthorsOnly[0]}`;
                 }
               }
             }

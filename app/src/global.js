@@ -1650,7 +1650,7 @@ ytm-shorts-lockup-view-model`,
             showDialog?.panelLoadingStrategy?.inlineContent?.dialogViewModel
               ?.customContent?.listViewModel?.listItems ||
             showDialog?.panelLoadingStrategy?.inlineContent?.sheetViewModel
-              ?.custom?.listViewModel?.listItems;
+              ?.content?.listViewModel?.listItems;
 
           if (Array.isArray(listItems)) {
             for (const listItem of listItems) {
