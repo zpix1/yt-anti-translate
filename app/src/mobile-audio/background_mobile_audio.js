@@ -32,7 +32,7 @@ const globalJsCopy = {
     INFO: 3,
     DEBUG: 4,
   },
-  currentLogLevel: 4, // Default to WARN
+  currentLogLevel: 2, // Default to WARN
 
   /**
    * Sets the current log level.
