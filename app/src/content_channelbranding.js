@@ -802,7 +802,7 @@ async function restoreCollaboratorsDialog() {
         }
 
         const originalItem = originalItems?.find(
-          (it) => it.avatarImage === imgSrc,
+          (item) => item.avatarImage === imgSrc,
         );
 
         const channelNameEl = item.querySelector(

@@ -1617,12 +1617,14 @@ ytm-shorts-lockup-view-model`,
 
     const sections =
       json?.contents?.twoColumnSearchResultsRenderer?.primaryContents
-        ?.sectionListRenderer?.contents || [];
+        ?.sectionListRenderer?.contents ||
+      json?.contents?.sectionListRenderer?.contents ||
+      [];
 
     for (const section of sections) {
       const items = section?.itemSectionRenderer?.contents || [];
       for (const item of items) {
-        const video = item?.videoRenderer;
+        const video = item?.videoRenderer || item?.videoWithContextRenderer;
         if (!video) {
           continue;
         }
@@ -1630,14 +1632,18 @@ ytm-shorts-lockup-view-model`,
         const byline = video.shortBylineText || video.longBylineText;
         const runs = byline?.runs || [];
         for (const run of runs) {
-          const showDialog = run?.navigationEndpoint?.showDialogCommand;
+          const showDialog =
+            run?.navigationEndpoint?.showDialogCommand ||
+            run?.navigationEndpoint?.showSheetCommand;
           if (!showDialog) {
             continue;
           }
 
           const listItems =
             showDialog?.panelLoadingStrategy?.inlineContent?.dialogViewModel
-              ?.customContent?.listViewModel?.listItems;
+              ?.customContent?.listViewModel?.listItems ||
+            showDialog?.panelLoadingStrategy?.inlineContent?.sheetViewModel
+              ?.custom?.listViewModel?.listItems;
 
           if (Array.isArray(listItems)) {
             for (const listItem of listItems) {
@@ -1649,8 +1655,24 @@ ytm-shorts-lockup-view-model`,
               const url =
                 view.rendererContext?.commandContext?.onTap?.innertubeCommand
                   ?.commandMetadata?.webCommandMetadata?.url || null;
+              const navigationEndpointUrl =
+                video.navigationEndpoint?.commandMetadata?.webCommandMetadata
+                  ?.url;
+              const videoId =
+                video.navigationEndpoint?.watchEndpoint?.videoId ||
+                this.extractVideoIdFromUrl(
+                  navigationEndpointUrl.startsWith("http")
+                    ? navigationEndpointUrl
+                    : window.location.origin + navigationEndpointUrl,
+                );
 
-              results.push({ name, avatarImage, url });
+              results.push({
+                name,
+                avatarImage,
+                url,
+                navigationEndpointUrl,
+                videoId,
+              });
             }
           }
         }

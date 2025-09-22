@@ -46,9 +46,9 @@ async function untranslateCurrentShortVideo() {
 }
 
 // Changes short title on "/shorts/shortid" pages inside of the Description Panel
-async function untranslateCurrentShortVideoDescriptionPanel() {
+async function untranslateCurrentShortVideoDescriptionPanelHeader() {
   const fakeNodeID =
-    "yt-anti-translate-fake-node-current-short-video-description-panel";
+    "yt-anti-translate-fake-node-current-short-video-description-panel-heaeder";
   const originalNodeSelector = `#anchored-panel ytd-video-description-header-renderer > #title > yt-formatted-string:not(#${fakeNodeID})`;
   const originalNodePartialSelector = `span:not(#${fakeNodeID})`;
 
@@ -627,6 +627,12 @@ async function untranslateOtherVideos(intersectElements = null) {
           linkElement.href,
         );
 
+        const videoId = window.YoutubeAntiTranslate.extractVideoIdFromUrl(
+          videoHref.startsWith("http")
+            ? videoHref
+            : window.location.origin + videoHref,
+        );
+
         try {
           // console.debug(`Fetching oEmbed for video:`, videoHref);
           let response = await cachedRequest(
@@ -640,11 +646,7 @@ async function untranslateOtherVideos(intersectElements = null) {
           ) {
             if (response?.response?.status === 401) {
               // 401 likely means the video is restricted try again with youtubeI
-              const videoId = window.YoutubeAntiTranslate.extractVideoIdFromUrl(
-                videoHref.startsWith("http")
-                  ? videoHref
-                  : window.location.origin + videoHref,
-              );
+
               response =
                 await window.YoutubeAntiTranslate.getVideoTitleFromYoutubeI(
                   videoId,
@@ -688,12 +690,9 @@ async function untranslateOtherVideos(intersectElements = null) {
             // console.debug(`Video title unchanged or element missing:`, { href: videoHref, originalTitle, currentTitle });
           }
 
-          /* -------- Handle description snippet untranslation (search results, video lists) -------- */
-          if (
-            !video.getAttribute("data-ytat-untranslated-desc") ===
-            document.location.href
-          ) {
-            // Locate snippet containers
+          /* -------- Handle description snippet and collaborator untranslation (search results, video lists) -------- */
+          if (video.hasAttribute("data-ytat-untranslated-desc") !== videoId) {
+            // Locate description snippet containers
             const snippetElements = video.querySelectorAll(
               ".metadata-snippet-text, .metadata-snippet-text-navigation",
             );
@@ -719,17 +718,43 @@ async function untranslateOtherVideos(intersectElements = null) {
                       )
                     ) {
                       el.textContent = truncated;
+                      if (el.hasAttribute("is-empty")) {
+                        el.removeAttribute("is-empty");
+                      }
                     }
                   });
                 }
               }
             }
 
-            // Mark as processed to avoid repeated attempts
-            video.setAttribute(
-              "data-ytat-untranslated-desc",
-              document.location.href,
+            // Locate avatar stacks for collaborators videos
+            const avatarStacks = video.querySelectorAll(
+              "#avatar yt-avatar-stack-view-model yt-avatar-shape img",
             );
+
+            if (avatarStacks) {
+              for (const avatarImage of avatarStacks) {
+                const imgSrc = avatarImage.src;
+                if (!imgSrc || imgSrc.trim() === "") {
+                  continue;
+                }
+
+                const originalCollaborators =
+                  await window.YoutubeAntiTranslate.getOriginalCollaboratorsItemsWithYoutubeI(
+                    originalTitle,
+                  );
+
+                const originalItem = originalCollaborators?.find(
+                  (item) => item.avatarImage === avatarImage.src,
+                );
+                if (!originalItem) {
+                  continue;
+                }
+              }
+            }
+
+            // Mark as processed to avoid repeated attempts
+            video.setAttribute("data-ytat-untranslated-desc", videoId);
           }
         } catch (error) {
           window.YoutubeAntiTranslate.logInfo(
@@ -915,7 +940,7 @@ async function untranslate() {
   const currentShortEngagementPanelPromise =
     untranslateCurrentShortVideoEngagementPanel();
   const currentShortDescriptionPanelPromise =
-    untranslateCurrentShortVideoDescriptionPanel();
+    untranslateCurrentShortVideoDescriptionPanelHeader();
   const currentShortVideoLinksPromise = untranslateCurrentShortVideoLinks();
   const otherShortsPromise = untranslateOtherShortsVideos(); // Call the new function
   const currentMobileVideoDescriptionPromise =
