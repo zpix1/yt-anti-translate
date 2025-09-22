@@ -229,9 +229,11 @@ function getUntranslated360pFallback(playerResponse) {
         globalJsCopy.logDebug(
           "ytInitialPlayerResponse getter called - overriding to empty formats",
         );
-        originalPlayerResponse.streamingData.formats = null;
-        originalPlayerResponse.streamingData.serverAbrStreamingUrl = null;
-        originalPlayerResponse.streamingData.adaptiveFormats = null;
+        if (originalPlayerResponse.streamingData) {
+          originalPlayerResponse.streamingData.formats = null;
+          originalPlayerResponse.streamingData.serverAbrStreamingUrl = null;
+          originalPlayerResponse.streamingData.adaptiveFormats = null;
+        }
         return originalPlayerResponse;
       },
       set(value) {
