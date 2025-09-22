@@ -1497,14 +1497,21 @@ ytm-shorts-lockup-view-model`,
       JSON.stringify(body),
       headers,
       false,
-      "videoDetails.title",
+      "videoDetails",
     );
     const title =
-      response?.cachedWithDotNotation ||
+      response?.cachedWithDotNotation?.title ||
       response?.data?.videoDetails?.title ||
       null;
+    const author_name =
+      response?.cachedWithDotNotation?.author ||
+      response?.data?.videoDetails?.author ||
+      null;
     if (title) {
-      return { response: response.response, data: { title: title } };
+      return {
+        response: response.response,
+        data: { title: title, author_name: author_name },
+      };
     }
     return { response: response?.response, data: null };
   },

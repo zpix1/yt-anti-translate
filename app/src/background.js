@@ -729,8 +729,10 @@ async function untranslateOtherVideos(intersectElements = null) {
 
             // Locate avatar stacks for collaborators videos
             const avatarStacks = video.querySelectorAll(
-              "#avatar yt-avatar-stack-view-model yt-avatar-shape img",
+              "#channel-info #avatar yt-avatar-stack-view-model yt-avatar-shape img",
             );
+
+            const authors = [];
 
             if (avatarStacks) {
               for (const avatarImage of avatarStacks) {
@@ -749,6 +751,37 @@ async function untranslateOtherVideos(intersectElements = null) {
                 );
                 if (!originalItem) {
                   continue;
+                }
+
+                authors.push(originalItem.name);
+              }
+
+              if (authors.length > 0) {
+                const mainAuthor = response.data.author_name;
+                // Remove main author from collaborators list
+                const collaboratorAuthorsOnly = authors.filter(
+                  (name) => name !== mainAuthor,
+                );
+
+                if (
+                  collaboratorAuthorsOnly &&
+                  collaboratorAuthorsOnly.length === 1
+                ) {
+                  const authorsElement = video.querySelector(
+                    `#channel-info yt-formatted-string > a.yt-simple-endpoint`,
+                  );
+                  if (authorsElement) {
+                    const currentAuthorsText = authorsElement.textContent;
+                    const currentAuthorsTextWithoutMain = currentAuthorsText
+                      .replace(mainAuthor, "")
+                      .trim();
+                    // Slice in 2 parts with space get the "and" part
+                    const currentAuthorAnd = currentAuthorsTextWithoutMain
+                      .slice(0, currentAuthorsTextWithoutMain.indexOf(" "))
+                      .trim();
+
+                    authorsElement.textContent = `${mainAuthor} ${currentAuthorAnd} ${collaboratorAuthorsOnly[0]}`;
+                  }
                 }
               }
             }
