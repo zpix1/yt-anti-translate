@@ -791,7 +791,9 @@ async function restoreCollaboratorsDialog() {
           "search_query",
         );
         const originalItems =
-          await getOriginalCollaboratorsItemsWithYoutubeI(search_query);
+          await window.YoutubeAntiTranslate.getOriginalCollaboratorsItemsWithYoutubeI(
+            search_query,
+          );
 
         const nameEl = item.parentElement.querySelector("yt-avatar-shape img");
         const imgSrc = nameEl?.src || null;
@@ -852,104 +854,4 @@ async function restoreCollaboratorsDialog() {
   });
 
   await Promise.allSettled(tasks);
-}
-
-async function getOriginalCollaboratorsItemsWithYoutubeI(search_query) {
-  if (!search_query || search_query.trim() === "") {
-    return null;
-  }
-
-  // build the request body
-  const body = {
-    context: {
-      client: {
-        clientName: window.YoutubeAntiTranslate.isMobile() ? "MWEB" : "WEB",
-        clientVersion: "2.20250527.00.00",
-        hl: "lo", // Using "Lao" as default that is an unsupported (but valid) language of youtube
-        // That always get the original language as a result
-      },
-    },
-    query: search_query,
-  };
-
-  const requestIdentifier = `youtubei/v1/results_${JSON.stringify(body)}`;
-
-  // Check cache
-  const storedResponse =
-    window.YoutubeAntiTranslate.getSessionCache(requestIdentifier);
-  if (storedResponse) {
-    return storedResponse;
-  }
-
-  const search = `https://${window.YoutubeAntiTranslate.isMobile() ? "m" : "www"}.youtube.com/youtubei/v1/search?prettyPrint=false`;
-  const response = await window.YoutubeAntiTranslate.cachedRequest(
-    search,
-    JSON.stringify(body),
-    await window.YoutubeAntiTranslate.getYoutubeIHeadersWithCredentials(),
-    // doNotCache true as would take too much space
-    true,
-  );
-
-  if (!response?.data) {
-    window.YoutubeAntiTranslate.logWarning(
-      `Failed to fetch ${search} or parse response`,
-    );
-    return;
-  }
-
-  const result = extractCollaboratorsItemsFromSearch(response.data);
-
-  if (!result) {
-    return;
-  }
-
-  return result;
-}
-
-function extractCollaboratorsItemsFromSearch(json) {
-  const results = [];
-
-  const sections =
-    json?.contents?.twoColumnSearchResultsRenderer?.primaryContents
-      ?.sectionListRenderer?.contents || [];
-
-  for (const section of sections) {
-    const items = section?.itemSectionRenderer?.contents || [];
-    for (const item of items) {
-      const video = item?.videoRenderer;
-      if (!video) {
-        continue;
-      }
-
-      const byline = video.shortBylineText || video.longBylineText;
-      const runs = byline?.runs || [];
-      for (const run of runs) {
-        const showDialog = run?.navigationEndpoint?.showDialogCommand;
-        if (!showDialog) {
-          continue;
-        }
-
-        const listItems =
-          showDialog?.panelLoadingStrategy?.inlineContent?.dialogViewModel
-            ?.customContent?.listViewModel?.listItems;
-
-        if (Array.isArray(listItems)) {
-          for (const listItem of listItems) {
-            const view = listItem?.listItemViewModel || {};
-            const name = view.title?.content || null;
-            const avatarImage =
-              view.leadingAccessory?.avatarViewModel?.image?.sources?.[0]
-                ?.url || null;
-            const url =
-              view.rendererContext?.commandContext?.onTap?.innertubeCommand
-                ?.commandMetadata?.webCommandMetadata?.url || null;
-
-            results.push({ name, avatarImage, url });
-          }
-        }
-      }
-    }
-  }
-
-  return results;
 }
