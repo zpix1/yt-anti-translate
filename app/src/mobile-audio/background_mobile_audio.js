@@ -216,6 +216,12 @@ function getUntranslated360pFallback(playerResponse) {
         "Found existing ytInitialPlayerResponse, storing original",
       );
     }
+    if (
+      window.ytInitialPlayerResponse !== undefined &&
+      !window.ytInitialPlayerResponse
+    ) {
+      window.ytInitialPlayerResponse = undefined;
+    }
 
     // Set up property descriptor to intercept access
     Object.defineProperty(window, "ytInitialPlayerResponse", {
@@ -226,10 +232,10 @@ function getUntranslated360pFallback(playerResponse) {
           return originalPlayerResponse;
         }
 
-        globalJsCopy.logDebug(
-          "ytInitialPlayerResponse getter called - overriding to empty formats",
+        globalJsCopy.logWarning(
+          "ytInitialPlayerResponse getter called - overriding formats",
         );
-        if (originalPlayerResponse.streamingData) {
+        if (originalPlayerResponse && originalPlayerResponse?.streamingData) {
           originalPlayerResponse.streamingData.formats = null;
           originalPlayerResponse.streamingData.serverAbrStreamingUrl = null;
           originalPlayerResponse.streamingData.adaptiveFormats = null;
@@ -261,7 +267,7 @@ function getUntranslated360pFallback(playerResponse) {
         url.includes("yt-anti-translate=true")
       ) {
         try {
-          return origFetch(input, init);
+          return await origFetch(input, init);
         } catch {
           /* empty catch */
           // If we are executing YouTube requests as they are, we do not care if they fail
@@ -312,7 +318,7 @@ function getUntranslated360pFallback(playerResponse) {
         return modifiedResponse;
       } catch {
         try {
-          return origFetch(input, init);
+          return await origFetch(input, init);
         } catch {
           /* empty catch */
           // If we are executing YouTube requests as they are, we do not care if they fail
