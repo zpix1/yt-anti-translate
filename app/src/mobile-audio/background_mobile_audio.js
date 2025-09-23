@@ -88,7 +88,9 @@ const globalJsCopy = {
   },
 
   getSAPISID: function () {
-    const match = document.cookie.match(/SAPISID=([^\s;]+)/);
+    const matchSAPISID = document.cookie.match(/SAPISID=([^\s;]+)/);
+    const matchPAPISID = document.cookie.match(/PAPISID=([^\s;]+)/);
+    const match = matchSAPISID || matchPAPISID;
     return match ? match[1] : null;
   },
 
