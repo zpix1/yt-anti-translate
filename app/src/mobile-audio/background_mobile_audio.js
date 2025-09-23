@@ -259,7 +259,8 @@ function getUntranslated360pFallback(playerResponse) {
   }
 
   function createRewriter(origFetch) {
-    return async function (input, init = {}) {
+    return async function (...args) {
+      const [input, init] = args;
       const url = typeof input === "string" ? input : input.url;
 
       // Only process requests to the specific YouTube mobile player API
@@ -269,7 +270,7 @@ function getUntranslated360pFallback(playerResponse) {
         url.includes("yt-anti-translate=true")
       ) {
         try {
-          return await origFetch(input, init);
+          return origFetch(input, init);
         } catch {
           /* empty catch */
           // If we are executing YouTube requests as they are, we do not care if they fail
@@ -320,7 +321,7 @@ function getUntranslated360pFallback(playerResponse) {
         return modifiedResponse;
       } catch {
         try {
-          return await origFetch(input, init);
+          return origFetch(input, init);
         } catch {
           /* empty catch */
           // If we are executing YouTube requests as they are, we do not care if they fail
