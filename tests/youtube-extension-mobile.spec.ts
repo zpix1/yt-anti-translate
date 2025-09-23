@@ -43,6 +43,11 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
       browserNameWithExtensions,
     );
 
+    // Capture a screenshot for visual verification
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-extension-mobile-test-title.png`,
+    });
+
     // The mobile layout renders the video title inside a slim container.
     // Wait for the extension to inject its fake untranslated node.
     const fakeNodeSelector = "#yt-anti-translate-fake-node-current-video";
@@ -114,6 +119,11 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
     const channelUrl = "https://m.youtube.com/@MrBeast/videos";
     await loadPageAndVerifyAuth(page, channelUrl, browserNameWithExtensions);
 
+    // Take a screenshot for visual verification
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-channel-branding-header-mobile-test.png`,
+    });
+
     // Wait for branding description text to appear (English original)
     const expectedBrandingText = "SUBSCRIBE FOR A COOKIE";
     await page.waitForSelector(`text=${expectedBrandingText}`, {
@@ -122,7 +132,7 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
 
     // Take a screenshot for visual verification
     await page.screenshot({
-      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-channel-branding-header-test.png`,
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-channel-branding-header-mobile-test.png`,
     });
 
     // Ensure console output is not excessive
@@ -153,6 +163,12 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
       "https://www.youtube.com/@NileRed/playlists",
       browserNameWithExtensions,
     );
+
+    // Take a screenshot for visual verification
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-playlists-mobile-test.png`,
+    });
+
     // Locate the elements with the text "Popular Shorts"
     const popularShortsLocator = page.locator(
       'ytm-compact-playlist-renderer span:has-text("Popular Shorts")',
@@ -164,7 +180,7 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
 
     // Take a screenshot for visual verification
     await page.screenshot({
-      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-playlists-test.png`,
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-playlists-mobile-test.png`,
     });
 
     // Check console message count
@@ -202,6 +218,11 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
       browserNameWithExtensions,
     );
 
+    // Take a screenshot for visual verification
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-owned-playlists-mobile-test.png`,
+    });
+
     // Wait for the video grid to appear
     await page.waitForSelector("ytm-rich-item-renderer");
 
@@ -226,7 +247,7 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
 
     // Take a screenshot for visual verification
     await page.screenshot({
-      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-owned-playlists-test.png`,
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-owned-playlists-mobile-test.png`,
     });
 
     // Check console message count
@@ -258,6 +279,11 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
       browserNameWithExtensions,
     );
 
+    // Take a screenshot for visual verification
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-search-result-playlist-mobile-test.png`,
+    });
+
     // Wait for the video grid to appear
     await page.waitForSelector("ytm-compact-playlist-renderer");
 
@@ -282,7 +308,7 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
 
     // Take a screenshot for visual verification
     await page.screenshot({
-      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-search-result-playlist-test.png`,
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-search-result-playlist-mobile-test.png`,
     });
 
     // Check console message count

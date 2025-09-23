@@ -37,6 +37,11 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
     const searchUrl = "https://m.youtube.com/results?search_query=mr+beast";
     await loadPageAndVerifyAuth(page, searchUrl, browserNameWithExtensions);
 
+    // Screenshot for visual verification
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-channel-search-result-mobile-test.png`,
+    });
+
     // Wait until at least one channel renderer for MrBeast appears
     const channelRenderer = page
       .locator('ytm-compact-channel-renderer:has-text("@MrBeast")')
@@ -60,7 +65,7 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
 
     // Screenshot for visual verification
     await page.screenshot({
-      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-channel-search-result/mobile-test.png`,
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-channel-search-result-mobile-test.png`,
     });
 
     // Ensure console output not flooded
@@ -90,6 +95,11 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
       "https://m.youtube.com/results?search_query=Can+you+safely+drink+your+own+pee";
     await loadPageAndVerifyAuth(page, searchUrl, browserNameWithExtensions);
 
+    // Screenshot for visual verification
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-collaborator-video-search-result-mobile-test.png`,
+    });
+
     // Wait until at least one video renderer for Mark Rober appears
     const videoRenderer = page
       .locator('ytm-video-with-context-renderer:has-text("Mark Rober")')
@@ -113,7 +123,7 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
 
     // Screenshot for visual verification
     await page.screenshot({
-      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-collaborator-video-search-result-test.png`,
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-collaborator-video-search-result-mobile-test.png`,
     });
 
     // Ensure console output not flooded

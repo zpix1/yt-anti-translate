@@ -185,6 +185,11 @@ test.describe("YouTube Anti-Translate extension", () => {
       await page.waitForTimeout(1000);
     }
 
+    // Take a screenshot for visual verification
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-extension-test-description-fallback.png`,
+    });
+
     // Get the description text
     const descriptionText = await page
       .locator("#description-inline-expander:visible")
@@ -323,6 +328,11 @@ test.describe("YouTube Anti-Translate extension", () => {
     await moreButton.first().click();
     await page.waitForTimeout(1000);
 
+    // Take a screenshot
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-hashtag-test.png`,
+    });
+
     // Verify hashtag link is exist
     const hashtagLinks = page.locator(
       "#description-inline-expander:visible a[href^='/hashtag/']",
@@ -377,6 +387,11 @@ test.describe("YouTube Anti-Translate extension", () => {
     await moreButton.first().click();
     await page.waitForTimeout(1000);
 
+    // Take a screenshot
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-mention-test.png`,
+    });
+
     // Verify mention link is exist
     const mentionLinks = page.locator(
       "#description-inline-expander:visible a[href^='/@']",
@@ -422,6 +437,11 @@ test.describe("YouTube Anti-Translate extension", () => {
       "https://www.youtube.com/shorts/PXevNM0awlI",
       browserNameWithExtensions,
     );
+
+    // Take a screenshot for visual verification
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-shorts-test.png`,
+    });
 
     // Wait for the shorts title element to be present
     const shortsTitleSelector =
@@ -492,6 +512,11 @@ test.describe("YouTube Anti-Translate extension", () => {
       "https://www.youtube.com/@MrBeast/videos",
       browserNameWithExtensions,
     );
+
+    // Take a screenshot for visual verification
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-channel-tabs-test.png`,
+    });
 
     // Wait for the video grid to appear
     await page.waitForSelector("ytd-rich-grid-media");
@@ -848,6 +873,12 @@ test.describe("YouTube Anti-Translate extension", () => {
       "https://www.youtube.com/@NileRed/playlists",
       browserNameWithExtensions,
     );
+
+    // Take a screenshot for visual verification
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-playlists-test.png`,
+    });
+
     // Locate the elements with the text "Popular Shorts"
     const popularShortsLocator = page.locator(
       '.yt-lockup-metadata-view-model__heading-reset span:has-text("Popular Shorts")',
@@ -896,6 +927,11 @@ test.describe("YouTube Anti-Translate extension", () => {
       "https://www.youtube.com/feed/playlists",
       browserNameWithExtensions,
     );
+
+    // Take a screenshot for visual verification
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-owned-playlists-test.png`,
+    });
 
     // Wait for the video grid to appear
     await page.waitForSelector("ytd-rich-item-renderer");
@@ -952,6 +988,11 @@ test.describe("YouTube Anti-Translate extension", () => {
       "https://www.youtube.com/results?search_query=nilered+popular+shorts",
       browserNameWithExtensions,
     );
+
+    // Take a screenshot for visual verification
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-search-result-playlist-test.png`,
+    });
 
     // Wait for the video grid to appear
     await page.waitForSelector("yt-lockup-view-model");
@@ -1010,6 +1051,11 @@ test.describe("YouTube Anti-Translate extension", () => {
       browserNameWithExtensions,
     );
 
+    // Screenshot for manual visual verification when needed
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-chapters-test.png`,
+    });
+
     // Wait until the chapter button next to the progress bar is rendered
     await page.waitForSelector(
       ".ytp-chapter-title .ytp-chapter-title-content",
@@ -1040,6 +1086,7 @@ test.describe("YouTube Anti-Translate extension", () => {
       expectedChapterTitle,
       { timeout: 10000 },
     );
+
     // Screenshot for manual visual verification when needed
     await page.screenshot({
       path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-chapters-test.png`,
@@ -1110,7 +1157,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     }
 
     // Check that audio track is set to original
-    const currentTrack = await page.evaluate(async () => {
+    let currentTrack = await page.evaluate(async () => {
       const video = document.querySelector(
         "#movie_player",
       ) as HTMLVideoElement & {
@@ -1121,19 +1168,47 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     expect(currentTrack).toBeTruthy();
 
-    // Check original track is the selected one
-    const trackLanguageField = getTrackLanguageFieldObjectName(currentTrack);
+    // Get track the selected name
+    let trackLanguageField = getTrackLanguageFieldObjectName(currentTrack);
     if (trackLanguageField) {
-      expect(currentTrack[trackLanguageField]?.name).toContain("оригинал");
-    }
+      // If value is "Default" then it is an advert
+      // Wait for 5 seconds and get a new track
+      await page.waitForTimeout(5000);
 
-    await page.screenshot({
-      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-embedded-test.png`,
-    });
+      if (currentTrack[trackLanguageField]?.name === "Default") {
+        // Check that audio track is set to original
+        currentTrack = await page.evaluate(async () => {
+          const video = document.querySelector(
+            "#movie_player",
+          ) as HTMLVideoElement & {
+            getAudioTrack?: () => Promise<any>;
+          };
+          return await video?.getAudioTrack?.();
+        });
+
+        expect(currentTrack).toBeTruthy();
+
+        // Get track the selected name again
+        trackLanguageField = getTrackLanguageFieldObjectName(currentTrack);
+      }
+
+      if (trackLanguageField) {
+        // If value is still "Default" then it is an advert again so skip the check this time
+        if (currentTrack[trackLanguageField]?.name === "Default") {
+          console.log("Skipping advert track check.");
+        } else {
+          expect(currentTrack[trackLanguageField]?.name).toContain("оригинал");
+        }
+      }
+    }
 
     await expect(
       page.locator(".ytp-title-link.yt-uix-sessionlink"),
     ).toContainText("NAJTAŃSZY DYSK PCIe 5.0 – MA TO SENS W 2025?");
+
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-embedded-test.png`,
+    });
 
     // Check console message count
     expect(consoleMessageCountContainer.count).toBeLessThan(2000);
@@ -1176,6 +1251,10 @@ test.describe("YouTube Anti-Translate extension", () => {
       testInfo.skip();
     }
 
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-nocookie-test.png`,
+    });
+
     await page.click("#movie_player > div.ytp-cued-thumbnail-overlay > button");
 
     await expect(
@@ -1200,7 +1279,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     }
 
     // Check that audio track is set to original
-    const currentTrack = await page.evaluate(async () => {
+    let currentTrack = await page.evaluate(async () => {
       const video = document.querySelector(
         "#movie_player",
       ) as HTMLVideoElement & {
@@ -1211,19 +1290,47 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     expect(currentTrack).toBeTruthy();
 
-    // Check original track is the selected one
-    const trackLanguageField = getTrackLanguageFieldObjectName(currentTrack);
+    // Get track the selected name
+    let trackLanguageField = getTrackLanguageFieldObjectName(currentTrack);
     if (trackLanguageField) {
-      expect(currentTrack[trackLanguageField]?.name).toContain("оригинал");
-    }
+      // If value is "Default" then it is an advert
+      // Wait for 5 seconds and get a new track
+      await page.waitForTimeout(5000);
 
-    await page.screenshot({
-      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-nocookie-test.png`,
-    });
+      if (currentTrack[trackLanguageField]?.name === "Default") {
+        // Check that audio track is set to original
+        currentTrack = await page.evaluate(async () => {
+          const video = document.querySelector(
+            "#movie_player",
+          ) as HTMLVideoElement & {
+            getAudioTrack?: () => Promise<any>;
+          };
+          return await video?.getAudioTrack?.();
+        });
+
+        expect(currentTrack).toBeTruthy();
+
+        // Get track the selected name again
+        trackLanguageField = getTrackLanguageFieldObjectName(currentTrack);
+      }
+
+      if (trackLanguageField) {
+        // If value is still "Default" then it is an advert again so skip the check this time
+        if (currentTrack[trackLanguageField]?.name === "Default") {
+          console.log("Skipping advert track check.");
+        } else {
+          expect(currentTrack[trackLanguageField]?.name).toContain("оригинал");
+        }
+      }
+    }
 
     await expect(
       page.locator(".ytp-title-link.yt-uix-sessionlink"),
     ).toContainText("NAJTAŃSZY DYSK PCIe 5.0 – MA TO SENS W 2025?");
+
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-nocookie-test.png`,
+    });
 
     // Check console message count
     expect(consoleMessageCountContainer.count).toBeLessThan(2000);

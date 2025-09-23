@@ -145,6 +145,11 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
 
     await loadPageAndVerifyAuth(page, "https://www.youtube.com/@MrBeast");
 
+    // Take a screenshot for visual verification
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-channel-branding-about${addToScreenshotName}-test.png`,
+    });
+
     // Wait for the video grid to appear
     const channelHeaderSelector = "#page-header-container #page-header";
     await page.waitForSelector(channelHeaderSelector);
@@ -197,6 +202,11 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
       // empty
     }
     await page.waitForTimeout(500);
+
+    // Take a screenshot for visual verification
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-channel-branding-about${addToScreenshotName}-test.png`,
+    });
 
     // --- Check About Popup ---
     const aboutContainer = "ytd-engagement-panel-section-list-renderer";
@@ -335,6 +345,11 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
       "https://www.youtube.com/watch?v=l-nMKJ5J3Uc",
     );
 
+    // Take a screenshot for visual verification
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-video-author-test.png`,
+    });
+
     // Wait for the video player to appear
     const videoPlayerSelector = "#movie_player";
     await page.waitForSelector(videoPlayerSelector);
@@ -383,6 +398,11 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
 
     const searchUrl = "https://www.youtube.com/results?search_query=mr+beast";
     await loadPageAndVerifyAuth(page, searchUrl, browserNameWithExtensions);
+
+    // Screenshot for visual verification
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-channel-search-result-test-description.png`,
+    });
 
     // Wait until at least one channel renderer for MrBeast appears
     const channelRenderer = page
@@ -446,6 +466,11 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
       "https://www.youtube.com/results?search_query=Can+you+safely+drink+your+own+pee";
     await loadPageAndVerifyAuth(page, searchUrl, browserNameWithExtensions);
 
+    // Screenshot for visual verification
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-collaborator-video-search-result-test.png`,
+    });
+
     // Wait until at least one video renderer for Mark Rober appears
     const videoRenderer = page
       .locator('ytd-video-renderer:has-text("Mark Rober")')
@@ -493,6 +518,11 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
 
     const channelUrl = "https://www.youtube.com/@CARTONIMORTI";
     await loadPageAndVerifyAuth(page, channelUrl, browserNameWithExtensions);
+
+    // Take a screenshot for visual verification
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-cartonimorti-channel-test.png`,
+    });
 
     // Wait for the channel header to appear
     const channelHeaderSelector = "#page-header-container #page-header";
