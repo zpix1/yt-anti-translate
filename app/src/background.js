@@ -950,14 +950,34 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
         }
 
         // Find link element to get URL
-        const linkElement =
+        let linkElement =
           shortElement.querySelector("a.shortsLockupViewModelHostEndpoint") ||
           shortElement.querySelector(`a[href*="/shorts/"]`) ||
           shortElement.querySelector(`a[href*="/watch?v="]`); // This is for compatibility with [No YouTube Shorts](https://addons.mozilla.org/en-US/firefox/addon/no-youtube-shorts/)
         if (!linkElement || !linkElement.href) {
-          // Mark to avoid re-checking non-standard items, might not have a standard link
-          shortElement.setAttribute("data-ytat-untranslated-other", "checked");
-          return;
+          if (!linkElement) {
+            // extract video id from thumbnail as last resort
+            const thumbnail = shortElement.querySelector(
+              'img[src*="i.ytimg.com"]',
+            );
+            if (thumbnail) {
+              const videoId = window.YoutubeAntiTranslate.extractVideoIdFromUrl(
+                thumbnail.src,
+              );
+              if (videoId) {
+                linkElement = document.createElement("a");
+                linkElement.href = `/shorts/${videoId}`;
+              }
+            }
+          }
+          if (!linkElement || !linkElement.href) {
+            // Mark to avoid re-checking non-standard items, might not have a standard link
+            shortElement.setAttribute(
+              "data-ytat-untranslated-other",
+              "checked",
+            );
+            return;
+          }
         }
 
         const videoHref = linkElement.href;
@@ -1109,6 +1129,135 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
   );
 }
 
+async function untranslateCurrentPlayerBackgroundThumbnail() {
+  const player = window.YoutubeAntiTranslate.getFirstVisible(
+    document.querySelectorAll(window.YoutubeAntiTranslate.getPlayerSelector()),
+  );
+  if (!player) {
+    return;
+  }
+  // <div class="ytp-cued-thumbnail-overlay-image" style="background-image: url(&quot;https://i.ytimg.com/vi/iLU0CE2c2HQ/maxresdefault.jpg&quot;);"></div>
+  const thumbnailBackground = document.querySelector(
+    ".ytp-cued-thumbnail-overlay-image[style*='i.ytimg.com'][style*='background-image'][style*='maxresdefault']",
+  );
+  if (thumbnailBackground) {
+    const currentVideo = document.location.href;
+    const videoId =
+      window.YoutubeAntiTranslate.extractVideoIdFromUrl(currentVideo);
+    if (!videoId) {
+      return;
+    }
+
+    const oembedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}`;
+
+    try {
+      let response = await cachedRequest(oembedUrl);
+      if (
+        !response ||
+        !response.response ||
+        !response.response.ok ||
+        !response.data?.thumbnail_url
+      ) {
+        if (response?.response?.status === 401) {
+          // 401 likely means the video is restricted try again with youtubeI
+          response =
+            await window.YoutubeAntiTranslate.getVideoTitleFromYoutubeI(
+              videoId,
+            );
+          if (!response?.response?.ok || !response.data?.title) {
+            window.YoutubeAntiTranslate.logWarning(
+              `YoutubeI title request failed for video ${videoId}`,
+            );
+            return;
+          }
+        }
+      }
+
+      let originalThumbnail =
+        response.data.maxresdefault_url || response.data.thumbnail_url;
+      if (originalThumbnail) {
+        if (!originalThumbnail.includes("maxresdefault")) {
+          originalThumbnail = originalThumbnail.replace(
+            /\/(default|mqdefault|hqdefault|sddefault)\..+$/,
+            "/maxresdefault.jpg",
+          );
+        }
+        const currentStyle = thumbnailBackground.style.backgroundImage;
+        if (!currentStyle || !currentStyle.includes(originalThumbnail)) {
+          const { width, height } =
+            await window.YoutubeAntiTranslate.getImageSize(originalThumbnail);
+          thumbnailBackground.style.backgroundImage = `url("${originalThumbnail}?youtube-anti-translate=${Date.now()}")`;
+          // Add crop ratio to image
+          if (width && height) {
+            const cropRatio = width / height;
+            if (cropRatio) {
+              thumbnailBackground.style.aspectRatio = cropRatio;
+              thumbnailBackground.style.objectFit = "cover";
+            }
+          }
+        }
+      }
+    } catch (error) {
+      window.YoutubeAntiTranslate.logInfo(
+        `Error fetching oEmbed for current player thumbnail:`,
+        videoId,
+        error,
+      );
+      return;
+    }
+  }
+}
+
+async function untranslateCurrentPlaylistHeaderThumbnail() {
+  if (document.location.pathname !== "/playlist") {
+    return;
+  }
+
+  const playlistHeadersImages = window.YoutubeAntiTranslate.getAllVisibleNodes(
+    document.querySelectorAll(
+      "yt-page-header-renderer img[src*='i.ytimg.com']",
+    ),
+  );
+
+  if (!playlistHeadersImages || playlistHeadersImages.length === 0) {
+    return;
+  }
+
+  for (const playlistHeadersImage of playlistHeadersImages) {
+    let imageSrc = playlistHeadersImage.src;
+    if (!imageSrc || imageSrc.trim() === "") {
+      continue;
+    }
+
+    if (imageSrc.includes("/vi_lc/")) {
+      const { width, height } =
+        await window.YoutubeAntiTranslate.getImageSize(imageSrc);
+
+      // Remove any query parameters to get the base URL
+      imageSrc = imageSrc.split("?")[0];
+      playlistHeadersImage.src = imageSrc;
+
+      // Replace /vi_lc/ with /vi/ to get the original thumbnail
+      imageSrc = imageSrc.replace(/\/vi_lc\//g, "/vi/");
+
+      // Remove any language code (_[a-z]{2,3}) from the filename.jpg
+      imageSrc = imageSrc.replace(/_[a-z]{2,3}(\.jpg|\.webp|\.png)$/, "$1");
+      playlistHeadersImage.src = imageSrc;
+
+      playlistHeadersImage.src = `${imageSrc}?youtube-anti-translate=${Date.now()}`;
+
+      // Add crop ratio to image
+      if (width && height) {
+        const cropRatio = width / height;
+        if (cropRatio) {
+          playlistHeadersImage.style.aspectRatio = cropRatio;
+          playlistHeadersImage.style.objectFit = "cover";
+        }
+      }
+    }
+  }
+}
+
 async function untranslate() {
   const settings = window.YoutubeAntiTranslate.getSettings();
 
@@ -1127,7 +1276,8 @@ async function untranslate() {
   const otherVideosPromise =
     settings.untranslateTitle ||
     settings.untranslateDescription ||
-    settings.untranslateChannelBranding
+    settings.untranslateChannelBranding ||
+    settings.untranslateThumbnail
       ? untranslateOtherVideos()
       : Promise.resolve();
   const currentShortPromise = settings.untranslateTitle
@@ -1142,9 +1292,10 @@ async function untranslate() {
   const currentShortVideoLinksPromise = settings.untranslateTitle
     ? untranslateCurrentShortVideoLinks()
     : Promise.resolve();
-  const otherShortsPromise = settings.untranslateTitle
-    ? untranslateOtherShortsVideos()
-    : Promise.resolve();
+  const otherShortsPromise =
+    settings.untranslateTitle || settings.untranslateThumbnail
+      ? untranslateOtherShortsVideos()
+      : Promise.resolve();
   const currentMobileVideoDescriptionPromise = settings.untranslateTitle
     ? untranslateCurrentMobileVideoDescriptionHeader()
     : Promise.resolve();
@@ -1155,6 +1306,12 @@ async function untranslate() {
     settings.untranslateTitle || settings.untranslateChannelBranding
       ? untranslateCurrentEmbeddedVideoMobileFullScreen()
       : Promise.resolve();
+  const currentPlayerThumbnailPromise = settings.untranslateThumbnail
+    ? untranslateCurrentPlayerBackgroundThumbnail()
+    : Promise.resolve();
+  const currentPlaylistThumbnailPromise = settings.untranslateThumbnail
+    ? untranslateCurrentPlaylistHeaderThumbnail()
+    : Promise.resolve();
 
   // Wait for all promises to resolve concurrently
   await Promise.all([
@@ -1171,6 +1328,8 @@ async function untranslate() {
     currentMobileVideoDescriptionPromise,
     currentMobileFeaturedVideoChannel,
     currentEmbeddedVideoMobileFullScreenPromise,
+    currentPlayerThumbnailPromise,
+    currentPlaylistThumbnailPromise,
   ]);
 
   // update intersect observers

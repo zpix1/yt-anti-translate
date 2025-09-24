@@ -1475,6 +1475,9 @@ ytm-shorts-lockup-view-model`,
       if (u.pathname.startsWith("/shorts/")) {
         return u.pathname.split("/")[2] || null;
       }
+      if (u.pathname.startsWith("/embed/")) {
+        return u.pathname.split("/")[2] || null;
+      }
       if (u.hostname.includes("i.ytimg.com")) {
         // https://i.ytimg.com/vi_lc/**yhB3BgJyGl8**/mqdefault_th.jpg?sqp=COiW0cYG&rs=AOn4CLCEvTmuT5DfKOB-bYHzp00LiI4wlw
         const parts = u.pathname.split("/");
@@ -1516,9 +1519,16 @@ ytm-shorts-lockup-view-model`,
       response?.cachedWithDotNotation?.author ||
       response?.data?.videoDetails?.author ||
       null;
-    let thumbnail_url =
-      response?.cachedWithDotNotation?.thumbnail?.thumbnails?.[0]?.url ||
-      response?.data?.videoDetails?.thumbnail?.thumbnails?.[0]?.url ||
+
+    const /**@type {Array<{url: string}>}*/ thumbnails =
+        response?.cachedWithDotNotation?.thumbnail?.thumbnails ||
+        response?.data?.videoDetails?.thumbnail?.thumbnails ||
+        null;
+    // try to get the thumbnail with width 320 first, if not found get the first one
+    let thumbnail_url = thumbnails?.[0]?.url || null;
+
+    const maxresdefault_url =
+      thumbnails?.find((thumb) => thumb.url.includes("maxresdefault"))?.url ||
       null;
 
     // if thumbnail_url is not null strip it of any query parameters
@@ -1535,6 +1545,7 @@ ytm-shorts-lockup-view-model`,
           title: title,
           author_name: author_name,
           thumbnail_url: thumbnail_url,
+          maxresdefault_url: maxresdefault_url,
         },
       };
     }
