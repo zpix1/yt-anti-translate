@@ -164,20 +164,48 @@ export async function newPageWithStorageStateIfItExists(
  * @param {Page} page
  * @returns {Locator|null}
  */
-export async function findLoginButton(page: Page) {
-  console.log(`[AuthStorage] Searching for login button`);
-  const possibleLabels = ["Sign in", "Войти", "ลงชื่อเข้าใช้"];
-  for (const label of possibleLabels) {
-    console.log(
-      `[AuthStorage] Checking for login button with label: "${label}"`,
-    );
-    const button = page.locator(`#masthead a:has-text("${label}")`).first();
-    if (await button.isVisible()) {
-      console.log(`[AuthStorage] Found login button with label: "${label}"`);
-      return button;
+export async function findLoginButton(page: Page, isMobile: boolean = false) {
+  if (isMobile) {
+    if (page.url().includes("/watch?v=") || page.url().includes("/shorts/")) {
+      console.log(
+        `[AuthStorage] Searching for "Subscribe" button on mobile shorts`,
+      );
+      const possibleLabels = ["Subscribe", "Подписаться", "ติดตาม"];
+      for (const label of possibleLabels) {
+        const button = page
+          .locator(`yt-animated-action:has-text("${label}"):visible`)
+          .first();
+        if (await button.isVisible()) {
+          console.log(
+            `[AuthStorage] [WARNING] your test account must be subscribed to a channel for this test to work correctly.`,
+          );
+          return button;
+        }
+      }
+    } else {
+      console.log(`[AuthStorage] Searching for login button on mobile`);
+      const locator = page
+        .locator("ytm-pivot-bar-item-renderer > .pivot-you svg:visible")
+        .first();
+      if (await locator.isVisible()) {
+        return locator;
+      }
     }
+  } else {
+    console.log(`[AuthStorage] Searching for login button`);
+    const possibleLabels = ["Sign in", "Войти", "ลงชื่อเข้าใช้"];
+    for (const label of possibleLabels) {
+      console.log(
+        `[AuthStorage] Checking for login button with label: "${label}"`,
+      );
+      const button = page.locator(`#masthead a:has-text("${label}")`).first();
+      if (await button.isVisible()) {
+        console.log(`[AuthStorage] Found login button with label: "${label}"`);
+        return button;
+      }
+    }
+    console.log(`[AuthStorage] No login button found`);
   }
-  console.log(`[AuthStorage] No login button found`);
   return null;
 }
 

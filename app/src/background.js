@@ -605,7 +605,10 @@ async function untranslateOtherVideos(intersectElements = null) {
           ) ||
           video.querySelector("span.ytp-videowall-still-info-title") ||
           video.querySelector("div.ytp-ce-video-title") ||
-          video.querySelector("div.ytp-suggestion-title");
+          video.querySelector("div.ytp-suggestion-title") ||
+          (video.matches("ytm-playlist-card-renderer")
+            ? video
+            : null); /*this last one is a playlist element but is used for thumbnail*/
 
         if (!linkElement || !titleElement) {
           // Try another common pattern before giving up
@@ -613,6 +616,20 @@ async function untranslateOtherVideos(intersectElements = null) {
             linkElement =
               video.querySelector("ytd-thumbnail a") ||
               video.querySelector(`a[href*="/watch?v="]`);
+            if (!linkElement) {
+              // extract video id from thumbnail as last resort
+              const thumbnail = video.querySelector('img[src*="i.ytimg.com"]');
+              if (thumbnail) {
+                const videoId =
+                  window.YoutubeAntiTranslate.extractVideoIdFromUrl(
+                    thumbnail.src,
+                  );
+                if (videoId) {
+                  linkElement = document.createElement("a");
+                  linkElement.href = `/watch?v=${videoId}`;
+                }
+              }
+            }
           }
           if (!titleElement) {
             titleElement =
@@ -713,18 +730,34 @@ async function untranslateOtherVideos(intersectElements = null) {
           const originalThumbnail = response.data.thumbnail_url;
           if (settings.untranslateThumbnail && originalThumbnail) {
             const thumbnailElements = video.querySelectorAll(
-              'img[src*="i.ytimg.com"]',
+              'img[src*="i.ytimg.com"]:not(.ytd-moving-thumbnail-renderer):not([src*="ytimg.com/an_webp/"])',
             );
 
             if (thumbnailElements && thumbnailElements.length > 0) {
               for (const thumbnailElement of thumbnailElements) {
+                if (thumbnailElement.closest("#mouseover-overlay")) {
+                  continue;
+                }
+
                 if (!thumbnailElement || !thumbnailElement.src) {
                   continue;
                 }
 
                 // Only update if the thumbnail is different
-                if (thumbnailElement.src !== originalThumbnail) {
+                if (!thumbnailElement.src.includes(originalThumbnail)) {
+                  const { width, height } =
+                    await window.YoutubeAntiTranslate.getImageSize(
+                      thumbnailElement.src,
+                    );
                   thumbnailElement.src = originalThumbnail;
+                  // Add crop ratio to image
+                  if (width && height) {
+                    const cropRatio = width / height;
+                    if (cropRatio) {
+                      thumbnailElement.style.aspectRatio = cropRatio;
+                      thumbnailElement.style.objectFit = "cover";
+                    }
+                  }
                 }
               }
             }
@@ -1027,8 +1060,20 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
                   }
 
                   // Only update if the thumbnail is different
-                  if (thumbnailElement.src !== originalThumbnail) {
+                  if (!thumbnailElement.src.includes(originalThumbnail)) {
+                    const { width, height } =
+                      await window.YoutubeAntiTranslate.getImageSize(
+                        thumbnailElement.src,
+                      );
                     thumbnailElement.src = originalThumbnail;
+                    // Add crop ratio to image
+                    if (width && height) {
+                      const cropRatio = width / height;
+                      if (cropRatio) {
+                        thumbnailElement.style.aspectRatio = cropRatio;
+                        thumbnailElement.style.objectFit = "cover";
+                      }
+                    }
                   }
                 }
               }

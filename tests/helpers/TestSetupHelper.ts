@@ -115,6 +115,7 @@ export async function loadPageAndVerifyAuth(
   page: Page,
   url: string,
   browserNameWithExtensions?: string,
+  isMobile: boolean = false,
 ) {
   // Navigate to the specified YouTube page
   await page.goto(url);
@@ -129,7 +130,7 @@ export async function loadPageAndVerifyAuth(
   await page.waitForTimeout(5000);
 
   // If for whatever reason we are not logged in, then fail the test
-  expect(await findLoginButton(page)).toBe(null);
+  expect(await findLoginButton(page, isMobile)).toBe(null);
 
   // When chromium we need to wait some extra time to allow adds to be removed by uBlock Origin Lite
   // Ads are allowed to load and removed after so it takes time

@@ -35,7 +35,12 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
     );
 
     const searchUrl = "https://m.youtube.com/results?search_query=mr+beast";
-    await loadPageAndVerifyAuth(page, searchUrl, browserNameWithExtensions);
+    await loadPageAndVerifyAuth(
+      page,
+      searchUrl,
+      browserNameWithExtensions,
+      true,
+    );
 
     // Screenshot for visual verification
     await page.screenshot({
@@ -93,7 +98,12 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
 
     const searchUrl =
       "https://m.youtube.com/results?search_query=Can+you+safely+drink+your+own+pee";
-    await loadPageAndVerifyAuth(page, searchUrl, browserNameWithExtensions);
+    await loadPageAndVerifyAuth(
+      page,
+      searchUrl,
+      browserNameWithExtensions,
+      true,
+    );
 
     // Screenshot for visual verification
     await page.screenshot({

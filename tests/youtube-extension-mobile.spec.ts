@@ -41,6 +41,7 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
       page,
       mobileVideoUrl,
       browserNameWithExtensions,
+      true,
     );
 
     // Capture a screenshot for visual verification
@@ -162,6 +163,7 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
       page,
       "https://www.youtube.com/@NileRed/playlists",
       browserNameWithExtensions,
+      true,
     );
 
     // Take a screenshot for visual verification
@@ -216,6 +218,7 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
       page,
       "https://www.youtube.com/feed/playlists",
       browserNameWithExtensions,
+      true,
     );
 
     // Take a screenshot for visual verification
@@ -275,8 +278,9 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
 
     await loadPageAndVerifyAuth(
       page,
-      "https://m.youtube.com/results?search_query=nilered+popular+shrots",
+      "https://m.youtube.com/results?search_query=nilered+popular+shorts",
       browserNameWithExtensions,
+      true,
     );
 
     // Take a screenshot for visual verification

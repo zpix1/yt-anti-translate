@@ -150,6 +150,7 @@ ytd-compact-video-renderer,
 ytd-grid-video-renderer,
 ytd-playlist-video-renderer,
 ytd-playlist-panel-video-renderer,
+ytm-playlist-panel-video-renderer,
 yt-lockup-view-model,
 ytm-compact-video-renderer,
 ytm-rich-item-renderer,
@@ -160,7 +161,8 @@ ytm-playlist-video-renderer,
 a.ytp-videowall-still,
 a.ytp-ce-covering-overlay,
 a.ytp-suggestion-link,
-div.fullscreen-recommendation`,
+div.fullscreen-recommendation,
+ytm-playlist-card-renderer` /*this last one is a playlist element but is used for thumbnail*/,
   ALL_ARRAYS_SHORTS_SELECTOR: `div.style-scope.ytd-rich-item-renderer,
 ytm-shorts-lockup-view-model`,
 
@@ -1473,6 +1475,13 @@ ytm-shorts-lockup-view-model`,
       if (u.pathname.startsWith("/shorts/")) {
         return u.pathname.split("/")[2] || null;
       }
+      if (u.hostname.includes("i.ytimg.com")) {
+        // https://i.ytimg.com/vi_lc/**yhB3BgJyGl8**/mqdefault_th.jpg?sqp=COiW0cYG&rs=AOn4CLCEvTmuT5DfKOB-bYHzp00LiI4wlw
+        const parts = u.pathname.split("/");
+        if (parts.length >= 3 && (parts[1] === "vi_lc" || parts[1] === "vi")) {
+          return parts[2];
+        }
+      }
       return null;
     } catch {
       return null;
@@ -1792,5 +1801,18 @@ ytm-shorts-lockup-view-model`,
       "ko-KR": "그리고",
     };
     return andTranslations[languageCode] || "and";
+  },
+
+  getImageSize: async function (src) {
+    const img = new Image();
+    img.src = src;
+
+    // Wait for load or error events
+    await img.decode(); // built-in async method for images
+
+    return {
+      width: img.naturalWidth,
+      height: img.naturalHeight,
+    };
   },
 };
