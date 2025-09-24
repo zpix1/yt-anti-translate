@@ -1507,10 +1507,26 @@ ytm-shorts-lockup-view-model`,
       response?.cachedWithDotNotation?.author ||
       response?.data?.videoDetails?.author ||
       null;
+    let thumbnail_url =
+      response?.cachedWithDotNotation?.thumbnail?.thumbnails?.[0]?.url ||
+      response?.data?.videoDetails?.thumbnail?.thumbnails?.[0]?.url ||
+      null;
+
+    // if thumbnail_url is not null strip it of any query parameters
+    if (thumbnail_url) {
+      const urlObj = new URL(thumbnail_url);
+      urlObj.search = "";
+      thumbnail_url = urlObj.toString();
+    }
+
     if (title) {
       return {
         response: response.response,
-        data: { title: title, author_name: author_name },
+        data: {
+          title: title,
+          author_name: author_name,
+          thumbnail_url: thumbnail_url,
+        },
       };
     }
     return { response: response?.response, data: null };

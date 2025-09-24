@@ -7,8 +7,10 @@ chrome.storage.sync.get(
     untranslateAudio: true,
     untranslateAudioOnlyAI: false,
     untranslateDescription: true,
+    untranslateChapters: true,
     untranslateChannelBranding: true,
     untranslateNotification: true,
+    untranslateThumbnail: true,
   },
   async function (items) {
     if (!items.disabled) {

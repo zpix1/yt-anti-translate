@@ -5,15 +5,18 @@ chrome.storage.sync.get(
     untranslateTitle: true,
     untranslateAudio: true,
     untranslateDescription: true,
+    untranslateChapters: true,
     untranslateChannelBranding: true,
     untranslateNotification: true,
+    untranslateThumbnail: true,
   },
   async function (items) {
     if (!items.disabled) {
       if (
         items.untranslateTitle ||
         items.untranslateDescription ||
-        items.untranslateChannelBranding
+        items.untranslateChannelBranding ||
+        items.untranslateThumbnail
       ) {
         const backgroundScript = document.createElement("script");
         backgroundScript.type = "module";
@@ -40,7 +43,11 @@ chrome.storage.sync.get(
         document.body.appendChild(backgroundAudioScript);
       }
 
-      if (items.untranslateDescription || items.untranslateChannelBranding) {
+      if (
+        items.untranslateDescription ||
+        items.untranslateChapters ||
+        items.untranslateChannelBranding
+      ) {
         const descriptionScript = document.createElement("script");
         descriptionScript.type = "module";
         descriptionScript.src = chrome.runtime.getURL(

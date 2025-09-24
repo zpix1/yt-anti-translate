@@ -7,10 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.19.14] - 2025-09-xx
+## [1.20.0] - 2025-09-xx
 
 ### New Feature
 
+- [#114](https://github.com/zpix1/yt-anti-translate/issues/114) Thumbnails Untranslate
 - [#135](https://github.com/zpix1/yt-anti-translate/issues/135) Untranslate Collaborator authors on search and watch
 - [#119](https://github.com/zpix1/yt-anti-translate/issues/119) Untranslate Embeded videos outside of YouTube (e.g. On filmot.com) - iFrame support
 - [#57](https://github.com/zpix1/yt-anti-translate/issues/57) Add support for youtube-nocookie.com

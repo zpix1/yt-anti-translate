@@ -618,9 +618,10 @@ function fetchOriginalAuthor() {
 async function restoreOriginalDescriptionAndAuthor() {
   const settings = await window.YoutubeAntiTranslate.getSettings();
 
-  const originalDescription = settings.untranslateDescription
-    ? await fetchOriginalDescription()
-    : null;
+  const originalDescription =
+    settings.untranslateDescription || settings.untranslateChapters
+      ? await fetchOriginalDescription()
+      : null;
   const originalAuthor = settings.untranslateChannelBranding
     ? fetchOriginalAuthor()
     : null;
@@ -633,19 +634,23 @@ async function restoreOriginalDescriptionAndAuthor() {
   }
 
   if (originalDescription) {
-    const descriptionContainer = window.YoutubeAntiTranslate.getFirstVisible(
-      document.querySelectorAll(DESCRIPTION_SELECTOR),
-    );
-
-    if (descriptionContainer) {
-      updateDescriptionContent(descriptionContainer, originalDescription);
-    } else {
-      window.YoutubeAntiTranslate.logWarning(
-        `Video Description container not found`,
+    if (settings.untranslateDescription) {
+      const descriptionContainer = window.YoutubeAntiTranslate.getFirstVisible(
+        document.querySelectorAll(DESCRIPTION_SELECTOR),
       );
+
+      if (descriptionContainer) {
+        updateDescriptionContent(descriptionContainer, originalDescription);
+      } else {
+        window.YoutubeAntiTranslate.logWarning(
+          `Video Description container not found`,
+        );
+      }
     }
 
-    setupChapters(originalDescription);
+    if (settings.untranslateChapters) {
+      setupChapters(originalDescription);
+    }
   }
 
   if (originalAuthor) {
@@ -967,6 +972,7 @@ async function handleDescriptionMutation() {
 
   if (
     !settings.untranslateDescription &&
+    !settings.untranslateChapters &&
     !settings.untranslateChannelBranding
   ) {
     return;
@@ -976,7 +982,11 @@ async function handleDescriptionMutation() {
     document.querySelectorAll(window.YoutubeAntiTranslate.getPlayerSelector()),
   );
 
-  if (settings.untranslateDescription || settings.untranslateChannelBranding) {
+  if (
+    settings.untranslateDescription ||
+    settings.untranslateChapters ||
+    settings.untranslateChannelBranding
+  ) {
     const descriptionElement = window.YoutubeAntiTranslate.getFirstVisible(
       document.querySelectorAll(DESCRIPTION_SELECTOR),
     );

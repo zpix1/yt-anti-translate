@@ -136,8 +136,10 @@ function saveOptions() {
       untranslateAudio: true,
       untranslateAudioOnlyAI: false,
       untranslateDescription: true,
+      untranslateChapters: true,
       untranslateChannelBranding: true,
       untranslateNotification: true,
+      untranslateThumbnail: true,
       youtubeDataApiKey: null,
     },
     function (items) {
@@ -173,8 +175,10 @@ function loadOptions() {
       untranslateAudio: true,
       untranslateAudioOnlyAI: false,
       untranslateDescription: true,
+      untranslateChapters: true,
       untranslateChannelBranding: true,
       untranslateNotification: true,
+      untranslateThumbnail: true,
       youtubeDataApiKey: null,
     },
     function (items) {
@@ -199,11 +203,15 @@ function loadOptions() {
         items.untranslateAudioOnlyAI;
       document.getElementById("description-checkbox").checked =
         items.untranslateDescription;
+      document.getElementById("chapters-checkbox").checked =
+        items.untranslateChapters;
       document.getElementById("channel-branding-checkbox").checked =
         items.untranslateChannelBranding;
       document.getElementById("notification-checkbox").checked =
         items.untranslateNotification;
       document.getElementById("api-key-input").value = items.youtubeDataApiKey;
+      document.getElementById("thumbnail-checkbox").checked =
+        items.untranslateThumbnail;
     },
   );
 }
@@ -218,11 +226,14 @@ function checkboxUpdate() {
         .checked,
       untranslateDescription: document.getElementById("description-checkbox")
         .checked,
+      untranslateChapters: document.getElementById("chapters-checkbox").checked,
       untranslateChannelBranding: document.getElementById(
         "channel-branding-checkbox",
       ).checked,
       untranslateNotification: document.getElementById("notification-checkbox")
         .checked,
+      untranslateThumbnail:
+        document.getElementById("thumbnail-checkbox").checked,
     },
     () => {
       reloadActiveYouTubeTab();
@@ -289,10 +300,16 @@ function addListeners() {
     .getElementById("description-checkbox")
     .addEventListener("click", checkboxUpdate);
   document
+    .getElementById("chapters-checkbox")
+    .addEventListener("click", checkboxUpdate);
+  document
     .getElementById("channel-branding-checkbox")
     .addEventListener("click", checkboxUpdate);
   document
     .getElementById("notification-checkbox")
+    .addEventListener("click", checkboxUpdate);
+  document
+    .getElementById("thumbnail-checkbox")
     .addEventListener("click", checkboxUpdate);
   document
     .getElementById("save-api-key-button")

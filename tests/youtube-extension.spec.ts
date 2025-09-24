@@ -1028,6 +1028,139 @@ test.describe("YouTube Anti-Translate extension", () => {
     await context.close();
   });
 
+  test("YouTube video retains original thumbnail", async ({
+    browserNameWithExtensions,
+    localeString,
+  }, testInfo) => {
+    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
+
+    // Launch browser with the extension
+    const context = await createBrowserContext(browserNameWithExtensions);
+
+    // Create a new page
+    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
+      context,
+      browserNameWithExtensions,
+      localeString,
+    );
+
+    await loadPageAndVerifyAuth(
+      page,
+      "https://www.youtube.com/results?search_query=mrbeast+7+Days+Stranded+At+Sea",
+      browserNameWithExtensions,
+    );
+
+    // Take a screenshot for visual verification
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-video-thumbnail-test.png`,
+    });
+
+    // Wait for the video grid to appear
+    await page.waitForSelector("ytd-video-renderer");
+
+    // --- Check Videos Tab ---
+    const expectedThumbnailSrc =
+      "https://i.ytimg.com/vi/yhB3BgJyGl8/hqdefault.jpg";
+    const originalVideoTitle = "7 Days Stranded At Sea";
+    const videoSelector = `ytd-video-renderer:has-text("${originalVideoTitle}")`;
+
+    const originalPlaylist = page.locator(videoSelector).first();
+    if (await originalPlaylist.isVisible()) {
+      await page.mouse.wheel(0, 500);
+      await originalPlaylist.scrollIntoViewIfNeeded();
+      try {
+        await page.waitForLoadState("networkidle", { timeout: 5000 });
+      } catch {
+        // empty
+      }
+    }
+
+    // Find the thumbnail image within the located video item
+    const thumbnailImage = originalPlaylist.locator('img[src*="ytimg.com"]');
+    await expect(thumbnailImage).toHaveAttribute("src", expectedThumbnailSrc);
+
+    // Take a screenshot for visual verification
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-video-thumbnail-test.png`,
+    });
+
+    // Check console message count
+    expect(consoleMessageCountContainer.count).toBeLessThan(2000);
+
+    // Close the browser context
+    await context.close();
+  });
+
+  test("YouTube video playlist retains original thumbnail of the first video", async ({
+    browserNameWithExtensions,
+    localeString,
+  }, testInfo) => {
+    /**
+     * NOTE WELL
+     * This test requires the account in use to have a playlist named "owned-playlist-playwright-test"
+     * with as first video [@MrBeast "7 Days Stranded At Sea"](https://www.youtube.com/watch?v=yhB3BgJyGl8).
+     * If missing you must create it manually as part of setting up the test account.
+     */
+
+    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
+
+    // Launch browser with the extension
+    const context = await createBrowserContext(browserNameWithExtensions);
+
+    // Create a new page
+    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
+      context,
+      browserNameWithExtensions,
+      localeString,
+    );
+
+    await loadPageAndVerifyAuth(
+      page,
+      "https://www.youtube.com/feed/playlists",
+      browserNameWithExtensions,
+    );
+
+    // Take a screenshot for visual verification
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-video-playlist-thumbnail-test.png`,
+    });
+
+    // Wait for the video grid to appear
+    await page.waitForSelector("ytd-rich-item-renderer");
+
+    // --- Check Videos Tab ---
+    const expectedThumbnailSrc =
+      "https://i.ytimg.com/vi/yhB3BgJyGl8/hqdefault.jpg";
+    const originalPlaylistTitle = "owned-playlist-playwright-test";
+    const videoSelector = `ytd-rich-item-renderer:has-text("${originalPlaylistTitle}")`;
+
+    const originalPlaylist = page.locator(videoSelector).first();
+    if (await originalPlaylist.isVisible()) {
+      await page.mouse.wheel(0, 500);
+      await originalPlaylist.scrollIntoViewIfNeeded();
+      try {
+        await page.waitForLoadState("networkidle", { timeout: 5000 });
+      } catch {
+        // empty
+      }
+    }
+
+    // Find the thumbnail image within the located video item
+    const thumbnailImage = originalPlaylist.locator('img[src*="ytimg.com"]');
+    await expect(thumbnailImage).toHaveAttribute("src", expectedThumbnailSrc);
+
+    // Take a screenshot for visual verification
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-video-playlist-thumbnail-test.png`,
+    });
+
+    // Check console message count
+    expect(consoleMessageCountContainer.count).toBeLessThan(2000);
+
+    // Close the browser context
+    await context.close();
+  });
+
   test("YouTube chapters titles are not translated and chapter 2 has expected text", async ({
     browserNameWithExtensions,
     localeString,

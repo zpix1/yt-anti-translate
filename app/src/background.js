@@ -556,14 +556,15 @@ async function untranslateOtherVideos(intersectElements = null) {
         }
 
         // Check if current widget is a playlist, not a video
-        if (
+        const isPlaylist =
           video.querySelector('a[href*="/playlist?"]') ||
           window.YoutubeAntiTranslate.getFirstVisible(
             video.querySelectorAll(
               "yt-collection-thumbnail-view-model, .media-item-thumbnail-container.stacked",
             ),
-          )
-        ) {
+          );
+
+        if (isPlaylist && !settings.untranslateThumbnail) {
           return;
         }
 
@@ -685,6 +686,7 @@ async function untranslateOtherVideos(intersectElements = null) {
             titleElement.innerText?.trim() || titleElement.textContent?.trim();
 
           if (
+            !isPlaylist &&
             settings.untranslateTitle &&
             originalTitle &&
             currentTitle &&
@@ -705,6 +707,27 @@ async function untranslateOtherVideos(intersectElements = null) {
             }
           } else {
             // console.debug(`Video title unchanged or element missing:`, { href: videoHref, originalTitle, currentTitle });
+          }
+
+          /* -------- Handle video thumbnail untranslation -------- */
+          const originalThumbnail = response.data.thumbnail_url;
+          if (settings.untranslateThumbnail && originalThumbnail) {
+            const thumbnailElements = video.querySelectorAll(
+              'img[src*="i.ytimg.com"]',
+            );
+
+            if (thumbnailElements && thumbnailElements.length > 0) {
+              for (const thumbnailElement of thumbnailElements) {
+                if (!thumbnailElement || !thumbnailElement.src) {
+                  continue;
+                }
+
+                // Only update if the thumbnail is different
+                if (thumbnailElement.src !== originalThumbnail) {
+                  thumbnailElement.src = originalThumbnail;
+                }
+              }
+            }
           }
 
           /* -------- Handle description snippet and collaborator untranslation (search results, video lists) -------- */
@@ -751,7 +774,8 @@ async function untranslateOtherVideos(intersectElements = null) {
               }
             }
 
-            if (settings.untranslateChannelBranding) {
+            const mainAuthor = response.data.author_name;
+            if (settings.untranslateChannelBranding && mainAuthor) {
               // Locate avatar stacks for collaborators videos
               const avatarStacks = video.querySelectorAll(
                 "#channel-info #avatar yt-avatar-stack-view-model yt-avatar-shape img",
@@ -797,7 +821,6 @@ async function untranslateOtherVideos(intersectElements = null) {
               }
 
               if (authors.length > 0) {
-                const mainAuthor = response.data.author_name;
                 // Remove main author from collaborators list
                 const collaboratorAuthorsOnly = authors.filter(
                   (name) => name !== mainAuthor,
@@ -872,6 +895,8 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
     }
     const shortsArray = Array.from(shortsItems);
 
+    const settings = await window.YoutubeAntiTranslate.getSettings();
+
     await Promise.all(
       shortsArray.map(async (shortElement) => {
         if (!shortElement) {
@@ -879,14 +904,15 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
         }
 
         // Check if current widget is a playlist, not a video
-        if (
+        const isPlaylist =
           shortElement.querySelector('a[href*="/playlist?"]') ||
           window.YoutubeAntiTranslate.getFirstVisible(
             shortElement.querySelectorAll(
               "yt-collection-thumbnail-view-model, .media-item-thumbnail-container.stacked",
             ),
-          )
-        ) {
+          );
+
+        if (isPlaylist && !settings.untranslateThumbnail) {
           return;
         }
 
@@ -962,23 +988,51 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
           const realTitle = response.data.title;
           const currentTitle = titleElement.textContent?.trim(); // Use textContent for typical title spans
 
-          if (
-            realTitle &&
-            currentTitle &&
-            !window.YoutubeAntiTranslate.isStringEqual(realTitle, currentTitle)
-          ) {
-            titleElement.textContent = realTitle;
-            // Update title attribute if it exists (for tooltips)
-            if (titleElement.hasAttribute("title")) {
-              titleElement.title = realTitle;
+          if (settings.untranslateTitle || settings.untranslateThumbnail) {
+            if (
+              !isPlaylist &&
+              settings.untranslateTitle &&
+              realTitle &&
+              currentTitle &&
+              !window.YoutubeAntiTranslate.isStringEqual(
+                realTitle,
+                currentTitle,
+              )
+            ) {
+              titleElement.textContent = realTitle;
+              // Update title attribute if it exists (for tooltips)
+              if (titleElement.hasAttribute("title")) {
+                titleElement.title = realTitle;
+              }
+              const titleA = shortElement.querySelector(
+                "a.shortsLockupViewModelHostEndpoint.shortsLockupViewModelHostOutsideMetadataEndpoint",
+              );
+              if (titleA) {
+                titleA.title = realTitle;
+              }
+              shortElement.setAttribute("data-ytat-untranslated-other", "true"); // Mark as successfully untranslated
             }
-            const titleA = shortElement.querySelector(
-              "a.shortsLockupViewModelHostEndpoint.shortsLockupViewModelHostOutsideMetadataEndpoint",
-            );
-            if (titleA) {
-              titleA.title = realTitle;
+
+            /* -------- Handle video thumbnail untranslation -------- */
+            const originalThumbnail = response.data.thumbnail_url;
+            if (settings.untranslateThumbnail && originalThumbnail) {
+              const thumbnailElements = shortElement.querySelectorAll(
+                'img[src*="i.ytimg.com"]',
+              );
+
+              if (thumbnailElements && thumbnailElements.length > 0) {
+                for (const thumbnailElement of thumbnailElements) {
+                  if (!thumbnailElement || !thumbnailElement.src) {
+                    continue;
+                  }
+
+                  // Only update if the thumbnail is different
+                  if (thumbnailElement.src !== originalThumbnail) {
+                    thumbnailElement.src = originalThumbnail;
+                  }
+                }
+              }
             }
-            shortElement.setAttribute("data-ytat-untranslated-other", "true"); // Mark as successfully untranslated
           } else {
             // Mark as done even if titles match or one is missing, prevents re-checking
             shortElement.setAttribute("data-ytat-untranslated-other", "true");
@@ -1026,7 +1080,9 @@ async function untranslate() {
     ? untranslateCurrentChannelEmbeddedVideoTitle()
     : Promise.resolve();
   const otherVideosPromise =
-    settings.untranslateTitle || settings.untranslateChannelBranding
+    settings.untranslateTitle ||
+    settings.untranslateDescription ||
+    settings.untranslateChannelBranding
       ? untranslateOtherVideos()
       : Promise.resolve();
   const currentShortPromise = settings.untranslateTitle
@@ -1051,9 +1107,7 @@ async function untranslate() {
     ? untranslateCurrentMobileFeaturedVideoChannel()
     : Promise.resolve();
   const currentEmbeddedVideoMobileFullScreenPromise =
-    settings.untranslateTitle ||
-    settings.untranslateDescription ||
-    settings.untranslateChannelBranding
+    settings.untranslateTitle || settings.untranslateChannelBranding
       ? untranslateCurrentEmbeddedVideoMobileFullScreen()
       : Promise.resolve();
 
@@ -1078,11 +1132,12 @@ async function untranslate() {
   if (
     settings.untranslateTitle ||
     settings.untranslateDescription ||
-    settings.untranslateChannelBranding
+    settings.untranslateChannelBranding ||
+    settings.untranslateThumbnail
   ) {
     updateObserverOtherVideosOnIntersect();
   }
-  if (settings.untranslateTitle) {
+  if (settings.untranslateTitle || settings.untranslateThumbnail) {
     updateObserverOtherShortsOnIntersect();
   }
 }
