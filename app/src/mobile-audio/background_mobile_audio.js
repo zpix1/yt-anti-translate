@@ -225,32 +225,42 @@ function getUntranslated360pFallback(playerResponse) {
       window.ytInitialPlayerResponse = undefined;
     }
 
-    // Set up property descriptor to intercept access
-    Object.defineProperty(window, "ytInitialPlayerResponse", {
-      configurable: true,
-      enumerable: true,
-      get() {
-        if (originalPlayerResponse && originalPlayerResponse.ytAntiTranslate) {
-          return originalPlayerResponse;
-        }
+    try {
+      // Set up property descriptor to intercept access
+      Object.defineProperty(window, "ytInitialPlayerResponse", {
+        configurable: true,
+        enumerable: true,
+        get() {
+          if (
+            originalPlayerResponse &&
+            originalPlayerResponse.ytAntiTranslate
+          ) {
+            return originalPlayerResponse;
+          }
 
-        globalJsCopy.logWarning(
-          "ytInitialPlayerResponse getter called - overriding formats",
-        );
-        if (originalPlayerResponse && originalPlayerResponse?.streamingData) {
-          originalPlayerResponse.streamingData.formats = null;
-          originalPlayerResponse.streamingData.serverAbrStreamingUrl = null;
-          originalPlayerResponse.streamingData.adaptiveFormats = null;
-        }
-        return originalPlayerResponse;
-      },
-      set(value) {
-        globalJsCopy.logDebug(
-          "ytInitialPlayerResponse being set - storing original",
-        );
-        originalPlayerResponse = value;
-      },
-    });
+          globalJsCopy.logWarning(
+            "ytInitialPlayerResponse getter called - overriding formats",
+          );
+          if (originalPlayerResponse && originalPlayerResponse?.streamingData) {
+            originalPlayerResponse.streamingData.formats = null;
+            originalPlayerResponse.streamingData.serverAbrStreamingUrl = null;
+            originalPlayerResponse.streamingData.adaptiveFormats = null;
+          }
+          return originalPlayerResponse;
+        },
+        set(value) {
+          globalJsCopy.logDebug(
+            "ytInitialPlayerResponse being set - storing original",
+          );
+          originalPlayerResponse = value;
+        },
+      });
+    } catch (e) {
+      globalJsCopy.logWarning(
+        "ytInitialPlayerResponse interception was skipped. Reason:",
+        e.message,
+      );
+    }
 
     isIntercepted = true;
     globalJsCopy.logDebug(
