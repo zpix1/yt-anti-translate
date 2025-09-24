@@ -616,9 +616,17 @@ function fetchOriginalAuthor() {
  * triggers the chapters replacement logic.
  */
 async function restoreOriginalDescriptionAndAuthor() {
-  const originalDescription = await fetchOriginalDescription();
-  const originalAuthor = fetchOriginalAuthor();
-  const originalTitle = await getTitle(document.location.href);
+  const settings = await window.YoutubeAntiTranslate.getSettings();
+
+  const originalDescription = settings.untranslateDescription
+    ? await fetchOriginalDescription()
+    : null;
+  const originalAuthor = settings.untranslateChannelBranding
+    ? fetchOriginalAuthor()
+    : null;
+  const originalTitle = settings.untranslateChannelBranding
+    ? await getTitle(document.location.href)
+    : null;
 
   if (!originalDescription && !originalAuthor && !originalTitle) {
     return;
@@ -955,19 +963,34 @@ function replaceTextNodeContent(container, textNodeIndex, newText) {
 }
 
 async function handleDescriptionMutation() {
-  const descriptionElement = window.YoutubeAntiTranslate.getFirstVisible(
-    document.querySelectorAll(DESCRIPTION_SELECTOR),
-  );
+  const settings = await window.YoutubeAntiTranslate.getSettings();
+
+  if (
+    !settings.untranslateDescription &&
+    !settings.untranslateChannelBranding
+  ) {
+    return;
+  }
+
   const player = window.YoutubeAntiTranslate.getFirstVisible(
     document.querySelectorAll(window.YoutubeAntiTranslate.getPlayerSelector()),
   );
-  if (descriptionElement && player) {
-    await restoreOriginalDescriptionAndAuthor();
+
+  if (settings.untranslateDescription || settings.untranslateChannelBranding) {
+    const descriptionElement = window.YoutubeAntiTranslate.getFirstVisible(
+      document.querySelectorAll(DESCRIPTION_SELECTOR),
+    );
+    if (descriptionElement && player) {
+      await restoreOriginalDescriptionAndAuthor();
+    }
   }
 
   // On mobile the author is visible even when the description is not
   // so we need to check separately
-  if (window.YoutubeAntiTranslate.isMobile()) {
+  if (
+    window.YoutubeAntiTranslate.isMobile() &&
+    settings.untranslateChannelBranding
+  ) {
     const authorElement = window.YoutubeAntiTranslate.getFirstVisible(
       document.querySelectorAll(AUTHOR_SELECTOR),
     );

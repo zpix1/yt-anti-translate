@@ -87,35 +87,52 @@ function renderFooterLinks() {
   });
 }
 
-const reloadActiveYouTubeTab = () => {
-  const isAutoReloadEnabled =
-    document.getElementById("reload-checkbox")?.checked;
-  if (!isAutoReloadEnabled) {
-    return;
-  }
-
-  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    const tab = tabs[0];
-    if (tab && tab.url && tab.url.match(/^.*youtube\.com\/.*$/)) {
-      chrome.tabs.reload(tab.id);
-    }
-  });
-
-  // Send a message to `content_start.js` to trigger reload in the content script
-  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    const tab = tabs[0];
-    if (tab && tab.id) {
-      chrome.tabs.sendMessage(tab.id, { type: "reload" });
-    }
-  });
-};
-
-function saveOptions() {
-  reloadActiveYouTubeTab();
+const reloadActiveYouTubeTab = (toggled = false) => {
   chrome.storage.sync.get(
     {
       disabled: false,
       autoreloadOption: true,
+    },
+    function (items) {
+      if (!items.autoreloadOption) {
+        return;
+      }
+
+      if (items.disabled && !toggled) {
+        return;
+      }
+
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        const tab = tabs[0];
+        if (tab && tab.url && tab.url.match(/^.*youtube\.com\/.*$/)) {
+          chrome.tabs.reload(tab.id);
+          return;
+        }
+      });
+
+      // Send a message to `content_start.js` to trigger reload in the content script
+      // This is needed to reload the pages that are inside iFrames
+      chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
+        const tab = tabs[0];
+        if (tab && tab.id) {
+          try {
+            await chrome.tabs.sendMessage(tab.id, { type: "reload" });
+          } catch (error) {
+            console.info("The extension is not active in this tab:", error);
+          }
+        }
+      });
+    },
+  );
+};
+
+function saveOptions() {
+  reloadActiveYouTubeTab(/*toggled=*/ true);
+  chrome.storage.sync.get(
+    {
+      disabled: false,
+      autoreloadOption: true,
+      untranslateTitle: true,
       untranslateAudio: true,
       untranslateAudioOnlyAI: false,
       untranslateDescription: true,
@@ -152,6 +169,7 @@ function loadOptions() {
     {
       disabled: false,
       autoreloadOption: true,
+      untranslateTitle: true,
       untranslateAudio: true,
       untranslateAudioOnlyAI: false,
       untranslateDescription: true,
@@ -173,6 +191,8 @@ function loadOptions() {
         : "enabled";
       document.getElementById("reload-checkbox").checked =
         items.autoreloadOption;
+      document.getElementById("title-checkbox").checked =
+        items.untranslateTitle;
       document.getElementById("audio-checkbox").checked =
         items.untranslateAudio;
       document.getElementById("audio-only-ai-checkbox").checked =
@@ -192,6 +212,7 @@ function checkboxUpdate() {
   chrome.storage.sync.set(
     {
       autoreloadOption: document.getElementById("reload-checkbox").checked,
+      untranslateTitle: document.getElementById("title-checkbox").checked,
       untranslateAudio: document.getElementById("audio-checkbox").checked,
       untranslateAudioOnlyAI: document.getElementById("audio-only-ai-checkbox")
         .checked,
@@ -254,6 +275,9 @@ function addListeners() {
     .addEventListener("click", saveOptions);
   document
     .getElementById("reload-checkbox")
+    .addEventListener("click", checkboxUpdate);
+  document
+    .getElementById("title-checkbox")
     .addEventListener("click", checkboxUpdate);
   document
     .getElementById("audio-checkbox")

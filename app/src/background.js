@@ -289,6 +289,8 @@ async function createOrUpdateUntranslatedFakeNode(
       ),
     )
   ) {
+    const settings = await window.YoutubeAntiTranslate.getSettings();
+
     let translatedElement = window.YoutubeAntiTranslate.getFirstVisible(
       document.querySelectorAll(originalNodeSelector),
     );
@@ -360,7 +362,12 @@ async function createOrUpdateUntranslatedFakeNode(
       return;
     }
 
-    if (videoAuthorSelector && authorFakeNodeID && authorCreateElementTag) {
+    if (
+      settings.untranslateChannelBranding &&
+      videoAuthorSelector &&
+      authorFakeNodeID &&
+      authorCreateElementTag
+    ) {
       await createOrUpdateUntranslatedFakeNodeAuthor(
         response.data.author_name,
         videoAuthorSelector,
@@ -369,81 +376,88 @@ async function createOrUpdateUntranslatedFakeNode(
       );
     }
 
-    let oldTitle = translatedElement?.textContent;
+    if (settings.untranslateTitle) {
+      let oldTitle = translatedElement?.textContent;
 
-    if (!oldTitle && fakeNode) {
-      // If we don't have the translated element, try to find the hidden translated element from the fakeNode parent
-      const hiddenTranslatedElement = fakeNode.parentElement?.querySelector(
-        originalNodePartialSelector,
-      );
-      // Get the translated title only if it's not empty
-      oldTitle =
-        hiddenTranslatedElement?.textContent?.trim() === ""
-          ? null
-          : hiddenTranslatedElement?.textContent;
-    }
-
-    if (shouldSetDocumentTitle) {
-      if (
-        window.YoutubeAntiTranslate.doesStringInclude(document.title, oldTitle)
-      ) {
-        document.title = window.YoutubeAntiTranslate.stringReplaceWithOptions(
-          document.title,
-          oldTitle,
-          realTitle,
+      if (!oldTitle && fakeNode) {
+        // If we don't have the translated element, try to find the hidden translated element from the fakeNode parent
+        const hiddenTranslatedElement = fakeNode.parentElement?.querySelector(
+          originalNodePartialSelector,
         );
+        // Get the translated title only if it's not empty
+        oldTitle =
+          hiddenTranslatedElement?.textContent?.trim() === ""
+            ? null
+            : hiddenTranslatedElement?.textContent;
       }
-    }
 
-    if (
-      window.YoutubeAntiTranslate.isStringEqual(
-        fakeNode?.textContent,
-        realTitle,
-      )
-    ) {
-      return;
-    }
+      if (shouldSetDocumentTitle) {
+        if (
+          window.YoutubeAntiTranslate.doesStringInclude(
+            document.title,
+            oldTitle,
+          )
+        ) {
+          document.title = window.YoutubeAntiTranslate.stringReplaceWithOptions(
+            document.title,
+            oldTitle,
+            realTitle,
+          );
+        }
+      }
 
-    if (window.YoutubeAntiTranslate.isStringEqual(realTitle, oldTitle)) {
-      return;
-    }
+      if (
+        window.YoutubeAntiTranslate.isStringEqual(
+          fakeNode?.textContent,
+          realTitle,
+        )
+      ) {
+        return;
+      }
 
-    window.YoutubeAntiTranslate.logInfo(
-      `translated title to "${realTitle}" from "${oldTitle}"`,
-    );
+      if (window.YoutubeAntiTranslate.isStringEqual(realTitle, oldTitle)) {
+        return;
+      }
 
-    if (!fakeNode && translatedElement) {
-      // Not sure why, but even tho we checked already 'fakeNode', 'existingFakeNode' still return a value of initialization
-      const existingFakeNode = translatedElement.parentElement.querySelector(
-        `#${fakeNodeID}`,
+      window.YoutubeAntiTranslate.logInfo(
+        `translated title to "${realTitle}" from "${oldTitle}"`,
       );
-      const newFakeNode = document.createElement(createElementTag);
-      if (translatedElement.href) {
-        newFakeNode.href = translatedElement.href;
+
+      if (!fakeNode && translatedElement) {
+        // Not sure why, but even tho we checked already 'fakeNode', 'existingFakeNode' still return a value of initialization
+        const existingFakeNode = translatedElement.parentElement.querySelector(
+          `#${fakeNodeID}`,
+        );
+        const newFakeNode = document.createElement(createElementTag);
+        if (translatedElement.href) {
+          newFakeNode.href = translatedElement.href;
+        }
+        newFakeNode.className = translatedElement.className;
+        newFakeNode.target = translatedElement.target;
+        newFakeNode.tabIndex = translatedElement.tabIndex;
+        newFakeNode["data-sessionlink"] = translatedElement["data-sessionlink"];
+        newFakeNode.id = fakeNodeID;
+        newFakeNode.textContent = realTitle;
+        newFakeNode.setAttribute("video-id", videoId);
+        if (!existingFakeNode) {
+          newFakeNode.style.visibility =
+            translatedElement.style?.visibility ?? "visible";
+          newFakeNode.style.display =
+            translatedElement.style?.display ?? "block";
+          translatedElement.after(newFakeNode);
+        } else {
+          newFakeNode.style.visibility =
+            existingFakeNode.style?.visibility ?? "visible";
+          newFakeNode.style.display =
+            existingFakeNode.style?.display ?? "block";
+          existingFakeNode.replaceWith(newFakeNode);
+        }
+        translatedElement.style.visibility = "hidden";
+        translatedElement.style.display = "none";
+      } else if (fakeNode) {
+        fakeNode.textContent = realTitle;
+        fakeNode.setAttribute("video-id", videoId);
       }
-      newFakeNode.className = translatedElement.className;
-      newFakeNode.target = translatedElement.target;
-      newFakeNode.tabIndex = translatedElement.tabIndex;
-      newFakeNode["data-sessionlink"] = translatedElement["data-sessionlink"];
-      newFakeNode.id = fakeNodeID;
-      newFakeNode.textContent = realTitle;
-      newFakeNode.setAttribute("video-id", videoId);
-      if (!existingFakeNode) {
-        newFakeNode.style.visibility =
-          translatedElement.style?.visibility ?? "visible";
-        newFakeNode.style.display = translatedElement.style?.display ?? "block";
-        translatedElement.after(newFakeNode);
-      } else {
-        newFakeNode.style.visibility =
-          existingFakeNode.style?.visibility ?? "visible";
-        newFakeNode.style.display = existingFakeNode.style?.display ?? "block";
-        existingFakeNode.replaceWith(newFakeNode);
-      }
-      translatedElement.style.visibility = "hidden";
-      translatedElement.style.display = "none";
-    } else if (fakeNode) {
-      fakeNode.textContent = realTitle;
-      fakeNode.setAttribute("video-id", videoId);
     }
   }
 }
@@ -531,6 +545,8 @@ async function untranslateOtherVideos(intersectElements = null) {
       return;
     }
     const videosArray = Array.from(otherVideos);
+
+    const settings = await window.YoutubeAntiTranslate.getSettings();
 
     await Promise.all(
       videosArray.map(async (video) => {
@@ -669,6 +685,7 @@ async function untranslateOtherVideos(intersectElements = null) {
             titleElement.innerText?.trim() || titleElement.textContent?.trim();
 
           if (
+            settings.untranslateTitle &&
             originalTitle &&
             currentTitle &&
             !window.YoutubeAntiTranslate.isStringEqual(
@@ -691,118 +708,128 @@ async function untranslateOtherVideos(intersectElements = null) {
           }
 
           /* -------- Handle description snippet and collaborator untranslation (search results, video lists) -------- */
-          if (video.hasAttribute("data-ytat-untranslated-desc") !== videoId) {
-            // Locate description snippet containers
-            const snippetElements = video.querySelectorAll(
-              ".metadata-snippet-text, .metadata-snippet-text-navigation",
-            );
+          if (
+            (settings.untranslateDescription ||
+              settings.untranslateChannelBranding) &&
+            video.hasAttribute("data-ytat-untranslated-desc") !== videoId
+          ) {
+            if (settings.untranslateDescription) {
+              // Locate description snippet containers
+              const snippetElements = video.querySelectorAll(
+                ".metadata-snippet-text, .metadata-snippet-text-navigation",
+              );
 
-            if (snippetElements && snippetElements.length > 0) {
-              const idMatch = videoHref.match(/[?&]v=([a-zA-Z0-9_-]+)/);
-              if (idMatch && idMatch[1]) {
-                const videoId = idMatch[1];
-                const originalDescription =
-                  await getOriginalVideoDescription(videoId);
+              if (snippetElements && snippetElements.length > 0) {
+                const idMatch = videoHref.match(/[?&]v=([a-zA-Z0-9_-]+)/);
+                if (idMatch && idMatch[1]) {
+                  const videoId = idMatch[1];
+                  const originalDescription =
+                    await getOriginalVideoDescription(videoId);
 
-                if (originalDescription) {
-                  const truncated = trimDescriptionByWords(originalDescription);
+                  if (originalDescription) {
+                    const truncated =
+                      trimDescriptionByWords(originalDescription);
 
-                  snippetElements.forEach((el) => {
-                    const currentText = el.textContent?.trim();
-                    if (
-                      truncated &&
-                      currentText &&
-                      !window.YoutubeAntiTranslate.isStringEqual(
-                        currentText,
-                        truncated,
-                      )
-                    ) {
-                      el.textContent = truncated;
-                      if (el.hasAttribute("is-empty")) {
-                        el.removeAttribute("is-empty");
+                    snippetElements.forEach((el) => {
+                      const currentText = el.textContent?.trim();
+                      if (
+                        truncated &&
+                        currentText &&
+                        !window.YoutubeAntiTranslate.isStringEqual(
+                          currentText,
+                          truncated,
+                        )
+                      ) {
+                        el.textContent = truncated;
+                        if (el.hasAttribute("is-empty")) {
+                          el.removeAttribute("is-empty");
+                        }
                       }
-                    }
-                  });
+                    });
+                  }
                 }
               }
             }
 
-            // Locate avatar stacks for collaborators videos
-            const avatarStacks = video.querySelectorAll(
-              "#channel-info #avatar yt-avatar-stack-view-model yt-avatar-shape img",
-            );
+            if (settings.untranslateChannelBranding) {
+              // Locate avatar stacks for collaborators videos
+              const avatarStacks = video.querySelectorAll(
+                "#channel-info #avatar yt-avatar-stack-view-model yt-avatar-shape img",
+              );
 
-            const authors = [];
+              const authors = [];
 
-            if (avatarStacks && avatarStacks.length > 0) {
-              for (const avatarImage of avatarStacks) {
-                const imgSrc = avatarImage.src;
-                if (!imgSrc || imgSrc.trim() === "") {
-                  continue;
+              if (avatarStacks && avatarStacks.length > 0) {
+                for (const avatarImage of avatarStacks) {
+                  const imgSrc = avatarImage.src;
+                  if (!imgSrc || imgSrc.trim() === "") {
+                    continue;
+                  }
+
+                  const originalCollaborators =
+                    await window.YoutubeAntiTranslate.getOriginalCollaboratorsItemsWithYoutubeI(
+                      originalTitle,
+                    );
+
+                  const originalItem = originalCollaborators?.find(
+                    (item) => item.avatarImage === avatarImage.src,
+                  );
+                  if (!originalItem) {
+                    continue;
+                  }
+
+                  authors.push(originalItem.name);
                 }
-
+              } else {
+                // Falback using video id filtered list
                 const originalCollaborators =
                   await window.YoutubeAntiTranslate.getOriginalCollaboratorsItemsWithYoutubeI(
                     originalTitle,
                   );
-
-                const originalItem = originalCollaborators?.find(
-                  (item) => item.avatarImage === avatarImage.src,
+                const originalItems = originalCollaborators?.filter(
+                  (item) => item.videoId === videoId,
                 );
-                if (!originalItem) {
-                  continue;
-                }
-
-                authors.push(originalItem.name);
-              }
-            } else {
-              // Falback using video id filtered list
-              const originalCollaborators =
-                await window.YoutubeAntiTranslate.getOriginalCollaboratorsItemsWithYoutubeI(
-                  originalTitle,
-                );
-              const originalItems = originalCollaborators?.filter(
-                (item) => item.videoId === videoId,
-              );
-              if (originalItems && originalItems.length > 0) {
-                for (const originalItem of originalItems) {
-                  authors.push(originalItem.name);
+                if (originalItems && originalItems.length > 0) {
+                  for (const originalItem of originalItems) {
+                    authors.push(originalItem.name);
+                  }
                 }
               }
-            }
 
-            if (authors.length > 0) {
-              const mainAuthor = response.data.author_name;
-              // Remove main author from collaborators list
-              const collaboratorAuthorsOnly = authors.filter(
-                (name) => name !== mainAuthor,
-              );
+              if (authors.length > 0) {
+                const mainAuthor = response.data.author_name;
+                // Remove main author from collaborators list
+                const collaboratorAuthorsOnly = authors.filter(
+                  (name) => name !== mainAuthor,
+                );
 
-              if (
-                collaboratorAuthorsOnly &&
-                collaboratorAuthorsOnly.length === 1
-              ) {
-                const authorsElement = video.querySelector(
-                  `#channel-info yt-formatted-string > a.yt-simple-endpoint, div.media-item-metadata .YtmBadgeAndBylineRendererHost span${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}`,
-                );
-                const authorsTooltipElement = video.querySelector(
-                  `#channel-info .ytd-channel-name #tooltip`,
-                );
                 if (
-                  authorsElement &&
-                  !authorsElement.textContent.includes(
-                    collaboratorAuthorsOnly[0],
-                  )
+                  collaboratorAuthorsOnly &&
+                  collaboratorAuthorsOnly.length === 1
                 ) {
-                  const localizedAnd =
-                    window.YoutubeAntiTranslate.getLocalizedAnd(
-                      document.documentElement.lang,
-                    );
-                  const untranslatedAuthorText = `${mainAuthor} ${localizedAnd} ${collaboratorAuthorsOnly[0]}`;
-                  authorsElement.textContent = untranslatedAuthorText;
-                  // Update tooltip if exists
-                  if (authorsTooltipElement) {
-                    authorsTooltipElement.textContent = untranslatedAuthorText;
+                  const authorsElement = video.querySelector(
+                    `#channel-info yt-formatted-string > a.yt-simple-endpoint, div.media-item-metadata .YtmBadgeAndBylineRendererHost span${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}`,
+                  );
+                  const authorsTooltipElement = video.querySelector(
+                    `#channel-info .ytd-channel-name #tooltip`,
+                  );
+                  if (
+                    authorsElement &&
+                    !authorsElement.textContent.includes(
+                      collaboratorAuthorsOnly[0],
+                    )
+                  ) {
+                    const localizedAnd =
+                      window.YoutubeAntiTranslate.getLocalizedAnd(
+                        document.documentElement.lang,
+                      );
+                    const untranslatedAuthorText = `${mainAuthor} ${localizedAnd} ${collaboratorAuthorsOnly[0]}`;
+                    authorsElement.textContent = untranslatedAuthorText;
+                    // Update tooltip if exists
+                    if (authorsTooltipElement) {
+                      authorsTooltipElement.textContent =
+                        untranslatedAuthorText;
+                    }
                   }
                 }
               }
@@ -984,26 +1011,51 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
 }
 
 async function untranslate() {
-  const currentVideoPromise = untranslateCurrentVideo();
-  const currentVideoFullScreenLinkPromise = untranslateCurrentVideoHeadLink();
-  const currentVideoFullScreenEduPromise =
-    untranslateCurrentVideoFullScreenEdu();
-  const channelEmbeddedVideoPromise =
-    untranslateCurrentChannelEmbeddedVideoTitle();
-  const otherVideosPromise = untranslateOtherVideos();
-  const currentShortPromise = untranslateCurrentShortVideo();
-  const currentShortEngagementPanelPromise =
-    untranslateCurrentShortVideoEngagementPanel();
-  const currentShortDescriptionPanelPromise =
-    untranslateCurrentShortVideoDescriptionPanelHeader();
-  const currentShortVideoLinksPromise = untranslateCurrentShortVideoLinks();
-  const otherShortsPromise = untranslateOtherShortsVideos(); // Call the new function
-  const currentMobileVideoDescriptionPromise =
-    untranslateCurrentMobileVideoDescriptionHeader();
-  const currentMobileFeaturedVideoChannel =
-    untranslateCurrentMobileFeaturedVideoChannel();
+  const settings = window.YoutubeAntiTranslate.getSettings();
+
+  const currentVideoPromise = settings.untranslateTitle
+    ? untranslateCurrentVideo()
+    : Promise.resolve();
+  const currentVideoFullScreenLinkPromise = settings.untranslateTitle
+    ? untranslateCurrentVideoHeadLink()
+    : Promise.resolve();
+  const currentVideoFullScreenEduPromise = settings.untranslateTitle
+    ? untranslateCurrentVideoFullScreenEdu()
+    : Promise.resolve();
+  const channelEmbeddedVideoPromise = settings.untranslateTitle
+    ? untranslateCurrentChannelEmbeddedVideoTitle()
+    : Promise.resolve();
+  const otherVideosPromise =
+    settings.untranslateTitle || settings.untranslateChannelBranding
+      ? untranslateOtherVideos()
+      : Promise.resolve();
+  const currentShortPromise = settings.untranslateTitle
+    ? untranslateCurrentShortVideo()
+    : Promise.resolve();
+  const currentShortEngagementPanelPromise = settings.untranslateTitle
+    ? untranslateCurrentShortVideoEngagementPanel()
+    : Promise.resolve();
+  const currentShortDescriptionPanelPromise = settings.untranslateTitle
+    ? untranslateCurrentShortVideoDescriptionPanelHeader()
+    : Promise.resolve();
+  const currentShortVideoLinksPromise = settings.untranslateTitle
+    ? untranslateCurrentShortVideoLinks()
+    : Promise.resolve();
+  const otherShortsPromise = settings.untranslateTitle
+    ? untranslateOtherShortsVideos()
+    : Promise.resolve();
+  const currentMobileVideoDescriptionPromise = settings.untranslateTitle
+    ? untranslateCurrentMobileVideoDescriptionHeader()
+    : Promise.resolve();
+  const currentMobileFeaturedVideoChannel = settings.untranslateTitle
+    ? untranslateCurrentMobileFeaturedVideoChannel()
+    : Promise.resolve();
   const currentEmbeddedVideoMobileFullScreenPromise =
-    untranslateCurrentEmbeddedVideoMobileFullScreen();
+    settings.untranslateTitle ||
+    settings.untranslateDescription ||
+    settings.untranslateChannelBranding
+      ? untranslateCurrentEmbeddedVideoMobileFullScreen()
+      : Promise.resolve();
 
   // Wait for all promises to resolve concurrently
   await Promise.all([
@@ -1023,8 +1075,16 @@ async function untranslate() {
   ]);
 
   // update intersect observers
-  updateObserverOtherVideosOnIntersect();
-  updateObserverOtherShortsOnIntersect();
+  if (
+    settings.untranslateTitle ||
+    settings.untranslateDescription ||
+    settings.untranslateChannelBranding
+  ) {
+    updateObserverOtherVideosOnIntersect();
+  }
+  if (settings.untranslateTitle) {
+    updateObserverOtherShortsOnIntersect();
+  }
 }
 
 // Initialize the extension

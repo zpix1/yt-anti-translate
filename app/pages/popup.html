@@ -230,7 +230,7 @@
       }
 
       /* Dim the entire row for visual feedback */
-      .options:has(#audio-checkbox:not(:checked)) .option:nth-child(2) {
+      .options:has(#audio-checkbox:not(:checked)) .option:nth-child(3) {
         opacity: 0.5;
       }
     </style>
@@ -253,6 +253,10 @@
         </div>
         <button id="disable-button">Disable</button>
         <div class="options">
+          <div class="option">
+            <span>Untranslate titles</span>
+            <input id="title-checkbox" type="checkbox" checked />
+          </div>
           <div class="option">
             <span>Untranslate audio track</span>
             <input id="audio-checkbox" type="checkbox" checked />
