@@ -654,6 +654,20 @@ async function restoreOriginalDescriptionAndAuthor() {
   }
 
   if (originalAuthor) {
+    if (
+      await window.YoutubeAntiTranslate.isWhitelistedChannel(
+        "whiteListUntranslateChannelBranding",
+        null,
+        null,
+        null,
+        originalAuthor,
+      )
+    ) {
+      window.YoutubeAntiTranslate.logInfo(
+        "Channel is whitelisted, skipping branding untranslation",
+      );
+      return;
+    }
     await handleAuthor(originalAuthor, originalTitle);
   }
 }
@@ -665,6 +679,21 @@ async function restoreOriginalAuthorOnly() {
   const originalAuthor = fetchOriginalAuthor();
 
   if (!originalAuthor) {
+    return;
+  }
+
+  if (
+    await window.YoutubeAntiTranslate.isWhitelistedChannel(
+      "whiteListUntranslateChannelBranding",
+      null,
+      null,
+      null,
+      originalAuthor,
+    )
+  ) {
+    window.YoutubeAntiTranslate.logInfo(
+      "Channel is whitelisted, skipping branding untranslation",
+    );
     return;
   }
 

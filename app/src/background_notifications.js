@@ -14,33 +14,40 @@ async function fetchOriginalTitle(videoId) {
 
   const oembedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}`;
   try {
-    let response = await fetch(oembedUrl);
-    if (!response.ok) {
-      if (response?.status === 401) {
+    let response = await window.YoutubeAntiTranslate.cachedRequest(oembedUrl);
+    if (
+      !response ||
+      !response.response ||
+      !response.response.ok ||
+      !response.data?.thumbnail_url
+    ) {
+      if (response?.response?.status === 401) {
         // 401 likely means the video is restricted try again with youtubeI
         response =
           await window.YoutubeAntiTranslate.getVideoTitleFromYoutubeI(videoId);
-        if (!response.ok) {
+        if (!response?.response?.ok || !response.data?.title) {
           window.YoutubeAntiTranslate.logWarning(
-            `YoutubeI title request failed (${response.status}) for video ${videoId}`,
+            `YoutubeI title request failed for video ${videoId}`,
           );
-          window.YoutubeAntiTranslate.setSessionCache(cacheKey, null);
-          return { originalTitle: null };
-        } else {
-          window.YoutubeAntiTranslate.setSessionCache(cacheKey, response.title);
-          return { originalTitle: response.title };
+          return;
         }
       }
-      window.YoutubeAntiTranslate.logWarning(
-        `oEmbed request failed (${response.status}) for video ${videoId}`,
+    }
+
+    if (
+      await window.YoutubeAntiTranslate.isWhitelistedChannel(
+        "whiteListUntranslateTitle",
+        null,
+        response.data.author_url,
+      )
+    ) {
+      window.YoutubeAntiTranslate.logInfo(
+        "Channel is whitelisted, skipping thumbnail untranslation",
       );
-      window.YoutubeAntiTranslate.setSessionCache(cacheKey, null);
       return { originalTitle: null };
     }
-    const data = await response.json();
-    const title = data.title || null;
-    window.YoutubeAntiTranslate.setSessionCache(cacheKey, title);
-    return { originalTitle: title };
+
+    return { originalTitle: response.data.title };
   } catch (err) {
     window.YoutubeAntiTranslate.logWarning(
       `oEmbed fetch error for video ${videoId}:`,

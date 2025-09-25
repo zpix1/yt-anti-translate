@@ -144,7 +144,6 @@ function saveOptions() {
       untranslateChannelBranding: true,
       whiteListUntranslateChannelBranding: [],
       untranslateNotification: true,
-      whiteListUntranslateNotification: [],
       untranslateThumbnail: true,
       whiteListUntranslateThumbnail: [],
       youtubeDataApiKey: null,
@@ -190,7 +189,6 @@ function loadOptions() {
       untranslateChannelBranding: true,
       whiteListUntranslateChannelBranding: [],
       untranslateNotification: true,
-      whiteListUntranslateNotification: [],
       untranslateThumbnail: true,
       whiteListUntranslateThumbnail: [],
       youtubeDataApiKey: null,
@@ -236,8 +234,6 @@ function loadOptions() {
         items.whiteListUntranslateChapters.join("\n");
       document.getElementById("whitelist-channel-branding-input").value =
         items.whiteListUntranslateChannelBranding.join("\n");
-      document.getElementById("whitelist-notification-input").value =
-        items.whiteListUntranslateNotification.join("\n");
       document.getElementById("whitelist-thumbnail-input").value =
         items.whiteListUntranslateThumbnail.join("\n");
     },
@@ -495,15 +491,6 @@ function addListeners() {
         "whitelist-channel-branding-input",
         "whitelist-channel-branding-status",
         "whiteListUntranslateChannelBranding",
-      );
-    });
-  document
-    .getElementById("save-whitelist-notification-button")
-    .addEventListener("click", () => {
-      validateAndSaveWhitelist(
-        "whitelist-notification-input",
-        "whitelist-notification-status",
-        "whiteListUntranslateNotification",
       );
     });
   document

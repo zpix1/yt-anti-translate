@@ -28,6 +28,7 @@ It is much easier to use than its analogues (such as [YoutubeAutotranslateCancel
 - Works on youtube-nocookie.com
 - Works on embeded YouTube videos
 - Works automatically without any configuration
+- "Advanced Settings" to allow translations for specified channels (using the @ handle of any channel)
 
 > [!WARNING]
 > For compatibility with [DeArrow](https://github.com/ajayyy/DeArrow) it is recommended do disable "Untranslate titles" and "Untranslate video thumbnails".

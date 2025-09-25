@@ -340,7 +340,7 @@
             <span>Untranslate audio track</span>
             <input id="audio-checkbox" type="checkbox" checked />
           </div>
-          <div class="option" style="padding-left: 10px; font-size: 14px;">
+          <div class="option" style="padding-left: 20px; font-size: 14px;">
             <span>Only for AI-dubbed audio</span>
             <input id="audio-only-ai-checkbox" type="checkbox" />
           </div>
@@ -379,7 +379,7 @@
             </div>
             <div id="whitelist-container">
               <label for="whitelist-title-input">
-                Allow specific channels to be ignored from "Untranslate titles"<br>
+                Allow specific channels to be ignored from "Untranslate titles" and "Untranslate notification titles"<br>
                 <small>(one handle per line, begins with @, no spaces or special characters [except underscores (_), hyphens (-), periods (.), Latin middle dots (·) allowed inside the handle])</small>
               </label>
               <textarea id="whitelist-title-input" rows="4" placeholder="@channel1&#xA;@channel2"></textarea>
@@ -421,15 +421,6 @@
               <textarea id="whitelist-channel-branding-input" rows="4" placeholder="@channel1&#xA;@channel2"></textarea>
               <button id="save-whitelist-channel-branding-button" class="simple-button"><span id="save-whitelist-channel-branding-text">Save Whitelist</span></button>
               <div id="whitelist-channel-branding-status" class="whitelist-status"></div>
-            </div>
-            <div id="whitelist-container">
-              <label for="whitelist-notification-input">
-                Allow specific channels to be ignored from "Untranslate notification titles"<br>
-                <small>(one handle per line, begins with @, no spaces or special characters [except underscores (_), hyphens (-), periods (.), Latin middle dots (·) allowed inside the handle])</small>
-              </label>
-              <textarea id="whitelist-notification-input" rows="4" placeholder="@channel1&#xA;@channel2"></textarea>
-              <button id="save-whitelist-notification-button" class="simple-button"><span id="save-whitelist-notifications-text">Save Whitelist</span></button>
-              <div id="whitelist-notification-status" class="whitelist-status"></div>
             </div>
             <div id="whitelist-container">
               <label for="whitelist-thumbnail-input">

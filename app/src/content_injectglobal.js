@@ -15,7 +15,6 @@ chrome.storage.sync.get(
     untranslateChannelBranding: true,
     whiteListUntranslateChannelBranding: [],
     untranslateNotification: true,
-    whiteListUntranslateNotification: [],
     untranslateThumbnail: true,
     whiteListUntranslateThumbnail: [],
   },
