@@ -133,13 +133,20 @@ function saveOptions() {
       disabled: false,
       autoreloadOption: true,
       untranslateTitle: true,
+      whiteListUntranslateTitle: [],
       untranslateAudio: true,
       untranslateAudioOnlyAI: false,
+      whiteListUntranslateAudio: [],
       untranslateDescription: true,
+      whiteListUntranslateDescription: [],
       untranslateChapters: true,
+      whiteListUntranslateChapters: [],
       untranslateChannelBranding: true,
+      whiteListUntranslateChannelBranding: [],
       untranslateNotification: true,
+      whiteListUntranslateNotification: [],
       untranslateThumbnail: true,
+      whiteListUntranslateThumbnail: [],
       youtubeDataApiKey: null,
     },
     function (items) {
@@ -172,13 +179,20 @@ function loadOptions() {
       disabled: false,
       autoreloadOption: true,
       untranslateTitle: true,
+      whiteListUntranslateTitle: [],
       untranslateAudio: true,
       untranslateAudioOnlyAI: false,
+      whiteListUntranslateAudio: [],
       untranslateDescription: true,
+      whiteListUntranslateDescription: [],
       untranslateChapters: true,
+      whiteListUntranslateChapters: [],
       untranslateChannelBranding: true,
+      whiteListUntranslateChannelBranding: [],
       untranslateNotification: true,
+      whiteListUntranslateNotification: [],
       untranslateThumbnail: true,
+      whiteListUntranslateThumbnail: [],
       youtubeDataApiKey: null,
     },
     function (items) {
@@ -212,6 +226,20 @@ function loadOptions() {
       document.getElementById("api-key-input").value = items.youtubeDataApiKey;
       document.getElementById("thumbnail-checkbox").checked =
         items.untranslateThumbnail;
+      document.getElementById("whitelist-title-input").value =
+        items.whiteListUntranslateTitle.join("\n");
+      document.getElementById("whitelist-audio-input").value =
+        items.whiteListUntranslateAudio.join("\n");
+      document.getElementById("whitelist-description-input").value =
+        items.whiteListUntranslateDescription.join("\n");
+      document.getElementById("whitelist-chapters-input").value =
+        items.whiteListUntranslateChapters.join("\n");
+      document.getElementById("whitelist-channel-branding-input").value =
+        items.whiteListUntranslateChannelBranding.join("\n");
+      document.getElementById("whitelist-notification-input").value =
+        items.whiteListUntranslateNotification.join("\n");
+      document.getElementById("whitelist-thumbnail-input").value =
+        items.whiteListUntranslateThumbnail.join("\n");
     },
   );
 }
@@ -237,6 +265,79 @@ function checkboxUpdate() {
     },
     () => {
       reloadActiveYouTubeTab();
+    },
+  );
+}
+
+function validateAndSaveWhitelist(textareaId, statusTestId, storageKey) {
+  // Verify that the textarea has:
+  // - one handle per line
+  // - begins with @
+  // - have no spaces
+  // - does not contain urls special characters
+  // note: underscores (_), hyphens (-), periods (.), Latin middle dots (·) allowed
+  //       with exceptions of usage the beginning or end of a handle
+
+  const textarea = document.getElementById(textareaId);
+  if (!textarea) {
+    return;
+  }
+
+  const lines = textarea.value.split("\n");
+  const validLines = [];
+  const invalidLines = [];
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (trimmed.length === 0) {
+      continue; // Skip empty lines
+    }
+    if (
+      trimmed.startsWith("@") &&
+      !trimmed.includes(" ") &&
+      !/[^\w\s_\-.·@]/.test(trimmed) &&
+      !/[_.\-·]$/.test(trimmed) &&
+      !/^@[_.\-·]/.test(trimmed)
+    ) {
+      validLines.push(trimmed);
+    } else {
+      invalidLines.push(trimmed);
+    }
+  }
+
+  const status = document.getElementById(statusTestId);
+  if (invalidLines.length > 0) {
+    if (status) {
+      status.textContent = `❌ Invalid entries: ${invalidLines.join(", ")}`;
+      status.className = "whitelist-status error";
+    }
+    if (validLines.length === 0) {
+      return;
+    }
+  }
+
+  chrome.storage.sync.set(
+    {
+      [storageKey]: validLines,
+    },
+    () => {
+      if (status) {
+        if (invalidLines.length > 0) {
+          status.textContent += `\n✅ Valid entries saved: ${validLines.join(", ")}`;
+          status.className = "whitelist-status partial-success";
+          setTimeout(() => {
+            status.textContent = status.textContent.split("\n")[0]; // Keep only the first line (errors)
+            status.className = "whitelist-status error";
+          }, 3000);
+          return;
+        }
+        status.textContent = "✅ Whitelist saved!";
+        status.className = "success whitelist-status";
+        setTimeout(() => {
+          status.textContent = "";
+          status.className = "whitelist-status";
+        }, 3000);
+      }
     },
   );
 }
@@ -277,6 +378,18 @@ function apiKeyUpdate() {
   }, 1500);
 }
 
+function adjustHeight() {
+  // if viewport height is more than 600px (not extension popup)
+  // then remove 'max-height' restriction form '.scroll-wrapper'
+  const scrollWrapper = document.querySelector(".scroll-wrapper");
+  if (scrollWrapper) {
+    const viewportHeight = window.innerHeight;
+    if (viewportHeight > 600) {
+      scrollWrapper.style.maxHeight = "none";
+    }
+  }
+}
+
 function addListeners() {
   document
     .getElementById("request-permission-button")
@@ -314,9 +427,76 @@ function addListeners() {
   document
     .getElementById("save-api-key-button")
     .addEventListener("click", apiKeyUpdate);
+  document
+    .getElementById("save-whitelist-title-button")
+    .addEventListener("click", () => {
+      validateAndSaveWhitelist(
+        "whitelist-title-input",
+        "whitelist-title-status",
+        "whiteListUntranslateTitle",
+      );
+    });
+  document
+    .getElementById("save-whitelist-audio-button")
+    .addEventListener("click", () => {
+      validateAndSaveWhitelist(
+        "whitelist-audio-input",
+        "whitelist-audio-status",
+        "whiteListUntranslateAudio",
+      );
+    });
+  document
+    .getElementById("save-whitelist-description-button")
+    .addEventListener("click", () => {
+      validateAndSaveWhitelist(
+        "whitelist-description-input",
+        "whitelist-description-status",
+        "whiteListUntranslateDescription",
+      );
+    });
+  document
+    .getElementById("save-whitelist-chapters-button")
+    .addEventListener("click", () => {
+      validateAndSaveWhitelist(
+        "whitelist-chapters-input",
+        "whitelist-chapters-status",
+        "whiteListUntranslateChapters",
+      );
+    });
+  document
+    .getElementById("save-whitelist-channel-branding-button")
+    .addEventListener("click", () => {
+      validateAndSaveWhitelist(
+        "whitelist-channel-branding-input",
+        "whitelist-channel-branding-status",
+        "whiteListUntranslateChannelBranding",
+      );
+    });
+  document
+    .getElementById("save-whitelist-notification-button")
+    .addEventListener("click", () => {
+      validateAndSaveWhitelist(
+        "whitelist-notification-input",
+        "whitelist-notification-status",
+        "whiteListUntranslateNotification",
+      );
+    });
+  document
+    .getElementById("save-whitelist-thumbnail-button")
+    .addEventListener("click", () => {
+      validateAndSaveWhitelist(
+        "whitelist-thumbnail-input",
+        "whitelist-thumbnail-status",
+        "whiteListUntranslateThumbnail",
+      );
+    });
 }
 
 document.addEventListener("DOMContentLoaded", renderFooterLinks);
 document.addEventListener("DOMContentLoaded", checkPermissions);
+document.addEventListener("DOMContentLoaded", adjustHeight);
 document.addEventListener("DOMContentLoaded", loadOptions);
 document.addEventListener("DOMContentLoaded", addListeners);
+document.addEventListener("DOMContentLoaded", () => {
+  requestAnimationFrame(adjustHeight);
+});

@@ -1826,4 +1826,24 @@ ytm-shorts-lockup-view-model`,
       height: img.naturalHeight,
     };
   },
+
+  isWhitelistedHandle: function (handle, whiteListType) {
+    if (
+      !handle ||
+      typeof handle !== "string" ||
+      handle.trim() === "" ||
+      !handle.startsWith("@")
+    ) {
+      this.logWarning(`isWhitelistedHandle: invalid handle: ${handle}`);
+      return false;
+    }
+
+    const settings = this.getSettings();
+    const /** @type {string[]} */ whitelist = settings?.[whiteListType];
+    if (!whitelist) {
+      throw new Error(`Unsupported whiteListType: ${whiteListType}`);
+    }
+
+    return whitelist.includes(handle.toLowerCase());
+  },
 };

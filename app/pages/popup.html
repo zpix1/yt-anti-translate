@@ -27,7 +27,7 @@
 
       .container {
         padding: 20px 15px 20px 20px;
-        width: 230px;
+        width: 400px;
         height: fit-content;
         text-align: center;
       }
@@ -46,6 +46,14 @@
         border-radius: 50%;
         font-size: 22px;
         color: #fff;
+      }
+
+      .partial-success {
+        color: rgb(199, 143, 0);
+      }
+
+      .error {
+        color: rgb(160, 0, 0);
       }
 
       .status.enabled {
@@ -170,6 +178,18 @@
           background-color: #121212;
           color: #f0f0f0;
         }
+
+        small {
+          color: #cacaca;
+        }
+
+        .partial-success {
+          color: rgb(255, 206, 83);
+        }
+
+        .error {
+          color: rgb(255, 87, 87);
+        }
         
         .advanced-options-summary {
           color: #66d9ef;
@@ -233,6 +253,30 @@
       .options:has(#audio-checkbox:not(:checked)) .option:nth-child(3) {
         opacity: 0.5;
       }
+      
+      #whitelist-container {
+        margin-top: 10px;
+        margin-bottom: 10px;
+      }
+
+      input, textarea {
+        color: rgb(26, 26, 26);
+      }
+
+      #whitelist-container > label {
+        font-size: 13px;
+        margin-top: 8px;
+      }
+
+      #whitelist-container > textarea {
+        width: 100%; 
+        box-sizing: border-box;
+      }
+
+      #whitelist-container > .whitelist-status {
+        font-size: 12px; 
+        margin-top: 4px;
+      }
     </style>
   </head>
 
@@ -282,7 +326,7 @@
             <input id="notification-checkbox" type="checkbox" checked />
           </div>
           <div class="option">
-            <span>Untranslate video thumbnails</span>
+            <span>Untranslate video/shorts thumbnails</span>
             <input id="thumbnail-checkbox" type="checkbox" checked />
           </div>
           <div class="option">
@@ -297,6 +341,69 @@
               </span>
               <input id="api-key-input" type="password" placeholder="Enter API key" />
               <button id="save-api-key-button" class="simple-button"><span id="save-api-key-text">Save API Key</span></button>
+            </div>
+            <div id="whitelist-container">
+              <label for="whitelist-title-input">
+                Allow specific channels to be ignored from "Untranslate titles"<br>
+                <small>(one handle per line, begins with @, no spaces or special characters [except underscores (_), hyphens (-), periods (.), Latin middle dots (·) allowed inside the handle])</small>
+              </label>
+              <textarea id="whitelist-title-input" rows="4" placeholder="@channel1&#xA;@channel2"></textarea>
+              <button id="save-whitelist-title-button" class="simple-button"><span id="save-whitelist-title-text">Save Whitelist</span></button>
+              <div id="whitelist-title-status" class="whitelist-status"></div>
+            </div>
+            <div id="whitelist-container">
+              <label for="whitelist-audio-input">
+                Allow specific channels to be ignored from "Untranslate audio"<br>
+                <small>(one handle per line, begins with @, no spaces or special characters [except <b>_-.·</b> inside the handle])</small>
+              </label>
+              <textarea id="whitelist-audio-input" rows="4" placeholder="@channel1&#xA;@channel2"></textarea>
+              <button id="save-whitelist-audio-button" class="simple-button"><span id="save-whitelist-audio-text">Save Whitelist</span></button>
+              <div id="whitelist-audio-status" class="whitelist-status" style="font-size: 12px; margin-top: 4px;"></div>
+            </div>
+            <div id="whitelist-container">
+              <label for="whitelist-description-input">
+                Allow specific channels to be ignored from "Untranslate description"<br>
+                <small>(one handle per line, begins with @, no spaces or special characters [except underscores (_), hyphens (-), periods (.), Latin middle dots (·) allowed inside the handle])</small>
+              </label>
+              <textarea id="whitelist-description-input" rows="4" placeholder="@channel1&#xA;@channel2"></textarea>
+              <button id="save-whitelist-description-button" class="simple-button"><span id="save-whitelist-description-text">Save Whitelist</span></button>
+              <div id="whitelist-description-status" class="whitelist-status"></div>
+            </div>
+            <div id="whitelist-container">
+              <label for="whitelist-chapters-input">
+                Allow specific channels to be ignored from "Untranslate video chapters"<br>
+                <small>(one handle per line, begins with @, no spaces or special characters [except underscores (_), hyphens (-), periods (.), Latin middle dots (·) allowed inside the handle])</small>
+              </label>
+              <textarea id="whitelist-chapters-input" rows="4" placeholder="@channel1&#xA;@channel2"></textarea>
+              <button id="save-whitelist-chapters-button" class="simple-button"><span id="save-whitelist-chapters-text">Save Whitelist</span></button>
+              <div id="whitelist-chapters-status" class="whitelist-status"></div>
+            </div>
+            <div id="whitelist-container">
+              <label for="whitelist-channel-branding-input">
+                Allow specific channels to be ignored from "Untranslate channel branding"<br>
+                <small>(one handle per line, begins with @, no spaces or special characters [except underscores (_), hyphens (-), periods (.), Latin middle dots (·) allowed inside the handle])</small>
+              </label>
+              <textarea id="whitelist-channel-branding-input" rows="4" placeholder="@channel1&#xA;@channel2"></textarea>
+              <button id="save-whitelist-channel-branding-button" class="simple-button"><span id="save-whitelist-channel-branding-text">Save Whitelist</span></button>
+              <div id="whitelist-channel-branding-status" class="whitelist-status"></div>
+            </div>
+            <div id="whitelist-container">
+              <label for="whitelist-notification-input">
+                Allow specific channels to be ignored from "Untranslate notification titles"<br>
+                <small>(one handle per line, begins with @, no spaces or special characters [except underscores (_), hyphens (-), periods (.), Latin middle dots (·) allowed inside the handle])</small>
+              </label>
+              <textarea id="whitelist-notification-input" rows="4" placeholder="@channel1&#xA;@channel2"></textarea>
+              <button id="save-whitelist-notification-button" class="simple-button"><span id="save-whitelist-notifications-text">Save Whitelist</span></button>
+              <div id="whitelist-notification-status" class="whitelist-status"></div>
+            </div>
+            <div id="whitelist-container">
+              <label for="whitelist-thumbnail-input">
+                Allow specific channels to be ignored from "Untranslate video/shorts thumbnails"<br>
+                <small>(one handle per line, begins with @, no spaces or special characters [except underscores (_), hyphens (-), periods (.), Latin middle dots (·) allowed inside the handle])</small>
+              </label>
+              <textarea id="whitelist-thumbnail-input" rows="4" placeholder="@channel1&#xA;@channel2"></textarea>
+              <button id="save-whitelist-thumbnail-button" class="simple-button"><span id="save-whitelist-thumbnail-text">Save Whitelist</span></button>
+              <div id="whitelist-thumbnail-status" class="whitelist-status"></div>
             </div>
           </details>
         </div>
