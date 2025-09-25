@@ -654,20 +654,6 @@ async function restoreOriginalDescriptionAndAuthor() {
   }
 
   if (originalAuthor) {
-    if (
-      await window.YoutubeAntiTranslate.isWhitelistedChannel(
-        "whiteListUntranslateChannelBranding",
-        null,
-        null,
-        null,
-        originalAuthor,
-      )
-    ) {
-      window.YoutubeAntiTranslate.logInfo(
-        "Channel is whitelisted, skipping branding untranslation",
-      );
-      return;
-    }
     await handleAuthor(originalAuthor, originalTitle);
   }
 }
@@ -682,6 +668,11 @@ async function restoreOriginalAuthorOnly() {
     return;
   }
 
+  await handleAuthor(originalAuthor);
+}
+
+// Author handler
+async function handleAuthor(originalAuthor, originalTitle = null) {
   if (
     await window.YoutubeAntiTranslate.isWhitelistedChannel(
       "whiteListUntranslateChannelBranding",
@@ -697,11 +688,6 @@ async function restoreOriginalAuthorOnly() {
     return;
   }
 
-  await handleAuthor(originalAuthor);
-}
-
-// Author handler
-async function handleAuthor(originalAuthor, originalTitle = null) {
   // We should skip this operation if the video player was embedded as it does not have the author above the description
   const player = window.YoutubeAntiTranslate.getFirstVisible(
     document.querySelectorAll(window.YoutubeAntiTranslate.getPlayerSelector()),
