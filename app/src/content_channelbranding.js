@@ -431,7 +431,7 @@ async function untranslateBranding() {
   if (isChannelPage) {
     if (
       await window.YoutubeAntiTranslate.isWhitelistedChannel(
-        "whiteListUntranslateChannelBranding",
+        "whiteListUntranslateThumbnail",
         null,
         document.location.href,
       )
@@ -643,6 +643,9 @@ async function restoreCollaboratorsDialog() {
               originalItem.name,
             )
           ) {
+            window.YoutubeAntiTranslate.logInfo(
+              "Channel is whitelisted, skipping branding untranslation",
+            );
             return;
           }
           window.YoutubeAntiTranslate.replaceTextOnly(

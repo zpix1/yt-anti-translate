@@ -929,6 +929,9 @@ async function updateCollaboratorAuthors(avatarStack, originalAuthor) {
             collaboratorAuthorsOnly[0],
           )
         ) {
+          window.YoutubeAntiTranslate.logInfo(
+            "Channel is whitelisted, skipping branding untranslation",
+          );
           return;
         }
 

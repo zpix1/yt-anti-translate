@@ -740,6 +740,19 @@ async function untranslateOtherVideos(intersectElements = null) {
           /* -------- Handle video thumbnail untranslation -------- */
           const originalThumbnail = response.data.thumbnail_url;
           if (settings.untranslateThumbnail && originalThumbnail) {
+            if (
+              await window.YoutubeAntiTranslate.isWhitelistedChannel(
+                "whiteListUntranslateChannelBranding",
+                null,
+                response.data.author_url,
+              )
+            ) {
+              window.YoutubeAntiTranslate.logInfo(
+                "Channel is whitelisted, skipping thumbnail untranslation",
+              );
+              return;
+            }
+
             const thumbnailElements = video.querySelectorAll(
               'img[src*="i.ytimg.com"]:not(.ytd-moving-thumbnail-renderer):not([src*="ytimg.com/an_webp/"])',
             );
@@ -883,6 +896,9 @@ async function untranslateOtherVideos(intersectElements = null) {
                       collaboratorAuthorsOnly[0],
                     )
                   ) {
+                    window.YoutubeAntiTranslate.logInfo(
+                      "Channel is whitelisted, skipping branding untranslation",
+                    );
                     return;
                   }
                   const authorsElement = video.querySelector(
@@ -1093,6 +1109,19 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
             /* -------- Handle video thumbnail untranslation -------- */
             const originalThumbnail = response.data.thumbnail_url;
             if (settings.untranslateThumbnail && originalThumbnail) {
+              if (
+                await window.YoutubeAntiTranslate.isWhitelistedChannel(
+                  "whiteListUntranslateChannelBranding",
+                  null,
+                  response.data.author_url,
+                )
+              ) {
+                window.YoutubeAntiTranslate.logInfo(
+                  "Channel is whitelisted, skipping thumbnail untranslation",
+                );
+                return;
+              }
+
               const thumbnailElements = shortElement.querySelectorAll(
                 'img[src*="i.ytimg.com"]',
               );
@@ -1197,6 +1226,19 @@ async function untranslateCurrentPlayerBackgroundThumbnail() {
         }
       }
 
+      if (
+        await window.YoutubeAntiTranslate.isWhitelistedChannel(
+          "whiteListUntranslateChannelBranding",
+          null,
+          response.data.author_url,
+        )
+      ) {
+        window.YoutubeAntiTranslate.logInfo(
+          "Channel is whitelisted, skipping thumbnail untranslation",
+        );
+        return;
+      }
+
       let originalThumbnail =
         response.data.maxresdefault_url || response.data.thumbnail_url;
       if (originalThumbnail) {
@@ -1248,36 +1290,77 @@ async function untranslateCurrentPlaylistHeaderThumbnail() {
   }
 
   for (const playlistHeadersImage of playlistHeadersImages) {
-    let imageSrc = playlistHeadersImage.src;
+    const imageSrc = playlistHeadersImage.src;
     if (!imageSrc || imageSrc.trim() === "") {
       continue;
     }
 
-    if (imageSrc.includes("/vi_lc/")) {
-      const { width, height } =
-        await window.YoutubeAntiTranslate.getImageSize(imageSrc);
+    // Extract video ID from URL
+    const videoId = window.YoutubeAntiTranslate.extractVideoIdFromUrl(imageSrc);
 
-      // Remove any query parameters to get the base URL
-      imageSrc = imageSrc.split("?")[0];
-      playlistHeadersImage.src = imageSrc;
+    if (!videoId) {
+      return;
+    }
 
-      // Replace /vi_lc/ with /vi/ to get the original thumbnail
-      imageSrc = imageSrc.replace(/\/vi_lc\//g, "/vi/");
-
-      // Remove any language code (_[a-z]{2,3}) from the filename.jpg
-      imageSrc = imageSrc.replace(/_[a-z]{2,3}(\.jpg|\.webp|\.png)$/, "$1");
-      playlistHeadersImage.src = imageSrc;
-
-      playlistHeadersImage.src = `${imageSrc}?youtube-anti-translate=${Date.now()}`;
-
-      // Add crop ratio to image
-      if (width && height) {
-        const cropRatio = width / height;
-        if (cropRatio) {
-          playlistHeadersImage.style.aspectRatio = cropRatio;
-          playlistHeadersImage.style.objectFit = "cover";
+    const oembedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}`;
+    try {
+      let response = await cachedRequest(oembedUrl);
+      if (
+        !response ||
+        !response.response ||
+        !response.response.ok ||
+        !response.data?.thumbnail_url
+      ) {
+        if (response?.response?.status === 401) {
+          // 401 likely means the video is restricted try again with youtubeI
+          response =
+            await window.YoutubeAntiTranslate.getVideoTitleFromYoutubeI(
+              videoId,
+            );
+          if (!response?.response?.ok || !response.data?.title) {
+            window.YoutubeAntiTranslate.logWarning(
+              `YoutubeI title request failed for video ${videoId}`,
+            );
+            return;
+          }
         }
       }
+
+      if (
+        await window.YoutubeAntiTranslate.isWhitelistedChannel(
+          "whiteListUntranslateChannelBranding",
+          null,
+          response.data.author_url,
+        )
+      ) {
+        window.YoutubeAntiTranslate.logInfo(
+          "Channel is whitelisted, skipping thumbnail untranslation",
+        );
+        return;
+      }
+
+      if (imageSrc.includes(response.data.thumbnail_url)) {
+        const { width, height } =
+          await window.YoutubeAntiTranslate.getImageSize(imageSrc);
+
+        playlistHeadersImage.src = response.data.thumbnail_url;
+
+        // Add crop ratio to image
+        if (width && height) {
+          const cropRatio = width / height;
+          if (cropRatio) {
+            playlistHeadersImage.style.aspectRatio = cropRatio;
+            playlistHeadersImage.style.objectFit = "cover";
+          }
+        }
+      }
+    } catch (error) {
+      window.YoutubeAntiTranslate.logInfo(
+        `Error fetching oEmbed for current playlist header thumbnail:`,
+        videoId,
+        error,
+      );
+      return;
     }
   }
 }
