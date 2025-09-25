@@ -568,18 +568,29 @@ async function untranslateOtherVideos(intersectElements = null) {
           return;
         }
 
+        const hrefFilter = '[href*="/watch?v="]';
         // Find link and title elements typical for standard videos
         let linkElement =
-          video.querySelector("a#video-title-link") ||
-          video.querySelector("a#thumbnail") ||
-          video.querySelector("a.media-item-thumbnail-container") ||
-          video.querySelector("div.media-item-metadata > a") ||
-          video.querySelector("ytd-playlist-panel-video-renderer a") ||
-          video.querySelector("ytm-video-card-renderer a") ||
-          video.querySelector("a.yt-lockup-metadata-view-model__title") ||
-          (video.matches("a.ytp-videowall-still") ? video : null) ||
-          (video.matches("a.ytp-ce-covering-overlay") ? video : null) ||
-          (video.matches("a.ytp-suggestion-link") ? video : null);
+          video.querySelector(`a#video-title-link${hrefFilter}`) ||
+          video.querySelector(`a#thumbnail${hrefFilter}`) ||
+          video.querySelector(
+            `a.media-item-thumbnail-container${hrefFilter}`,
+          ) ||
+          video.querySelector(`div.media-item-metadata > a${hrefFilter}`) ||
+          video.querySelector(
+            `ytd-playlist-panel-video-renderer a${hrefFilter}`,
+          ) ||
+          video.querySelector(`ytm-video-card-renderer a${hrefFilter}`) ||
+          video.querySelector(
+            `a.yt-lockup-metadata-view-model__title${hrefFilter}`,
+          ) ||
+          (video.matches(`a.ytp-videowall-still${hrefFilter}`)
+            ? video
+            : null) ||
+          (video.matches(`a.ytp-ce-covering-overlay${hrefFilter}`)
+            ? video
+            : null) ||
+          (video.matches(`a.ytp-suggestion-link${hrefFilter}`) ? video : null);
         let titleElement =
           video.querySelector("#video-title:not(.cbCustomTitle)") ||
           video.querySelector(
@@ -614,8 +625,8 @@ async function untranslateOtherVideos(intersectElements = null) {
           // Try another common pattern before giving up
           if (!linkElement) {
             linkElement =
-              video.querySelector("ytd-thumbnail a") ||
-              video.querySelector(`a[href*="/watch?v="]`);
+              video.querySelector(`ytd-thumbnail a${hrefFilter}`) ||
+              video.querySelector(`a${hrefFilter}`);
             if (!linkElement) {
               // extract video id from thumbnail as last resort
               const thumbnail = video.querySelector('img[src*="i.ytimg.com"]');
@@ -951,7 +962,9 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
 
         // Find link element to get URL
         let linkElement =
-          shortElement.querySelector("a.shortsLockupViewModelHostEndpoint") ||
+          shortElement.querySelector(
+            'a.shortsLockupViewModelHostEndpoint[href*="/shorts/"]',
+          ) ||
           shortElement.querySelector(`a[href*="/shorts/"]`) ||
           shortElement.querySelector(`a[href*="/watch?v="]`); // This is for compatibility with [No YouTube Shorts](https://addons.mozilla.org/en-US/firefox/addon/no-youtube-shorts/)
         if (!linkElement || !linkElement.href) {

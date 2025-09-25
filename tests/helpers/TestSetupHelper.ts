@@ -25,12 +25,17 @@ export async function handleRetrySetup(
   testInfo: TestInfo,
   browserNameWithExtensions: string,
   localeString: string,
+  isMobile: boolean = false,
 ) {
   if (testInfo.retry > 0) {
     console.log("retrying test", testInfo.title, "doing setup again");
     // If this test is retrying then check uBlock and Auth again
     expect(
-      await setupUBlockAndAuth([browserNameWithExtensions], [localeString]),
+      await setupUBlockAndAuth(
+        [browserNameWithExtensions],
+        [localeString],
+        isMobile,
+      ),
     ).toBe(true);
   }
 }
@@ -87,11 +92,13 @@ export async function setupPageWithAuth(
   context: BrowserContext | Browser,
   browserNameWithExtensions: string,
   localeString: string,
+  isMobile: boolean = false,
 ) {
   const result = await newPageWithStorageStateIfItExists(
     context,
     browserNameWithExtensions,
     localeString,
+    isMobile,
   );
   const page = result.page;
   const localeLoaded = result.localeLoaded;

@@ -9,7 +9,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const authFileLocationBase = path.join(__dirname, "../../playwright/.auth/");
-const authFileName = "user.json";
+const authFileBase = "user";
 
 import "dotenv/config";
 import { Browser, BrowserContext, Page } from "@playwright/test";
@@ -24,6 +24,7 @@ export async function newPageWithStorageStateIfItExists(
   context: Browser | BrowserContext,
   browserName: string,
   locale: string,
+  isMobile: boolean = false,
 ) {
   console.log(
     `[AuthStorage] Initializing with browser: ${browserName}, locale: ${locale}`,
@@ -43,7 +44,11 @@ export async function newPageWithStorageStateIfItExists(
   switch (browserName) {
     case "chromium":
     case "firefox":
-      authFile = path.join(authFileLocationBase, browserName, authFileName);
+      authFile = path.join(
+        authFileLocationBase,
+        browserName,
+        `${authFileBase}${isMobile ? "_mobile" : ""}.json`,
+      );
       console.log(`[AuthStorage] Auth file path: ${authFile}`);
       break;
     default:
@@ -59,7 +64,7 @@ export async function newPageWithStorageStateIfItExists(
       file = path.join(
         authFileLocationBase,
         browserName,
-        `user_${locale}.json`,
+        `${authFileBase}_${locale}${isMobile ? "_mobile" : ""}.json`,
       );
       console.log(`[AuthStorage] Locale-specific auth file: ${file}`);
       break;
@@ -164,9 +169,16 @@ export async function newPageWithStorageStateIfItExists(
  * @param {Page} page
  * @returns {Locator|null}
  */
-export async function findLoginButton(page: Page, isMobile: boolean = false) {
+export async function findLoginButton(
+  page: Page,
+  isMobile: boolean = false,
+  isSetup: boolean = false,
+) {
   if (isMobile) {
-    if (page.url().includes("/watch?v=") || page.url().includes("/shorts/")) {
+    if (
+      !isSetup /* this element cannot be used in setup as it is not interactive */ &&
+      (page.url().includes("/watch?v=") || page.url().includes("/shorts/"))
+    ) {
       console.log(
         `[AuthStorage] Searching for "Subscribe" button on mobile shorts`,
       );
@@ -184,13 +196,48 @@ export async function findLoginButton(page: Page, isMobile: boolean = false) {
       }
     } else {
       console.log(`[AuthStorage] Searching for login button on mobile`);
-      const locator = page
-        .locator("ytm-pivot-bar-item-renderer > .pivot-you svg:visible")
-        .first();
-      if (await locator.isVisible()) {
-        return locator;
+      const possibleLabels = ["You", "Вы", "คุณ"];
+      for (const label of possibleLabels) {
+        const youTab = page.getByRole("tab", { name: label }).first();
+        const containsIconLocator = youTab.locator("svg:visible").first();
+        if (
+          (await youTab.isVisible()) &&
+          (await containsIconLocator.isVisible())
+        ) {
+          // If this is not setup we can skip this as it already confirms the test is not logged in
+          if (isSetup) {
+            await youTab.scrollIntoViewIfNeeded();
+            await youTab.click();
+            await page.waitForTimeout(500);
+            try {
+              await page.waitForLoadState("networkidle", { timeout: 5000 });
+            } catch {
+              console.log(
+                `[AuthStorage] Network idle timeout after mobile click`,
+              );
+            }
+            const possibleLabels2 = ["Sign in", "Войти", "ลงชื่อเข้าใช้"];
+            for (const label of possibleLabels2) {
+              console.log(
+                `[AuthStorage] Checking for login button with label: "${label}"`,
+              );
+              const button = page.getByRole(`link`, { name: label }).first();
+              if (await button.isVisible()) {
+                console.log(
+                  `[AuthStorage] Found login button with label: "${label}"`,
+                );
+                return button;
+              }
+            }
+          }
+          console.log(
+            `[AuthStorage] Found login button with label: "${label}"`,
+          );
+          return youTab;
+        }
       }
     }
+    console.log(`[AuthStorage] No login button found`);
   } else {
     console.log(`[AuthStorage] Searching for login button`);
     const possibleLabels = ["Sign in", "Войти", "ลงชื่อเข้าใช้"];
@@ -210,16 +257,18 @@ export async function findLoginButton(page: Page, isMobile: boolean = false) {
 }
 
 /**
- * @param {BrowserContext} context
+ * @param {BrowserContext | Browser} context
  * @param {Page} page
  * @param {string} browserName
  * @param {string} locale
+ * @param {boolean} isMobile - optional, default false
  */
 export async function handleGoogleLogin(
-  context: BrowserContext,
+  context: BrowserContext | Browser,
   page: Page,
   browserName: string,
   locale: string,
+  isMobile: boolean = false,
 ) {
   console.log(
     `[AuthStorage] Starting Google login process for ${browserName} with locale ${locale}`,
@@ -232,7 +281,7 @@ export async function handleGoogleLogin(
   }
 
   //Check if we need to login
-  const button = await findLoginButton(page);
+  const button = await findLoginButton(page, isMobile, true);
   if (button && (await button.isVisible())) {
     console.log(`[AuthStorage] Login required, clicking login button`);
     await button.scrollIntoViewIfNeeded();
@@ -244,93 +293,142 @@ export async function handleGoogleLogin(
 
   //Check youtube locale is set correctly
   console.log(`[AuthStorage] Checking and setting YouTube locale`);
-  const avatarButton = page.locator("#masthead #avatar-btn");
-  if (await avatarButton.isVisible()) {
-    console.log(
-      `[AuthStorage] Avatar button found, clicking to access settings`,
-    );
-    await avatarButton.scrollIntoViewIfNeeded();
-    await avatarButton.click();
-    await page.waitForTimeout(500);
+
+  if (isMobile) {
+    await page.goto("https://m.youtube.com/select_site");
+
     try {
       await page.waitForLoadState("networkidle", { timeout: 5000 });
     } catch {
       console.log(`[AuthStorage] Network idle timeout after avatar click`);
     }
 
-    const locationButton = page.locator(
-      "yt-multi-page-menu-section-renderer:nth-child(3) > #items > ytd-compact-link-renderer:nth-child(3) > a#endpoint",
-    );
-    if (await locationButton.isVisible()) {
-      console.log(`[AuthStorage] Location/Language button found, clicking`);
-      await locationButton.scrollIntoViewIfNeeded();
-      await locationButton.click();
+    await page.getByRole("button").first().waitFor();
+
+    const settingsLabels = ["General", "Generali", "Общие", "ทั่วไป"];
+    for (const label of settingsLabels) {
+      const settingsButton = page.getByRole("button", { name: label }).first();
+      if (await settingsButton.isVisible()) {
+        console.log(
+          `[AuthStorage] Found settings button with label: "${label}"`,
+        );
+        await settingsButton.scrollIntoViewIfNeeded();
+        await settingsButton.click();
+
+        const languageLabels = ["Language", "Lingua", "Язык", "ภาษา"];
+        for (const langLabel of languageLabels) {
+          const languageButton = page
+            .getByRole("button", { name: langLabel })
+            .first();
+          if (await languageButton.isVisible()) {
+            console.log(
+              `[AuthStorage] Found language button with label: "${langLabel}"`,
+            );
+            await languageButton.scrollIntoViewIfNeeded();
+            await languageButton.click();
+            break;
+          } else {
+            console.log(`[AuthStorage] Language button not found`);
+          }
+        }
+        break;
+      } else {
+        console.log(`[AuthStorage] General Settings button not found`);
+      }
+    }
+  } else {
+    const avatarButton = page.locator("#masthead #avatar-btn");
+    if (await avatarButton.isVisible()) {
+      console.log(
+        `[AuthStorage] Avatar button found, clicking to access settings`,
+      );
+      await avatarButton.scrollIntoViewIfNeeded();
+      await avatarButton.click();
       await page.waitForTimeout(500);
       try {
         await page.waitForLoadState("networkidle", { timeout: 5000 });
       } catch {
-        console.log(
-          `[AuthStorage] Network idle timeout after location button click`,
-        );
+        console.log(`[AuthStorage] Network idle timeout after avatar click`);
       }
 
-      let languageOption;
-
-      switch (locale) {
-        case "ru-RU":
-          console.log(`[AuthStorage] Setting language to Russian`);
-          languageOption = page.getByRole("link", { name: "Русский" }).first();
-          break;
-        case "th-TH":
-          console.log(`[AuthStorage] Setting language to Thai`);
-          languageOption = page.getByRole("link", { name: "ภาษาไทย" }).first();
-          break;
-        default:
-          console.error(
-            `[AuthStorage] Unsupported locale for language setting: ${locale}`,
+      const locationButton = page.locator(
+        "yt-multi-page-menu-section-renderer:nth-child(3) > #items > ytd-compact-link-renderer:nth-child(3) > a#endpoint",
+      );
+      if (await locationButton.isVisible()) {
+        console.log(`[AuthStorage] Location/Language button found, clicking`);
+        await locationButton.scrollIntoViewIfNeeded();
+        await locationButton.click();
+        await page.waitForTimeout(500);
+        try {
+          await page.waitForLoadState("networkidle", { timeout: 5000 });
+        } catch {
+          console.log(
+            `[AuthStorage] Network idle timeout after location button click`,
           );
-          throw "handleGoogleLogin: Unsupported locale";
-      }
-
-      await languageOption.scrollIntoViewIfNeeded();
-      await languageOption.click();
-      console.log(
-        `[AuthStorage] Language option clicked, waiting for page to update`,
-      );
-      await page.waitForTimeout(5000);
-
-      const localeStoragePath = path.join(
-        authFileLocationBase,
-        browserName,
-        `user_${locale}.json`,
-      );
-
-      if (browserName === "chromium") {
-        console.log(
-          `[AuthStorage] Saving locale-specific storage state for Chromium: ${localeStoragePath}`,
-        );
-        // for chromium we must use persistent context so save the storageState from the browserContext intead of pageContext
-        await context.storageState({
-          path: localeStoragePath,
-        });
+        }
       } else {
-        console.log(
-          `[AuthStorage] Saving locale-specific storage state for ${browserName}: ${localeStoragePath}`,
-        );
-        await page.context().storageState({
-          path: localeStoragePath,
-        });
-      }
-      try {
-        await page.waitForLoadState("networkidle", { timeout: 5000 });
-      } catch {
-        console.log(`[AuthStorage] Network idle timeout after language change`);
+        console.log(`[AuthStorage] Location/Language button not found`);
       }
     } else {
-      console.log(`[AuthStorage] Location/Language button not found`);
+      console.log(`[AuthStorage] Avatar button not found`);
     }
+  }
+
+  let languageOption;
+
+  switch (locale) {
+    case "ru-RU":
+      console.log(`[AuthStorage] Setting language to Russian`);
+      languageOption = page
+        .getByRole(isMobile ? "option" : "link", { name: "Русский" })
+        .first();
+      break;
+    case "th-TH":
+      console.log(`[AuthStorage] Setting language to Thai`);
+      languageOption = page
+        .getByRole(isMobile ? "option" : "link", { name: "ภาษาไทย" })
+        .first();
+      break;
+    default:
+      console.error(
+        `[AuthStorage] Unsupported locale for language setting: ${locale}`,
+      );
+      throw "handleGoogleLogin: Unsupported locale";
+  }
+
+  await languageOption.scrollIntoViewIfNeeded();
+  await languageOption.click();
+  console.log(
+    `[AuthStorage] Language option clicked, waiting for page to update`,
+  );
+  await page.waitForTimeout(5000);
+
+  const localeStoragePath = path.join(
+    authFileLocationBase,
+    browserName,
+    `${authFileBase}_${locale}${isMobile ? "_mobile" : ""}.json`,
+  );
+
+  if (browserName === "chromium") {
+    console.log(
+      `[AuthStorage] Saving locale-specific storage state for Chromium: ${localeStoragePath}`,
+    );
+    // for chromium we must use persistent context so save the storageState from the browserContext intead of pageContext
+    await (context as BrowserContext).storageState({
+      path: localeStoragePath,
+    });
   } else {
-    console.log(`[AuthStorage] Avatar button not found`);
+    console.log(
+      `[AuthStorage] Saving locale-specific storage state for ${browserName}: ${localeStoragePath}`,
+    );
+    await page.context().storageState({
+      path: localeStoragePath,
+    });
+  }
+  try {
+    await page.waitForLoadState("networkidle", { timeout: 5000 });
+  } catch {
+    console.log(`[AuthStorage] Network idle timeout after language change`);
   }
 
   async function continueLoginSteps(page: any) {
@@ -345,7 +443,9 @@ export async function handleGoogleLogin(
     const nextText = /Next|Далее|ถัดไป/i;
 
     console.log(`[AuthStorage] Filling in email: ${process.env.GOOGLE_USER}`);
-    await page.locator("#identifierId").fill(process.env.GOOGLE_USER);
+    const emailInput = page.locator("#identifierId, input[type='email']");
+    await emailInput.waitFor();
+    await emailInput.fill(process.env.GOOGLE_USER);
     await page.getByRole("button", { name: nextText }).click();
     try {
       await page.waitForLoadState("networkidle", { timeout: 5000 });
@@ -354,7 +454,11 @@ export async function handleGoogleLogin(
     }
 
     console.log(`[AuthStorage] Filling in password`);
-    await page.locator("#password input").fill(process.env.GOOGLE_PWD);
+    const passwordInput = page.locator(
+      "#password input, input[name='password']",
+    );
+    await passwordInput.waitFor();
+    await passwordInput.fill(process.env.GOOGLE_PWD);
     await page.getByRole("button", { name: nextText }).click();
     try {
       await page.waitForLoadState("networkidle", { timeout: 5000 });
@@ -362,7 +466,8 @@ export async function handleGoogleLogin(
       console.log(`[AuthStorage] Network idle timeout after password step`);
     }
 
-    const totpInput = page.locator("#totpPin");
+    const totpInput = page.locator("#totpPin, input[name='totpPin']");
+    await totpInput.waitFor();
     if (await totpInput.isVisible()) {
       console.log(`[AuthStorage] 2FA required, generating OTP`);
       if (!process.env.GOOGLE_OTP_SECRET) {
@@ -389,7 +494,7 @@ export async function handleGoogleLogin(
     const baseStoragePath = path.join(
       authFileLocationBase,
       browserName,
-      authFileName,
+      `${authFileBase}${isMobile ? "_mobile" : ""}.json`,
     );
 
     if (browserName === "chromium") {
@@ -397,7 +502,7 @@ export async function handleGoogleLogin(
         `[AuthStorage] Saving base storage state for Chromium: ${baseStoragePath}`,
       );
       // for chromium we must use persistent context so save the storageState from the browserContext intead of pageContext
-      await context.storageState({
+      await (context as BrowserContext).storageState({
         path: baseStoragePath,
       });
     } else {

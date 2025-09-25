@@ -1,5 +1,6 @@
-/* eslint-disable  @typescript-eslint/no-explicit-any */
-export async function handleYoutubeConsent(page: any) {
+import { Page } from "@playwright/test";
+
+export async function handleYoutubeConsent(page: Page) {
   await page.waitForTimeout(1000);
   try {
     await page.waitForLoadState("networkidle", { timeout: 5000 });
@@ -25,7 +26,7 @@ export async function handleYoutubeConsent(page: any) {
   // Sometimes YouTube shows a cookies dialog, handle it if it appears
   const possibleLabels = ["Accept all", "Принять все", "ยอมรับทั้งหมด"];
   for (const label of possibleLabels) {
-    const button = page.locator(`button:has-text("${label}")`).first();
+    const button = page.getByRole("button", { name: label }).first();
     if (await button.isVisible()) {
       await button.scrollIntoViewIfNeeded();
       await button.click();

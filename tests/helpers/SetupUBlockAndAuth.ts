@@ -13,6 +13,7 @@ import { handleYoutubeConsent } from "./YoutubeConsentHelper";
 export async function setupUBlockAndAuth(
   allBrowserNameWithExtensions: string[],
   allLocaleStrings: string[],
+  isMobile: boolean,
 ) {
   try {
     for (let index = 0; index < allBrowserNameWithExtensions.length; index++) {
@@ -81,6 +82,7 @@ export async function setupUBlockAndAuth(
           context,
           browserNameWithExtensions,
           localeString,
+          isMobile,
         );
         const page = result.page;
         const localeLoaded = result.localeLoaded;
@@ -117,6 +119,7 @@ export async function setupUBlockAndAuth(
             page,
             browserNameWithExtensions,
             localeString,
+            isMobile,
           );
 
           // If for whatever reason we are not logged in, then fail the setup

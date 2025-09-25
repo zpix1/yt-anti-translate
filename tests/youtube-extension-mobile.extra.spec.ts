@@ -17,8 +17,14 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
   test("YouTube search results channel author name retain original content", async ({
     browserNameWithExtensions,
     localeString,
+    isMobile,
   }, testInfo) => {
-    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
+    await handleRetrySetup(
+      testInfo,
+      browserNameWithExtensions,
+      localeString,
+      isMobile,
+    );
 
     // Launch browser with the extension
     const context = await createBrowserContext(
@@ -32,6 +38,7 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
       context,
       browserNameWithExtensions,
       localeString,
+      isMobile,
     );
 
     const searchUrl = "https://m.youtube.com/results?search_query=mr+beast";
@@ -39,7 +46,7 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
       page,
       searchUrl,
       browserNameWithExtensions,
-      true,
+      isMobile,
     );
 
     // Screenshot for visual verification
@@ -83,8 +90,14 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
   test("YouTube search results video with collaborator retain original content", async ({
     browserNameWithExtensions,
     localeString,
+    isMobile,
   }, testInfo) => {
-    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
+    await handleRetrySetup(
+      testInfo,
+      browserNameWithExtensions,
+      localeString,
+      isMobile,
+    );
 
     // Launch browser with the extension
     const context = await createBrowserContext(browserNameWithExtensions);
@@ -94,6 +107,7 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
       context,
       browserNameWithExtensions,
       localeString,
+      isMobile,
     );
 
     const searchUrl =
@@ -102,7 +116,7 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
       page,
       searchUrl,
       browserNameWithExtensions,
-      true,
+      isMobile,
     );
 
     // Screenshot for visual verification

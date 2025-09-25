@@ -48,6 +48,15 @@ export default defineConfig<TestOptions>({
       },
     },
     {
+      name: "setup-auth-and-ublock-mobile",
+      testMatch: /.*setup\.spec\.ts/,
+      use: {
+        ...devices["Pixel 5"],
+        allBrowserNameWithExtensions: ["chromium"],
+        allLocaleStrings: ["ru-RU", "th-TH"],
+      },
+    },
+    {
       name: "chromium-extension-ru-RU",
       testMatch: /.*extension\.spec\.ts/,
       use: {
@@ -128,7 +137,7 @@ export default defineConfig<TestOptions>({
         },
         locale: "ru-RU",
       },
-      dependencies: ["setup-auth-and-ublock"],
+      dependencies: ["setup-auth-and-ublock-mobile"],
     },
     {
       name: "chromium-extension-mobile-extra-th-TH",
@@ -145,7 +154,7 @@ export default defineConfig<TestOptions>({
         },
         locale: "th-TH",
       },
-      dependencies: ["setup-auth-and-ublock"],
+      dependencies: ["setup-auth-and-ublock-mobile"],
     },
   ],
 });

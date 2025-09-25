@@ -16,9 +16,15 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
   test("Prevents mobile video title auto-translation", async ({
     browserNameWithExtensions,
     localeString,
+    isMobile,
   }, testInfo) => {
     // Handle retries and prerequisite setup
-    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
+    await handleRetrySetup(
+      testInfo,
+      browserNameWithExtensions,
+      localeString,
+      isMobile,
+    );
 
     // Launch a browser context with the extension loaded
     const context = await createBrowserContext(
@@ -32,6 +38,7 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
       context,
       browserNameWithExtensions,
       localeString,
+      isMobile,
     );
 
     // Navigate to the mobile YouTube URL (with timestamp & extra params)
@@ -41,7 +48,7 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
       page,
       mobileVideoUrl,
       browserNameWithExtensions,
-      true,
+      isMobile,
     );
 
     // Capture a screenshot for visual verification
@@ -98,9 +105,15 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
   test("Restores original channel branding on mobile channel page", async ({
     browserNameWithExtensions,
     localeString,
+    isMobile,
   }, testInfo) => {
     // Handle retries and prerequisite setup
-    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
+    await handleRetrySetup(
+      testInfo,
+      browserNameWithExtensions,
+      localeString,
+      isMobile,
+    );
 
     // Launch a browser context with the extension loaded
     const context = await createBrowserContext(
@@ -114,11 +127,17 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
       context,
       browserNameWithExtensions,
       localeString,
+      isMobile,
     );
 
     // Navigate to the MrBeast mobile channel videos tab
     const channelUrl = "https://m.youtube.com/@MrBeast/videos";
-    await loadPageAndVerifyAuth(page, channelUrl, browserNameWithExtensions);
+    await loadPageAndVerifyAuth(
+      page,
+      channelUrl,
+      browserNameWithExtensions,
+      isMobile,
+    );
 
     // Take a screenshot for visual verification
     await page.screenshot({
@@ -146,8 +165,14 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
   test("YouTube channel playlist page contains 'Popular Shorts' playlist", async ({
     browserNameWithExtensions,
     localeString,
+    isMobile,
   }, testInfo) => {
-    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
+    await handleRetrySetup(
+      testInfo,
+      browserNameWithExtensions,
+      localeString,
+      isMobile,
+    );
 
     // Launch browser with the extension
     const context = await createBrowserContext(browserNameWithExtensions);
@@ -157,13 +182,14 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
       context,
       browserNameWithExtensions,
       localeString,
+      isMobile,
     );
 
     await loadPageAndVerifyAuth(
       page,
       "https://www.youtube.com/@NileRed/playlists",
       browserNameWithExtensions,
-      true,
+      isMobile,
     );
 
     // Take a screenshot for visual verification
@@ -195,6 +221,7 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
   test("YouTube owned feed playlists page contains 'owned-playlist-playwright-test' playlist", async ({
     browserNameWithExtensions,
     localeString,
+    isMobile,
   }, testInfo) => {
     /**
      * NOTE WELL
@@ -202,7 +229,12 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
      * If missing you must create it manually as part of setting up the test account.
      */
 
-    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
+    await handleRetrySetup(
+      testInfo,
+      browserNameWithExtensions,
+      localeString,
+      isMobile,
+    );
 
     // Launch browser with the extension
     const context = await createBrowserContext(browserNameWithExtensions);
@@ -212,13 +244,14 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
       context,
       browserNameWithExtensions,
       localeString,
+      isMobile,
     );
 
     await loadPageAndVerifyAuth(
       page,
       "https://www.youtube.com/feed/playlists",
       browserNameWithExtensions,
-      true,
+      isMobile,
     );
 
     // Take a screenshot for visual verification
@@ -260,11 +293,24 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
     await context.close();
   });
 
-  test("YouTube search results page contains NileRed 'Popular Shorts' playlist", async ({
+  test("YouTube video playlist retains original thumbnail of the first video", async ({
     browserNameWithExtensions,
     localeString,
+    isMobile,
   }, testInfo) => {
-    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
+    /**
+     * NOTE WELL
+     * This test requires the account in use to have a playlist named "owned-playlist-playwright-test"
+     * with as first video [@MrBeast "7 Days Stranded At Sea"](https://www.youtube.com/watch?v=yhB3BgJyGl8).
+     * If missing you must create it manually as part of setting up the test account.
+     */
+
+    await handleRetrySetup(
+      testInfo,
+      browserNameWithExtensions,
+      localeString,
+      isMobile,
+    );
 
     // Launch browser with the extension
     const context = await createBrowserContext(browserNameWithExtensions);
@@ -274,13 +320,85 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
       context,
       browserNameWithExtensions,
       localeString,
+      isMobile,
+    );
+
+    await loadPageAndVerifyAuth(
+      page,
+      "https://www.youtube.com/feed/playlists",
+      browserNameWithExtensions,
+      isMobile,
+    );
+
+    // Take a screenshot for visual verification
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-video-playlist-thumbnail-test-mobile.png`,
+    });
+
+    // Wait for the video grid to appear
+    await page.waitForSelector("ytm-rich-item-renderer");
+
+    // --- Check Videos Tab ---
+    const expectedThumbnailSrc =
+      "https://i.ytimg.com/vi/yhB3BgJyGl8/hqdefault.jpg";
+    const originalPlaylistTitle = "owned-playlist-playwright-test";
+    const videoSelector = `ytm-rich-item-renderer:has-text("${originalPlaylistTitle}")`;
+
+    const originalPlaylist = page.locator(videoSelector).first();
+    if (await originalPlaylist.isVisible()) {
+      await page.mouse.wheel(0, 500);
+      await originalPlaylist.scrollIntoViewIfNeeded();
+      try {
+        await page.waitForLoadState("networkidle", { timeout: 5000 });
+      } catch {
+        // empty
+      }
+    }
+
+    // Find the thumbnail image within the located video item
+    const thumbnailImage = originalPlaylist.locator('img[src*="ytimg.com"]');
+    await expect(thumbnailImage).toHaveAttribute("src", expectedThumbnailSrc);
+
+    // Take a screenshot for visual verification
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-video-playlist-thumbnail-test-mobile.png`,
+    });
+
+    // Check console message count
+    expect(consoleMessageCountContainer.count).toBeLessThan(2000);
+
+    // Close the browser context
+    await context.close();
+  });
+
+  test("YouTube search results page contains NileRed 'Popular Shorts' playlist", async ({
+    browserNameWithExtensions,
+    localeString,
+    isMobile,
+  }, testInfo) => {
+    await handleRetrySetup(
+      testInfo,
+      browserNameWithExtensions,
+      localeString,
+      isMobile,
+    );
+
+    // Launch browser with the extension
+    const context = await createBrowserContext(browserNameWithExtensions);
+
+    // Create a new page
+    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
+      context,
+      browserNameWithExtensions,
+      localeString,
+      isMobile,
     );
 
     await loadPageAndVerifyAuth(
       page,
       "https://m.youtube.com/results?search_query=nilered+popular+shorts",
       browserNameWithExtensions,
-      true,
+      isMobile,
     );
 
     // Take a screenshot for visual verification
