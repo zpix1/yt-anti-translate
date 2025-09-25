@@ -255,8 +255,8 @@
       }
       
       #whitelist-container {
-        margin-top: 10px;
-        margin-bottom: 10px;
+        margin-top: 15px;
+        margin-bottom: 15px;
       }
 
       input, textarea {
@@ -277,10 +277,45 @@
         font-size: 12px; 
         margin-top: 4px;
       }
+
+      #expand-popup-link {
+        position: absolute;
+        top: 8px;
+        left: 8px;
+        width: 20px;
+        height: 20px;
+        z-index: 1000;
+      }
+
+      #expand-popup-link img {
+        width: 100%;
+        height: 100%;
+        transform: scaleX(-1); /* mirror horizontally */
+        cursor: pointer;
+        opacity: 0.8;
+        transition: opacity 0.2s ease;
+        filter: invert(41%) sepia(0%) saturate(0%) hue-rotate(181deg) brightness(93%) contrast(88%);
+        /* #666 in light mode */
+      }
+
+      #expand-popup-link img:hover {
+        opacity: 1;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        #expand-popup-link img {
+          filter: invert(86%) sepia(0%) saturate(0%) hue-rotate(181deg) brightness(93%) contrast(88%);
+          /* #cacaca in dark mode */
+        }
+      }
+
     </style>
   </head>
 
   <body id="yt-anti-translate">
+    <a id="expand-popup-link" href="/pages/popup.html" target="_blank" title="Open popup in new tab">
+      <img src="/pages/expand-content-svgrepo-com.svg" alt="Expand" />
+    </a>
     <div class="scroll-wrapper">
       <div class="container">
         <div class="header">YT Anti Translate 1.20.0</div>

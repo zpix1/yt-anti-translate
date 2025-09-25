@@ -1838,28 +1838,31 @@ ytm-shorts-lockup-view-model`,
 
   /**
    * Check if a channel is whitelisted.
-   * @param {string} whiteListType - The type of whitelist to check against.
+   * @param {string} whiteStoragePropertyName - The type of whitelist to check against.
    * @param {string} handle - The channel handle (e.g. "@mrbeast").
    * @param {string} channelId - The channel ID (e.g. "UC123456").
    * @param {string} channelUrl - The channel URL (e.g. "https://www.youtube.com/@mrbeast" or "https://www.youtube.com/channel/UCX6OQ3DkcsbYNE6H8uQQuVA").
    *                              URL like /user/ or /c/ are not supported.
+   * @param {string} channelName - Optional. The channel name (not used for whitelist check, only for logging).
    * @returns {Promise<boolean>} - True if the channel is whitelisted, false otherwise.
    */
   isWhitelistedChannel: async function (
-    whiteListType,
+    whiteStoragePropertyName,
     handle = null,
     channelUrl = null,
     channelId = null,
+    channelName = null,
   ) {
     const settings = this.getSettings();
-    const /** @type {string[]} */ whitelist = settings?.[whiteListType];
+    const /** @type {string[]} */ whitelist =
+        settings?.[whiteStoragePropertyName];
     if (!whitelist) {
-      throw new Error(`Unsupported whiteListType: ${whiteListType}`);
+      throw new Error(`Unsupported whiteListType: ${whiteStoragePropertyName}`);
     }
 
     if (whitelist.length === 0) {
       this.logDebug(
-        `isWhitelistedChannel: ${whiteListType} is empty, no channel is whitelisted`,
+        `isWhitelistedChannel: ${whiteStoragePropertyName} is empty, no channel is whitelisted`,
       );
       return false;
     }
@@ -1871,7 +1874,10 @@ ytm-shorts-lockup-view-model`,
       (!handle || typeof handle !== "string" || handle.trim() === "") &&
       (!channelUrl ||
         typeof channelUrl !== "string" ||
-        channelUrl.trim() === "")
+        channelUrl.trim() === "") &&
+      (!channelName ||
+        typeof channelName !== "string" ||
+        channelName.trim() === "")
     ) {
       return false;
     }
@@ -1905,16 +1911,21 @@ ytm-shorts-lockup-view-model`,
       handle.trim() === "" ||
       !handle.startsWith("@")
     ) {
-      this.logWarning(`isWhitelistedChannel: invalid handle: ${handle}`);
+      if (handle) {
+        this.logInfo(`isWhitelistedChannel: invalid handle: ${handle}`);
+      }
       if (
-        !channelId ||
-        typeof channelId !== "string" ||
-        channelId.trim() === ""
+        (!channelId ||
+          typeof channelId !== "string" ||
+          channelId.trim() === "") &&
+        (!channelName ||
+          typeof channelName !== "string" ||
+          channelName.trim() === "")
       ) {
         return false;
       }
     } else {
-      return whitelist.includes(handle);
+      return whitelist.includes(handle.trim());
     }
 
     if (
@@ -1922,8 +1933,16 @@ ytm-shorts-lockup-view-model`,
       typeof channelId !== "string" ||
       channelId.trim() === ""
     ) {
-      this.logWarning(`isWhitelistedChannel: invalid channelId: ${channelId}`);
-      return false;
+      if (channelId) {
+        this.logInfo(`isWhitelistedChannel: invalid channelId: ${channelId}`);
+      }
+      if (
+        !channelName ||
+        typeof channelName !== "string" ||
+        channelName.trim() === ""
+      ) {
+        return false;
+      }
     } else {
       // Get handle form channel UCID
       const response = await this.getChannelBrandingWithYoutubeI(channelId);
@@ -1931,13 +1950,48 @@ ytm-shorts-lockup-view-model`,
     }
 
     if (!handle) {
-      this.logWarning(
+      this.logInfo(
         `isWhitelistedChannel: could not retrieve handle for channelId: ${channelId}`,
       );
-      return false;
+      if (
+        !channelName ||
+        typeof channelName !== "string" ||
+        channelName.trim() === ""
+      ) {
+        return false;
+      }
+    } else {
+      return whitelist.includes(handle.trim());
     }
 
-    return whitelist.includes(handle);
+    if (
+      !channelName ||
+      typeof channelName !== "string" ||
+      channelName.trim() === ""
+    ) {
+      this.logInfo(`isWhitelistedChannel: invalid channelName: ${channelName}`);
+      return false;
+    } else {
+      // Try to use channelName as handle if does not have spaces
+      if (
+        !channelName.trim().includes(" ") &&
+        whitelist.includes(`@${channelName}`.trim())
+      ) {
+        return true;
+      }
+      // Get handle from channel name
+      const lookupResult = await this.lookupChannelId(channelName);
+      handle = lookupResult?.channelHandle;
+    }
+
+    if (!handle) {
+      this.logInfo(
+        `isWhitelistedChannel: could not retrieve handle for channelName: ${channelName}`,
+      );
+      return false;
+    } else {
+      return whitelist.includes(handle.trim());
+    }
   },
 
   /**
@@ -1997,19 +2051,39 @@ ytm-shorts-lockup-view-model`,
 
     const json = result.data;
 
-    const channelUcid =
-      json.contents?.twoColumnSearchResultsRenderer?.primaryContents
-        .sectionListRenderer?.contents[0].itemSectionRenderer.contents[0]
-        ?.channelRenderer?.channelId || null;
+    let channelUcid;
+    let channelHandle;
 
-    if (!channelUcid) {
+    for (const sectionContent of json.contents?.twoColumnSearchResultsRenderer
+      ?.primaryContents.sectionListRenderer?.contents || []) {
+      for (const itemRenderedContent of sectionContent?.itemSectionRenderer
+        ?.contents || []) {
+        if (
+          itemRenderedContent?.channelRenderer?.title?.simpleText === query ||
+          itemRenderedContent?.subscriberCountText?.simpleText === query
+        ) {
+          channelUcid = itemRenderedContent?.channelRenderer?.channelId;
+          channelHandle =
+            itemRenderedContent?.channelRenderer?.subscriberCountText
+              ?.simpleText;
+          break;
+        }
+      }
+    }
+
+    const response = {
+      channelUcid: channelUcid,
+      channelHandle: channelHandle,
+    };
+
+    if (!response || !response.channelUcid) {
       return;
     }
 
     // Store in cache
-    this.setSessionCache(requestIdentifier, channelUcid);
+    this.setSessionCache(requestIdentifier, response);
 
-    return channelUcid;
+    return response;
   },
 
   getChannelUCIDFromHref: async function (href) {
@@ -2030,7 +2104,8 @@ ytm-shorts-lockup-view-model`,
       if (!handle.startsWith("@")) {
         handle = href.includes("/@") ? `@${handle}` : handle;
       }
-      return await this.lookupChannelId(handle);
+      const lookupResult = await this.lookupChannelId(handle);
+      return lookupResult?.channelUcid;
     }
     return null;
   },
@@ -2056,7 +2131,8 @@ ytm-shorts-lockup-view-model`,
       const match = window.location.pathname.match(/\/user\/([^/?]+)/);
       handle = match ? `${match[1]}` : null;
     }
-    return await window.YoutubeAntiTranslate.lookupChannelId(handle);
+    const lookupResult = await this.lookupChannelId(handle);
+    return lookupResult?.channelUcid;
   },
 
   /**
@@ -2125,7 +2201,7 @@ ytm-shorts-lockup-view-model`,
       for (const metadataPart of metadataRow?.metadataParts || []) {
         if (metadataPart?.text?.content?.startsWith("@")) {
           channelHandle = metadataPart?.text?.content;
-          continue;
+          break;
         }
       }
     }

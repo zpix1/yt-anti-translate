@@ -920,6 +920,18 @@ async function updateCollaboratorAuthors(avatarStack, originalAuthor) {
       );
 
       if (collaboratorAuthorsOnly && collaboratorAuthorsOnly.length === 1) {
+        if (
+          await window.YoutubeAntiTranslate.isWhitelistedChannel(
+            "whiteListUntranslateChannelBranding",
+            null,
+            null,
+            null,
+            collaboratorAuthorsOnly[0],
+          )
+        ) {
+          return;
+        }
+
         const multipleChannelNameContainer =
           window.YoutubeAntiTranslate.getFirstVisible(
             avatarStack

@@ -429,6 +429,18 @@ async function untranslateBranding() {
   );
 
   if (isChannelPage) {
+    if (
+      await window.YoutubeAntiTranslate.isWhitelistedChannel(
+        "whiteListUntranslateChannelBranding",
+        null,
+        document.location.href,
+      )
+    ) {
+      window.YoutubeAntiTranslate.logInfo(
+        "Channel is whitelisted, skipping branding untranslation",
+      );
+      return;
+    }
     const brandingHeaderPromise = restoreOriginalBrandingHeader();
     const brandingAboutPromise = restoreOriginalBrandingAbout();
     const collaboratorsPromise = restoreCollaboratorsDialog();
@@ -588,6 +600,7 @@ async function restoreCollaboratorsDialog() {
         ".yt-list-item-view-model__text-wrapper a.yt-core-attributed-string__link",
       ) || item.querySelector("a.yt-core-attributed-string__link");
     if (!linkEl) {
+      // Fallback to searching for the channel name filtered by search query and avatar image
       if (document.location.href.includes("search_query=")) {
         const search_query = new URLSearchParams(document.location.search).get(
           "search_query",
@@ -621,6 +634,17 @@ async function restoreCollaboratorsDialog() {
             originalItem.name,
           )
         ) {
+          if (
+            await window.YoutubeAntiTranslate.isWhitelistedChannel(
+              "whiteListUntranslateChannelBranding",
+              null,
+              null,
+              null,
+              originalItem.name,
+            )
+          ) {
+            return;
+          }
           window.YoutubeAntiTranslate.replaceTextOnly(
             channelNameEl,
             originalItem.name,
@@ -632,6 +656,20 @@ async function restoreCollaboratorsDialog() {
     }
 
     const href = linkEl.getAttribute("href");
+
+    if (
+      await window.YoutubeAntiTranslate.isWhitelistedChannel(
+        "whiteListUntranslateChannelBranding",
+        null,
+        href,
+      )
+    ) {
+      window.YoutubeAntiTranslate.logInfo(
+        "Channel is whitelisted, skipping branding untranslation",
+      );
+      return;
+    }
+
     const ucid = await window.YoutubeAntiTranslate.getChannelUCIDFromHref(href);
     if (!ucid) {
       return;

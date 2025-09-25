@@ -270,74 +270,87 @@ function checkboxUpdate() {
 }
 
 function validateAndSaveWhitelist(textareaId, statusTestId, storageKey) {
-  // Verify that the textarea has:
-  // - one handle per line
-  // - begins with @
-  // - have no spaces
-  // - does not contain urls special characters
-  // note: underscores (_), hyphens (-), periods (.), Latin middle dots (·) allowed
-  //       with exceptions of usage the beginning or end of a handle
-
-  const textarea = document.getElementById(textareaId);
-  if (!textarea) {
-    return;
-  }
-
-  const lines = textarea.value.split("\n");
-  const validLines = [];
-  const invalidLines = [];
-
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (trimmed.length === 0) {
-      continue; // Skip empty lines
-    }
-    if (
-      trimmed.startsWith("@") &&
-      !trimmed.includes(" ") &&
-      !/[^\w\s_\-.·@]/.test(trimmed) &&
-      !/[_.\-·]$/.test(trimmed) &&
-      !/^@[_.\-·]/.test(trimmed)
-    ) {
-      validLines.push(trimmed);
-    } else {
-      invalidLines.push(trimmed);
-    }
-  }
-
-  const status = document.getElementById(statusTestId);
-  if (invalidLines.length > 0) {
-    if (status) {
-      status.textContent = `❌ Invalid entries: ${invalidLines.join(", ")}`;
-      status.className = "whitelist-status error";
-    }
-    if (validLines.length === 0) {
-      return;
-    }
-  }
-
-  chrome.storage.sync.set(
+  chrome.storage.sync.get(
     {
-      [storageKey]: validLines,
+      autoreloadOption: true,
     },
-    () => {
-      if (status) {
-        if (invalidLines.length > 0) {
-          status.textContent += `\n✅ Valid entries saved: ${validLines.join(", ")}`;
-          status.className = "whitelist-status partial-success";
-          setTimeout(() => {
-            status.textContent = status.textContent.split("\n")[0]; // Keep only the first line (errors)
-            status.className = "whitelist-status error";
-          }, 3000);
+    function (items) {
+      // Verify that the textarea has:
+      // - one handle per line
+      // - begins with @
+      // - have no spaces
+      // - does not contain urls special characters
+      // note: underscores (_), hyphens (-), periods (.), Latin middle dots (·) allowed
+      //       with exceptions of usage the beginning or end of a handle
+
+      const textarea = document.getElementById(textareaId);
+      if (!textarea) {
+        return;
+      }
+
+      const lines = textarea.value.split("\n");
+      const validLines = [];
+      const invalidLines = [];
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed.length === 0) {
+          continue; // Skip empty lines
+        }
+        if (
+          trimmed.startsWith("@") &&
+          !trimmed.includes(" ") &&
+          !/[^\w\s_\-.·@]/.test(trimmed) &&
+          !/[_.\-·]$/.test(trimmed) &&
+          !/^@[_.\-·]/.test(trimmed)
+        ) {
+          validLines.push(trimmed);
+        } else {
+          invalidLines.push(trimmed);
+        }
+      }
+
+      const status = document.getElementById(statusTestId);
+      if (invalidLines.length > 0) {
+        if (status) {
+          status.textContent = `❌ Invalid entries: ${invalidLines.join(", ")}`;
+          status.className = "whitelist-status error";
+        }
+        if (validLines.length === 0) {
           return;
         }
-        status.textContent = "✅ Whitelist saved!";
-        status.className = "success whitelist-status";
-        setTimeout(() => {
-          status.textContent = "";
-          status.className = "whitelist-status";
-        }, 3000);
       }
+
+      chrome.storage.sync.set(
+        {
+          [storageKey]: validLines,
+        },
+        () => {
+          if (status) {
+            if (invalidLines.length > 0) {
+              status.textContent += `\n✅ Valid entries saved: ${validLines.join(", ")}`;
+              status.className = "whitelist-status partial-success";
+              setTimeout(() => {
+                status.textContent = status.textContent.split("\n")[0]; // Keep only the first line (errors)
+                status.className = "whitelist-status error";
+              }, 3000);
+              if (items.autoreloadOption && isPopup()) {
+                reloadActiveYouTubeTab();
+              }
+              return;
+            }
+            status.textContent = "✅ Whitelist saved!";
+            status.className = "success whitelist-status";
+            setTimeout(() => {
+              status.textContent = "";
+              status.className = "whitelist-status";
+            }, 3000);
+            if (items.autoreloadOption && isPopup()) {
+              reloadActiveYouTubeTab();
+            }
+          }
+        },
+      );
     },
   );
 }
@@ -378,14 +391,26 @@ function apiKeyUpdate() {
   }, 1500);
 }
 
-function adjustHeight() {
-  // if viewport height is more than 600px (not extension popup)
+function isPopup() {
+  try {
+    return chrome.extension.getViews({ type: "popup" }).includes(window);
+  } catch {
+    // In case the API isn't available (e.g. not in extension context)
+    return false;
+  }
+}
+
+function optionTabChanges() {
+  // if windows type is not popup
   // then remove 'max-height' restriction form '.scroll-wrapper'
-  const scrollWrapper = document.querySelector(".scroll-wrapper");
-  if (scrollWrapper) {
-    const viewportHeight = window.innerHeight;
-    if (viewportHeight > 600) {
+  if (!isPopup()) {
+    const scrollWrapper = document.querySelector(".scroll-wrapper");
+    if (scrollWrapper) {
       scrollWrapper.style.maxHeight = "none";
+    }
+    const expandLink = document.getElementById("expand-popup-link");
+    if (expandLink) {
+      expandLink.style.visibility = "hidden";
     }
   }
 }
@@ -492,11 +517,8 @@ function addListeners() {
     });
 }
 
+document.addEventListener("DOMContentLoaded", optionTabChanges);
 document.addEventListener("DOMContentLoaded", renderFooterLinks);
 document.addEventListener("DOMContentLoaded", checkPermissions);
-document.addEventListener("DOMContentLoaded", adjustHeight);
 document.addEventListener("DOMContentLoaded", loadOptions);
 document.addEventListener("DOMContentLoaded", addListeners);
-document.addEventListener("DOMContentLoaded", () => {
-  requestAnimationFrame(adjustHeight);
-});

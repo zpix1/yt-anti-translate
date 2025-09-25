@@ -874,6 +874,17 @@ async function untranslateOtherVideos(intersectElements = null) {
                   collaboratorAuthorsOnly &&
                   collaboratorAuthorsOnly.length === 1
                 ) {
+                  if (
+                    await window.YoutubeAntiTranslate.isWhitelistedChannel(
+                      "whiteListUntranslateChannelBranding",
+                      null,
+                      null,
+                      null,
+                      collaboratorAuthorsOnly[0],
+                    )
+                  ) {
+                    return;
+                  }
                   const authorsElement = video.querySelector(
                     `#channel-info yt-formatted-string > a.yt-simple-endpoint, div.media-item-metadata .YtmBadgeAndBylineRendererHost span${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}`,
                   );
