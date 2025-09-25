@@ -10,12 +10,18 @@ test.describe("Setup Auth And UBlock", () => {
     allLocaleStrings,
     isMobile,
   }) => {
-    expect(
-      await setupUBlockAndAuth(
-        allBrowserNameWithExtensions,
-        allLocaleStrings,
-        isMobile,
-      ),
-    ).toBe(true);
+    // If this test is retrying then check uBlock and Auth again
+    const { status, error } = await setupUBlockAndAuth(
+      allBrowserNameWithExtensions,
+      allLocaleStrings,
+      isMobile,
+      false,
+    );
+
+    await expect(status).toBe(true);
+
+    if (error) {
+      console.error("Error during setupUBlockAndAuth:", error);
+    }
   });
 });

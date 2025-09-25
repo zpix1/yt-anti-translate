@@ -1,10 +1,8 @@
-import { expect, BrowserContext, Browser } from "@playwright/test";
+import { expect, BrowserContext, Browser, Page } from "@playwright/test";
 import { test } from "../playwright.config";
 import { handleTestDistribution } from "./helpers/ExtensionsFilesHelper";
 import {
-  handleRetrySetup,
-  createBrowserContext,
-  setupPageWithAuth,
+  setupTestEnvironment,
   loadPageAndVerifyAuth,
 } from "./helpers/TestSetupHelper";
 
@@ -18,25 +16,30 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
   test("YouTube channel branding header and about retain original content - WITH Api Key Set", async ({
     browserNameWithExtensions,
     localeString,
+    isMobile,
   }, testInfo) => {
     expect(process.env.YOUTUBE_API_KEY?.trim() || "").not.toBe("");
-
-    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
 
     // --- Update Extension Settings and distribute a test copy ---
     // The object to be passed and inserted into the start.js file
     const configObject = { youtubeDataApiKey: process.env.YOUTUBE_API_KEY };
     handleTestDistribution(configObject);
 
-    // Launch browser with the extension
-    const context = await createBrowserContext(
-      browserNameWithExtensions,
-      "../testDist",
-    );
+    // Handle retries and prerequisite setup
+    const { context, page, consoleMessageCountContainer } =
+      await setupTestEnvironment(
+        testInfo,
+        browserNameWithExtensions,
+        localeString,
+        isMobile,
+        "../testDist",
+      );
 
     // Create a new page
     await channelBrandingAboutTest(
       context,
+      page,
+      consoleMessageCountContainer,
       browserNameWithExtensions,
       localeString,
     );
@@ -45,18 +48,23 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
   test("YouTube channel branding header and about retain original content - WITHOUT Api Key (YouTubeI)", async ({
     browserNameWithExtensions,
     localeString,
+    isMobile,
   }, testInfo) => {
-    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
-
-    // Launch browser with the extension
-    const context = await createBrowserContext(
-      browserNameWithExtensions,
-      "../../app",
-    );
+    // Handle retries and prerequisite setup
+    const { context, page, consoleMessageCountContainer } =
+      await setupTestEnvironment(
+        testInfo,
+        browserNameWithExtensions,
+        localeString,
+        isMobile,
+        "../../app",
+      );
 
     // Create a new page
     await channelBrandingAboutTest(
       context,
+      page,
+      consoleMessageCountContainer,
       browserNameWithExtensions,
       localeString,
       "-youtubeI",
@@ -66,16 +74,16 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
   test("Collaborators video has collaborator author, opens Collaborators popup, and retains original names (th-TH)", async ({
     browserNameWithExtensions,
     localeString,
+    isMobile,
   }, testInfo) => {
-    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
-
-    const context = await createBrowserContext(browserNameWithExtensions);
-
-    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
-      context,
-      browserNameWithExtensions,
-      localeString,
-    );
+    // Handle retries and prerequisite setup
+    const { context, page, consoleMessageCountContainer } =
+      await setupTestEnvironment(
+        testInfo,
+        browserNameWithExtensions,
+        localeString,
+        isMobile,
+      );
 
     // Navigate to the provided video
     await loadPageAndVerifyAuth(
@@ -133,16 +141,12 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
 
   async function channelBrandingAboutTest(
     context: BrowserContext | Browser,
+    page: Page,
+    consoleMessageCountContainer: { count: number },
     browserNameWithExtensions: string,
     localeString: string,
     addToScreenshotName: string = "",
   ) {
-    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
-      context,
-      browserNameWithExtensions,
-      localeString,
-    );
-
     await loadPageAndVerifyAuth(page, "https://www.youtube.com/@MrBeast");
 
     // Take a screenshot for visual verification
@@ -324,21 +328,16 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
   test("YouTube video player retain original author", async ({
     browserNameWithExtensions,
     localeString,
+    isMobile,
   }, testInfo) => {
-    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
-
-    // Launch browser with the extension
-    const context = await createBrowserContext(
-      browserNameWithExtensions,
-      "../../app",
-    );
-
-    // Create a new page
-    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
-      context,
-      browserNameWithExtensions,
-      localeString,
-    );
+    // Handle retries and prerequisite setup
+    const { context, page, consoleMessageCountContainer } =
+      await setupTestEnvironment(
+        testInfo,
+        browserNameWithExtensions,
+        localeString,
+        isMobile,
+      );
 
     await loadPageAndVerifyAuth(
       page,
@@ -383,18 +382,16 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
   test("YouTube search results channel author name and description retain original content", async ({
     browserNameWithExtensions,
     localeString,
+    isMobile,
   }, testInfo) => {
-    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
-
-    // Launch browser with the extension
-    const context = await createBrowserContext(browserNameWithExtensions);
-
-    // Open new page with auth + extension
-    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
-      context,
-      browserNameWithExtensions,
-      localeString,
-    );
+    // Handle retries and prerequisite setup
+    const { context, page, consoleMessageCountContainer } =
+      await setupTestEnvironment(
+        testInfo,
+        browserNameWithExtensions,
+        localeString,
+        isMobile,
+      );
 
     const searchUrl = "https://www.youtube.com/results?search_query=mr+beast";
     await loadPageAndVerifyAuth(page, searchUrl, browserNameWithExtensions);
@@ -449,18 +446,16 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
   test("YouTube search results video with collaborator retain original content", async ({
     browserNameWithExtensions,
     localeString,
+    isMobile,
   }, testInfo) => {
-    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
-
-    // Launch browser with the extension
-    const context = await createBrowserContext(browserNameWithExtensions);
-
-    // Open new page with auth + extension
-    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
-      context,
-      browserNameWithExtensions,
-      localeString,
-    );
+    // Handle retries and prerequisite setup
+    const { context, page, consoleMessageCountContainer } =
+      await setupTestEnvironment(
+        testInfo,
+        browserNameWithExtensions,
+        localeString,
+        isMobile,
+      );
 
     const searchUrl =
       "https://www.youtube.com/results?search_query=Can+you+safely+drink+your+own+pee";
@@ -503,18 +498,16 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
   test("Non english channel description retains original content", async ({
     browserNameWithExtensions,
     localeString,
+    isMobile,
   }, testInfo) => {
-    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
-
-    // Launch browser with the extension
-    const context = await createBrowserContext(browserNameWithExtensions);
-
-    // Open new page with auth + extension
-    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
-      context,
-      browserNameWithExtensions,
-      localeString,
-    );
+    // Handle retries and prerequisite setup
+    const { context, page, consoleMessageCountContainer } =
+      await setupTestEnvironment(
+        testInfo,
+        browserNameWithExtensions,
+        localeString,
+        isMobile,
+      );
 
     const channelUrl = "https://www.youtube.com/@CARTONIMORTI";
     await loadPageAndVerifyAuth(page, channelUrl, browserNameWithExtensions);

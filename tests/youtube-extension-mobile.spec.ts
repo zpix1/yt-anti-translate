@@ -2,9 +2,7 @@ import { expect } from "@playwright/test";
 import { test } from "../playwright.config";
 
 import {
-  handleRetrySetup,
-  createBrowserContext,
-  setupPageWithAuth,
+  setupTestEnvironment,
   loadPageAndVerifyAuth,
 } from "./helpers/TestSetupHelper";
 
@@ -19,27 +17,13 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
     isMobile,
   }, testInfo) => {
     // Handle retries and prerequisite setup
-    await handleRetrySetup(
-      testInfo,
-      browserNameWithExtensions,
-      localeString,
-      isMobile,
-    );
-
-    // Launch a browser context with the extension loaded
-    const context = await createBrowserContext(
-      browserNameWithExtensions,
-      undefined,
-      true,
-    );
-
-    // Create a page in the context and ensure auth is applied
-    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
-      context,
-      browserNameWithExtensions,
-      localeString,
-      isMobile,
-    );
+    const { context, page, consoleMessageCountContainer } =
+      await setupTestEnvironment(
+        testInfo,
+        browserNameWithExtensions,
+        localeString,
+        isMobile,
+      );
 
     // Navigate to the mobile YouTube URL (with timestamp & extra params)
     const mobileVideoUrl =
@@ -108,27 +92,13 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
     isMobile,
   }, testInfo) => {
     // Handle retries and prerequisite setup
-    await handleRetrySetup(
-      testInfo,
-      browserNameWithExtensions,
-      localeString,
-      isMobile,
-    );
-
-    // Launch a browser context with the extension loaded
-    const context = await createBrowserContext(
-      browserNameWithExtensions,
-      undefined,
-      true,
-    );
-
-    // Create a page in the context and ensure auth is applied
-    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
-      context,
-      browserNameWithExtensions,
-      localeString,
-      isMobile,
-    );
+    const { context, page, consoleMessageCountContainer } =
+      await setupTestEnvironment(
+        testInfo,
+        browserNameWithExtensions,
+        localeString,
+        isMobile,
+      );
 
     // Navigate to the MrBeast mobile channel videos tab
     const channelUrl = "https://m.youtube.com/@MrBeast/videos";
@@ -167,23 +137,14 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
     localeString,
     isMobile,
   }, testInfo) => {
-    await handleRetrySetup(
-      testInfo,
-      browserNameWithExtensions,
-      localeString,
-      isMobile,
-    );
-
-    // Launch browser with the extension
-    const context = await createBrowserContext(browserNameWithExtensions);
-
-    // Create a new page
-    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
-      context,
-      browserNameWithExtensions,
-      localeString,
-      isMobile,
-    );
+    // Handle retries and prerequisite setup
+    const { context, page, consoleMessageCountContainer } =
+      await setupTestEnvironment(
+        testInfo,
+        browserNameWithExtensions,
+        localeString,
+        isMobile,
+      );
 
     await loadPageAndVerifyAuth(
       page,
@@ -229,23 +190,14 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
      * If missing you must create it manually as part of setting up the test account.
      */
 
-    await handleRetrySetup(
-      testInfo,
-      browserNameWithExtensions,
-      localeString,
-      isMobile,
-    );
-
-    // Launch browser with the extension
-    const context = await createBrowserContext(browserNameWithExtensions);
-
-    // Create a new page
-    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
-      context,
-      browserNameWithExtensions,
-      localeString,
-      isMobile,
-    );
+    // Handle retries and prerequisite setup
+    const { context, page, consoleMessageCountContainer } =
+      await setupTestEnvironment(
+        testInfo,
+        browserNameWithExtensions,
+        localeString,
+        isMobile,
+      );
 
     await loadPageAndVerifyAuth(
       page,
@@ -305,23 +257,14 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
      * If missing you must create it manually as part of setting up the test account.
      */
 
-    await handleRetrySetup(
-      testInfo,
-      browserNameWithExtensions,
-      localeString,
-      isMobile,
-    );
-
-    // Launch browser with the extension
-    const context = await createBrowserContext(browserNameWithExtensions);
-
-    // Create a new page
-    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
-      context,
-      browserNameWithExtensions,
-      localeString,
-      isMobile,
-    );
+    // Handle retries and prerequisite setup
+    const { context, page, consoleMessageCountContainer } =
+      await setupTestEnvironment(
+        testInfo,
+        browserNameWithExtensions,
+        localeString,
+        isMobile,
+      );
 
     await loadPageAndVerifyAuth(
       page,
@@ -376,23 +319,14 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
     localeString,
     isMobile,
   }, testInfo) => {
-    await handleRetrySetup(
-      testInfo,
-      browserNameWithExtensions,
-      localeString,
-      isMobile,
-    );
-
-    // Launch browser with the extension
-    const context = await createBrowserContext(browserNameWithExtensions);
-
-    // Create a new page
-    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
-      context,
-      browserNameWithExtensions,
-      localeString,
-      isMobile,
-    );
+    // Handle retries and prerequisite setup
+    const { context, page, consoleMessageCountContainer } =
+      await setupTestEnvironment(
+        testInfo,
+        browserNameWithExtensions,
+        localeString,
+        isMobile,
+      );
 
     await loadPageAndVerifyAuth(
       page,

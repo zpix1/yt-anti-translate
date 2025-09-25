@@ -26,28 +26,89 @@ export async function handleRetrySetup(
   browserNameWithExtensions: string,
   localeString: string,
   isMobile: boolean = false,
-) {
+): Promise<{ context?: BrowserContext | Browser; page?: Page }> {
   if (testInfo.retry > 0) {
     console.log("retrying test", testInfo.title, "doing setup again");
     // If this test is retrying then check uBlock and Auth again
-    expect(
-      await setupUBlockAndAuth(
-        [browserNameWithExtensions],
-        [localeString],
-        isMobile,
-      ),
-    ).toBe(true);
+    const { status, error, context, page } = await setupUBlockAndAuth(
+      [browserNameWithExtensions],
+      [localeString],
+      isMobile,
+      true,
+    );
+
+    await expect(status).toBe(true);
+
+    if (error) {
+      console.error("Error during setupUBlockAndAuth:", error);
+    }
+
+    return { context: context, page: page };
+  } else {
+    return { context: undefined, page: undefined };
   }
+}
+
+// Helper function to create Browser|BrowserContext, Page, and console message counting
+// Used by all tests at start and retrys
+export async function setupTestEnvironment(
+  testInfo: TestInfo,
+  browserNameWithExtensions: string,
+  localeString: string,
+  isMobile: boolean = false,
+  extensionPath: string | undefined = undefined,
+): Promise<{
+  context: BrowserContext | Browser;
+  page: Page;
+  consoleMessageCountContainer: { count: number };
+}> {
+  // Handle retries and prerequisite setup
+  let { context, page } = await handleRetrySetup(
+    testInfo,
+    browserNameWithExtensions,
+    localeString,
+    isMobile,
+  );
+  let consoleMessageCountContainer: { count: number };
+
+  if (!context || !page) {
+    // Launch browser with the extension
+    context = await createBrowserContext(
+      browserNameWithExtensions,
+      extensionPath,
+      isMobile,
+    );
+
+    // Open new page with auth + extension
+    ({ page, consoleMessageCountContainer } = await setupPageWithAuth(
+      context,
+      browserNameWithExtensions,
+      localeString,
+      isMobile,
+    ));
+  } else {
+    // Set up console message counting
+    consoleMessageCountContainer = { count: 0 };
+    page.on("console", () => {
+      consoleMessageCountContainer.count++;
+    });
+  }
+
+  return {
+    context: context,
+    page: page,
+    consoleMessageCountContainer: consoleMessageCountContainer,
+  };
 }
 
 // Helper function to create browser context with extension
 export async function createBrowserContext(
   browserNameWithExtensions: string,
   extensionPath: string = "../../app",
-  mobile: boolean = false,
+  isMobile: boolean = false,
 ): Promise<BrowserContext | Browser> {
   let context;
-  const mobileContextOptions = mobile
+  const mobileContextOptions = isMobile
     ? {
         ...devices["Pixel 5"], // emulate a common Android device
       }
@@ -137,7 +198,9 @@ export async function loadPageAndVerifyAuth(
   await page.waitForTimeout(5000);
 
   // If for whatever reason we are not logged in, then fail the test
-  expect(await findLoginButton(page, isMobile)).toBe(null);
+  expect(await findLoginButton(page, browserNameWithExtensions, isMobile)).toBe(
+    null,
+  );
 
   // When chromium we need to wait some extra time to allow adds to be removed by uBlock Origin Lite
   // Ads are allowed to load and removed after so it takes time

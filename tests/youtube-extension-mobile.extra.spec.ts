@@ -2,9 +2,7 @@ import { expect } from "@playwright/test";
 import { test } from "../playwright.config";
 
 import {
-  handleRetrySetup,
-  createBrowserContext,
-  setupPageWithAuth,
+  setupTestEnvironment,
   loadPageAndVerifyAuth,
 } from "./helpers/TestSetupHelper";
 
@@ -19,27 +17,14 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
     localeString,
     isMobile,
   }, testInfo) => {
-    await handleRetrySetup(
-      testInfo,
-      browserNameWithExtensions,
-      localeString,
-      isMobile,
-    );
-
-    // Launch browser with the extension
-    const context = await createBrowserContext(
-      browserNameWithExtensions,
-      undefined,
-      true,
-    );
-
-    // Open new page with auth + extension
-    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
-      context,
-      browserNameWithExtensions,
-      localeString,
-      isMobile,
-    );
+    // Handle retries and prerequisite setup
+    const { context, page, consoleMessageCountContainer } =
+      await setupTestEnvironment(
+        testInfo,
+        browserNameWithExtensions,
+        localeString,
+        isMobile,
+      );
 
     const searchUrl = "https://m.youtube.com/results?search_query=mr+beast";
     await loadPageAndVerifyAuth(
@@ -92,23 +77,14 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
     localeString,
     isMobile,
   }, testInfo) => {
-    await handleRetrySetup(
-      testInfo,
-      browserNameWithExtensions,
-      localeString,
-      isMobile,
-    );
-
-    // Launch browser with the extension
-    const context = await createBrowserContext(browserNameWithExtensions);
-
-    // Open new page with auth + extension
-    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
-      context,
-      browserNameWithExtensions,
-      localeString,
-      isMobile,
-    );
+    // Handle retries and prerequisite setup
+    const { context, page, consoleMessageCountContainer } =
+      await setupTestEnvironment(
+        testInfo,
+        browserNameWithExtensions,
+        localeString,
+        isMobile,
+      );
 
     const searchUrl =
       "https://m.youtube.com/results?search_query=Can+you+safely+drink+your+own+pee";
