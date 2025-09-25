@@ -1531,6 +1531,14 @@ ytm-shorts-lockup-view-model`,
       thumbnails?.find((thumb) => thumb.url.includes("maxresdefault"))?.url ||
       null;
 
+    const channelId =
+      response?.cachedWithDotNotation?.channelId ||
+      response?.data?.videoDetails?.channelId ||
+      null;
+    const author_url = channelId
+      ? `https://www.youtube.com/channel/${channelId}`
+      : null;
+
     // if thumbnail_url is not null strip it of any query parameters
     if (thumbnail_url) {
       const urlObj = new URL(thumbnail_url);
@@ -1544,6 +1552,7 @@ ytm-shorts-lockup-view-model`,
         data: {
           title: title,
           author_name: author_name,
+          author_url: author_url,
           thumbnail_url: thumbnail_url,
           maxresdefault_url: maxresdefault_url,
         },
@@ -1827,23 +1836,319 @@ ytm-shorts-lockup-view-model`,
     };
   },
 
-  isWhitelistedHandle: function (handle, whiteListType) {
-    if (
-      !handle ||
-      typeof handle !== "string" ||
-      handle.trim() === "" ||
-      !handle.startsWith("@")
-    ) {
-      this.logWarning(`isWhitelistedHandle: invalid handle: ${handle}`);
-      return false;
-    }
-
+  /**
+   * Check if a channel is whitelisted.
+   * @param {string} whiteListType - The type of whitelist to check against.
+   * @param {string} handle - The channel handle (e.g. "@mrbeast").
+   * @param {string} channelId - The channel ID (e.g. "UC123456").
+   * @param {string} channelUrl - The channel URL (e.g. "https://www.youtube.com/@mrbeast" or "https://www.youtube.com/channel/UCX6OQ3DkcsbYNE6H8uQQuVA").
+   *                              URL like /user/ or /c/ are not supported.
+   * @returns {Promise<boolean>} - True if the channel is whitelisted, false otherwise.
+   */
+  isWhitelistedChannel: async function (
+    whiteListType,
+    handle = null,
+    channelUrl = null,
+    channelId = null,
+  ) {
     const settings = this.getSettings();
     const /** @type {string[]} */ whitelist = settings?.[whiteListType];
     if (!whitelist) {
       throw new Error(`Unsupported whiteListType: ${whiteListType}`);
     }
 
-    return whitelist.includes(handle.toLowerCase());
+    if (whitelist.length === 0) {
+      this.logDebug(
+        `isWhitelistedChannel: ${whiteListType} is empty, no channel is whitelisted`,
+      );
+      return false;
+    }
+
+    if (
+      (!channelId ||
+        typeof channelId !== "string" ||
+        channelId.trim() === "") &&
+      (!handle || typeof handle !== "string" || handle.trim() === "") &&
+      (!channelUrl ||
+        typeof channelUrl !== "string" ||
+        channelUrl.trim() === "")
+    ) {
+      return false;
+    }
+
+    let /** @type {URL} */ channelURL = null;
+    if (channelUrl && typeof channelUrl === "string") {
+      const url = channelUrl.startsWith("http")
+        ? channelUrl
+        : window.location.origin + channelUrl;
+      try {
+        channelURL = new URL(url);
+      } catch {
+        this.logWarning(`isWhitelistedChannel: invalid channelUrl: ${url}`);
+      }
+    }
+
+    if (channelURL) {
+      // Extract id or handle from URL
+      if (!channelId && channelURL.pathname.startsWith("/channel/")) {
+        var match = channelURL.pathname.match(/\/channel\/([^/?]+)/);
+        channelId = match ? match[1] : null;
+      } else if (!handle && channelURL.pathname.startsWith("/@")) {
+        const match = channelURL.pathname.match(/\/(@[^/?]+)/);
+        handle = match ? match[1] : null;
+      }
+    }
+
+    if (
+      !handle ||
+      typeof handle !== "string" ||
+      handle.trim() === "" ||
+      !handle.startsWith("@")
+    ) {
+      this.logWarning(`isWhitelistedChannel: invalid handle: ${handle}`);
+      if (
+        !channelId ||
+        typeof channelId !== "string" ||
+        channelId.trim() === ""
+      ) {
+        return false;
+      }
+    } else {
+      return whitelist.includes(handle);
+    }
+
+    if (
+      !channelId ||
+      typeof channelId !== "string" ||
+      channelId.trim() === ""
+    ) {
+      this.logWarning(`isWhitelistedChannel: invalid channelId: ${channelId}`);
+      return false;
+    } else {
+      // Get handle form channel UCID
+      const response = await this.getChannelBrandingWithYoutubeI(channelId);
+      handle = response?.channelHandle || null;
+    }
+
+    if (!handle) {
+      this.logWarning(
+        `isWhitelistedChannel: could not retrieve handle for channelId: ${channelId}`,
+      );
+      return false;
+    }
+
+    return whitelist.includes(handle);
+  },
+
+  /**
+   * Retrieve the UCID of a channel using youtubei/v1/search
+   * @param {string} query the YouTube channel handle (e.g. "@mrbeast" or "MrBeast")
+   * @returns {string} channel UCID
+   */
+  lookupChannelId: async function (query) {
+    if (!query) {
+      return null;
+    }
+
+    let decodedQuery;
+    try {
+      decodedQuery = decodeURIComponent(query);
+    } catch {
+      decodedQuery = query;
+    }
+
+    // build the request body ──
+    const body = {
+      context: {
+        client: {
+          clientName: "WEB",
+          clientVersion: "2.20250527.00.00",
+        },
+      },
+      query: decodedQuery,
+      // "EgIQAg==" = filter=channels  (protobuf: {12: {1:2}})
+      params: "EgIQAg==",
+    };
+
+    const requestIdentifier = `youtubei/v1/search_${JSON.stringify(body)}`;
+
+    // Check cache
+    const storedResponse = this.getSessionCache(requestIdentifier);
+    if (storedResponse) {
+      return storedResponse;
+    }
+
+    const search =
+      "https://www.youtube.com/youtubei/v1/search?prettyPrint=false";
+    const result = await this.cachedRequest(
+      search,
+      JSON.stringify(body),
+      { "content-type": "application/json" },
+      true,
+    );
+
+    if (!result || !result.response || !result.response.ok) {
+      this.logInfo(
+        `Failed to fetch ${search}:`,
+        result?.response?.statusText || "Unknown error",
+      );
+      return;
+    }
+
+    const json = result.data;
+
+    const channelUcid =
+      json.contents?.twoColumnSearchResultsRenderer?.primaryContents
+        .sectionListRenderer?.contents[0].itemSectionRenderer.contents[0]
+        ?.channelRenderer?.channelId || null;
+
+    if (!channelUcid) {
+      return;
+    }
+
+    // Store in cache
+    this.setSessionCache(requestIdentifier, channelUcid);
+
+    return channelUcid;
+  },
+
+  getChannelUCIDFromHref: async function (href) {
+    if (!href) {
+      return null;
+    }
+    // Direct UCID reference
+    const channelMatch = href.match(/\/channel\/([^/?&#]+)/);
+    if (channelMatch && channelMatch[1]) {
+      return channelMatch[1];
+    }
+
+    // Handle paths such as /@handle or /c/Custom or /user/Username
+    const handleMatch = href.match(/\/(?:@|c\/|user\/)([^/?&#]+)/);
+    if (handleMatch && handleMatch[1]) {
+      let handle = handleMatch[1];
+      // restore missing @ for handle form
+      if (!handle.startsWith("@")) {
+        handle = href.includes("/@") ? `@${handle}` : handle;
+      }
+      return await this.lookupChannelId(handle);
+    }
+    return null;
+  },
+
+  /**
+   * Retrieved the Channel UCID (UC...) for the current Channel page using window.location and lookupChannelId() search
+   * @returns {string} channel UCID
+   */
+  getChannelUCID: async function () {
+    if (window.location.pathname.startsWith("/channel/")) {
+      var match = window.location.pathname.match(/\/channel\/([^/?]+)/);
+      return match ? `${match[1]}` : null;
+    }
+
+    let handle = null;
+    if (window.location.pathname.startsWith("/c/")) {
+      const match = window.location.pathname.match(/\/c\/([^/?]+)/);
+      handle = match ? `${match[1]}` : null;
+    } else if (window.location.pathname.startsWith("/@")) {
+      const match = window.location.pathname.match(/\/(@[^/?]+)/);
+      handle = match ? `${match[1]}` : null;
+    } else if (window.location.pathname.startsWith("/user/")) {
+      const match = window.location.pathname.match(/\/user\/([^/?]+)/);
+      handle = match ? `${match[1]}` : null;
+    }
+    return await window.YoutubeAntiTranslate.lookupChannelId(handle);
+  },
+
+  /**
+   * Fetch the About/branding section of a YouTube channel.
+   * @param {string} ucid   Optional Channel ID (starts with "UC…"). Defaults to UCID of the current channel
+   * @param {string} locale Optional BCP-47 tag, e.g. "it-IT" or "fr". Defaults to the user's browser language.
+   * @returns {object}      The title and description branding.
+   */
+  getChannelBrandingWithYoutubeI: async function (ucid = null) {
+    if (!ucid) {
+      ucid = await this.getChannelUCID();
+    }
+    if (!ucid) {
+      this.logInfo(`could not find channel UCID`);
+      return;
+    }
+
+    // 1. get continuation to get country in english
+    // const locale = await getChannelLocale(ucid, "en-US");
+
+    // const [hl, gl] = locale.split(/[-_]/); // "en-US" → ["en", "US"]
+
+    // build the request body
+    const body = {
+      context: {
+        client: {
+          clientName: this.isMobile() ? "MWEB" : "WEB",
+          clientVersion: "2.20250527.00.00",
+          hl: "lo", // Using "Lao" as default that is an unsupported (but valid) language of youtube
+          // That always get the original language as a result
+        },
+      },
+      browseId: ucid,
+    };
+
+    const requestIdentifier = `youtubei/v1/browse_${JSON.stringify(body)}`;
+
+    // Check cache
+    const storedResponse = this.getSessionCache(requestIdentifier);
+    if (storedResponse) {
+      return storedResponse;
+    }
+
+    const browse = `https://${this.isMobile() ? "m" : "www"}.youtube.com/youtubei/v1/browse?prettyPrint=false`;
+    const response = await this.cachedRequest(
+      browse,
+      JSON.stringify(body),
+      await this.getYoutubeIHeadersWithCredentials(),
+      // As it might take too much space
+      true,
+    );
+
+    if (!response?.data) {
+      this.logWarning(`Failed to fetch ${browse} or parse response`);
+      return;
+    }
+
+    const hdr = response.data.header?.pageHeaderRenderer;
+    const metadata = response.data.metadata?.channelMetadataRenderer;
+    const hdrMetadataRows =
+      hdr?.content?.pageHeaderViewModel?.metadata?.contentMetadataViewModel
+        ?.metadataRows;
+
+    let channelHandle;
+    for (const metadataRow of hdrMetadataRows || []) {
+      for (const metadataPart of metadataRow?.metadataParts || []) {
+        if (metadataPart?.text?.content?.startsWith("@")) {
+          channelHandle = metadataPart?.text?.content;
+          continue;
+        }
+      }
+    }
+
+    const result = {
+      title: metadata?.title, // channel name
+      truncatedDescription:
+        hdr?.content?.pageHeaderViewModel?.description
+          ?.descriptionPreviewViewModel?.description?.content,
+      description: metadata?.description, // full description
+      channelHandle: channelHandle,
+    };
+
+    if (!metadata || !hdr) {
+      return;
+    }
+
+    // Store in cache
+    this.setSessionCache(requestIdentifier, result);
+
+    // Store also the successful detected locale that worked
+    // this.setSessionCache(ucid, locale);
+
+    return result;
   },
 };

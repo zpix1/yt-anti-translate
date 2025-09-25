@@ -11,184 +11,6 @@ const CHANNEL_LOCATION_REGEXES = [
 ];
 
 /**
- * Retrieve the UCID of a channel using youtubei/v1/search
- * @param {string} query the YouTube channel handle (e.g. "@mrbeast" or "MrBeast")
- * @returns {string} channel UCID
- */
-async function lookupChannelId(query) {
-  if (!query) {
-    return null;
-  }
-
-  let decodedQuery;
-  try {
-    decodedQuery = decodeURIComponent(query);
-  } catch {
-    decodedQuery = query;
-  }
-
-  // build the request body ──
-  const body = {
-    context: {
-      client: {
-        clientName: "WEB",
-        clientVersion: "2.20250527.00.00",
-      },
-    },
-    query: decodedQuery,
-    // "EgIQAg==" = filter=channels  (protobuf: {12: {1:2}})
-    params: "EgIQAg==",
-  };
-
-  const requestIdentifier = `youtubei/v1/search_${JSON.stringify(body)}`;
-
-  // Check cache
-  const storedResponse =
-    window.YoutubeAntiTranslate.getSessionCache(requestIdentifier);
-  if (storedResponse) {
-    return storedResponse;
-  }
-
-  const search = "https://www.youtube.com/youtubei/v1/search?prettyPrint=false";
-  const result = await window.YoutubeAntiTranslate.cachedRequest(
-    search,
-    JSON.stringify(body),
-    { "content-type": "application/json" },
-    true,
-  );
-
-  if (!result || !result.response || !result.response.ok) {
-    window.YoutubeAntiTranslate.logInfo(
-      `Failed to fetch ${search}:`,
-      result?.response?.statusText || "Unknown error",
-    );
-    return;
-  }
-
-  const json = result.data;
-
-  const channelUcid =
-    json.contents?.twoColumnSearchResultsRenderer?.primaryContents
-      .sectionListRenderer?.contents[0].itemSectionRenderer.contents[0]
-      ?.channelRenderer?.channelId || null;
-
-  if (!channelUcid) {
-    return;
-  }
-
-  // Store in cache
-  window.YoutubeAntiTranslate.setSessionCache(requestIdentifier, channelUcid);
-
-  return channelUcid;
-}
-
-/**
- * Retrieved the Channel UCID (UC...) for the current Channel page using window.location and lookupChannelId() search
- * @returns {string} channel UCID
- */
-async function getChannelUCID() {
-  if (window.location.pathname.startsWith("/channel/")) {
-    var match = window.location.pathname.match(/\/channel\/([^/?]+)/);
-    return match ? `${match[1]}` : null;
-  }
-
-  let handle = null;
-  if (window.location.pathname.startsWith("/c/")) {
-    const match = window.location.pathname.match(/\/c\/([^/?]+)/);
-    handle = match ? `${match[1]}` : null;
-  } else if (window.location.pathname.startsWith("/@")) {
-    const match = window.location.pathname.match(/\/(@[^/?]+)/);
-    handle = match ? `${match[1]}` : null;
-  } else if (window.location.pathname.startsWith("/user/")) {
-    const match = window.location.pathname.match(/\/user\/([^/?]+)/);
-    handle = match ? `${match[1]}` : null;
-  }
-  return await lookupChannelId(handle);
-}
-
-/**
- * Fetch the About/branding section of a YouTube channel.
- * @param {string} ucid   Optional Channel ID (starts with "UC…"). Defaults to UCID of the current channel
- * @param {string} locale Optional BCP-47 tag, e.g. "it-IT" or "fr". Defaults to the user's browser language.
- * @returns {object}      The title and description branding.
- */
-async function getChannelBrandingWithYoutubeI(ucid = null) {
-  if (!ucid) {
-    ucid = await getChannelUCID();
-  }
-  if (!ucid) {
-    window.YoutubeAntiTranslate.logInfo(`could not find channel UCID`);
-    return;
-  }
-
-  // 1. get continuation to get country in english
-  // const locale = await getChannelLocale(ucid, "en-US");
-
-  // const [hl, gl] = locale.split(/[-_]/); // "en-US" → ["en", "US"]
-
-  // build the request body
-  const body = {
-    context: {
-      client: {
-        clientName: window.YoutubeAntiTranslate.isMobile() ? "MWEB" : "WEB",
-        clientVersion: "2.20250527.00.00",
-        hl: "lo", // Using "Lao" as default that is an unsupported (but valid) language of youtube
-        // That always get the original language as a result
-      },
-    },
-    browseId: ucid,
-  };
-
-  const requestIdentifier = `youtubei/v1/browse_${JSON.stringify(body)}`;
-
-  // Check cache
-  const storedResponse =
-    window.YoutubeAntiTranslate.getSessionCache(requestIdentifier);
-  if (storedResponse) {
-    return storedResponse;
-  }
-
-  const browse = `https://${window.YoutubeAntiTranslate.isMobile() ? "m" : "www"}.youtube.com/youtubei/v1/browse?prettyPrint=false`;
-  const response = await window.YoutubeAntiTranslate.cachedRequest(
-    browse,
-    JSON.stringify(body),
-    await window.YoutubeAntiTranslate.getYoutubeIHeadersWithCredentials(),
-    // As it might take too much space
-    true,
-  );
-
-  if (!response?.data) {
-    window.YoutubeAntiTranslate.logWarning(
-      `Failed to fetch ${browse} or parse response`,
-    );
-    return;
-  }
-
-  const hdr = response.data.header?.pageHeaderRenderer;
-  const metadata = response.data.metadata?.channelMetadataRenderer;
-
-  const result = {
-    title: metadata?.title, // channel name
-    truncatedDescription:
-      hdr?.content?.pageHeaderViewModel?.description
-        ?.descriptionPreviewViewModel?.description?.content,
-    description: metadata?.description, // full description
-  };
-
-  if (!metadata || !hdr) {
-    return;
-  }
-
-  // Store in cache
-  window.YoutubeAntiTranslate.setSessionCache(requestIdentifier, result);
-
-  // Store also the successful detected locale that worked
-  // window.YoutubeAntiTranslate.setSessionCache(ucid, locale);
-
-  return result;
-}
-
-/**
  * Retrieved the Channel identifier filter for the current Channel page using location
  * @returns channel filter
  */
@@ -286,7 +108,8 @@ async function restoreOriginalBrandingHeader() {
         }
         if (!originalBrandingData) {
           // Fallback to YouTubeI+i18n if YoutubeDataAPI Key was not set OR if it failed
-          originalBrandingData = await getChannelBrandingWithYoutubeI();
+          originalBrandingData =
+            await window.YoutubeAntiTranslate.getChannelBrandingWithYoutubeI();
         }
 
         if (!originalBrandingData) {
@@ -454,7 +277,8 @@ async function restoreOriginalBrandingAbout() {
         }
         if (!originalBrandingData) {
           // Fallback to YouTubeI+i18n if YoutubeDataAPI Key was not set OR if it failed
-          originalBrandingData = await getChannelBrandingWithYoutubeI();
+          originalBrandingData =
+            await window.YoutubeAntiTranslate.getChannelBrandingWithYoutubeI();
         }
 
         if (!originalBrandingData) {
@@ -684,29 +508,6 @@ function updateSearchResultChannelAuthor(container, originalBrandingData) {
   }
 }
 
-async function getChannelUCIDFromHref(href) {
-  if (!href) {
-    return null;
-  }
-  // Direct UCID reference
-  const channelMatch = href.match(/\/channel\/([^/?&#]+)/);
-  if (channelMatch && channelMatch[1]) {
-    return channelMatch[1];
-  }
-
-  // Handle paths such as /@handle or /c/Custom or /user/Username
-  const handleMatch = href.match(/\/(?:@|c\/|user\/)([^/?&#]+)/);
-  if (handleMatch && handleMatch[1]) {
-    let handle = handleMatch[1];
-    // restore missing @ for handle form
-    if (!handle.startsWith("@")) {
-      handle = href.includes("/@") ? `@${handle}` : handle;
-    }
-    return await lookupChannelId(handle);
-  }
-  return null;
-}
-
 /**
  * Restores original channel branding for channel renderers visible in search results.
  */
@@ -739,12 +540,13 @@ async function restoreOriginalBrandingSearchResults() {
       return;
     }
     const href = linkElement.href;
-    const ucid = await getChannelUCIDFromHref(href);
+    const ucid = await window.YoutubeAntiTranslate.getChannelUCIDFromHref(href);
     if (!ucid) {
       return;
     }
 
-    const originalBrandingData = await getChannelBrandingWithYoutubeI(ucid);
+    const originalBrandingData =
+      await window.YoutubeAntiTranslate.getChannelBrandingWithYoutubeI(ucid);
     if (!originalBrandingData) {
       return;
     }
@@ -830,12 +632,13 @@ async function restoreCollaboratorsDialog() {
     }
 
     const href = linkEl.getAttribute("href");
-    const ucid = await getChannelUCIDFromHref(href);
+    const ucid = await window.YoutubeAntiTranslate.getChannelUCIDFromHref(href);
     if (!ucid) {
       return;
     }
 
-    const branding = await getChannelBrandingWithYoutubeI(ucid);
+    const branding =
+      await window.YoutubeAntiTranslate.getChannelBrandingWithYoutubeI(ucid);
     if (!branding || !branding.title) {
       return;
     }
