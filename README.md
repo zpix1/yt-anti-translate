@@ -32,7 +32,7 @@ It is much easier to use than its analogues (such as [YoutubeAutotranslateCancel
 
 > [!WARNING]
 > For compatibility with [DeArrow](https://github.com/ajayyy/DeArrow) it is recommended do disable "Untranslate titles" and "Untranslate video thumbnails".
-> Using [DeArrow](https://github.com/ajayyy/DeArrow)'s options page, under "Behavior" menu section, you can enable "Default to Original Video Information"
+> You can then use [DeArrow](https://github.com/ajayyy/DeArrow)'s options page, under "Behavior" menu section, and enable "Default to Original Video Information" to still have translated titles and thumbnail from [DeArrow](https://github.com/ajayyy/DeArrow).
 
 ### Enhanced Features Reliability Option
 
@@ -60,7 +60,7 @@ There's also a [Firefox Manifest v3 version](https://addons.mozilla.org/firefox/
    - Please create or update tests if adding new capabilities
    - For running tests on your machine you need a `.env` file with values for `GOOGLE_USER`, `GOOGLE_PWD` and `GOOGLE_OTP_SECRET`.
      > [!NOTE]
-     > Those values should be valid credentials to a Google (YouTube) Account with 2FA OTP enabled and OTP as the highest level of security on the account (aka no "Google prompt" or "Passkeys and security keys" configured).
+     > These `.env` values should be valid credentials to a Google (YouTube) Account with 2FA OTP enabled and OTP as the highest level of security on the account (aka no "Google prompt" or "Passkeys and security keys" configured).
      > `GOOGLE_OTP_SECRET` is the "secret" query parameter of the QR Code that is provided when configuring the 2FA OTP Authenticathor. You can use a QR Code reader to read the text value.
      > It is recommended that you create a test account for this purpose.
 
@@ -99,7 +99,7 @@ You can also show your support by:
 
 ### Contributors
 
-- [namakeingo](https://github.com/namakeingo) - Firefox MV3 Developer
+- [namakeingo](https://github.com/namakeingo) - Collaborator and Main Maintainer - Firefox MV3 Developer
   - [Donate to namakeingo](https://github.com/sponsors/namakeingo)
   - Star the fork [namakeingo/yt-anti-translate-firefox](https://github.com/namakeingo/yt-anti-translate-firefox)
 - [artisticfox8](https://github.com/artisticfox8/yt-anti-translate) - Firefox MV3 Developer
