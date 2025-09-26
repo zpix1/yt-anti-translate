@@ -439,16 +439,16 @@ async function untranslateBranding() {
       window.YoutubeAntiTranslate.logInfo(
         "Channel is whitelisted, skipping channel branding untranslation",
       );
-      return;
+    } else {
+      const brandingHeaderPromise = restoreOriginalBrandingHeader();
+      const brandingAboutPromise = restoreOriginalBrandingAbout();
+      const collaboratorsPromise = restoreCollaboratorsDialog();
+      await Promise.all([
+        brandingHeaderPromise,
+        brandingAboutPromise,
+        collaboratorsPromise,
+      ]);
     }
-    const brandingHeaderPromise = restoreOriginalBrandingHeader();
-    const brandingAboutPromise = restoreOriginalBrandingAbout();
-    const collaboratorsPromise = restoreCollaboratorsDialog();
-    await Promise.all([
-      brandingHeaderPromise,
-      brandingAboutPromise,
-      collaboratorsPromise,
-    ]);
   } else {
     await Promise.all([
       restoreOriginalBrandingSearchResults(),
@@ -601,7 +601,10 @@ async function restoreCollaboratorsDialog() {
       ) || item.querySelector("a.yt-core-attributed-string__link");
     if (!linkEl) {
       // Fallback to searching for the channel name filtered by search query and avatar image
-      if (document.location.href.includes("search_query=")) {
+      if (
+        document.location.pathname.startsWith("/results") &&
+        document.location.search.includes("search_query=")
+      ) {
         const search_query = new URLSearchParams(document.location.search).get(
           "search_query",
         );
@@ -660,21 +663,22 @@ async function restoreCollaboratorsDialog() {
 
     const href = linkEl.getAttribute("href");
 
+    const ucid = await window.YoutubeAntiTranslate.getChannelUCIDFromHref(href);
+    if (!ucid) {
+      return;
+    }
+
     if (
       await window.YoutubeAntiTranslate.isWhitelistedChannel(
         "whiteListUntranslateChannelBranding",
         null,
-        href,
+        null,
+        ucid,
       )
     ) {
       window.YoutubeAntiTranslate.logInfo(
         "Channel is whitelisted, skipping channel branding untranslation",
       );
-      return;
-    }
-
-    const ucid = await window.YoutubeAntiTranslate.getChannelUCIDFromHref(href);
-    if (!ucid) {
       return;
     }
 

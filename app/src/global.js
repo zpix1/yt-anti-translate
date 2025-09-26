@@ -1867,6 +1867,9 @@ ytm-shorts-lockup-view-model`,
       return false;
     }
 
+    // lower case version for case insensitive comparison
+    const lowerCaseWhitelist = whitelist.map((item) => item.toLowerCase());
+
     if (
       (!channelId ||
         typeof channelId !== "string" ||
@@ -1925,7 +1928,7 @@ ytm-shorts-lockup-view-model`,
         return false;
       }
     } else {
-      return whitelist.includes(handle.trim());
+      return lowerCaseWhitelist.includes(handle.trim().toLowerCase());
     }
 
     if (
@@ -1961,7 +1964,7 @@ ytm-shorts-lockup-view-model`,
         return false;
       }
     } else {
-      return whitelist.includes(handle.trim());
+      return lowerCaseWhitelist.includes(handle.trim().toLowerCase());
     }
 
     if (
@@ -1975,7 +1978,7 @@ ytm-shorts-lockup-view-model`,
       // Try to use channelName as handle if does not have spaces
       if (
         !channelName.trim().includes(" ") &&
-        whitelist.includes(`@${channelName}`.trim())
+        lowerCaseWhitelist.includes(`@${channelName}`.trim().toLowerCase())
       ) {
         return true;
       }
@@ -1990,7 +1993,7 @@ ytm-shorts-lockup-view-model`,
       );
       return false;
     } else {
-      return whitelist.includes(handle.trim());
+      return lowerCaseWhitelist.includes(handle.trim().toLowerCase());
     }
   },
 
@@ -2032,6 +2035,7 @@ ytm-shorts-lockup-view-model`,
       return storedResponse;
     }
 
+    // TODO: add support for mobile (MWEB)
     const search =
       "https://www.youtube.com/youtubei/v1/search?prettyPrint=false";
     const result = await this.cachedRequest(
@@ -2060,7 +2064,8 @@ ytm-shorts-lockup-view-model`,
         ?.contents || []) {
         if (
           itemRenderedContent?.channelRenderer?.title?.simpleText === query ||
-          itemRenderedContent?.subscriberCountText?.simpleText === query
+          itemRenderedContent?.channelRenderer?.subscriberCountText
+            ?.simpleText === query
         ) {
           channelUcid = itemRenderedContent?.channelRenderer?.channelId;
           channelHandle =
@@ -2205,6 +2210,7 @@ ytm-shorts-lockup-view-model`,
         }
       }
     }
+    // TODO: check if handle is the same path on mobile
 
     const result = {
       title: metadata?.title, // channel name

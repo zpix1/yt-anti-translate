@@ -406,6 +406,80 @@ describe("YoutubeAntiTranslate.isWhitelistedChannel", () => {
     );
     expect(result).toBe(false);
   });
+  it("returns true if handle matches whitelist with different case", async () => {
+    window.YoutubeAntiTranslate.getSettings = () => ({
+      testWhitelist: ["@Foo"],
+    });
+    const result = await isWhitelistedChannel("testWhitelist", "@foo");
+    expect(result).toBe(true);
+  });
+
+  it("returns true if handle with spaces and different case matches whitelist", async () => {
+    window.YoutubeAntiTranslate.getSettings = () => ({
+      testWhitelist: ["@Foo"],
+    });
+    const result = await isWhitelistedChannel("testWhitelist", "  @fOo  ");
+    expect(result).toBe(true);
+  });
+
+  it("returns true if handle extracted from channelUrl matches whitelist with different case", async () => {
+    window.YoutubeAntiTranslate.getSettings = () => ({
+      testWhitelist: ["@Foo"],
+    });
+    const result = await isWhitelistedChannel(
+      "testWhitelist",
+      null,
+      "https://www.youtube.com/@fOo",
+    );
+    expect(result).toBe(true);
+  });
+
+  it("returns true if handle extracted from channelId matches whitelist with different case", async () => {
+    window.YoutubeAntiTranslate.getSettings = () => ({
+      testWhitelist: ["@Foo"],
+    });
+    window.YoutubeAntiTranslate.getChannelBrandingWithYoutubeI = vi
+      .fn()
+      .mockResolvedValue({ channelHandle: "@fOo" });
+    const result = await isWhitelistedChannel(
+      "testWhitelist",
+      null,
+      null,
+      "UC123",
+    );
+    expect(result).toBe(true);
+  });
+
+  it("returns true if channelName as handle matches whitelist with different case", async () => {
+    window.YoutubeAntiTranslate.getSettings = () => ({
+      testWhitelist: ["@Foo"],
+    });
+    const result = await isWhitelistedChannel(
+      "testWhitelist",
+      null,
+      null,
+      null,
+      "fOo",
+    );
+    expect(result).toBe(true);
+  });
+
+  it("returns true if handle from lookupChannelId(channelName) matches whitelist with different case", async () => {
+    window.YoutubeAntiTranslate.getSettings = () => ({
+      testWhitelist: ["@Foo"],
+    });
+    window.YoutubeAntiTranslate.lookupChannelId = vi
+      .fn()
+      .mockResolvedValue({ channelHandle: "@fOo" });
+    const result = await isWhitelistedChannel(
+      "testWhitelist",
+      null,
+      null,
+      null,
+      "Foo Bar",
+    );
+    expect(result).toBe(true);
+  });
 
   it("returns false if all identifying info is missing", async () => {
     window.YoutubeAntiTranslate.getSettings = () => ({

@@ -586,6 +586,7 @@ async function fetchOriginalDescription() {
       playerResponse?.videoDetails?.shortDescription ||
       playerResponse?.videoDetails?.title ||
       null,
+    title: playerResponse?.videoDetails?.title || null,
     channelId: playerResponse?.videoDetails?.channelId || null,
   };
 }
@@ -651,13 +652,12 @@ async function restoreOriginalDescriptionAndAuthor() {
           window.YoutubeAntiTranslate.logInfo(
             "Channel is whitelisted, skipping video description untranslation",
           );
-          return;
+        } else {
+          updateDescriptionContent(
+            descriptionContainer,
+            originalDescriptionData.shortDescription,
+          );
         }
-
-        updateDescriptionContent(
-          descriptionContainer,
-          originalDescriptionData.shortDescription,
-        );
       } else {
         window.YoutubeAntiTranslate.logWarning(
           `Video Description container not found`,
@@ -678,9 +678,9 @@ async function restoreOriginalDescriptionAndAuthor() {
         window.YoutubeAntiTranslate.logInfo(
           "Channel is whitelisted, skipping video chapters untranslation",
         );
-        return;
+      } else {
+        setupChapters(originalDescriptionData.shortDescription);
       }
-      setupChapters(originalDescriptionData);
     }
   }
 
@@ -716,27 +716,30 @@ async function handleAuthor(originalAuthor, originalTitle = null) {
     window.YoutubeAntiTranslate.logInfo(
       "Channel is whitelisted, skipping channel branding untranslation",
     );
-    return;
-  }
-
-  // We should skip this operation if the video player was embedded as it does not have the author above the description
-  const player = window.YoutubeAntiTranslate.getFirstVisible(
-    document.querySelectorAll(window.YoutubeAntiTranslate.getPlayerSelector()),
-  );
-  if (player && player.id === "c4-player") {
-    return;
-  }
-
-  const authorContainers = window.YoutubeAntiTranslate.getAllVisibleNodes(
-    document.querySelectorAll(AUTHOR_SELECTOR),
-  );
-
-  if (authorContainers) {
-    for (const authorContainer of authorContainers) {
-      updateAuthorContent(authorContainer, originalAuthor);
-    }
   } else {
-    window.YoutubeAntiTranslate.logWarning(`Video Author container not found`);
+    // We should skip this operation if the video player was embedded as it does not have the author above the description
+    const player = window.YoutubeAntiTranslate.getFirstVisible(
+      document.querySelectorAll(
+        window.YoutubeAntiTranslate.getPlayerSelector(),
+      ),
+    );
+    if (player && player.id === "c4-player") {
+      return;
+    }
+
+    const authorContainers = window.YoutubeAntiTranslate.getAllVisibleNodes(
+      document.querySelectorAll(AUTHOR_SELECTOR),
+    );
+
+    if (authorContainers) {
+      for (const authorContainer of authorContainers) {
+        updateAuthorContent(authorContainer, originalAuthor);
+      }
+    } else {
+      window.YoutubeAntiTranslate.logWarning(
+        `Video Author container not found`,
+      );
+    }
   }
 
   if (originalTitle) {
@@ -934,9 +937,6 @@ async function updateCollaboratorAuthors(avatarStack, originalAuthor) {
 
   const authors = [];
 
-  let originalTitle;
-  let channelId;
-
   if (avatarStackImages) {
     for (const avatarImage of avatarStackImages) {
       const imgSrc = avatarImage.src;
@@ -944,11 +944,11 @@ async function updateCollaboratorAuthors(avatarStack, originalAuthor) {
         continue;
       }
 
-      ({ originalTitle, channelId } = await fetchOriginalDescription());
+      const originalDescriptionData = await fetchOriginalDescription();
 
       const originalCollaborators =
         await window.YoutubeAntiTranslate.getOriginalCollaboratorsItemsWithYoutubeI(
-          originalTitle,
+          originalDescriptionData.title,
         );
 
       const originalItem = originalCollaborators?.find(
@@ -970,20 +970,13 @@ async function updateCollaboratorAuthors(avatarStack, originalAuthor) {
 
       if (collaboratorAuthorsOnly && collaboratorAuthorsOnly.length === 1) {
         if (
-          (channelId &&
-            (await window.YoutubeAntiTranslate.isWhitelistedChannel(
-              "whiteListUntranslateChannelBranding",
-              null,
-              null,
-              channelId,
-            ))) ||
-          (await window.YoutubeAntiTranslate.isWhitelistedChannel(
+          await window.YoutubeAntiTranslate.isWhitelistedChannel(
             "whiteListUntranslateChannelBranding",
             null,
             null,
             null,
             collaboratorAuthorsOnly[0],
-          ))
+          )
         ) {
           window.YoutubeAntiTranslate.logInfo(
             "Channel is whitelisted, skipping channel branding untranslation",

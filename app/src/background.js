@@ -387,7 +387,7 @@ async function createOrUpdateUntranslatedFakeNode(
       window.YoutubeAntiTranslate.logInfo(
         "Channel is whitelisted, skipping video titles untranslation",
       );
-      return { originalTitle: null };
+      return;
     }
 
     if (settings.untranslateTitle) {
@@ -512,7 +512,7 @@ async function createOrUpdateUntranslatedFakeNodeAuthor(
 
   if (
     await window.YoutubeAntiTranslate.isWhitelistedChannel(
-      "untranslateChannelBranding",
+      "whiteListUntranslateChannelBranding",
       null,
       realAuthorUrl,
     )
@@ -520,7 +520,7 @@ async function createOrUpdateUntranslatedFakeNodeAuthor(
     window.YoutubeAntiTranslate.logInfo(
       "Channel is whitelisted, skipping channel branding untranslation",
     );
-    return { originalTitle: null };
+    return;
   }
 
   const oldAuthor = translatedElement?.textContent || fakeNode?.textContent;
@@ -762,18 +762,19 @@ async function untranslateOtherVideos(intersectElements = null) {
               window.YoutubeAntiTranslate.logInfo(
                 "Channel is whitelisted, skipping video titles untranslation",
               );
-              return { originalTitle: null };
-            }
-
-            window.YoutubeAntiTranslate.logInfo(
-              `Untranslating Video: "${currentTitle}" -> "${originalTitle}"`,
-            );
-            // Update both innerText and title attribute
-            titleElement.innerText = originalTitle;
-            titleElement.title = originalTitle;
-            // Update link title attribute if it's the specific title link
-            if (linkElement.matches("a#video-title-link:not(.cbCustomTitle)")) {
-              linkElement.title = originalTitle;
+            } else {
+              window.YoutubeAntiTranslate.logInfo(
+                `Untranslating Video: "${currentTitle}" -> "${originalTitle}"`,
+              );
+              // Update both innerText and title attribute
+              titleElement.innerText = originalTitle;
+              titleElement.title = originalTitle;
+              // Update link title attribute if it's the specific title link
+              if (
+                linkElement.matches("a#video-title-link:not(.cbCustomTitle)")
+              ) {
+                linkElement.title = originalTitle;
+              }
             }
           } else {
             // console.debug(`Video title unchanged or element missing:`, { href: videoHref, originalTitle, currentTitle });
@@ -792,36 +793,35 @@ async function untranslateOtherVideos(intersectElements = null) {
               window.YoutubeAntiTranslate.logInfo(
                 "Channel is whitelisted, skipping video thumbnail untranslation",
               );
-              return;
-            }
+            } else {
+              const thumbnailElements = video.querySelectorAll(
+                'img[src*="i.ytimg.com"]:not(.ytd-moving-thumbnail-renderer):not([src*="ytimg.com/an_webp/"])',
+              );
 
-            const thumbnailElements = video.querySelectorAll(
-              'img[src*="i.ytimg.com"]:not(.ytd-moving-thumbnail-renderer):not([src*="ytimg.com/an_webp/"])',
-            );
+              if (thumbnailElements && thumbnailElements.length > 0) {
+                for (const thumbnailElement of thumbnailElements) {
+                  if (thumbnailElement.closest("#mouseover-overlay")) {
+                    continue;
+                  }
 
-            if (thumbnailElements && thumbnailElements.length > 0) {
-              for (const thumbnailElement of thumbnailElements) {
-                if (thumbnailElement.closest("#mouseover-overlay")) {
-                  continue;
-                }
+                  if (!thumbnailElement || !thumbnailElement.src) {
+                    continue;
+                  }
 
-                if (!thumbnailElement || !thumbnailElement.src) {
-                  continue;
-                }
-
-                // Only update if the thumbnail is different
-                if (!thumbnailElement.src.includes(originalThumbnail)) {
-                  const { width, height } =
-                    await window.YoutubeAntiTranslate.getImageSize(
-                      thumbnailElement.src,
-                    );
-                  thumbnailElement.src = originalThumbnail;
-                  // Add crop ratio to image
-                  if (width && height) {
-                    const cropRatio = width / height;
-                    if (cropRatio) {
-                      thumbnailElement.style.aspectRatio = cropRatio;
-                      thumbnailElement.style.objectFit = "cover";
+                  // Only update if the thumbnail is different
+                  if (!thumbnailElement.src.includes(originalThumbnail)) {
+                    const { width, height } =
+                      await window.YoutubeAntiTranslate.getImageSize(
+                        thumbnailElement.src,
+                      );
+                    thumbnailElement.src = originalThumbnail;
+                    // Add crop ratio to image
+                    if (width && height) {
+                      const cropRatio = width / height;
+                      if (cropRatio) {
+                        thumbnailElement.style.aspectRatio = cropRatio;
+                        thumbnailElement.style.objectFit = "cover";
+                      }
                     }
                   }
                 }
@@ -846,41 +846,40 @@ async function untranslateOtherVideos(intersectElements = null) {
                 window.YoutubeAntiTranslate.logInfo(
                   "Channel is whitelisted, skipping video description untranslation",
                 );
-                return;
-              }
+              } else {
+                // Locate description snippet containers
+                const snippetElements = video.querySelectorAll(
+                  ".metadata-snippet-text, .metadata-snippet-text-navigation",
+                );
 
-              // Locate description snippet containers
-              const snippetElements = video.querySelectorAll(
-                ".metadata-snippet-text, .metadata-snippet-text-navigation",
-              );
+                if (snippetElements && snippetElements.length > 0) {
+                  const idMatch = videoHref.match(/[?&]v=([a-zA-Z0-9_-]+)/);
+                  if (idMatch && idMatch[1]) {
+                    const videoId = idMatch[1];
+                    const originalDescription =
+                      await getOriginalVideoDescription(videoId);
 
-              if (snippetElements && snippetElements.length > 0) {
-                const idMatch = videoHref.match(/[?&]v=([a-zA-Z0-9_-]+)/);
-                if (idMatch && idMatch[1]) {
-                  const videoId = idMatch[1];
-                  const originalDescription =
-                    await getOriginalVideoDescription(videoId);
+                    if (originalDescription) {
+                      const truncated =
+                        trimDescriptionByWords(originalDescription);
 
-                  if (originalDescription) {
-                    const truncated =
-                      trimDescriptionByWords(originalDescription);
-
-                    snippetElements.forEach((el) => {
-                      const currentText = el.textContent?.trim();
-                      if (
-                        truncated &&
-                        currentText &&
-                        !window.YoutubeAntiTranslate.isStringEqual(
-                          currentText,
-                          truncated,
-                        )
-                      ) {
-                        el.textContent = truncated;
-                        if (el.hasAttribute("is-empty")) {
-                          el.removeAttribute("is-empty");
+                      snippetElements.forEach((el) => {
+                        const currentText = el.textContent?.trim();
+                        if (
+                          truncated &&
+                          currentText &&
+                          !window.YoutubeAntiTranslate.isStringEqual(
+                            currentText,
+                            truncated,
+                          )
+                        ) {
+                          el.textContent = truncated;
+                          if (el.hasAttribute("is-empty")) {
+                            el.removeAttribute("is-empty");
+                          }
                         }
-                      }
-                    });
+                      });
+                    }
                   }
                 }
               }
@@ -954,30 +953,30 @@ async function untranslateOtherVideos(intersectElements = null) {
                     window.YoutubeAntiTranslate.logInfo(
                       "Channel is whitelisted, skipping channel branding untranslation",
                     );
-                    return;
-                  }
-                  const authorsElement = video.querySelector(
-                    `#channel-info yt-formatted-string > a.yt-simple-endpoint, div.media-item-metadata .YtmBadgeAndBylineRendererHost span${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}`,
-                  );
-                  const authorsTooltipElement = video.querySelector(
-                    `#channel-info .ytd-channel-name #tooltip`,
-                  );
-                  if (
-                    authorsElement &&
-                    !authorsElement.textContent.includes(
-                      collaboratorAuthorsOnly[0],
-                    )
-                  ) {
-                    const localizedAnd =
-                      window.YoutubeAntiTranslate.getLocalizedAnd(
-                        document.documentElement.lang,
-                      );
-                    const untranslatedAuthorText = `${mainAuthor} ${localizedAnd} ${collaboratorAuthorsOnly[0]}`;
-                    authorsElement.textContent = untranslatedAuthorText;
-                    // Update tooltip if exists
-                    if (authorsTooltipElement) {
-                      authorsTooltipElement.textContent =
-                        untranslatedAuthorText;
+                  } else {
+                    const authorsElement = video.querySelector(
+                      `#channel-info yt-formatted-string > a.yt-simple-endpoint, div.media-item-metadata .YtmBadgeAndBylineRendererHost span${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}`,
+                    );
+                    const authorsTooltipElement = video.querySelector(
+                      `#channel-info .ytd-channel-name #tooltip`,
+                    );
+                    if (
+                      authorsElement &&
+                      !authorsElement.textContent.includes(
+                        collaboratorAuthorsOnly[0],
+                      )
+                    ) {
+                      const localizedAnd =
+                        window.YoutubeAntiTranslate.getLocalizedAnd(
+                          document.documentElement.lang,
+                        );
+                      const untranslatedAuthorText = `${mainAuthor} ${localizedAnd} ${collaboratorAuthorsOnly[0]}`;
+                      authorsElement.textContent = untranslatedAuthorText;
+                      // Update tooltip if exists
+                      if (authorsTooltipElement) {
+                        authorsTooltipElement.textContent =
+                          untranslatedAuthorText;
+                      }
                     }
                   }
                 }
@@ -1157,21 +1156,23 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
                 window.YoutubeAntiTranslate.logInfo(
                   "Channel is whitelisted, skipping shorts titles untranslation",
                 );
-                return { originalTitle: null };
+              } else {
+                titleElement.textContent = realTitle;
+                // Update title attribute if it exists (for tooltips)
+                if (titleElement.hasAttribute("title")) {
+                  titleElement.title = realTitle;
+                }
+                const titleA = shortElement.querySelector(
+                  "a.shortsLockupViewModelHostEndpoint.shortsLockupViewModelHostOutsideMetadataEndpoint",
+                );
+                if (titleA) {
+                  titleA.title = realTitle;
+                }
+                shortElement.setAttribute(
+                  "data-ytat-untranslated-other",
+                  "true",
+                ); // Mark as successfully untranslated
               }
-
-              titleElement.textContent = realTitle;
-              // Update title attribute if it exists (for tooltips)
-              if (titleElement.hasAttribute("title")) {
-                titleElement.title = realTitle;
-              }
-              const titleA = shortElement.querySelector(
-                "a.shortsLockupViewModelHostEndpoint.shortsLockupViewModelHostOutsideMetadataEndpoint",
-              );
-              if (titleA) {
-                titleA.title = realTitle;
-              }
-              shortElement.setAttribute("data-ytat-untranslated-other", "true"); // Mark as successfully untranslated
             }
 
             /* -------- Handle video thumbnail untranslation -------- */
@@ -1187,32 +1188,31 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
                 window.YoutubeAntiTranslate.logInfo(
                   "Channel is whitelisted, skipping short thumbnail untranslation",
                 );
-                return;
-              }
+              } else {
+                const thumbnailElements = shortElement.querySelectorAll(
+                  'img[src*="i.ytimg.com"]',
+                );
 
-              const thumbnailElements = shortElement.querySelectorAll(
-                'img[src*="i.ytimg.com"]',
-              );
+                if (thumbnailElements && thumbnailElements.length > 0) {
+                  for (const thumbnailElement of thumbnailElements) {
+                    if (!thumbnailElement || !thumbnailElement.src) {
+                      continue;
+                    }
 
-              if (thumbnailElements && thumbnailElements.length > 0) {
-                for (const thumbnailElement of thumbnailElements) {
-                  if (!thumbnailElement || !thumbnailElement.src) {
-                    continue;
-                  }
-
-                  // Only update if the thumbnail is different
-                  if (!thumbnailElement.src.includes(originalThumbnail)) {
-                    const { width, height } =
-                      await window.YoutubeAntiTranslate.getImageSize(
-                        thumbnailElement.src,
-                      );
-                    thumbnailElement.src = originalThumbnail;
-                    // Add crop ratio to image
-                    if (width && height) {
-                      const cropRatio = width / height;
-                      if (cropRatio) {
-                        thumbnailElement.style.aspectRatio = cropRatio;
-                        thumbnailElement.style.objectFit = "cover";
+                    // Only update if the thumbnail is different
+                    if (!thumbnailElement.src.includes(originalThumbnail)) {
+                      const { width, height } =
+                        await window.YoutubeAntiTranslate.getImageSize(
+                          thumbnailElement.src,
+                        );
+                      thumbnailElement.src = originalThumbnail;
+                      // Add crop ratio to image
+                      if (width && height) {
+                        const cropRatio = width / height;
+                        if (cropRatio) {
+                          thumbnailElement.style.aspectRatio = cropRatio;
+                          thumbnailElement.style.objectFit = "cover";
+                        }
                       }
                     }
                   }
@@ -1404,10 +1404,13 @@ async function untranslateCurrentPlaylistHeaderThumbnail() {
         window.YoutubeAntiTranslate.logInfo(
           "Channel is whitelisted, skipping video thumbnail untranslation",
         );
-        return;
+        continue;
       }
 
-      if (imageSrc.includes(response.data.thumbnail_url)) {
+      if (
+        response.data.thumbnail_url &&
+        !imageSrc.includes(response.data.thumbnail_url)
+      ) {
         const { width, height } =
           await window.YoutubeAntiTranslate.getImageSize(imageSrc);
 
