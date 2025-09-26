@@ -369,11 +369,25 @@ async function createOrUpdateUntranslatedFakeNode(
       authorCreateElementTag
     ) {
       await createOrUpdateUntranslatedFakeNodeAuthor(
+        response.data.author_url,
         response.data.author_name,
         videoAuthorSelector,
         authorFakeNodeID,
         authorCreateElementTag,
       );
+    }
+
+    if (
+      await window.YoutubeAntiTranslate.isWhitelistedChannel(
+        "whiteListUntranslateTitle",
+        null,
+        response.data.author_url,
+      )
+    ) {
+      window.YoutubeAntiTranslate.logInfo(
+        "Channel is whitelisted, skipping video titles untranslation",
+      );
+      return { originalTitle: null };
     }
 
     if (settings.untranslateTitle) {
@@ -465,6 +479,7 @@ async function createOrUpdateUntranslatedFakeNode(
 /**
  * Helper function used by `createOrUpdateUntranslatedFakeNode`
  * Create or Updates an untranslated fake node for the translated element with a video author
+ * @param {string} realAuthorUrl
  * @param {string} realAuthor
  * @param {string} videoAuthorSelector
  * @param {string} authorFakeNodeID
@@ -472,6 +487,7 @@ async function createOrUpdateUntranslatedFakeNode(
  * @returns
  */
 async function createOrUpdateUntranslatedFakeNodeAuthor(
+  realAuthorUrl,
   realAuthor,
   videoAuthorSelector,
   authorFakeNodeID,
@@ -492,6 +508,19 @@ async function createOrUpdateUntranslatedFakeNodeAuthor(
 
   if (!realAuthor || (!translatedElement && !fakeNode)) {
     return;
+  }
+
+  if (
+    await window.YoutubeAntiTranslate.isWhitelistedChannel(
+      "untranslateChannelBranding",
+      null,
+      realAuthorUrl,
+    )
+  ) {
+    window.YoutubeAntiTranslate.logInfo(
+      "Channel is whitelisted, skipping channel branding untranslation",
+    );
+    return { originalTitle: null };
   }
 
   const oldAuthor = translatedElement?.textContent || fakeNode?.textContent;
@@ -723,6 +752,19 @@ async function untranslateOtherVideos(intersectElements = null) {
               currentTitle,
             )
           ) {
+            if (
+              await window.YoutubeAntiTranslate.isWhitelistedChannel(
+                "whiteListUntranslateTitle",
+                null,
+                response.data.author_url,
+              )
+            ) {
+              window.YoutubeAntiTranslate.logInfo(
+                "Channel is whitelisted, skipping video titles untranslation",
+              );
+              return { originalTitle: null };
+            }
+
             window.YoutubeAntiTranslate.logInfo(
               `Untranslating Video: "${currentTitle}" -> "${originalTitle}"`,
             );
@@ -1105,6 +1147,19 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
                 currentTitle,
               )
             ) {
+              if (
+                await window.YoutubeAntiTranslate.isWhitelistedChannel(
+                  "whiteListUntranslateTitle",
+                  null,
+                  response.data.author_url,
+                )
+              ) {
+                window.YoutubeAntiTranslate.logInfo(
+                  "Channel is whitelisted, skipping shorts titles untranslation",
+                );
+                return { originalTitle: null };
+              }
+
               titleElement.textContent = realTitle;
               // Update title attribute if it exists (for tooltips)
               if (titleElement.hasAttribute("title")) {
