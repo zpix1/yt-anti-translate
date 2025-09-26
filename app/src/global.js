@@ -1909,7 +1909,7 @@ ytm-shorts-lockup-view-model`,
       !handle ||
       typeof handle !== "string" ||
       handle.trim() === "" ||
-      !handle.startsWith("@")
+      !handle.trim().startsWith("@")
     ) {
       if (handle) {
         this.logInfo(`isWhitelistedChannel: invalid handle: ${handle}`);
