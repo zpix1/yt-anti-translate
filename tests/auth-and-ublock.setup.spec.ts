@@ -1,6 +1,7 @@
 import { expect } from "@playwright/test";
 import { test } from "../playwright.config";
 import { setupUBlockAndAuth } from "./helpers/SetupUBlockAndAuth";
+import { acquireLock } from "./helpers/lock";
 
 // This is a setup test used to download uBlock and set up a Storage State with Google Auth and Locale setting
 
@@ -10,18 +11,29 @@ test.describe("Setup Auth And UBlock", () => {
     allLocaleStrings,
     isMobile,
   }) => {
-    // If this test is retrying then check uBlock and Auth again
-    const { status, error } = await setupUBlockAndAuth(
-      allBrowserNameWithExtensions,
-      allLocaleStrings,
-      isMobile,
-      false,
-    );
+    // use a lock to prevent multiple runs of this test at the same time
+    // this allow parallelism globally, but not when doing the setup
+    // (which is critical that is not flacky to avoid repeated fails and login attmpts)
+    const lockRelease = await acquireLock("setup-auth-and-ublock", {
+      timeoutMs: 3 * 60 * 1000,
+    });
 
-    await expect(status).toBe(true);
+    try {
+      // If this test is retrying then check uBlock and Auth again
+      const { status, error } = await setupUBlockAndAuth(
+        allBrowserNameWithExtensions,
+        allLocaleStrings,
+        isMobile,
+        false,
+      );
 
-    if (error) {
-      console.error("Error during setupUBlockAndAuth:", error);
+      await expect(status).toBe(true);
+
+      if (error) {
+        console.error("Error during setupUBlockAndAuth:", error);
+      }
+    } finally {
+      lockRelease();
     }
   });
 });
