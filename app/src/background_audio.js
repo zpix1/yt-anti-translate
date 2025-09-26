@@ -159,6 +159,20 @@ async function untranslateAudioTrack() {
     return;
   }
 
+  if (
+    await window.YoutubeAntiTranslate.isWhitelistedChannel(
+      "whiteListUntranslateAudio",
+      null,
+      null,
+      playerResponse.videoDetails?.channelId,
+    )
+  ) {
+    window.YoutubeAntiTranslate.logInfo(
+      "Channel is whitelisted, skipping audio dubbing untranslation",
+    );
+    return;
+  }
+
   const originalTrack = getOriginalTrack(tracks);
 
   // Respect user's manual audio language choice
