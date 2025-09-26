@@ -42,13 +42,15 @@ describe("YoutubeAntiTranslate.isWhitelistedChannel", () => {
   });
 
   it("returns false if whitelist is empty", async () => {
-    window.YoutubeAntiTranslate.getSettings = () => ({ testWhitelist: [] });
+    window.YoutubeAntiTranslate.getSettings = async () => ({
+      testWhitelist: [],
+    });
     const result = await isWhitelistedChannel("testWhitelist", "@foo");
     expect(result).toBe(false);
   });
 
   it("returns true if handle is in whitelist", async () => {
-    window.YoutubeAntiTranslate.getSettings = () => ({
+    window.YoutubeAntiTranslate.getSettings = async () => ({
       testWhitelist: ["@foo"],
     });
     const result = await isWhitelistedChannel("testWhitelist", "@foo");
@@ -56,7 +58,7 @@ describe("YoutubeAntiTranslate.isWhitelistedChannel", () => {
   });
 
   it("returns false if handle is not in whitelist", async () => {
-    window.YoutubeAntiTranslate.getSettings = () => ({
+    window.YoutubeAntiTranslate.getSettings = async () => ({
       testWhitelist: ["@foo"],
     });
     const result = await isWhitelistedChannel("testWhitelist", "@bar");
@@ -64,7 +66,7 @@ describe("YoutubeAntiTranslate.isWhitelistedChannel", () => {
   });
 
   it("returns true if handle extracted from channelUrl is in whitelist", async () => {
-    window.YoutubeAntiTranslate.getSettings = () => ({
+    window.YoutubeAntiTranslate.getSettings = async () => ({
       testWhitelist: ["@foo"],
     });
     // channelUrl: https://www.youtube.com/@foo
@@ -77,7 +79,7 @@ describe("YoutubeAntiTranslate.isWhitelistedChannel", () => {
   });
 
   it("returns true if handle extracted from channelId is in whitelist", async () => {
-    window.YoutubeAntiTranslate.getSettings = () => ({
+    window.YoutubeAntiTranslate.getSettings = async () => ({
       testWhitelist: ["@foo"],
     });
     window.YoutubeAntiTranslate.getChannelBrandingWithYoutubeI = vi
@@ -93,7 +95,7 @@ describe("YoutubeAntiTranslate.isWhitelistedChannel", () => {
   });
 
   it("returns false if handle extracted from channelId is not in whitelist", async () => {
-    window.YoutubeAntiTranslate.getSettings = () => ({
+    window.YoutubeAntiTranslate.getSettings = async () => ({
       testWhitelist: ["@foo"],
     });
     window.YoutubeAntiTranslate.getChannelBrandingWithYoutubeI = vi
@@ -109,7 +111,7 @@ describe("YoutubeAntiTranslate.isWhitelistedChannel", () => {
   });
 
   it("returns true if channelName as handle is in whitelist (no spaces)", async () => {
-    window.YoutubeAntiTranslate.getSettings = () => ({
+    window.YoutubeAntiTranslate.getSettings = async () => ({
       testWhitelist: ["@foo"],
     });
     const result = await isWhitelistedChannel(
@@ -123,7 +125,7 @@ describe("YoutubeAntiTranslate.isWhitelistedChannel", () => {
   });
 
   it("returns true if handle from lookupChannelId(channelName) is in whitelist", async () => {
-    window.YoutubeAntiTranslate.getSettings = () => ({
+    window.YoutubeAntiTranslate.getSettings = async () => ({
       testWhitelist: ["@foo"],
     });
     window.YoutubeAntiTranslate.lookupChannelId = vi
@@ -140,7 +142,7 @@ describe("YoutubeAntiTranslate.isWhitelistedChannel", () => {
   });
 
   it("returns false if handle from lookupChannelId(channelName) is not in whitelist", async () => {
-    window.YoutubeAntiTranslate.getSettings = () => ({
+    window.YoutubeAntiTranslate.getSettings = async () => ({
       testWhitelist: ["@foo"],
     });
     window.YoutubeAntiTranslate.lookupChannelId = vi
@@ -157,7 +159,7 @@ describe("YoutubeAntiTranslate.isWhitelistedChannel", () => {
   });
 
   it("throws if whitelist type is not supported", async () => {
-    window.YoutubeAntiTranslate.getSettings = () => ({
+    window.YoutubeAntiTranslate.getSettings = async () => ({
       testWhitelist: ["@foo"],
     });
     await expect(
@@ -166,7 +168,7 @@ describe("YoutubeAntiTranslate.isWhitelistedChannel", () => {
   });
 
   it("returns true if handle has leading/trailing spaces and is in whitelist", async () => {
-    window.YoutubeAntiTranslate.getSettings = () => ({
+    window.YoutubeAntiTranslate.getSettings = async () => ({
       testWhitelist: ["@foo"],
     });
     const result = await isWhitelistedChannel("testWhitelist", "  @foo  ");
@@ -174,7 +176,7 @@ describe("YoutubeAntiTranslate.isWhitelistedChannel", () => {
   });
 
   it("returns false if handle is invalid (does not start with @)", async () => {
-    window.YoutubeAntiTranslate.getSettings = () => ({
+    window.YoutubeAntiTranslate.getSettings = async () => ({
       testWhitelist: ["@foo"],
     });
     const result = await isWhitelistedChannel("testWhitelist", "foo");
@@ -182,7 +184,7 @@ describe("YoutubeAntiTranslate.isWhitelistedChannel", () => {
   });
 
   it("returns true if handle extracted from /channel/UCID url is in whitelist", async () => {
-    window.YoutubeAntiTranslate.getSettings = () => ({
+    window.YoutubeAntiTranslate.getSettings = async () => ({
       testWhitelist: ["@foo"],
     });
     window.YoutubeAntiTranslate.getChannelBrandingWithYoutubeI = vi
@@ -197,7 +199,7 @@ describe("YoutubeAntiTranslate.isWhitelistedChannel", () => {
   });
 
   it("returns false if channelUrl is invalid", async () => {
-    window.YoutubeAntiTranslate.getSettings = () => ({
+    window.YoutubeAntiTranslate.getSettings = async () => ({
       testWhitelist: ["@foo"],
     });
     const result = await isWhitelistedChannel(
@@ -209,7 +211,7 @@ describe("YoutubeAntiTranslate.isWhitelistedChannel", () => {
   });
 
   it("returns false if getChannelBrandingWithYoutubeI returns null for channelId", async () => {
-    window.YoutubeAntiTranslate.getSettings = () => ({
+    window.YoutubeAntiTranslate.getSettings = async () => ({
       testWhitelist: ["@foo"],
     });
     window.YoutubeAntiTranslate.getChannelBrandingWithYoutubeI = vi
@@ -225,7 +227,7 @@ describe("YoutubeAntiTranslate.isWhitelistedChannel", () => {
   });
 
   it("returns false if channelName has spaces and is not in whitelist, and lookupChannelId returns handle not in whitelist", async () => {
-    window.YoutubeAntiTranslate.getSettings = () => ({
+    window.YoutubeAntiTranslate.getSettings = async () => ({
       testWhitelist: ["@foo"],
     });
     window.YoutubeAntiTranslate.lookupChannelId = vi
@@ -242,7 +244,7 @@ describe("YoutubeAntiTranslate.isWhitelistedChannel", () => {
   });
 
   it("returns false if lookupChannelId returns null for channelName", async () => {
-    window.YoutubeAntiTranslate.getSettings = () => ({
+    window.YoutubeAntiTranslate.getSettings = async () => ({
       testWhitelist: ["@foo"],
     });
     window.YoutubeAntiTranslate.lookupChannelId = vi
@@ -259,7 +261,7 @@ describe("YoutubeAntiTranslate.isWhitelistedChannel", () => {
   });
 
   it("returns true if channelName with no spaces is in whitelist as @channelName", async () => {
-    window.YoutubeAntiTranslate.getSettings = () => ({
+    window.YoutubeAntiTranslate.getSettings = async () => ({
       testWhitelist: ["@foo"],
     });
     const result = await isWhitelistedChannel(
@@ -273,7 +275,7 @@ describe("YoutubeAntiTranslate.isWhitelistedChannel", () => {
   });
 
   it("returns true if channelId is invalid but channelName is in whitelist as @channelName", async () => {
-    window.YoutubeAntiTranslate.getSettings = () => ({
+    window.YoutubeAntiTranslate.getSettings = async () => ({
       testWhitelist: ["@foo"],
     });
     const result = await isWhitelistedChannel(
@@ -287,7 +289,7 @@ describe("YoutubeAntiTranslate.isWhitelistedChannel", () => {
   });
 
   it("returns true if channelId is invalid, channelName not in whitelist, but lookupChannelId returns handle in whitelist", async () => {
-    window.YoutubeAntiTranslate.getSettings = () => ({
+    window.YoutubeAntiTranslate.getSettings = async () => ({
       testWhitelist: ["@foo"],
     });
     window.YoutubeAntiTranslate.lookupChannelId = vi
@@ -304,7 +306,7 @@ describe("YoutubeAntiTranslate.isWhitelistedChannel", () => {
   });
 
   it("returns false if channelId is invalid, channelName not in whitelist, and lookupChannelId returns handle not in whitelist", async () => {
-    window.YoutubeAntiTranslate.getSettings = () => ({
+    window.YoutubeAntiTranslate.getSettings = async () => ({
       testWhitelist: ["@foo"],
     });
     window.YoutubeAntiTranslate.lookupChannelId = vi
@@ -321,7 +323,7 @@ describe("YoutubeAntiTranslate.isWhitelistedChannel", () => {
   });
 
   it("returns true if getChannelBrandingWithYoutubeI returns handle with spaces that matches whitelist", async () => {
-    window.YoutubeAntiTranslate.getSettings = () => ({
+    window.YoutubeAntiTranslate.getSettings = async () => ({
       testWhitelist: ["@foo"],
     });
     window.YoutubeAntiTranslate.getChannelBrandingWithYoutubeI = vi
@@ -337,7 +339,7 @@ describe("YoutubeAntiTranslate.isWhitelistedChannel", () => {
   });
 
   it("returns true if channelUrl is a relative /@foo path and handle is in whitelist", async () => {
-    window.YoutubeAntiTranslate.getSettings = () => ({
+    window.YoutubeAntiTranslate.getSettings = async () => ({
       testWhitelist: ["@foo"],
     });
     const result = await isWhitelistedChannel("testWhitelist", null, "/@foo");
@@ -345,7 +347,7 @@ describe("YoutubeAntiTranslate.isWhitelistedChannel", () => {
   });
 
   it("returns true if channelUrl is a relative /channel/UC123 path and getChannelBrandingWithYoutubeI returns handle in whitelist", async () => {
-    window.YoutubeAntiTranslate.getSettings = () => ({
+    window.YoutubeAntiTranslate.getSettings = async () => ({
       testWhitelist: ["@foo"],
     });
     window.YoutubeAntiTranslate.getChannelBrandingWithYoutubeI = vi
@@ -360,7 +362,7 @@ describe("YoutubeAntiTranslate.isWhitelistedChannel", () => {
   });
 
   it("returns false if channelUrl is /user/ or /c/ path (unsupported)", async () => {
-    window.YoutubeAntiTranslate.getSettings = () => ({
+    window.YoutubeAntiTranslate.getSettings = async () => ({
       testWhitelist: ["@foo"],
     });
     // /user/ path
@@ -380,7 +382,7 @@ describe("YoutubeAntiTranslate.isWhitelistedChannel", () => {
   });
 
   it("returns false if channelName is only spaces", async () => {
-    window.YoutubeAntiTranslate.getSettings = () => ({
+    window.YoutubeAntiTranslate.getSettings = async () => ({
       testWhitelist: ["@foo"],
     });
     const result = await isWhitelistedChannel(
@@ -394,7 +396,7 @@ describe("YoutubeAntiTranslate.isWhitelistedChannel", () => {
   });
 
   it("returns false if all identifying info is present but all are invalid/empty", async () => {
-    window.YoutubeAntiTranslate.getSettings = () => ({
+    window.YoutubeAntiTranslate.getSettings = async () => ({
       testWhitelist: ["@foo"],
     });
     const result = await isWhitelistedChannel(
@@ -407,7 +409,7 @@ describe("YoutubeAntiTranslate.isWhitelistedChannel", () => {
     expect(result).toBe(false);
   });
   it("returns true if handle matches whitelist with different case", async () => {
-    window.YoutubeAntiTranslate.getSettings = () => ({
+    window.YoutubeAntiTranslate.getSettings = async () => ({
       testWhitelist: ["@Foo"],
     });
     const result = await isWhitelistedChannel("testWhitelist", "@foo");
@@ -415,7 +417,7 @@ describe("YoutubeAntiTranslate.isWhitelistedChannel", () => {
   });
 
   it("returns true if handle with spaces and different case matches whitelist", async () => {
-    window.YoutubeAntiTranslate.getSettings = () => ({
+    window.YoutubeAntiTranslate.getSettings = async () => ({
       testWhitelist: ["@Foo"],
     });
     const result = await isWhitelistedChannel("testWhitelist", "  @fOo  ");
@@ -423,7 +425,7 @@ describe("YoutubeAntiTranslate.isWhitelistedChannel", () => {
   });
 
   it("returns true if handle extracted from channelUrl matches whitelist with different case", async () => {
-    window.YoutubeAntiTranslate.getSettings = () => ({
+    window.YoutubeAntiTranslate.getSettings = async () => ({
       testWhitelist: ["@Foo"],
     });
     const result = await isWhitelistedChannel(
@@ -435,7 +437,7 @@ describe("YoutubeAntiTranslate.isWhitelistedChannel", () => {
   });
 
   it("returns true if handle extracted from channelId matches whitelist with different case", async () => {
-    window.YoutubeAntiTranslate.getSettings = () => ({
+    window.YoutubeAntiTranslate.getSettings = async () => ({
       testWhitelist: ["@Foo"],
     });
     window.YoutubeAntiTranslate.getChannelBrandingWithYoutubeI = vi
@@ -451,7 +453,7 @@ describe("YoutubeAntiTranslate.isWhitelistedChannel", () => {
   });
 
   it("returns true if channelName as handle matches whitelist with different case", async () => {
-    window.YoutubeAntiTranslate.getSettings = () => ({
+    window.YoutubeAntiTranslate.getSettings = async () => ({
       testWhitelist: ["@Foo"],
     });
     const result = await isWhitelistedChannel(
@@ -465,7 +467,7 @@ describe("YoutubeAntiTranslate.isWhitelistedChannel", () => {
   });
 
   it("returns true if handle from lookupChannelId(channelName) matches whitelist with different case", async () => {
-    window.YoutubeAntiTranslate.getSettings = () => ({
+    window.YoutubeAntiTranslate.getSettings = async () => ({
       testWhitelist: ["@Foo"],
     });
     window.YoutubeAntiTranslate.lookupChannelId = vi
@@ -482,7 +484,7 @@ describe("YoutubeAntiTranslate.isWhitelistedChannel", () => {
   });
 
   it("returns false if all identifying info is missing", async () => {
-    window.YoutubeAntiTranslate.getSettings = () => ({
+    window.YoutubeAntiTranslate.getSettings = async () => ({
       testWhitelist: ["@foo"],
     });
     const result = await isWhitelistedChannel("testWhitelist");

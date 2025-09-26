@@ -1074,13 +1074,23 @@ async function handleDescriptionMutation() {
     }
   }
 }
-// Initialize the mutation observer for description
-const targetNode = document.body;
-const observerConfig = { childList: true, subtree: true };
-const descriptionObserver = new MutationObserver(
-  window.YoutubeAntiTranslate.debounce(handleDescriptionMutation, 100),
-);
-descriptionObserver.observe(targetNode, observerConfig);
+
+// Initialize the extension, waiting for window.YoutubeAntiTranslate to be available
+(function waitForYoutubeAntiTranslate() {
+  if (
+    window.YoutubeAntiTranslate &&
+    typeof window.YoutubeAntiTranslate.debounce === "function"
+  ) {
+    const target = document.body;
+    const config = { childList: true, subtree: true };
+    const observer = new MutationObserver(
+      window.YoutubeAntiTranslate.debounce(handleDescriptionMutation),
+    );
+    observer.observe(target, config);
+  } else {
+    setTimeout(waitForYoutubeAntiTranslate, 8);
+  }
+})();
 
 // Add global click handler for timecode links
 document.addEventListener("click", (event) => {

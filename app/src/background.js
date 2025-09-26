@@ -2,31 +2,63 @@
 //as the callback will handle multiple elements entering them sigularly
 const INTERSECTION_UPDATE_STEP_VIDEOS = 2;
 let allIntersectVideoElements = null;
-const intersectionObserverOtherVideos = new IntersectionObserver(
-  untranslateOtherVideosOnIntersect,
-  {
-    root: null, // viewport
-    rootMargin: `${window.YoutubeAntiTranslate.VIEWPORT_EXTENSION_PERCENTAGE_FRACTION * 100}%`,
-    threshold: 0, // Trigger when ANY part of the observed elements are inside the extended viewport
-  },
-);
+let intersectionObserverOtherVideos;
+(function waitForIntersectionObserverOtherVideos() {
+  if (
+    window.YoutubeAntiTranslate &&
+    typeof window.YoutubeAntiTranslate
+      .VIEWPORT_EXTENSION_PERCENTAGE_FRACTION !== "undefined"
+  ) {
+    intersectionObserverOtherVideos = new IntersectionObserver(
+      untranslateOtherVideosOnIntersect,
+      {
+        root: null, // viewport
+        rootMargin: `${window.YoutubeAntiTranslate.VIEWPORT_EXTENSION_PERCENTAGE_FRACTION * 100}%`,
+        threshold: 0, // Trigger when ANY part of the observed elements are inside the extended viewport
+      },
+    );
+  } else {
+    setTimeout(waitForIntersectionObserverOtherVideos, 8);
+  }
+})();
 
 //For intersect we are not switching to debounce
 //as the callback will handle multiple elements entering them sigularly
 const INTERSECTION_UPDATE_STEP_SHORTS = 2;
 let allIntersectShortElements = null;
-const intersectionObserverOtherShorts = new IntersectionObserver(
-  untranslateOtherShortsOnIntersect,
-  {
-    root: null, // viewport
-    rootMargin: `${window.YoutubeAntiTranslate.VIEWPORT_EXTENSION_PERCENTAGE_FRACTION * 100}%`,
-    threshold: 0, // Trigger when ANY part of the observed elements are inside the extended viewport
-  },
-);
+let intersectionObserverOtherShorts;
+(function waitForIntersectionObserverOtherShorts() {
+  if (
+    window.YoutubeAntiTranslate &&
+    typeof window.YoutubeAntiTranslate
+      .VIEWPORT_EXTENSION_PERCENTAGE_FRACTION !== "undefined"
+  ) {
+    intersectionObserverOtherShorts = new IntersectionObserver(
+      untranslateOtherShortsOnIntersect,
+      {
+        root: null, // viewport
+        rootMargin: `${window.YoutubeAntiTranslate.VIEWPORT_EXTENSION_PERCENTAGE_FRACTION * 100}%`,
+        threshold: 0, // Trigger when ANY part of the observed elements are inside the extended viewport
+      },
+    );
+  } else {
+    setTimeout(waitForIntersectionObserverOtherShorts, 8);
+  }
+})();
 
-const cachedRequest = window.YoutubeAntiTranslate.cachedRequest.bind(
-  window.YoutubeAntiTranslate,
-);
+let cachedRequest = null;
+(function waitForCachedRequest() {
+  if (
+    window.YoutubeAntiTranslate &&
+    typeof window.YoutubeAntiTranslate.cachedRequest === "function"
+  ) {
+    cachedRequest = window.YoutubeAntiTranslate.cachedRequest.bind(
+      window.YoutubeAntiTranslate,
+    );
+  } else {
+    setTimeout(waitForCachedRequest, 8);
+  }
+})();
 
 // Changes main short title on "/shorts/shortid" pages
 async function untranslateCurrentShortVideo() {
@@ -1437,7 +1469,7 @@ async function untranslateCurrentPlaylistHeaderThumbnail() {
 }
 
 async function untranslate() {
-  const settings = window.YoutubeAntiTranslate.getSettings();
+  const settings = await window.YoutubeAntiTranslate.getSettings();
 
   const currentVideoPromise = settings.untranslateTitle
     ? untranslateCurrentVideo()
@@ -1524,13 +1556,22 @@ async function untranslate() {
   }
 }
 
-// Initialize the extension
-const target = document.body;
-const config = { childList: true, subtree: true };
-const observer = new MutationObserver(
-  window.YoutubeAntiTranslate.debounce(untranslate),
-);
-observer.observe(target, config);
+// Initialize the extension, waiting for window.YoutubeAntiTranslate to be available
+(function waitForYoutubeAntiTranslate() {
+  if (
+    window.YoutubeAntiTranslate &&
+    typeof window.YoutubeAntiTranslate.debounce === "function"
+  ) {
+    const target = document.body;
+    const config = { childList: true, subtree: true };
+    const observer = new MutationObserver(
+      window.YoutubeAntiTranslate.debounce(untranslate),
+    );
+    observer.observe(target, config);
+  } else {
+    setTimeout(waitForYoutubeAntiTranslate, 8);
+  }
+})();
 
 // --- Observe all Other Videos outside viewport for intersect ---
 let mutationIdxVideos = 0;
@@ -1555,7 +1596,13 @@ async function untranslateOtherVideosOnIntersect(entries) {
   mutationIdxVideos++;
 }
 
-updateObserverOtherVideosOnIntersect();
+(function waitForUpdateObserverOtherVideosOnIntersect() {
+  if (window.YoutubeAntiTranslate) {
+    updateObserverOtherVideosOnIntersect();
+  } else {
+    setTimeout(waitForUpdateObserverOtherVideosOnIntersect, 8);
+  }
+})();
 function updateObserverOtherVideosOnIntersect() {
   for (const el of allIntersectVideoElements ?? []) {
     intersectionObserverOtherVideos.unobserve(el);
@@ -1595,7 +1642,13 @@ async function untranslateOtherShortsOnIntersect(entries) {
   mutationIdxShorts++;
 }
 
-updateObserverOtherShortsOnIntersect();
+(function waitForUpdateObserverOtherShortsOnIntersect() {
+  if (window.YoutubeAntiTranslate) {
+    updateObserverOtherShortsOnIntersect();
+  } else {
+    setTimeout(waitForUpdateObserverOtherShortsOnIntersect, 8);
+  }
+})();
 function updateObserverOtherShortsOnIntersect() {
   for (const el of allIntersectShortElements ?? []) {
     intersectionObserverOtherShorts.unobserve(el);

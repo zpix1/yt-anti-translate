@@ -1280,11 +1280,42 @@ ytm-shorts-lockup-view-model`,
     );
     return null;
   },
-  getSettings: function () {
+  getSettings: async function () {
+    // First try to read from the DOM
     const element = document.querySelector(
       'script[type="module"][data-ytantitranslatesettings]',
     );
-    return JSON.parse(element?.dataset?.ytantitranslatesettings ?? "{}");
+    if (element?.dataset?.ytantitranslatesettings) {
+      try {
+        return JSON.parse(element.dataset.ytantitranslatesettings);
+      } catch {
+        // fallback to chrome storage if JSON is invalid
+      }
+    }
+
+    // Fallback: read from Chrome storage
+    if (chrome?.storage?.sync?.get) {
+      return await chrome.storage.sync.get({
+        disabled: false,
+        untranslateTitle: true,
+        whiteListUntranslateTitle: [],
+        untranslateAudio: true,
+        untranslateAudioOnlyAI: false,
+        whiteListUntranslateAudio: [],
+        untranslateDescription: true,
+        whiteListUntranslateDescription: [],
+        untranslateChapters: true,
+        whiteListUntranslateChapters: [],
+        untranslateChannelBranding: true,
+        whiteListUntranslateChannelBranding: [],
+        untranslateNotification: true,
+        untranslateThumbnail: true,
+        whiteListUntranslateThumbnail: [],
+      });
+    }
+
+    // Absolute fallback: return empty object
+    return {};
   },
   /**
    * Make a GET request. Its result will be cached in sessionStorage and will return same promise for parallel requests.
@@ -1853,7 +1884,7 @@ ytm-shorts-lockup-view-model`,
     channelId = null,
     channelName = null,
   ) {
-    const settings = this.getSettings();
+    const settings = await this.getSettings();
     const /** @type {string[]} */ whitelist =
         settings?.[whiteStoragePropertyName];
     if (!whitelist) {
@@ -2018,7 +2049,7 @@ ytm-shorts-lockup-view-model`,
     const body = {
       context: {
         client: {
-          clientName: "WEB",
+          clientName: this.isMobile() ? "MWEB" : "WEB",
           clientVersion: "2.20250527.00.00",
         },
       },
@@ -2035,13 +2066,13 @@ ytm-shorts-lockup-view-model`,
       return storedResponse;
     }
 
-    // TODO: add support for mobile (MWEB)
-    const search =
-      "https://www.youtube.com/youtubei/v1/search?prettyPrint=false";
+    // TODO: Validate mobile (MWEB) support
+    const search = `https://${this.isMobile() ? "m" : "www"}.youtube.com/youtubei/v1/search?prettyPrint=false`;
     const result = await this.cachedRequest(
       search,
       JSON.stringify(body),
-      { "content-type": "application/json" },
+      await this.getYoutubeIHeadersWithCredentials(),
+      // As it might take too much space
       true,
     );
 
@@ -2071,6 +2102,44 @@ ytm-shorts-lockup-view-model`,
           channelHandle =
             itemRenderedContent?.channelRenderer?.subscriberCountText
               ?.simpleText;
+          break;
+        }
+      }
+    }
+
+    // TODO: Validate mobile (MWEB) support
+    for (const sectionContent of json.contents?.sectionListRenderer?.contents ||
+      []) {
+      for (const itemRenderedContent of sectionContent?.itemSectionRenderer
+        ?.contents || []) {
+        let /** @type {boolean} */ itemMatchChannelName = false;
+        for (const runs of itemRenderedContent?.compactChannelRenderer
+          ?.displayName?.runs || []) {
+          if (runs.text === query) {
+            itemMatchChannelName = true;
+            break;
+          }
+        }
+
+        let /** @type {boolean} */ itemMatchChannelHandle = false;
+        let /** @type {number} */ itemMatchChannelHandleIndex = -1;
+        for (const runs of itemRenderedContent?.compactChannelRenderer
+          ?.subscriberCountText?.runs || []) {
+          if (runs.text === query) {
+            itemMatchChannelHandle = true;
+            itemMatchChannelHandleIndex =
+              itemRenderedContent?.compactChannelRenderer?.subscriberCountText?.runs.indexOf(
+                runs,
+              );
+            break;
+          }
+        }
+
+        if (itemMatchChannelName || itemMatchChannelHandle) {
+          channelUcid = itemRenderedContent?.compactChannelRenderer?.channelId;
+          channelHandle =
+            itemRenderedContent?.compactChannelRenderer?.subscriberCountText
+              ?.runs?.[itemMatchChannelHandleIndex]?.text;
           break;
         }
       }
@@ -2210,7 +2279,7 @@ ytm-shorts-lockup-view-model`,
         }
       }
     }
-    // TODO: check if handle is the same path on mobile
+    // TODO: Validate mobile (MWEB) support
 
     const result = {
       title: metadata?.title, // channel name

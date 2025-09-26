@@ -144,7 +144,7 @@ async function untranslateAudioTrack() {
 
   // Respect user preference: only untranslate AI-generated dubbed audio when the option is enabled
   if (
-    window.YoutubeAntiTranslate?.getSettings()?.untranslateAudioOnlyAI &&
+    (await window.YoutubeAntiTranslate.getSettings())?.untranslateAudioOnlyAI &&
     !getTrackInfo(currentTrack).isAI
   ) {
     // Current track is not AI-dubbed; leave it as is.
@@ -196,10 +196,19 @@ async function untranslate() {
   await untranslateAudioTrack();
 }
 
-// Initialize the extension
-const target = document.body;
-const config = { childList: true, subtree: true };
-const observer = new MutationObserver(
-  window.YoutubeAntiTranslate.debounce(untranslate),
-);
-observer.observe(target, config);
+// Initialize the extension, waiting for window.YoutubeAntiTranslate to be available
+(function waitForYoutubeAntiTranslate() {
+  if (
+    window.YoutubeAntiTranslate &&
+    typeof window.YoutubeAntiTranslate.debounce === "function"
+  ) {
+    const target = document.body;
+    const config = { childList: true, subtree: true };
+    const observer = new MutationObserver(
+      window.YoutubeAntiTranslate.debounce(untranslate),
+    );
+    observer.observe(target, config);
+  } else {
+    setTimeout(waitForYoutubeAntiTranslate, 8);
+  }
+})();
