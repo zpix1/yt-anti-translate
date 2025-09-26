@@ -42,7 +42,7 @@ async function fetchOriginalTitle(videoId) {
       )
     ) {
       window.YoutubeAntiTranslate.logInfo(
-        "Channel is whitelisted, skipping thumbnail untranslation",
+        "Channel is whitelisted, skipping notification titles untranslation",
       );
       return { originalTitle: null };
     }

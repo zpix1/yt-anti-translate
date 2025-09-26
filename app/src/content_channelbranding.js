@@ -431,13 +431,13 @@ async function untranslateBranding() {
   if (isChannelPage) {
     if (
       await window.YoutubeAntiTranslate.isWhitelistedChannel(
-        "whiteListUntranslateThumbnail",
+        "whiteListUntranslateChannelBranding",
         null,
         document.location.href,
       )
     ) {
       window.YoutubeAntiTranslate.logInfo(
-        "Channel is whitelisted, skipping branding untranslation",
+        "Channel is whitelisted, skipping channel branding untranslation",
       );
       return;
     }
@@ -644,7 +644,7 @@ async function restoreCollaboratorsDialog() {
             )
           ) {
             window.YoutubeAntiTranslate.logInfo(
-              "Channel is whitelisted, skipping branding untranslation",
+              "Channel is whitelisted, skipping channel branding untranslation",
             );
             return;
           }
@@ -668,7 +668,7 @@ async function restoreCollaboratorsDialog() {
       )
     ) {
       window.YoutubeAntiTranslate.logInfo(
-        "Channel is whitelisted, skipping branding untranslation",
+        "Channel is whitelisted, skipping channel branding untranslation",
       );
       return;
     }

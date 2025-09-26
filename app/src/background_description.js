@@ -564,7 +564,7 @@ function getPlayerResponseSafely(playerEl) {
 /**
  * Uses the YouTube player API to obtain the original (untranslated) video description.
  *
- * @returns {string|null} The original description or null if it cannot be retrieved.
+ * @returns {{shortDescription: string|null, channelId: string|null}} The original description or null if it cannot be retrieved.
  */
 async function fetchOriginalDescription() {
   const player = window.YoutubeAntiTranslate.getFirstVisible(
@@ -581,11 +581,13 @@ async function fetchOriginalDescription() {
     return null;
   }
 
-  return (
-    playerResponse?.videoDetails?.shortDescription ||
-    playerResponse?.videoDetails?.title ||
-    null
-  );
+  return {
+    shortDescription:
+      playerResponse?.videoDetails?.shortDescription ||
+      playerResponse?.videoDetails?.title ||
+      null,
+    channelId: playerResponse?.videoDetails?.channelId || null,
+  };
 }
 
 /**
@@ -618,29 +620,44 @@ function fetchOriginalAuthor() {
 async function restoreOriginalDescriptionAndAuthor() {
   const settings = await window.YoutubeAntiTranslate.getSettings();
 
-  const originalDescription =
+  const originalDescriptionData =
     settings.untranslateDescription || settings.untranslateChapters
       ? await fetchOriginalDescription()
       : null;
-  const originalAuthor = settings.untranslateChannelBranding
-    ? fetchOriginalAuthor()
-    : null;
+  const originalAuthor = fetchOriginalAuthor();
   const originalTitle = settings.untranslateChannelBranding
     ? await getTitle(document.location.href)
     : null;
 
-  if (!originalDescription && !originalAuthor && !originalTitle) {
+  if (!originalDescriptionData && !originalAuthor && !originalTitle) {
     return;
   }
 
-  if (originalDescription) {
+  if (originalDescriptionData.shortDescription) {
     if (settings.untranslateDescription) {
       const descriptionContainer = window.YoutubeAntiTranslate.getFirstVisible(
         document.querySelectorAll(DESCRIPTION_SELECTOR),
       );
 
       if (descriptionContainer) {
-        updateDescriptionContent(descriptionContainer, originalDescription);
+        if (
+          await window.YoutubeAntiTranslate.isWhitelistedChannel(
+            "whiteListUntranslateDescription",
+            null,
+            null,
+            originalDescriptionData.channelId,
+          )
+        ) {
+          window.YoutubeAntiTranslate.logInfo(
+            "Channel is whitelisted, skipping video description untranslation",
+          );
+          return;
+        }
+
+        updateDescriptionContent(
+          descriptionContainer,
+          originalDescriptionData.shortDescription,
+        );
       } else {
         window.YoutubeAntiTranslate.logWarning(
           `Video Description container not found`,
@@ -649,11 +666,25 @@ async function restoreOriginalDescriptionAndAuthor() {
     }
 
     if (settings.untranslateChapters) {
-      setupChapters(originalDescription);
+      if (
+        await window.YoutubeAntiTranslate.isWhitelistedChannel(
+          "whiteListUntranslateChapters",
+          null,
+          null,
+          null,
+          originalAuthor,
+        )
+      ) {
+        window.YoutubeAntiTranslate.logInfo(
+          "Channel is whitelisted, skipping video chapters untranslation",
+        );
+        return;
+      }
+      setupChapters(originalDescriptionData);
     }
   }
 
-  if (originalAuthor) {
+  if (settings.untranslateChannelBranding && originalAuthor) {
     await handleAuthor(originalAuthor, originalTitle);
   }
 }
@@ -683,7 +714,7 @@ async function handleAuthor(originalAuthor, originalTitle = null) {
     )
   ) {
     window.YoutubeAntiTranslate.logInfo(
-      "Channel is whitelisted, skipping branding untranslation",
+      "Channel is whitelisted, skipping channel branding untranslation",
     );
     return;
   }
@@ -903,6 +934,9 @@ async function updateCollaboratorAuthors(avatarStack, originalAuthor) {
 
   const authors = [];
 
+  let originalTitle;
+  let channelId;
+
   if (avatarStackImages) {
     for (const avatarImage of avatarStackImages) {
       const imgSrc = avatarImage.src;
@@ -910,7 +944,7 @@ async function updateCollaboratorAuthors(avatarStack, originalAuthor) {
         continue;
       }
 
-      const originalTitle = await fetchOriginalDescription();
+      ({ originalTitle, channelId } = await fetchOriginalDescription());
 
       const originalCollaborators =
         await window.YoutubeAntiTranslate.getOriginalCollaboratorsItemsWithYoutubeI(
@@ -936,16 +970,23 @@ async function updateCollaboratorAuthors(avatarStack, originalAuthor) {
 
       if (collaboratorAuthorsOnly && collaboratorAuthorsOnly.length === 1) {
         if (
-          await window.YoutubeAntiTranslate.isWhitelistedChannel(
+          (channelId &&
+            (await window.YoutubeAntiTranslate.isWhitelistedChannel(
+              "whiteListUntranslateChannelBranding",
+              null,
+              null,
+              channelId,
+            ))) ||
+          (await window.YoutubeAntiTranslate.isWhitelistedChannel(
             "whiteListUntranslateChannelBranding",
             null,
             null,
             null,
             collaboratorAuthorsOnly[0],
-          )
+          ))
         ) {
           window.YoutubeAntiTranslate.logInfo(
-            "Channel is whitelisted, skipping branding untranslation",
+            "Channel is whitelisted, skipping channel branding untranslation",
           );
           return;
         }
@@ -1276,12 +1317,16 @@ async function getTitle(url) {
   return response.data.title;
 }
 
-// Get Description from the VideoData
+/** Get Description from the VideoData
+ * @return {Promise<{shortDescription:string|null, channelId: string|null}>} The original description or null if it cannot be retrieved.
+ */
 async function getDescriptionMobile() {
-  return (
-    extractVideoDataField("shortDescription") ||
-    (await getTitle(document.location.href))
-  );
+  return {
+    shortDescription:
+      extractVideoDataField("shortDescription") ||
+      (await getTitle(document.location.href)),
+    channelId: extractVideoDataField("channelId") || null,
+  };
 }
 
 // Get Author from the VideoData

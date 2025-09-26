@@ -742,13 +742,13 @@ async function untranslateOtherVideos(intersectElements = null) {
           if (settings.untranslateThumbnail && originalThumbnail) {
             if (
               await window.YoutubeAntiTranslate.isWhitelistedChannel(
-                "whiteListUntranslateChannelBranding",
+                "whiteListUntranslateThumbnail",
                 null,
                 response.data.author_url,
               )
             ) {
               window.YoutubeAntiTranslate.logInfo(
-                "Channel is whitelisted, skipping thumbnail untranslation",
+                "Channel is whitelisted, skipping video thumbnail untranslation",
               );
               return;
             }
@@ -794,6 +794,19 @@ async function untranslateOtherVideos(intersectElements = null) {
             video.hasAttribute("data-ytat-untranslated-desc") !== videoId
           ) {
             if (settings.untranslateDescription) {
+              if (
+                await window.YoutubeAntiTranslate.isWhitelistedChannel(
+                  "whiteListUntranslateDescription",
+                  null,
+                  response.data.author_url,
+                )
+              ) {
+                window.YoutubeAntiTranslate.logInfo(
+                  "Channel is whitelisted, skipping video description untranslation",
+                );
+                return;
+              }
+
               // Locate description snippet containers
               const snippetElements = video.querySelectorAll(
                 ".metadata-snippet-text, .metadata-snippet-text-navigation",
@@ -897,7 +910,7 @@ async function untranslateOtherVideos(intersectElements = null) {
                     )
                   ) {
                     window.YoutubeAntiTranslate.logInfo(
-                      "Channel is whitelisted, skipping branding untranslation",
+                      "Channel is whitelisted, skipping channel branding untranslation",
                     );
                     return;
                   }
@@ -1111,13 +1124,13 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
             if (settings.untranslateThumbnail && originalThumbnail) {
               if (
                 await window.YoutubeAntiTranslate.isWhitelistedChannel(
-                  "whiteListUntranslateChannelBranding",
+                  "whiteListUntranslateThumbnail",
                   null,
                   response.data.author_url,
                 )
               ) {
                 window.YoutubeAntiTranslate.logInfo(
-                  "Channel is whitelisted, skipping thumbnail untranslation",
+                  "Channel is whitelisted, skipping short thumbnail untranslation",
                 );
                 return;
               }
@@ -1228,13 +1241,13 @@ async function untranslateCurrentPlayerBackgroundThumbnail() {
 
       if (
         await window.YoutubeAntiTranslate.isWhitelistedChannel(
-          "whiteListUntranslateChannelBranding",
+          "whiteListUntranslateThumbnail",
           null,
           response.data.author_url,
         )
       ) {
         window.YoutubeAntiTranslate.logInfo(
-          "Channel is whitelisted, skipping thumbnail untranslation",
+          "Channel is whitelisted, skipping video thumbnail untranslation",
         );
         return;
       }
@@ -1328,13 +1341,13 @@ async function untranslateCurrentPlaylistHeaderThumbnail() {
 
       if (
         await window.YoutubeAntiTranslate.isWhitelistedChannel(
-          "whiteListUntranslateChannelBranding",
+          "whiteListUntranslateThumbnail",
           null,
           response.data.author_url,
         )
       ) {
         window.YoutubeAntiTranslate.logInfo(
-          "Channel is whitelisted, skipping thumbnail untranslation",
+          "Channel is whitelisted, skipping video thumbnail untranslation",
         );
         return;
       }
