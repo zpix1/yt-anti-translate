@@ -16,7 +16,11 @@ export const test = base.extend<TestOptions>({
 });
 
 export default defineConfig<TestOptions>({
-  timeout: 4 * 60 * 1000,
+  globalTimeout: 55 * 60 * 1000,
+  timeout: process.env.CI ? 6 * 60 * 1000 : 3 * 60 * 1000,
+  expect: {
+    timeout: process.env.CI ? 40_000 : 20_000,
+  },
   testDir: "./tests",
   /* Run tests in files in parallel */
   fullyParallel: true,
@@ -47,6 +51,8 @@ export default defineConfig<TestOptions>({
         allBrowserNameWithExtensions: ["chromium"],
         allLocaleStrings: ["ru-RU", "th-TH"],
         isMobile: false,
+        actionTimeout: process.env.CI ? 40_000 : 20_000,
+        navigationTimeout: process.env.CI ? 60_000 : 30_000,
       },
     },
     {
@@ -65,6 +71,8 @@ export default defineConfig<TestOptions>({
           args: ["--headless=new"],
         },
         locale: "ru-RU",
+        actionTimeout: process.env.CI ? 40_000 : 20_000,
+        navigationTimeout: process.env.CI ? 60_000 : 30_000,
       },
       dependencies: ["setup-auth-and-ublock-chromium"],
     },
@@ -84,6 +92,8 @@ export default defineConfig<TestOptions>({
           args: ["--headless=new"],
         },
         locale: "th-TH",
+        actionTimeout: process.env.CI ? 40_000 : 20_000,
+        navigationTimeout: process.env.CI ? 60_000 : 30_000,
       },
       dependencies: ["setup-auth-and-ublock-chromium"],
     },
@@ -96,6 +106,8 @@ export default defineConfig<TestOptions>({
         allBrowserNameWithExtensions: ["firefox"],
         allLocaleStrings: ["ru-RU", "th-TH"],
         isMobile: false,
+        actionTimeout: process.env.CI ? 40_000 : 20_000,
+        navigationTimeout: process.env.CI ? 60_000 : 30_000,
       },
     },
     {
@@ -111,6 +123,8 @@ export default defineConfig<TestOptions>({
           args: ["--headless=new"],
         },
         locale: "ru-RU",
+        actionTimeout: process.env.CI ? 40_000 : 20_000,
+        navigationTimeout: process.env.CI ? 60_000 : 30_000,
       },
       dependencies: ["setup-auth-and-ublock-firefox"],
     },
@@ -127,6 +141,8 @@ export default defineConfig<TestOptions>({
           args: ["--headless=new"],
         },
         locale: "th-TH",
+        actionTimeout: process.env.CI ? 40_000 : 20_000,
+        navigationTimeout: process.env.CI ? 60_000 : 30_000,
       },
       dependencies: ["setup-auth-and-ublock-firefox"],
     },
@@ -139,6 +155,8 @@ export default defineConfig<TestOptions>({
         ...devices["Pixel 5"],
         allBrowserNameWithExtensions: ["chromium"],
         allLocaleStrings: ["ru-RU", "th-TH"],
+        actionTimeout: process.env.CI ? 40_000 : 20_000,
+        navigationTimeout: process.env.CI ? 60_000 : 30_000,
       },
     },
     {
@@ -156,6 +174,8 @@ export default defineConfig<TestOptions>({
           args: ["--headless=new"],
         },
         locale: "ru-RU",
+        actionTimeout: process.env.CI ? 40_000 : 20_000,
+        navigationTimeout: process.env.CI ? 60_000 : 30_000,
       },
       dependencies: ["setup-auth-and-ublock-mobile"],
     },
@@ -174,6 +194,8 @@ export default defineConfig<TestOptions>({
           args: ["--headless=new"],
         },
         locale: "th-TH",
+        actionTimeout: process.env.CI ? 40_000 : 20_000,
+        navigationTimeout: process.env.CI ? 60_000 : 30_000,
       },
       dependencies: ["setup-auth-and-ublock-mobile"],
     },

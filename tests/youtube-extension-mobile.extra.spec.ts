@@ -4,6 +4,7 @@ import { test } from "../playwright.config";
 import {
   setupTestEnvironment,
   loadPageAndVerifyAuth,
+  waitForSelectorOrRetryWithPageReload,
 } from "./helpers/TestSetupHelper";
 
 // This test ensures the extension properly untranslated titles on the mobile site (m.youtube.com)
@@ -40,18 +41,14 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
     });
 
     // Wait until at least one channel renderer for MrBeast appears
-    const channelRenderer = page
-      .locator('ytm-compact-channel-renderer:has-text("@MrBeast")')
-      .first();
-    await expect(channelRenderer).toBeVisible({ timeout: 15000 });
-
-    // Locate the channel name element inside the renderer
-    const authorLocator = channelRenderer.locator(
-      "h4.compact-media-item-headline > .yt-core-attributed-string, h4.YtmCompactMediaItemHeadline > .yt-core-attributed-string",
-    );
-    await expect(authorLocator).toBeVisible({ timeout: 15000 });
-
-    const authorText = (await authorLocator.textContent()) ?? "";
+    const channelRenderer = (
+      await waitForSelectorOrRetryWithPageReload(
+        page,
+        'ytm-compact-channel-renderer h4:has-text("MrBeast")',
+      )
+    ).first();
+    await expect(channelRenderer).toBeVisible();
+    const authorText = (await channelRenderer.textContent()) ?? "";
     console.log("Search result author:", authorText.trim());
 
     // Check that original English text is present and Thai translation is absent
@@ -101,10 +98,13 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
     });
 
     // Wait until at least one video renderer for Mark Rober appears
-    const videoRenderer = page
-      .locator('ytm-video-with-context-renderer:has-text("Mark Rober")')
-      .first();
-    await expect(videoRenderer).toBeVisible({ timeout: 15000 });
+    const videoRenderer = (
+      await waitForSelectorOrRetryWithPageReload(
+        page,
+        'ytm-video-with-context-renderer:has-text("Mark Rober")',
+      )
+    ).first();
+    await expect(videoRenderer).toBeVisible();
 
     // Locate the channel name element inside the renderer
     const authorLocator = videoRenderer
@@ -112,7 +112,8 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
         "div.media-item-metadata .YtmBadgeAndBylineRendererHost .yt-core-attributed-string",
       )
       .first();
-    await expect(authorLocator).toBeVisible({ timeout: 15000 });
+    await authorLocator.waitFor();
+    await expect(authorLocator).toBeVisible();
 
     const authorText = (await authorLocator.textContent()) ?? "";
     console.log("Search result author:", authorText.trim());

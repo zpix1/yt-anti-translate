@@ -19,6 +19,7 @@ import {
 } from "./AuthStorageHelper";
 import { downloadAndExtractUBlock } from "./ExtensionsFilesHelper";
 import { handleYoutubeConsent } from "./YoutubeConsentHelper";
+import { waitForSelectorOrRetryWithPageReload } from "./TestSetupHelper";
 
 export async function setupUBlockAndAuth(
   allBrowserNameWithExtensions: string[],
@@ -129,7 +130,7 @@ export async function setupUBlockAndAuth(
         }
 
         if (loginButton || !isCorrectLocale || !localeLoaded) {
-          await openYoutubeStartingPage(page);
+          await openYoutubeStartingPage(page, true);
 
           // If we did not load a locale storage state, login to test account and set locale
           // This will also create a new storage state with the locale already set
@@ -195,7 +196,10 @@ export async function setupUBlockAndAuth(
     };
   }
 
-  async function openYoutubeStartingPage(page: Page) {
+  async function openYoutubeStartingPage(
+    page: Page,
+    loginNeeded: boolean = false,
+  ) {
     await page.goto("https://www.youtube.com/feed/you");
 
     try {
@@ -213,5 +217,12 @@ export async function setupUBlockAndAuth(
     }
 
     await handleYoutubeConsent(page);
+
+    if (loginNeeded) {
+      await waitForSelectorOrRetryWithPageReload(
+        page,
+        "#items > [is-primary] > a#endpoint, [role='tablist'] [role='tab']",
+      );
+    }
   }
 }

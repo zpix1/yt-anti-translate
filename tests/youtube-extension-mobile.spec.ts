@@ -4,6 +4,7 @@ import { test } from "../playwright.config";
 import {
   setupTestEnvironment,
   loadPageAndVerifyAuth,
+  waitForSelectorOrRetryWithPageReload,
 } from "./helpers/TestSetupHelper";
 
 // This test ensures the extension properly untranslated titles on the mobile site (m.youtube.com)
@@ -42,13 +43,14 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
 
     // The mobile layout renders the video title inside a slim container.
     // Wait for the extension to inject its fake untranslated node.
-    const fakeNodeSelector = "#yt-anti-translate-fake-node-current-video";
-    await page.waitForSelector(fakeNodeSelector, { timeout: 15000 });
+    const videoTitleLocator = await waitForSelectorOrRetryWithPageReload(
+      page,
+      "#yt-anti-translate-fake-node-current-video",
+    );
+    await expect(videoTitleLocator).toBeVisible();
 
     // Retrieve the title text
-    const videoTitle = (
-      await page.locator(fakeNodeSelector).textContent()
-    )?.trim();
+    const videoTitle = ((await videoTitleLocator.textContent()) ?? "")?.trim();
     console.log("Mobile video title:", videoTitle);
 
     // Expect the title to contain English letters and no Cyrillic characters
@@ -67,12 +69,14 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
 
     // Expand the description section ("Show more" button)
     const showMoreSelector = ".slim-video-information-show-more";
-    await page.waitForSelector(showMoreSelector, { timeout: 15000 });
+    await page.waitForSelector(showMoreSelector);
     await page.locator(showMoreSelector).click();
 
     // Wait for the original (untranslated) description text to appear
     const expectedText = "In Loving Memory of Coach Tyler Wall*";
-    await page.getByText(expectedText);
+    const descriptionLocator = await page.getByText(expectedText);
+    await descriptionLocator.waitFor();
+    await expect(descriptionLocator).toBeVisible();
 
     // Capture screenshot for visual verification
     await page.screenshot({
@@ -114,11 +118,18 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
       path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-channel-branding-header-mobile-test.png`,
     });
 
+    await waitForSelectorOrRetryWithPageReload(
+      page,
+      "yt-description-preview-view-model",
+    );
+
     // Wait for branding description text to appear (English original)
     const expectedBrandingText = "SUBSCRIBE FOR A COOKIE";
-    await page.waitForSelector(`text=${expectedBrandingText}`, {
-      timeout: 20000,
-    });
+    const descriptionLocator = await page.locator(
+      `text=${expectedBrandingText}`,
+    );
+    await descriptionLocator.waitFor();
+    await expect(descriptionLocator).toBeVisible();
 
     // Take a screenshot for visual verification
     await page.screenshot({
@@ -159,7 +170,8 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
     });
 
     // Locate the elements with the text "Popular Shorts"
-    const popularShortsLocator = page.locator(
+    const popularShortsLocator = await waitForSelectorOrRetryWithPageReload(
+      page,
       'ytm-compact-playlist-renderer span:has-text("Popular Shorts")',
     );
 
@@ -212,7 +224,7 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
     });
 
     // Wait for the video grid to appear
-    await page.waitForSelector("ytm-rich-item-renderer");
+    await waitForSelectorOrRetryWithPageReload(page, "ytm-rich-item-renderer");
 
     // --- Check Videos Tab ---
     const originalPlaylistTitle = "owned-playlist-playwright-test";
@@ -279,7 +291,7 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
     });
 
     // Wait for the video grid to appear
-    await page.waitForSelector("ytm-rich-item-renderer");
+    await waitForSelectorOrRetryWithPageReload(page, "ytm-rich-item-renderer");
 
     // --- Check Videos Tab ---
     const expectedThumbnailSrc =
@@ -300,6 +312,7 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
 
     // Find the thumbnail image within the located video item
     const thumbnailImage = originalPlaylist.locator('img[src*="ytimg.com"]');
+    await thumbnailImage.waitFor();
     await expect(thumbnailImage).toHaveAttribute("src", expectedThumbnailSrc);
 
     // Take a screenshot for visual verification
@@ -341,7 +354,10 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
     });
 
     // Wait for the video grid to appear
-    await page.waitForSelector("ytm-compact-playlist-renderer");
+    await waitForSelectorOrRetryWithPageReload(
+      page,
+      "ytm-compact-playlist-renderer",
+    );
 
     // --- Check Videos Tab ---
     const originalPlaylistTitle = "Popular Shorts";

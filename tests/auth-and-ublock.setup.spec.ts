@@ -15,7 +15,7 @@ test.describe("Setup Auth And UBlock", () => {
     // this allow parallelism globally, but not when doing the setup
     // (which is critical that is not flacky to avoid repeated fails and login attmpts)
     const lockRelease = await acquireLock("setup-auth-and-ublock", {
-      timeoutMs: 3 * 60 * 1000,
+      timeoutMs: 5 * 60 * 1000,
     });
 
     try {

@@ -7,6 +7,7 @@ import {
   TestInfo,
   Page,
   devices,
+  Locator,
 } from "@playwright/test";
 import path, { dirname } from "node:path";
 import { withExtension } from "playwright-webextext";
@@ -204,7 +205,66 @@ export async function loadPageAndVerifyAuth(
 
   // When chromium we need to wait some extra time to allow adds to be removed by uBlock Origin Lite
   // Ads are allowed to load and removed after so it takes time
-  if (browserNameWithExtensions === "chromium") {
-    await page.waitForTimeout(5000);
+  if (
+    (url.includes("/watch?v") ||
+      url.includes("/shorts/") ||
+      url.includes("/embed/")) &&
+    browserNameWithExtensions === "chromium"
+  ) {
+    await page.waitForTimeout(6000);
+  } else {
+    await page.waitForTimeout(1000);
   }
+}
+
+export async function waitForSelectorOrRetryWithPageReload(
+  page: Page,
+  selector: string,
+  state: "attached" | "detached" | "visible" | "hidden" = "visible",
+  maxRetries: number = 3,
+): Promise<Locator> {
+  try {
+    const locator = page.locator(selector);
+    await locator.first().waitFor({ state });
+    await page.waitForTimeout(5000);
+    return locator;
+  } catch {
+    if (maxRetries <= 0) {
+      throw new Error(`Too many retries to find ${state} element: ${selector}`);
+    }
+    await page.reload();
+    try {
+      await page.waitForLoadState("networkidle", { timeout: 5000 });
+    } catch {
+      // empty
+    }
+    return waitForSelectorOrRetryWithPageReload(
+      page,
+      selector,
+      state,
+      maxRetries - 1,
+    );
+  }
+}
+
+export async function getFirstVisibleLocator(
+  locator: Locator,
+): Promise<Locator> {
+  const elements: Locator[] = await locator.all();
+  if (elements.length === 0) {
+    return locator;
+  }
+  let firstVisibleLocator: Locator | undefined = undefined;
+  for (const element of elements) {
+    if (await element.isVisible()) {
+      firstVisibleLocator = element;
+      break;
+    }
+  }
+
+  if (!firstVisibleLocator) {
+    throw new Error(`No visible elements found for the locator: ${locator}`);
+  }
+
+  return firstVisibleLocator;
 }

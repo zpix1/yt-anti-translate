@@ -13,6 +13,7 @@ const authFileBase = "user";
 
 import "dotenv/config";
 import { Browser, BrowserContext, Page } from "@playwright/test";
+import { waitForSelectorOrRetryWithPageReload } from "./TestSetupHelper";
 
 /**
  * @param {BrowserContext} context
@@ -210,7 +211,6 @@ export async function findLoginButton(
         const subscribeButtonHeader = page
           .getByRole("button", { name: label, disabled: false })
           .first();
-        // TODO: Locator does not work
         if (await subscribeButtonHeader.isVisible()) {
           await subscribeButtonHeader.scrollIntoViewIfNeeded();
           await subscribeButtonHeader.click();
@@ -256,7 +256,7 @@ export async function findLoginButton(
       const possibleLabels = ["You", "Вы", "คุณ"];
       for (const label of possibleLabels) {
         const youTab = page.getByRole("tab", { name: label }).first();
-        const containsIconLocator = youTab.locator("svg:visible").first();
+        const containsIconLocator = youTab.locator("svg").first();
         if (
           (await youTab.isVisible()) &&
           (await containsIconLocator.isVisible())
@@ -596,7 +596,10 @@ async function continueLoginSteps(
   console.log(
     `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Filling in email: ${process.env.GOOGLE_USER}`,
   );
-  const emailInput = page.locator("#identifierId, input[type='email']");
+  const emailInput = await waitForSelectorOrRetryWithPageReload(
+    page,
+    "#identifierId, input[type='email']",
+  );
   await emailInput.waitFor();
   await emailInput.fill(process.env.GOOGLE_USER!);
   await page.getByRole("button", { name: nextText }).click();
@@ -734,7 +737,11 @@ export async function isLocaleCorrect(
 
   const homeTab = page.getByRole("tab", { name: homeLabel }).first();
 
-  await homeTab.waitFor();
+  try {
+    await homeTab.waitFor();
+  } catch {
+    return false;
+  }
 
   if (await homeTab.isVisible()) {
     console.log(
