@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.19.13.1] - 2025-09-27
+
+### Fixed
+
+- Fix [#60](https://github.com/zpix1/yt-anti-translate/issues/60#issuecomment-3316129585) Titles of playlists changed to the title of the first video on them. (only on `/feed/you` and `/feed/playlist`)
+
 ## [1.19.13] - 2025-09-20
 
 ### New Feature
