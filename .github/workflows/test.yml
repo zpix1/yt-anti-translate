@@ -56,6 +56,7 @@ jobs:
           GOOGLE_USER: "${{ secrets.GOOGLE_USER }}"
           GOOGLE_PWD: "${{ secrets.GOOGLE_PWD }}"
           GOOGLE_OTP_SECRET: "${{ secrets.GOOGLE_OTP_SECRET }}"
+          TWOCAPTCHA_API_KEY: "${{ secrets.TWOCAPTCHA_API_KEY }}"
         run: xvfb-run npx playwright test --headed
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
