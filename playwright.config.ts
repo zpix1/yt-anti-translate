@@ -17,9 +17,9 @@ export const test = base.extend<TestOptions>({
 
 export default defineConfig<TestOptions>({
   globalTimeout: 55 * 60 * 1000,
-  timeout: process.env.CI ? 12 * 60 * 1000 : 4 * 60 * 1000,
+  timeout: process.env.CI ? 18 * 60 * 1000 : 6 * 60 * 1000,
   expect: {
-    timeout: process.env.CI ? 60_000 : 20_000,
+    timeout: process.env.CI ? 15_000 : 5_000,
   },
   testDir: "./tests",
   /* Run tests in files in parallel */
@@ -51,8 +51,8 @@ export default defineConfig<TestOptions>({
         allBrowserNameWithExtensions: ["chromium"],
         allLocaleStrings: ["ru-RU", "th-TH"],
         isMobile: false,
-        actionTimeout: process.env.CI ? 45_000 : 15_000,
-        navigationTimeout: process.env.CI ? 75_000 : 25_000,
+        actionTimeout: process.env.CI ? 30_000 : 10_000,
+        navigationTimeout: process.env.CI ? 45_000 : 15_000,
       },
     },
     {
@@ -106,8 +106,8 @@ export default defineConfig<TestOptions>({
         allBrowserNameWithExtensions: ["firefox"],
         allLocaleStrings: ["ru-RU", "th-TH"],
         isMobile: false,
-        actionTimeout: process.env.CI ? 45_000 : 15_000,
-        navigationTimeout: process.env.CI ? 75_000 : 25_000,
+        actionTimeout: process.env.CI ? 30_000 : 10_000,
+        navigationTimeout: process.env.CI ? 45_000 : 15_000,
       },
     },
     {
@@ -155,8 +155,8 @@ export default defineConfig<TestOptions>({
         ...devices["Pixel 5"],
         allBrowserNameWithExtensions: ["chromium"],
         allLocaleStrings: ["ru-RU", "th-TH"],
-        actionTimeout: process.env.CI ? 45_000 : 15_000,
-        navigationTimeout: process.env.CI ? 75_000 : 25_000,
+        actionTimeout: process.env.CI ? 30_000 : 10_000,
+        navigationTimeout: process.env.CI ? 45_000 : 15_000,
       },
     },
     {
