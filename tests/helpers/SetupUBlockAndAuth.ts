@@ -221,7 +221,7 @@ export async function setupUBlockAndAuth(
     if (loginNeeded) {
       await waitForSelectorOrRetryWithPageReload(
         page,
-        "#items > [is-primary] > a#endpoint, [role='tablist'] [role='tab']",
+        "#items > [role='tab'] > a#endpoint, [role='tablist'] [role='tab']",
       );
     }
   }

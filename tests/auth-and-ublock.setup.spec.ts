@@ -14,9 +14,10 @@ test.describe("Setup Auth And UBlock", () => {
     // use a lock to prevent multiple runs of this test at the same time
     // this allow parallelism globally, but not when doing the setup
     // (which is critical that is not flacky to avoid repeated fails and login attmpts)
-    const lockRelease = await acquireLock("setup-auth-and-ublock", {
-      timeoutMs: 5 * 60 * 1000,
-    });
+    const lockRelease = await acquireLock(
+      "setup-auth-and-ublock",
+      5 * 60 * 1000,
+    );
 
     try {
       // If this test is retrying then check uBlock and Auth again

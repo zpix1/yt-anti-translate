@@ -1,91 +1,78 @@
-/* eslint-disable  @typescript-eslint/no-explicit-any */
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-import fs from "fs/promises";
-import path from "path";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const LOCK_DIR = path.resolve(__dirname, ".locks");
 
-export type LockOptions = {
-  retryDelayMs?: number;
-  timeoutMs?: number;
-  staleThresholdMs?: number;
-};
-
-const DEFAULTS = {
-  retryDelayMs: 500,
-  timeoutMs: 5 * 60 * 1000, // 5 minutes
-  staleThresholdMs: 30 * 60 * 1000, // 30 minutes
-};
-
-function sleep(ms: number) {
-  return new Promise((r) => setTimeout(r, ms));
-}
-
-/**
- * Acquire a simple filesystem lock (atomic create of a lock file).
- * Returns a release function that removes the lock.
- */
 export async function acquireLock(
   name: string,
-  opts?: LockOptions,
-): Promise<() => Promise<void>> {
-  const { retryDelayMs, timeoutMs, staleThresholdMs } = {
-    ...DEFAULTS,
-    ...(opts ?? {}),
-  };
-  const lockDir = path.resolve(process.cwd(), "tmp", "locks");
-  await fs.mkdir(lockDir, { recursive: true });
-  const lockPath = path.join(lockDir, `${name}.lock`);
-
+  timeoutMs = 300000,
+): Promise<() => void> {
+  const file = path.join(LOCK_DIR, `${name}.lock`);
+  fs.mkdirSync(LOCK_DIR, { recursive: true });
   const start = Date.now();
+
   while (true) {
     try {
-      // 'wx' fails if file exists -> atomic creation
-      const fh = await fs.open(lockPath, "wx");
-      const content = JSON.stringify({ pid: process.pid, created: Date.now() });
-      await fh.writeFile(content);
-      await fh.close();
-
-      // release function
-      let released = false;
-      return async () => {
-        if (released) {
-          return;
-        }
-        released = true;
-        try {
-          await fs.unlink(lockPath);
-        } catch {
-          /* ignore */
+      const pid = process.pid;
+      const content = JSON.stringify({ pid, createdAt: Date.now() });
+      fs.writeFileSync(file, content, { flag: "wx" }); // atomic create
+      // success
+      const release = () => {
+        if (fs.existsSync(file)) {
+          fs.unlinkSync(file);
         }
       };
-    } catch (err: any) {
-      // someone else holds the lock
-      if (err?.code !== "EEXIST") {
-        throw err;
+
+      // cleanup on exit
+      process.once("exit", release);
+      process.once("SIGINT", () => {
+        release();
+        process.exit(1);
+      });
+      process.once("SIGTERM", () => {
+        release();
+        process.exit(1);
+      });
+
+      return release;
+    } catch (err) {
+      const e = err as NodeJS.ErrnoException;
+      if (e.code !== "EEXIST") {
+        throw e;
       }
 
-      // if lock file looks stale (old mtime), remove it and retry
+      // check if stale
       try {
-        const stat = await fs.stat(lockPath);
-        const age = Date.now() - stat.mtimeMs;
-        if (age > staleThresholdMs) {
-          // try to remove stale lock and loop to acquire
-          try {
-            await fs.unlink(lockPath);
-            continue;
-          } catch {
-            // can't remove it -> just wait
-          }
+        const data = JSON.parse(fs.readFileSync(file, "utf8"));
+        const pid: number = data.pid;
+        const age = Date.now() - data.createdAt;
+        if (!isProcessAlive(pid) || age > timeoutMs) {
+          fs.unlinkSync(file);
+          continue; // retry immediately
         }
       } catch {
-        // stat failed, just wait and retry
+        // corrupted lock file, remove
+        fs.unlinkSync(file);
+        continue;
       }
 
+      // wait before retry
       if (Date.now() - start > timeoutMs) {
-        throw new Error(
-          `Timeout acquiring lock "${name}" after ${timeoutMs} ms`,
-        );
+        throw new Error(`Timeout waiting for lock: ${name}`);
       }
-      await sleep(retryDelayMs);
+      await new Promise((r) => setTimeout(r, 200));
     }
+  }
+}
+
+function isProcessAlive(pid: number): boolean {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
   }
 }

@@ -224,7 +224,14 @@ export async function waitForSelectorOrRetryWithPageReload(
   maxRetries: number = 3,
 ): Promise<Locator> {
   try {
-    const locator = page.locator(selector);
+    let attributedSelector;
+    if (selector.includes(",")) {
+      // multiple selectors, need to wrap in :is()
+      attributedSelector = `:is(${selector})`;
+    } else {
+      attributedSelector = selector;
+    }
+    const locator = page.locator(`${attributedSelector}:${state}`);
     await locator.first().waitFor({ state });
     await page.waitForTimeout(5000);
     return locator;
@@ -249,6 +256,7 @@ export async function waitForSelectorOrRetryWithPageReload(
 
 export async function getFirstVisibleLocator(
   locator: Locator,
+  allowNotFound: boolean = false,
 ): Promise<Locator> {
   const elements: Locator[] = await locator.all();
   if (elements.length === 0) {
@@ -263,7 +271,11 @@ export async function getFirstVisibleLocator(
   }
 
   if (!firstVisibleLocator) {
-    throw new Error(`No visible elements found for the locator: ${locator}`);
+    if (allowNotFound) {
+      return locator.first();
+    } else {
+      throw new Error(`No visible elements found for the locator: ${locator}`);
+    }
   }
 
   return firstVisibleLocator;

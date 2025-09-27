@@ -4,6 +4,7 @@ import * as OTPAuth from "otpauth";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { dirname } from "node:path";
+import TwoCaptcha from "2captcha-ts";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -13,7 +14,10 @@ const authFileBase = "user";
 
 import "dotenv/config";
 import { Browser, BrowserContext, Page } from "@playwright/test";
-import { waitForSelectorOrRetryWithPageReload } from "./TestSetupHelper";
+import {
+  getFirstVisibleLocator,
+  waitForSelectorOrRetryWithPageReload,
+} from "./TestSetupHelper";
 
 /**
  * @param {BrowserContext} context
@@ -256,7 +260,10 @@ export async function findLoginButton(
       const possibleLabels = ["You", "Вы", "คุณ"];
       for (const label of possibleLabels) {
         const youTab = page.getByRole("tab", { name: label }).first();
-        const containsIconLocator = youTab.locator("svg").first();
+        const containsIconLocator = await getFirstVisibleLocator(
+          youTab.locator("svg"),
+          true,
+        );
         if (
           (await youTab.isVisible()) &&
           (await containsIconLocator.isVisible())
@@ -611,11 +618,14 @@ async function continueLoginSteps(
     );
   }
 
+  await solveCaptcha(page);
+
   console.log(
     `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Filling in password`,
   );
-  const passwordInput = page.locator("#password input, input[name='password']");
-  await passwordInput.waitFor();
+  const passwordInput = await getFirstVisibleLocator(
+    page.locator("#password input, input[name='password']"),
+  );
   await passwordInput.fill(process.env.GOOGLE_PWD!);
   await page.getByRole("button", { name: nextText }).click();
   try {
@@ -626,7 +636,11 @@ async function continueLoginSteps(
     );
   }
 
-  const totpInput = page.locator("#totpPin, input[name='totpPin']");
+  await solveCaptcha(page);
+
+  const totpInput = await getFirstVisibleLocator(
+    page.locator("#totpPin, input[name='totpPin']"),
+  );
   await totpInput.waitFor();
   if (await totpInput.isVisible()) {
     console.log(
@@ -653,6 +667,8 @@ async function continueLoginSteps(
       `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] No 2FA required`,
     );
   }
+
+  await solveCaptcha(page);
 
   await page.waitForTimeout(5000);
   try {
@@ -753,5 +769,99 @@ export async function isLocaleCorrect(
       `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Home tab not found with locale label: ${homeLabel}, locale may be incorrect`,
     );
     return false;
+  }
+}
+
+export async function solveCaptcha(
+  page: Page,
+  maxRetries: number = 3,
+): Promise<void> {
+  const captchaSelector = "img#captchaimg";
+  const inputSelector = "input#ca";
+  const nextText = /Next|Далее|ถัดไป/i;
+
+  await page.waitForTimeout(2000);
+
+  const captchalocatorSearch = await getFirstVisibleLocator(
+    page.locator(captchaSelector),
+    true,
+  );
+  const inputLocatorSearch = await getFirstVisibleLocator(
+    page.locator(inputSelector),
+    true,
+  );
+
+  if (
+    (await captchalocatorSearch.isVisible()) ||
+    (await inputLocatorSearch.isVisible())
+  ) {
+    if (maxRetries <= 0) {
+      throw new Error("Failed to solve captcha after maximum retries");
+    }
+
+    const captchaLocator = await getFirstVisibleLocator(
+      page.locator(captchaSelector),
+    );
+
+    if (!process.env.TWOCAPTCHA_API_KEY) {
+      if (!process.env.CI) {
+        await page.pause();
+      }
+      return;
+    }
+
+    // Get captcha image as base64
+    const captchaSrc = await captchaLocator.getAttribute("src");
+    let imageData: string;
+
+    if (captchaSrc?.startsWith("data:image")) {
+      imageData = captchaSrc;
+    } else {
+      // Download image from URL
+      const response = await page.request.get(
+        captchaSrc!.startsWith("http")
+          ? captchaSrc!
+          : `${new URL(page.url()).origin}${captchaSrc}`,
+      );
+      const buffer = await response.body();
+      imageData = `data:image/png;base64,${buffer.toString("base64")}`;
+    }
+
+    // Use 2captcha to solve captcha
+    const solver = new TwoCaptcha.Solver(process.env.TWOCAPTCHA_API_KEY, 500);
+    let captchaText = "";
+    const captchaAnswer = await solver.imageCaptcha({
+      body: imageData,
+      numeric: 2,
+      min_len: 5,
+      max_len: 30,
+    });
+
+    // Fill the input
+    captchaText = captchaAnswer.data;
+    console.log(`Captcha solved: ${captchaText}`);
+    const inputLocator = await getFirstVisibleLocator(
+      page.locator(inputSelector),
+    );
+    await inputLocator.fill(captchaText);
+
+    // Click next
+    await page.getByRole("button", { name: nextText }).click();
+
+    await page.waitForTimeout(2000);
+    try {
+      await page.waitForLoadState("networkidle", { timeout: 5000 });
+    } catch {
+      console.log(
+        `Network idle captcha attempt, retries left: ${maxRetries - 1}`,
+      );
+    }
+
+    // Check if captcha is still visible or retry
+    await solveCaptcha(page, maxRetries - 1);
+    return;
+  } else {
+    // No captcha found, exit
+    return;
   }
 }
