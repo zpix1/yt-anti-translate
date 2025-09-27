@@ -220,14 +220,16 @@ export async function findLoginButton(
           await subscribeButtonHeader.click();
 
           try {
-            await page.waitForLoadState("networkidle", { timeout: 5000 });
+            await page.waitForLoadState("networkidle", {
+              timeout: process.env.CI ? 10000 : 5000,
+            });
           } catch {
             console.log(
               `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Network idle timeout after subscribe click`,
             );
           }
 
-          await page.waitForTimeout(1000);
+          await page.waitForTimeout(process.env.CI ? 2000 : 1000);
 
           if (needsCompleteFind) {
             const possibleLabels2 = ["Sign in", "Войти", "ลงชื่อเข้าใช้"];
@@ -274,14 +276,16 @@ export async function findLoginButton(
             await youTab.click();
 
             try {
-              await page.waitForLoadState("networkidle", { timeout: 5000 });
+              await page.waitForLoadState("networkidle", {
+                timeout: process.env.CI ? 10000 : 5000,
+              });
             } catch {
               console.log(
                 `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Network idle timeout after 'You' Tab click`,
               );
             }
 
-            await page.waitForTimeout(1000);
+            await page.waitForTimeout(process.env.CI ? 2000 : 1000);
 
             const possibleLabels2 = ["Sign in", "Войти", "ลงชื่อเข้าใช้"];
             for (const label of possibleLabels2) {
@@ -350,7 +354,9 @@ export async function handleGoogleLogin(
   );
 
   try {
-    await page.waitForLoadState("networkidle", { timeout: 5000 });
+    await page.waitForLoadState("networkidle", {
+      timeout: process.env.CI ? 10000 : 5000,
+    });
   } catch {
     console.log(
       `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Network idle timeout during initial load`,
@@ -398,14 +404,16 @@ export async function handleGoogleLogin(
     await page.goto("https://m.youtube.com/select_site");
 
     try {
-      await page.waitForLoadState("networkidle", { timeout: 5000 });
+      await page.waitForLoadState("networkidle", {
+        timeout: process.env.CI ? 10000 : 5000,
+      });
     } catch {
       console.log(
         `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Network idle timeout after settings page load`,
       );
     }
 
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(process.env.CI ? 2000 : 1000);
 
     await page.getByRole("button").first().waitFor();
 
@@ -420,14 +428,16 @@ export async function handleGoogleLogin(
         await settingsButton.click();
 
         try {
-          await page.waitForLoadState("networkidle", { timeout: 5000 });
+          await page.waitForLoadState("networkidle", {
+            timeout: process.env.CI ? 10000 : 5000,
+          });
         } catch {
           console.log(
             `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Network idle timeout after general settings click`,
           );
         }
 
-        await page.waitForTimeout(1000);
+        await page.waitForTimeout(process.env.CI ? 2000 : 1000);
 
         const languageLabels = ["Language", "Lingua", "Язык", "ภาษา"];
         for (const langLabel of languageLabels) {
@@ -463,9 +473,11 @@ export async function handleGoogleLogin(
       );
       await avatarButton.scrollIntoViewIfNeeded();
       await avatarButton.click();
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(process.env.CI ? 1000 : 500);
       try {
-        await page.waitForLoadState("networkidle", { timeout: 5000 });
+        await page.waitForLoadState("networkidle", {
+          timeout: process.env.CI ? 10000 : 5000,
+        });
       } catch {
         console.log(
           `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Network idle timeout after avatar click`,
@@ -496,9 +508,11 @@ export async function handleGoogleLogin(
 
   let languageOption;
 
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(process.env.CI ? 1000 : 500);
   try {
-    await page.waitForLoadState("networkidle", { timeout: 5000 });
+    await page.waitForLoadState("networkidle", {
+      timeout: process.env.CI ? 10000 : 5000,
+    });
   } catch {
     console.log(
       `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Network idle timeout after language button click`,
@@ -534,7 +548,7 @@ export async function handleGoogleLogin(
   console.log(
     `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Language option clicked, waiting for page to update`,
   );
-  await page.waitForTimeout(5000);
+  await page.waitForTimeout(process.env.CI ? 10000 : 5000);
 
   const localeStoragePath = path.join(
     authFileLocationBase,
@@ -559,14 +573,16 @@ export async function handleGoogleLogin(
     });
   }
   try {
-    await page.waitForLoadState("networkidle", { timeout: 5000 });
+    await page.waitForLoadState("networkidle", {
+      timeout: process.env.CI ? 10000 : 5000,
+    });
   } catch {
     console.log(
       `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Network idle timeout after language change`,
     );
   }
 
-  await page.waitForTimeout(1500);
+  await page.waitForTimeout(process.env.CI ? 3000 : 1500);
   console.log(
     `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Google login handling completed`,
   );
@@ -583,7 +599,9 @@ async function continueLoginSteps(
   );
 
   try {
-    await page.waitForLoadState("networkidle", { timeout: 5000 });
+    await page.waitForLoadState("networkidle", {
+      timeout: process.env.CI ? 10000 : 5000,
+    });
   } catch {
     console.log(
       `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Network idle timeout in login steps`,
@@ -611,7 +629,9 @@ async function continueLoginSteps(
   await emailInput.fill(process.env.GOOGLE_USER!);
   await page.getByRole("button", { name: nextText }).click();
   try {
-    await page.waitForLoadState("networkidle", { timeout: 5000 });
+    await page.waitForLoadState("networkidle", {
+      timeout: process.env.CI ? 10000 : 5000,
+    });
   } catch {
     console.log(
       `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Network idle timeout after email step`,
@@ -629,7 +649,9 @@ async function continueLoginSteps(
   await passwordInput.fill(process.env.GOOGLE_PWD!);
   await page.getByRole("button", { name: nextText }).click();
   try {
-    await page.waitForLoadState("networkidle", { timeout: 5000 });
+    await page.waitForLoadState("networkidle", {
+      timeout: process.env.CI ? 10000 : 5000,
+    });
   } catch {
     console.log(
       `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Network idle timeout after password step`,
@@ -670,9 +692,11 @@ async function continueLoginSteps(
 
   await solveCaptcha(page);
 
-  await page.waitForTimeout(5000);
+  await page.waitForTimeout(process.env.CI ? 10000 : 5000);
   try {
-    await page.waitForLoadState("networkidle", { timeout: 5000 });
+    await page.waitForLoadState("networkidle", {
+      timeout: process.env.CI ? 10000 : 5000,
+    });
   } catch {
     console.log(
       `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Network idle timeout after final login steps`,
@@ -780,7 +804,7 @@ export async function solveCaptcha(
   const inputSelector = "input#ca";
   const nextText = /Next|Далее|ถัดไป/i;
 
-  await page.waitForTimeout(2000);
+  await page.waitForTimeout(process.env.CI ? 4000 : 2000);
 
   const captchalocatorSearch = await getFirstVisibleLocator(
     page.locator(captchaSelector),
@@ -806,6 +830,8 @@ export async function solveCaptcha(
     if (!process.env.TWOCAPTCHA_API_KEY) {
       if (!process.env.CI) {
         await page.pause();
+      } else {
+        throw "TWOCAPTCHA_API_KEY is not set while login per this browser is currently showing a captcha";
       }
       return;
     }
@@ -848,9 +874,11 @@ export async function solveCaptcha(
     // Click next
     await page.getByRole("button", { name: nextText }).click();
 
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(process.env.CI ? 4000 : 2000);
     try {
-      await page.waitForLoadState("networkidle", { timeout: 5000 });
+      await page.waitForLoadState("networkidle", {
+        timeout: process.env.CI ? 10000 : 5000,
+      });
     } catch {
       console.log(
         `Network idle captcha attempt, retries left: ${maxRetries - 1}`,

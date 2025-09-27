@@ -191,12 +191,14 @@ export async function loadPageAndVerifyAuth(
 
   // Wait for the page to load
   try {
-    await page.waitForLoadState("networkidle", { timeout: 5000 });
+    await page.waitForLoadState("networkidle", {
+      timeout: process.env.CI ? 10000 : 5000,
+    });
   } catch {
     // empty
   }
   // .waitForLoadState("networkidle" is not always right so wait 5 extra seconds
-  await page.waitForTimeout(5000);
+  await page.waitForTimeout(process.env.CI ? 10000 : 5000);
 
   // If for whatever reason we are not logged in, then fail the test
   expect(await findLoginButton(page, browserNameWithExtensions, isMobile)).toBe(
@@ -211,9 +213,9 @@ export async function loadPageAndVerifyAuth(
       url.includes("/embed/")) &&
     browserNameWithExtensions === "chromium"
   ) {
-    await page.waitForTimeout(6000);
+    await page.waitForTimeout(process.env.CI ? 12000 : 6000);
   } else {
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(process.env.CI ? 2000 : 1000);
   }
 }
 
@@ -233,7 +235,7 @@ export async function waitForSelectorOrRetryWithPageReload(
     }
     const locator = page.locator(`${attributedSelector}:${state}`);
     await locator.first().waitFor({ state });
-    await page.waitForTimeout(5000);
+    await page.waitForTimeout(process.env.CI ? 10000 : 5000);
     return locator;
   } catch {
     if (maxRetries <= 0) {
@@ -241,7 +243,9 @@ export async function waitForSelectorOrRetryWithPageReload(
     }
     await page.reload();
     try {
-      await page.waitForLoadState("networkidle", { timeout: 5000 });
+      await page.waitForLoadState("networkidle", {
+        timeout: process.env.CI ? 10000 : 5000,
+      });
     } catch {
       // empty
     }

@@ -203,15 +203,19 @@ export async function setupUBlockAndAuth(
     await page.goto("https://www.youtube.com/feed/you");
 
     try {
-      await page.waitForLoadState("networkidle", { timeout: 5000 });
+      await page.waitForLoadState("networkidle", {
+        timeout: process.env.CI ? 10000 : 5000,
+      });
     } catch {
       // empty
     }
 
     // Sometimes youtube redirects to consent page so wait 2 seconds before proceeding
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(process.env.CI ? 4000 : 2000);
     try {
-      await page.waitForLoadState("networkidle", { timeout: 5000 });
+      await page.waitForLoadState("networkidle", {
+        timeout: process.env.CI ? 10000 : 5000,
+      });
     } catch {
       // empty
     }

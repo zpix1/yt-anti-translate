@@ -1855,6 +1855,9 @@ ytm-shorts-lockup-view-model`,
   },
 
   getImageSize: async function (src) {
+    if (!src) {
+      return { width: null, height: null };
+    }
     const img = new Image();
     img.src = src;
 
@@ -1865,6 +1868,18 @@ ytm-shorts-lockup-view-model`,
       width: img.naturalWidth,
       height: img.naturalHeight,
     };
+  },
+
+  isFoundImageSrc: async function (src) {
+    if (!src) {
+      return false;
+    }
+    try {
+      const response = await fetch(src, { method: "GET", redirect: "manual" });
+      return response.ok && response.status >= 200 && response.status < 300;
+    } catch {
+      return false;
+    }
   },
 
   /**

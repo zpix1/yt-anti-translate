@@ -11,6 +11,14 @@ test.describe("Setup Auth And UBlock", () => {
     allLocaleStrings,
     isMobile,
   }) => {
+    // Allow firefox to be always first
+    // Because google is more likely to serve a captcha on firefox
+    // So it needs to be the first to login to avoid that
+    if (allBrowserNameWithExtensions[0] !== "firefox") {
+      // wait 500ms
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    }
+
     // use a lock to prevent multiple runs of this test at the same time
     // this allow parallelism globally, but not when doing the setup
     // (which is critical that is not flacky to avoid repeated fails and login attmpts)
@@ -29,11 +37,11 @@ test.describe("Setup Auth And UBlock", () => {
         false,
       );
 
-      await expect(status).toBe(true);
-
       if (error) {
         console.error("Error during setupUBlockAndAuth:", error);
       }
+      await expect(error).toBeUndefined();
+      await expect(status).toBe(true);
     } finally {
       releaseLock("setup-auth-and-ublock");
     }

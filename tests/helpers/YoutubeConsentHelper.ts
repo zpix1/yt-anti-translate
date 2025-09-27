@@ -3,7 +3,9 @@ import { Page } from "@playwright/test";
 export async function handleYoutubeConsent(page: Page) {
   await page.waitForTimeout(1000);
   try {
-    await page.waitForLoadState("networkidle", { timeout: 5000 });
+    await page.waitForLoadState("networkidle", {
+      timeout: process.env.CI ? 10000 : 5000,
+    });
   } catch {
     // empty
   }
@@ -18,7 +20,9 @@ export async function handleYoutubeConsent(page: Page) {
     await page.waitForTimeout(1500);
   }
   try {
-    await page.waitForLoadState("networkidle", { timeout: 5000 });
+    await page.waitForLoadState("networkidle", {
+      timeout: process.env.CI ? 10000 : 5000,
+    });
   } catch {
     // empty
   }
@@ -38,7 +42,9 @@ export async function handleYoutubeConsent(page: Page) {
 
   await page.waitForTimeout(1000);
   try {
-    await page.waitForLoadState("networkidle", { timeout: 5000 });
+    await page.waitForLoadState("networkidle", {
+      timeout: process.env.CI ? 10000 : 5000,
+    });
   } catch {
     // empty
   }

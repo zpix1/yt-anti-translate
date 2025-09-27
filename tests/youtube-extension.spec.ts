@@ -40,7 +40,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     if (await moreButton.isVisible()) {
       await moreButton.click();
       // Wait for the description to expand
-      await page.waitForTimeout(1000);
+      await page.waitForTimeout(process.env.CI ? 2000 : 1000);
     }
 
     // Get the description text
@@ -81,7 +81,7 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Open full screen
     await page.keyboard.press("F");
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(process.env.CI ? 1000 : 500);
 
     // Get the head link video title
     const headLinkVideoTitleLocator = await page.locator(
@@ -126,7 +126,7 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Exit full screen
     await page.keyboard.press("F");
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(process.env.CI ? 1000 : 500);
 
     const descriptionLocator2 = await getFirstVisibleLocator(
       page.locator("#description-inline-expander"),
@@ -184,7 +184,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     if (await moreButton.isVisible()) {
       await moreButton.click();
       // Wait for the description to expand
-      await page.waitForTimeout(1000);
+      await page.waitForTimeout(process.env.CI ? 2000 : 1000);
     }
 
     // Take a screenshot for visual verification
@@ -251,7 +251,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     await moreButton.first().waitFor();
     await moreButton.first().click();
     // Wait for the description to expand
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(process.env.CI ? 2000 : 1000);
 
     // Get the description text to verify it's in English (not translated)
     const descriptionLocator = await getFirstVisibleLocator(
@@ -278,7 +278,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     await timecodeLink.click();
 
     // Wait for video to update its playback position
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(process.env.CI ? 4000 : 2000);
 
     // Verify the video time has changed to be near the clicked timecode
     const newTime = await page.evaluate(() => {
@@ -330,7 +330,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     const moreButton = page.locator("#expand");
     await moreButton.first().waitFor();
     await moreButton.first().click();
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(process.env.CI ? 2000 : 1000);
 
     // Take a screenshot
     await page.screenshot({
@@ -391,7 +391,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     const moreButton = page.locator("#expand");
     await moreButton.first().waitFor();
     await moreButton.first().click();
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(process.env.CI ? 2000 : 1000);
 
     // Take a screenshot
     await page.screenshot({
@@ -535,7 +535,9 @@ test.describe("YouTube Anti-Translate extension", () => {
       await page.mouse.wheel(0, 500);
       await originalVideo.scrollIntoViewIfNeeded();
       try {
-        await page.waitForLoadState("networkidle", { timeout: 5000 });
+        await page.waitForLoadState("networkidle", {
+          timeout: process.env.CI ? 10000 : 5000,
+        });
       } catch {
         // empty
       }
@@ -545,7 +547,9 @@ test.describe("YouTube Anti-Translate extension", () => {
       await page.mouse.wheel(0, 500);
       await translatedVideo.scrollIntoViewIfNeeded();
       try {
-        await page.waitForLoadState("networkidle", { timeout: 5000 });
+        await page.waitForLoadState("networkidle", {
+          timeout: process.env.CI ? 10000 : 5000,
+        });
       } catch {
         // empty
       }
@@ -561,7 +565,9 @@ test.describe("YouTube Anti-Translate extension", () => {
     console.log("Clicking Shorts tab...");
     await page.locator("#tabsContent").getByText("Shorts").click();
     try {
-      await page.waitForLoadState("networkidle", { timeout: 5000 });
+      await page.waitForLoadState("networkidle", {
+        timeout: process.env.CI ? 10000 : 5000,
+      });
     } catch {
       // empty
     }
@@ -582,7 +588,9 @@ test.describe("YouTube Anti-Translate extension", () => {
       await page.mouse.wheel(0, 500);
       await originalShort.scrollIntoViewIfNeeded();
       try {
-        await page.waitForLoadState("networkidle", { timeout: 5000 });
+        await page.waitForLoadState("networkidle", {
+          timeout: process.env.CI ? 10000 : 5000,
+        });
       } catch {
         // empty
       }
@@ -592,7 +600,9 @@ test.describe("YouTube Anti-Translate extension", () => {
       await page.mouse.wheel(0, 500);
       await translatedShort.scrollIntoViewIfNeeded();
       try {
-        await page.waitForLoadState("networkidle", { timeout: 5000 });
+        await page.waitForLoadState("networkidle", {
+          timeout: process.env.CI ? 10000 : 5000,
+        });
       } catch {
         // empty
       }
@@ -609,7 +619,9 @@ test.describe("YouTube Anti-Translate extension", () => {
     console.log("Clicking Videos tab...");
     await page.locator("#tabsContent").getByText("Видео").click();
     try {
-      await page.waitForLoadState("networkidle", { timeout: 5000 });
+      await page.waitForLoadState("networkidle", {
+        timeout: process.env.CI ? 10000 : 5000,
+      });
     } catch {
       // empty
     }
@@ -664,12 +676,14 @@ test.describe("YouTube Anti-Translate extension", () => {
       await firstShort.scrollIntoViewIfNeeded();
       await firstShort.click();
       try {
-        await page.waitForLoadState("networkidle", { timeout: 5000 });
+        await page.waitForLoadState("networkidle", {
+          timeout: process.env.CI ? 10000 : 5000,
+        });
       } catch {
         // empty
       }
     }
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(process.env.CI ? 4000 : 2000);
 
     // Wait for the video page to fully load
     await page.waitForSelector("#shorts-player");
@@ -724,12 +738,14 @@ test.describe("YouTube Anti-Translate extension", () => {
       await buttonDown.scrollIntoViewIfNeeded();
       await buttonDown.click();
       try {
-        await page.waitForLoadState("networkidle", { timeout: 5000 });
+        await page.waitForLoadState("networkidle", {
+          timeout: process.env.CI ? 10000 : 5000,
+        });
       } catch {
         // empty
       }
     }
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(process.env.CI ? 4000 : 2000);
 
     let [currentTrack2, currentId2] = await page.evaluate(async () => {
       type PlayerResponse = {
@@ -765,12 +781,14 @@ test.describe("YouTube Anti-Translate extension", () => {
       await buttonDown2.scrollIntoViewIfNeeded();
       await buttonDown2.click();
       try {
-        await page.waitForLoadState("networkidle", { timeout: 5000 });
+        await page.waitForLoadState("networkidle", {
+          timeout: process.env.CI ? 10000 : 5000,
+        });
       } catch {
         // empty
       }
     }
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(process.env.CI ? 4000 : 2000);
 
     let [currentTrack3, currentId3] = await page.evaluate(async () => {
       type PlayerResponse = {
@@ -827,12 +845,14 @@ test.describe("YouTube Anti-Translate extension", () => {
           await buttonDown2.scrollIntoViewIfNeeded();
           await buttonDown2.click();
           try {
-            await page.waitForLoadState("networkidle", { timeout: 5000 });
+            await page.waitForLoadState("networkidle", {
+              timeout: process.env.CI ? 10000 : 5000,
+            });
           } catch {
             // empty
           }
         }
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(process.env.CI ? 4000 : 2000);
 
         return await page.evaluate(async () => {
           type PlayerResponse = {
@@ -945,7 +965,9 @@ test.describe("YouTube Anti-Translate extension", () => {
       await page.mouse.wheel(0, 500);
       await originalPlaylist.scrollIntoViewIfNeeded();
       try {
-        await page.waitForLoadState("networkidle", { timeout: 5000 });
+        await page.waitForLoadState("networkidle", {
+          timeout: process.env.CI ? 10000 : 5000,
+        });
       } catch {
         // empty
       }
@@ -1004,7 +1026,9 @@ test.describe("YouTube Anti-Translate extension", () => {
       await page.mouse.wheel(0, 500);
       await originalPlaylist.scrollIntoViewIfNeeded();
       try {
-        await page.waitForLoadState("networkidle", { timeout: 5000 });
+        await page.waitForLoadState("networkidle", {
+          timeout: process.env.CI ? 10000 : 5000,
+        });
       } catch {
         // empty
       }
@@ -1065,7 +1089,9 @@ test.describe("YouTube Anti-Translate extension", () => {
       await page.mouse.wheel(0, 500);
       await originalPlaylist.scrollIntoViewIfNeeded();
       try {
-        await page.waitForLoadState("networkidle", { timeout: 5000 });
+        await page.waitForLoadState("networkidle", {
+          timeout: process.env.CI ? 10000 : 5000,
+        });
       } catch {
         // empty
       }
@@ -1135,7 +1161,9 @@ test.describe("YouTube Anti-Translate extension", () => {
       await page.mouse.wheel(0, 500);
       await originalPlaylist.scrollIntoViewIfNeeded();
       try {
-        await page.waitForLoadState("networkidle", { timeout: 5000 });
+        await page.waitForLoadState("networkidle", {
+          timeout: process.env.CI ? 10000 : 5000,
+        });
       } catch {
         // empty
       }
@@ -1275,10 +1303,10 @@ test.describe("YouTube Anti-Translate extension", () => {
       /* empty */
     }
     // Wait for the overlay button to disappear
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(process.env.CI ? 1000 : 500);
 
     await expect(overlayButton).not.toBeVisible();
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(process.env.CI ? 4000 : 2000);
 
     function getTrackLanguageFieldObjectName(track: object) {
       let languageFieldName: string;
@@ -1313,7 +1341,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     if (trackLanguageField) {
       // If value is "Default" then it is an advert
       // Wait for 5 seconds and get a new track
-      await page.waitForTimeout(5000);
+      await page.waitForTimeout(process.env.CI ? 10000 : 5000);
 
       if (currentTrack[trackLanguageField]?.name === "Default") {
         // Check that audio track is set to original
@@ -1405,10 +1433,10 @@ test.describe("YouTube Anti-Translate extension", () => {
       /* empty */
     }
     // Wait for the overlay button to disappear
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(process.env.CI ? 1000 : 500);
 
     await expect(overlayButton).not.toBeVisible();
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(process.env.CI ? 4000 : 2000);
 
     function getTrackLanguageFieldObjectName(track: object) {
       let languageFieldName: string;
@@ -1443,7 +1471,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     if (trackLanguageField) {
       // If value is "Default" then it is an advert
       // Wait for 5 seconds and get a new track
-      await page.waitForTimeout(5000);
+      await page.waitForTimeout(process.env.CI ? 10000 : 5000);
 
       if (currentTrack[trackLanguageField]?.name === "Default") {
         // Check that audio track is set to original

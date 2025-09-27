@@ -840,17 +840,26 @@ async function untranslateOtherVideos(intersectElements = null) {
                     continue;
                   }
 
+                  if (
+                    thumbnailElement.src.includes("https://i.ytimg.com/vi/") || // path of not-localized thumbnails
+                    thumbnailElement.src.includes("?youtube-anti-translate")
+                  ) {
+                    continue;
+                  }
                   // Only update if the thumbnail is different
                   if (!thumbnailElement.src.includes(originalThumbnail)) {
                     const { width, height } =
                       await window.YoutubeAntiTranslate.getImageSize(
                         thumbnailElement.src,
                       );
-                    thumbnailElement.src = originalThumbnail;
+                    thumbnailElement.src =
+                      originalThumbnail +
+                      `?youtube-anti-translate=${Date.now()}`;
                     // Add crop ratio to image
                     if (width && height) {
                       const cropRatio = width / height;
                       if (cropRatio) {
+                        // match crop ratio of current thumbnail
                         thumbnailElement.style.aspectRatio = cropRatio;
                         thumbnailElement.style.objectFit = "cover";
                       }
@@ -1128,7 +1137,14 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
           return;
         }
 
-        const oembedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/shorts/${videoId}`;
+        // Ignore advertisement video
+        if (window.YoutubeAntiTranslate.isAdvertisementHref(linkElement.href)) {
+          return;
+        }
+
+        const oembedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}`;
+        // although this is a short, oembeded is more reliable with standard video URLs
+        // e.g. using shorts url the thumbnail is different from the video thumbnail normally used in original locale
 
         try {
           let response = await cachedRequest(oembedUrl);
@@ -1208,7 +1224,7 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
             }
 
             /* -------- Handle video thumbnail untranslation -------- */
-            const originalThumbnail = response.data.thumbnail_url;
+            let originalThumbnail = response.data.thumbnail_url;
             if (settings.untranslateThumbnail && originalThumbnail) {
               if (
                 await window.YoutubeAntiTranslate.isWhitelistedChannel(
@@ -1231,19 +1247,74 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
                       continue;
                     }
 
+                    if (
+                      thumbnailElement.src.includes(
+                        "https://i.ytimg.com/vi/",
+                      ) || // path of not-localized thumbnails
+                      thumbnailElement.src.includes("?youtube-anti-translate")
+                    ) {
+                      continue;
+                    }
+
+                    if (linkElement.includes("/shorts/")) {
+                      for (const maxResName of [
+                        "maxresdefault",
+                        "oardefault",
+                      ]) {
+                        if (!originalThumbnail.includes(maxResName)) {
+                          originalThumbnail = originalThumbnail.replace(
+                            /\/([^/_]+)\.(jpg|jpeg|png|gif|webp|avif)/,
+                            `/${maxResName}.$2`,
+                          );
+                        }
+
+                        if (
+                          await window.YoutubeAntiTranslate.isFoundImageSrc(
+                            originalThumbnail,
+                          )
+                        ) {
+                          break;
+                        } else {
+                          originalThumbnail = response.data.thumbnail_url; // fallback to whatever is in oEmbed if maxres doesn't exist
+                        }
+                      }
+                    }
+
                     // Only update if the thumbnail is different
-                    if (!thumbnailElement.src.includes(originalThumbnail)) {
+                    if (
+                      originalThumbnail ||
+                      !thumbnailElement.src.includes(originalThumbnail)
+                    ) {
                       const { width, height } =
                         await window.YoutubeAntiTranslate.getImageSize(
                           thumbnailElement.src,
                         );
-                      thumbnailElement.src = originalThumbnail;
+                      thumbnailElement.src =
+                        originalThumbnail +
+                        `?youtube-anti-translate=${Date.now()}`;
                       // Add crop ratio to image
                       if (width && height) {
                         const cropRatio = width / height;
                         if (cropRatio) {
+                          // match crop ratio of current thumbnail
                           thumbnailElement.style.aspectRatio = cropRatio;
                           thumbnailElement.style.objectFit = "cover";
+
+                          // get new image size to determine orientation
+                          const { width, height } =
+                            await window.YoutubeAntiTranslate.getImageSize(
+                              originalThumbnail,
+                            );
+                          if (width > height) {
+                            thumbnailElement.style.width = "118%";
+                            thumbnailElement.style.height = "118%";
+                            // Center the thumbnail both horizontally and vertically
+                            thumbnailElement.style.position = "absolute";
+                            thumbnailElement.style.top = "50%";
+                            thumbnailElement.style.left = "50%";
+                            thumbnailElement.style.transform =
+                              "translate(-50%, -50%)";
+                          }
                         }
                       }
                     }
@@ -1294,6 +1365,19 @@ async function untranslateCurrentPlayerBackgroundThumbnail() {
     ".ytp-cued-thumbnail-overlay-image[style*='i.ytimg.com'][style*='background-image'][style*='maxresdefault']",
   );
   if (thumbnailBackground) {
+    const currentStyle = thumbnailBackground.style.backgroundImage;
+    // extract image src from style.backgroundImage(url("IMAGE_URL"))
+    const currentImageSrc = currentStyle.match(
+      /url\(["']?([^"']+)["']?\)/,
+    )?.[1];
+
+    if (
+      currentImageSrc.includes("https://i.ytimg.com/vi/") || // path of not-localized thumbnails
+      currentImageSrc.includes("?youtube-anti-translate")
+    ) {
+      return;
+    }
+
     const currentVideo = document.location.href;
     const videoId =
       window.YoutubeAntiTranslate.extractVideoIdFromUrl(currentVideo);
@@ -1344,19 +1428,29 @@ async function untranslateCurrentPlayerBackgroundThumbnail() {
       if (originalThumbnail) {
         if (!originalThumbnail.includes("maxresdefault")) {
           originalThumbnail = originalThumbnail.replace(
-            /\/(default|mqdefault|hqdefault|sddefault)\..+$/,
+            /\/([^/]+)\.(jpg|jpeg|png|gif|webp|avif)/,
             "/maxresdefault.jpg",
           );
         }
-        const currentStyle = thumbnailBackground.style.backgroundImage;
+
+        if (
+          !(await window.YoutubeAntiTranslate.isFoundImageSrc(
+            originalThumbnail,
+          ))
+        ) {
+          originalThumbnail =
+            response.data.maxresdefault_url || response.data.thumbnail_url; // fallback to whatever is in oEmbed if maxres doesn't exist
+        }
+
         if (!currentStyle || !currentStyle.includes(originalThumbnail)) {
           const { width, height } =
-            await window.YoutubeAntiTranslate.getImageSize(originalThumbnail);
+            await window.YoutubeAntiTranslate.getImageSize(currentImageSrc);
           thumbnailBackground.style.backgroundImage = `url("${originalThumbnail}?youtube-anti-translate=${Date.now()}")`;
           // Add crop ratio to image
           if (width && height) {
             const cropRatio = width / height;
             if (cropRatio) {
+              // match crop ratio of current thumbnail
               thumbnailBackground.style.aspectRatio = cropRatio;
               thumbnailBackground.style.objectFit = "cover";
             }
@@ -1392,6 +1486,13 @@ async function untranslateCurrentPlaylistHeaderThumbnail() {
   for (const playlistHeadersImage of playlistHeadersImages) {
     const imageSrc = playlistHeadersImage.src;
     if (!imageSrc || imageSrc.trim() === "") {
+      continue;
+    }
+
+    if (
+      imageSrc.includes("https://i.ytimg.com/vi/") || // path of not-localized thumbnails
+      imageSrc.includes("?youtube-anti-translate")
+    ) {
       continue;
     }
 
@@ -1446,12 +1547,14 @@ async function untranslateCurrentPlaylistHeaderThumbnail() {
         const { width, height } =
           await window.YoutubeAntiTranslate.getImageSize(imageSrc);
 
-        playlistHeadersImage.src = response.data.thumbnail_url;
+        playlistHeadersImage.src =
+          response.data.thumbnail_url + `?youtube-anti-translate=${Date.now()}`;
 
         // Add crop ratio to image
         if (width && height) {
           const cropRatio = width / height;
           if (cropRatio) {
+            // match crop ratio of current thumbnail
             playlistHeadersImage.style.aspectRatio = cropRatio;
             playlistHeadersImage.style.objectFit = "cover";
           }

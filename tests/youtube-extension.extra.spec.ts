@@ -101,7 +101,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     );
     await expect(uploadInfo).toBeVisible();
 
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(process.env.CI ? 4000 : 2000);
     const uploadInfoText = await uploadInfo.textContent();
     // Check that original English text is present and Thai translation is absent
     expect(uploadInfoText).toContain("MrBeast");
@@ -110,11 +110,13 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     await uploadInfo.scrollIntoViewIfNeeded();
     await uploadInfo.click();
     try {
-      await page.waitForLoadState("networkidle", { timeout: 5000 });
+      await page.waitForLoadState("networkidle", {
+        timeout: process.env.CI ? 10000 : 5000,
+      });
     } catch {
       // empty
     }
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(process.env.CI ? 4000 : 2000);
 
     // Expect a dialog to appear listing collaborators
     const collabItems = page.locator(
@@ -124,7 +126,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
 
     // Allow enough time for the extension to fetch and update names
     await expect(collabItems.first()).toBeAttached();
-    await page.waitForTimeout(5000);
+    await page.waitForTimeout(process.env.CI ? 10000 : 5000);
 
     const names = (await collabItems.allTextContents()).map((n: string) =>
       (n || "").trim(),
@@ -208,11 +210,13 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
       )
       .click();
     try {
-      await page.waitForLoadState("networkidle", { timeout: 5000 });
+      await page.waitForLoadState("networkidle", {
+        timeout: process.env.CI ? 10000 : 5000,
+      });
     } catch {
       // empty
     }
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(process.env.CI ? 1000 : 500);
 
     // Take a screenshot for visual verification
     await page.screenshot({
@@ -258,11 +262,13 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     );
     await closeButton.click();
     try {
-      await page.waitForLoadState("networkidle", { timeout: 5000 });
+      await page.waitForLoadState("networkidle", {
+        timeout: process.env.CI ? 10000 : 5000,
+      });
     } catch {
       // empty
     }
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(process.env.CI ? 1000 : 500);
 
     // --- Open About Popup via more links ---
     console.log(
@@ -274,11 +280,13 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
       )
       .click();
     try {
-      await page.waitForLoadState("networkidle", { timeout: 5000 });
+      await page.waitForLoadState("networkidle", {
+        timeout: process.env.CI ? 10000 : 5000,
+      });
     } catch {
       // empty
     }
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(process.env.CI ? 1000 : 500);
 
     // --- Check About A second time via the moreLinks Popup ---
     // Get the about title
@@ -320,11 +328,13 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     );
     await closeButton2.click();
     try {
-      await page.waitForLoadState("networkidle", { timeout: 5000 });
+      await page.waitForLoadState("networkidle", {
+        timeout: process.env.CI ? 10000 : 5000,
+      });
     } catch {
       // empty
     }
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(process.env.CI ? 1000 : 500);
 
     // Take a screenshot for visual verification
     await page.screenshot({
@@ -387,7 +397,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     await expect(page.locator(videoAuthorSelector)).toBeVisible();
 
     // Take a screenshot for visual verification
-    await page.waitForTimeout(4000);
+    await page.waitForTimeout(process.env.CI ? 8000 : 4000);
     await page.screenshot({
       path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-video-author-test.png`,
     });
