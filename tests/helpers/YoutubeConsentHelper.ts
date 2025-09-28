@@ -17,6 +17,7 @@ export async function handleYoutubeConsent(page: Page) {
   });
   if (await consentButton.isVisible()) {
     await consentButton.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(process.env.CI ? 50 : 25);
     await consentButton.click();
     await page.waitForTimeout(process.env.CI ? 3000 : 1500);
   }
@@ -34,6 +35,7 @@ export async function handleYoutubeConsent(page: Page) {
   const button = page.getByRole("button", { name: possibleLabels }).first();
   if (await button.isVisible()) {
     await button.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(process.env.CI ? 50 : 25);
     await button.click();
     // Most of the time we are redirected after the cookies dialog so allow extra time for load
     await page.waitForTimeout(process.env.CI ? 10000 : 5000);

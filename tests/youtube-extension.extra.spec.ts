@@ -108,6 +108,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     expect(uploadInfoText).not.toContain("มิสเตอร์บีสต์");
 
     await uploadInfo.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(process.env.CI ? 50 : 25);
     await uploadInfo.click();
     try {
       await page.waitForTimeout(process.env.CI ? 500 : 250);

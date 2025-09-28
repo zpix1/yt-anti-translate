@@ -233,6 +233,7 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
     const originalPlaylist = page.locator(videoSelector).first();
     if (await originalPlaylist.isVisible()) {
       await page.mouse.wheel(0, 500);
+      await page.waitForTimeout(process.env.CI ? 50 : 25);
       await originalPlaylist.scrollIntoViewIfNeeded();
       try {
         await page.waitForTimeout(process.env.CI ? 500 : 250);
@@ -305,6 +306,7 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
     const originalPlaylist = page.locator(videoSelector).first();
     if (await originalPlaylist.isVisible()) {
       await page.mouse.wheel(0, 500);
+      await page.waitForTimeout(process.env.CI ? 50 : 25);
       await originalPlaylist.scrollIntoViewIfNeeded();
       try {
         await page.waitForTimeout(process.env.CI ? 500 : 250);
@@ -372,6 +374,7 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
     const originalPlaylist = page.locator(videoSelector).first();
     if (await originalPlaylist.isVisible()) {
       await page.mouse.wheel(0, 500);
+      await page.waitForTimeout(process.env.CI ? 50 : 25);
       await originalPlaylist.scrollIntoViewIfNeeded();
       try {
         await page.waitForTimeout(process.env.CI ? 500 : 250);

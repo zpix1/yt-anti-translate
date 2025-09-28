@@ -233,6 +233,7 @@ export async function findLoginButton(
           : subscribeButtonLocator.first();
       if (await subscribeButtonHeader.isVisible()) {
         await subscribeButtonHeader.scrollIntoViewIfNeeded();
+        await page.waitForTimeout(process.env.CI ? 50 : 25);
         await subscribeButtonHeader.click();
 
         try {
@@ -315,6 +316,7 @@ export async function findLoginButton(
         // If this is not setup we can skip this as it already confirms the test is not logged in
         if (needsCompleteFind) {
           await youTab.scrollIntoViewIfNeeded();
+          await page.waitForTimeout(process.env.CI ? 50 : 25);
           await youTab.click();
 
           try {
@@ -438,6 +440,7 @@ export async function handleGoogleLogin(
       `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Login required, clicking login button`,
     );
     await button.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(process.env.CI ? 50 : 25);
     await button.click();
     const { isEarlyLogin } = await continueLoginSteps(
       browserName,
@@ -494,6 +497,7 @@ export async function handleGoogleLogin(
           `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Found settings button with label: "${label}"`,
         );
         await settingsButton.scrollIntoViewIfNeeded();
+        await page.waitForTimeout(process.env.CI ? 50 : 25);
         await settingsButton.click();
 
         try {
@@ -519,6 +523,7 @@ export async function handleGoogleLogin(
               `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Found language button with label: "${langLabel}"`,
             );
             await languageButton.scrollIntoViewIfNeeded();
+            await page.waitForTimeout(process.env.CI ? 50 : 25);
             await languageButton.click();
             break;
           } else {
@@ -543,6 +548,7 @@ export async function handleGoogleLogin(
         `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Avatar button found, clicking to access settings`,
       );
       await avatarButton.scrollIntoViewIfNeeded();
+      await page.waitForTimeout(process.env.CI ? 50 : 25);
       await avatarButton.click();
       await page.waitForTimeout(process.env.CI ? 1000 : 500);
       try {
@@ -565,6 +571,7 @@ export async function handleGoogleLogin(
           `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Language button found, clicking`,
         );
         await languageButton.scrollIntoViewIfNeeded();
+        await page.waitForTimeout(process.env.CI ? 50 : 25);
         await languageButton.click();
       } else {
         console.log(
@@ -617,6 +624,7 @@ export async function handleGoogleLogin(
   }
 
   await languageOption.scrollIntoViewIfNeeded();
+  await page.waitForTimeout(process.env.CI ? 50 : 25);
   await languageOption.click();
   console.log(
     `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Language option clicked, waiting for page to update`,
