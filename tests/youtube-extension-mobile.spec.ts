@@ -233,12 +233,12 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
     const originalPlaylist = page.locator(videoSelector).first();
     if (await originalPlaylist.isVisible()) {
       await page.mouse.wheel(0, 500);
-      await page.waitForTimeout(process.env.CI ? 50 : 25);
+      await page.waitForTimeout(process.env.CI ? 150 : 100);
       await originalPlaylist.scrollIntoViewIfNeeded();
       try {
-        await page.waitForTimeout(process.env.CI ? 500 : 250);
+        await page.waitForTimeout(process.env.CI ? 375 : 250);
         await page.waitForLoadState("networkidle", {
-          timeout: process.env.CI ? 10000 : 5000,
+          timeout: process.env.CI ? 7500 : 5000,
         });
       } catch {
         // empty
@@ -306,12 +306,12 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
     const originalPlaylist = page.locator(videoSelector).first();
     if (await originalPlaylist.isVisible()) {
       await page.mouse.wheel(0, 500);
-      await page.waitForTimeout(process.env.CI ? 50 : 25);
+      await page.waitForTimeout(process.env.CI ? 150 : 100);
       await originalPlaylist.scrollIntoViewIfNeeded();
       try {
-        await page.waitForTimeout(process.env.CI ? 500 : 250);
+        await page.waitForTimeout(process.env.CI ? 375 : 250);
         await page.waitForLoadState("networkidle", {
-          timeout: process.env.CI ? 10000 : 5000,
+          timeout: process.env.CI ? 7500 : 5000,
         });
       } catch {
         // empty
@@ -374,12 +374,12 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
     const originalPlaylist = page.locator(videoSelector).first();
     if (await originalPlaylist.isVisible()) {
       await page.mouse.wheel(0, 500);
-      await page.waitForTimeout(process.env.CI ? 50 : 25);
+      await page.waitForTimeout(process.env.CI ? 150 : 100);
       await originalPlaylist.scrollIntoViewIfNeeded();
       try {
-        await page.waitForTimeout(process.env.CI ? 500 : 250);
+        await page.waitForTimeout(process.env.CI ? 375 : 250);
         await page.waitForLoadState("networkidle", {
-          timeout: process.env.CI ? 10000 : 5000,
+          timeout: process.env.CI ? 7500 : 5000,
         });
       } catch {
         // empty

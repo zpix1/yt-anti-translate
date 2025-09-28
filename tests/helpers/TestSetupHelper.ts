@@ -191,15 +191,15 @@ export async function loadPageAndVerifyAuth(
 
   // Wait for the page to load
   try {
-    await page.waitForTimeout(process.env.CI ? 500 : 250);
+    await page.waitForTimeout(process.env.CI ? 375 : 250);
     await page.waitForLoadState("networkidle", {
-      timeout: process.env.CI ? 10000 : 5000,
+      timeout: process.env.CI ? 7500 : 5000,
     });
   } catch {
     // empty
   }
   // .waitForLoadState("networkidle" is not always right so wait 5 extra seconds
-  await page.waitForTimeout(process.env.CI ? 10000 : 5000);
+  await page.waitForTimeout(process.env.CI ? 7500 : 5000);
 
   // If for whatever reason we are not logged in, then fail the test
   expect(await findLoginButton(page, browserNameWithExtensions, isMobile)).toBe(
@@ -214,9 +214,9 @@ export async function loadPageAndVerifyAuth(
       url.includes("/embed/")) &&
     browserNameWithExtensions === "chromium"
   ) {
-    await page.waitForTimeout(process.env.CI ? 12000 : 6000);
+    await page.waitForTimeout(process.env.CI ? 9000 : 6000);
   } else {
-    await page.waitForTimeout(process.env.CI ? 2000 : 1000);
+    await page.waitForTimeout(process.env.CI ? 1500 : 1000);
   }
 }
 
@@ -224,7 +224,7 @@ export async function waitForSelectorOrRetryWithPageReload(
   page: Page,
   selector: string,
   state: "attached" | "detached" | "visible" | "hidden" = "visible",
-  maxRetries: number = 3,
+  maxRetries: number = 2,
 ): Promise<Locator> {
   try {
     let attributedSelector;
@@ -236,7 +236,7 @@ export async function waitForSelectorOrRetryWithPageReload(
     }
     const locator = page.locator(`${attributedSelector}:${state}`);
     await locator.first().waitFor({ state });
-    await page.waitForTimeout(process.env.CI ? 10000 : 5000);
+    await page.waitForTimeout(process.env.CI ? 7500 : 5000);
     return locator;
   } catch {
     if (maxRetries <= 0) {
@@ -244,9 +244,9 @@ export async function waitForSelectorOrRetryWithPageReload(
     }
     await page.reload();
     try {
-      await page.waitForTimeout(process.env.CI ? 500 : 250);
+      await page.waitForTimeout(process.env.CI ? 375 : 250);
       await page.waitForLoadState("networkidle", {
-        timeout: process.env.CI ? 10000 : 5000,
+        timeout: process.env.CI ? 7500 : 5000,
       });
     } catch {
       // empty
@@ -263,7 +263,7 @@ export async function waitForSelectorOrRetryWithPageReload(
 export async function waitForVisibleLocatorOrRetryWithPageReload(
   page: Page,
   locator: Locator,
-  maxRetries: number = 3,
+  maxRetries: number = 2,
   allowNotFound: boolean = false,
 ): Promise<Locator> {
   try {
@@ -279,9 +279,9 @@ export async function waitForVisibleLocatorOrRetryWithPageReload(
     }
     await page.reload();
     try {
-      await page.waitForTimeout(process.env.CI ? 500 : 250);
+      await page.waitForTimeout(process.env.CI ? 375 : 250);
       await page.waitForLoadState("networkidle", {
-        timeout: process.env.CI ? 10000 : 5000,
+        timeout: process.env.CI ? 7500 : 5000,
       });
     } catch {
       // empty

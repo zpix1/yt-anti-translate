@@ -233,13 +233,13 @@ export async function findLoginButton(
           : subscribeButtonLocator.first();
       if (await subscribeButtonHeader.isVisible()) {
         await subscribeButtonHeader.scrollIntoViewIfNeeded();
-        await page.waitForTimeout(process.env.CI ? 50 : 25);
+        await page.waitForTimeout(process.env.CI ? 150 : 100);
         await subscribeButtonHeader.click();
 
         try {
-          await page.waitForTimeout(process.env.CI ? 500 : 250);
+          await page.waitForTimeout(process.env.CI ? 375 : 250);
           await page.waitForLoadState("networkidle", {
-            timeout: process.env.CI ? 10000 : 5000,
+            timeout: process.env.CI ? 7500 : 5000,
           });
         } catch {
           console.log(
@@ -247,7 +247,7 @@ export async function findLoginButton(
           );
         }
 
-        await page.waitForTimeout(process.env.CI ? 2000 : 1000);
+        await page.waitForTimeout(process.env.CI ? 1500 : 1000);
 
         if (needsCompleteFind) {
           const possibleLabels2 = /Sign in|Войти|ลงชื่อเข้าใช้/i;
@@ -316,13 +316,13 @@ export async function findLoginButton(
         // If this is not setup we can skip this as it already confirms the test is not logged in
         if (needsCompleteFind) {
           await youTab.scrollIntoViewIfNeeded();
-          await page.waitForTimeout(process.env.CI ? 50 : 25);
+          await page.waitForTimeout(process.env.CI ? 150 : 100);
           await youTab.click();
 
           try {
-            await page.waitForTimeout(process.env.CI ? 500 : 250);
+            await page.waitForTimeout(process.env.CI ? 375 : 250);
             await page.waitForLoadState("networkidle", {
-              timeout: process.env.CI ? 10000 : 5000,
+              timeout: process.env.CI ? 7500 : 5000,
             });
           } catch {
             console.log(
@@ -330,7 +330,7 @@ export async function findLoginButton(
             );
           }
 
-          await page.waitForTimeout(process.env.CI ? 2000 : 1000);
+          await page.waitForTimeout(process.env.CI ? 1500 : 1000);
 
           const possibleLabels2 = /Sign in|Войти|ลงชื่อเข้าใช้/i;
 
@@ -423,9 +423,9 @@ export async function handleGoogleLogin(
   );
 
   try {
-    await page.waitForTimeout(process.env.CI ? 500 : 250);
+    await page.waitForTimeout(process.env.CI ? 375 : 250);
     await page.waitForLoadState("networkidle", {
-      timeout: process.env.CI ? 10000 : 5000,
+      timeout: process.env.CI ? 7500 : 5000,
     });
   } catch {
     console.log(
@@ -440,7 +440,7 @@ export async function handleGoogleLogin(
       `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Login required, clicking login button`,
     );
     await button.scrollIntoViewIfNeeded();
-    await page.waitForTimeout(process.env.CI ? 50 : 25);
+    await page.waitForTimeout(process.env.CI ? 150 : 100);
     await button.click();
     const { isEarlyLogin } = await continueLoginSteps(
       browserName,
@@ -475,9 +475,9 @@ export async function handleGoogleLogin(
     await page.goto("https://m.youtube.com/select_site");
 
     try {
-      await page.waitForTimeout(process.env.CI ? 500 : 250);
+      await page.waitForTimeout(process.env.CI ? 375 : 250);
       await page.waitForLoadState("networkidle", {
-        timeout: process.env.CI ? 10000 : 5000,
+        timeout: process.env.CI ? 7500 : 5000,
       });
     } catch {
       console.log(
@@ -485,7 +485,7 @@ export async function handleGoogleLogin(
       );
     }
 
-    await page.waitForTimeout(process.env.CI ? 2000 : 1000);
+    await page.waitForTimeout(process.env.CI ? 1500 : 1000);
 
     await page.getByRole("button").first().waitFor();
 
@@ -497,13 +497,13 @@ export async function handleGoogleLogin(
           `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Found settings button with label: "${label}"`,
         );
         await settingsButton.scrollIntoViewIfNeeded();
-        await page.waitForTimeout(process.env.CI ? 50 : 25);
+        await page.waitForTimeout(process.env.CI ? 150 : 100);
         await settingsButton.click();
 
         try {
-          await page.waitForTimeout(process.env.CI ? 500 : 250);
+          await page.waitForTimeout(process.env.CI ? 375 : 250);
           await page.waitForLoadState("networkidle", {
-            timeout: process.env.CI ? 10000 : 5000,
+            timeout: process.env.CI ? 7500 : 5000,
           });
         } catch {
           console.log(
@@ -511,7 +511,7 @@ export async function handleGoogleLogin(
           );
         }
 
-        await page.waitForTimeout(process.env.CI ? 2000 : 1000);
+        await page.waitForTimeout(process.env.CI ? 1500 : 1000);
 
         const languageLabels = ["Language", "Lingua", "Язык", "ภาษา"];
         for (const langLabel of languageLabels) {
@@ -523,7 +523,7 @@ export async function handleGoogleLogin(
               `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Found language button with label: "${langLabel}"`,
             );
             await languageButton.scrollIntoViewIfNeeded();
-            await page.waitForTimeout(process.env.CI ? 50 : 25);
+            await page.waitForTimeout(process.env.CI ? 150 : 100);
             await languageButton.click();
             break;
           } else {
@@ -548,13 +548,13 @@ export async function handleGoogleLogin(
         `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Avatar button found, clicking to access settings`,
       );
       await avatarButton.scrollIntoViewIfNeeded();
-      await page.waitForTimeout(process.env.CI ? 50 : 25);
+      await page.waitForTimeout(process.env.CI ? 150 : 100);
       await avatarButton.click();
-      await page.waitForTimeout(process.env.CI ? 1000 : 500);
+      await page.waitForTimeout(process.env.CI ? 750 : 500);
       try {
-        await page.waitForTimeout(process.env.CI ? 500 : 250);
+        await page.waitForTimeout(process.env.CI ? 375 : 250);
         await page.waitForLoadState("networkidle", {
-          timeout: process.env.CI ? 10000 : 5000,
+          timeout: process.env.CI ? 7500 : 5000,
         });
       } catch {
         console.log(
@@ -571,7 +571,7 @@ export async function handleGoogleLogin(
           `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Language button found, clicking`,
         );
         await languageButton.scrollIntoViewIfNeeded();
-        await page.waitForTimeout(process.env.CI ? 50 : 25);
+        await page.waitForTimeout(process.env.CI ? 150 : 100);
         await languageButton.click();
       } else {
         console.log(
@@ -587,11 +587,11 @@ export async function handleGoogleLogin(
 
   let languageOption;
 
-  await page.waitForTimeout(process.env.CI ? 1000 : 500);
+  await page.waitForTimeout(process.env.CI ? 750 : 500);
   try {
-    await page.waitForTimeout(process.env.CI ? 500 : 250);
+    await page.waitForTimeout(process.env.CI ? 375 : 250);
     await page.waitForLoadState("networkidle", {
-      timeout: process.env.CI ? 10000 : 5000,
+      timeout: process.env.CI ? 7500 : 5000,
     });
   } catch {
     console.log(
@@ -624,12 +624,12 @@ export async function handleGoogleLogin(
   }
 
   await languageOption.scrollIntoViewIfNeeded();
-  await page.waitForTimeout(process.env.CI ? 50 : 25);
+  await page.waitForTimeout(process.env.CI ? 150 : 100);
   await languageOption.click();
   console.log(
     `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Language option clicked, waiting for page to update`,
   );
-  await page.waitForTimeout(process.env.CI ? 10000 : 5000);
+  await page.waitForTimeout(process.env.CI ? 7500 : 5000);
 
   const localeStoragePath = path.join(
     authFileLocationBase,
@@ -654,9 +654,9 @@ export async function handleGoogleLogin(
     });
   }
   try {
-    await page.waitForTimeout(process.env.CI ? 500 : 250);
+    await page.waitForTimeout(process.env.CI ? 375 : 250);
     await page.waitForLoadState("networkidle", {
-      timeout: process.env.CI ? 10000 : 5000,
+      timeout: process.env.CI ? 7500 : 5000,
     });
   } catch {
     console.log(
@@ -664,7 +664,7 @@ export async function handleGoogleLogin(
     );
   }
 
-  await page.waitForTimeout(process.env.CI ? 3000 : 1500);
+  await page.waitForTimeout(process.env.CI ? 2250 : 1500);
   console.log(
     `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Google login handling completed`,
   );
@@ -681,9 +681,9 @@ async function continueLoginSteps(
   );
 
   try {
-    await page.waitForTimeout(process.env.CI ? 500 : 250);
+    await page.waitForTimeout(process.env.CI ? 375 : 250);
     await page.waitForLoadState("networkidle", {
-      timeout: process.env.CI ? 10000 : 5000,
+      timeout: process.env.CI ? 7500 : 5000,
     });
   } catch {
     console.log(
@@ -691,7 +691,7 @@ async function continueLoginSteps(
     );
   }
 
-  await page.waitForTimeout(process.env.CI ? 2000 : 1000);
+  await page.waitForTimeout(process.env.CI ? 1500 : 1000);
   // Sometimes clicking the "Sign In" button is sufficient to log in directly
   if (
     !page.url().includes("google.com") &&
@@ -713,9 +713,9 @@ async function continueLoginSteps(
   await emailInput.fill(process.env.GOOGLE_USER!);
   await page.getByRole("button", { name: nextText }).click();
   try {
-    await page.waitForTimeout(process.env.CI ? 500 : 250);
+    await page.waitForTimeout(process.env.CI ? 375 : 250);
     await page.waitForLoadState("networkidle", {
-      timeout: process.env.CI ? 10000 : 5000,
+      timeout: process.env.CI ? 7500 : 5000,
     });
   } catch {
     console.log(
@@ -734,9 +734,9 @@ async function continueLoginSteps(
   await passwordInput.fill(process.env.GOOGLE_PWD!);
   await page.getByRole("button", { name: nextText }).click();
   try {
-    await page.waitForTimeout(process.env.CI ? 500 : 250);
+    await page.waitForTimeout(process.env.CI ? 375 : 250);
     await page.waitForLoadState("networkidle", {
-      timeout: process.env.CI ? 10000 : 5000,
+      timeout: process.env.CI ? 7500 : 5000,
     });
   } catch {
     console.log(
@@ -778,11 +778,11 @@ async function continueLoginSteps(
 
   await solveCaptcha(page);
 
-  await page.waitForTimeout(process.env.CI ? 10000 : 5000);
+  await page.waitForTimeout(process.env.CI ? 7500 : 5000);
   try {
-    await page.waitForTimeout(process.env.CI ? 500 : 250);
+    await page.waitForTimeout(process.env.CI ? 375 : 250);
     await page.waitForLoadState("networkidle", {
-      timeout: process.env.CI ? 10000 : 5000,
+      timeout: process.env.CI ? 7500 : 5000,
     });
   } catch {
     console.log(
@@ -891,18 +891,18 @@ export async function solveCaptcha(
   const inputSelector = "input#ca";
   const nextText = /Next|Далее|ถัดไป/i;
 
-  await page.waitForTimeout(process.env.CI ? 4000 : 2000);
+  await page.waitForTimeout(process.env.CI ? 3000 : 2000);
   try {
-    await page.waitForTimeout(process.env.CI ? 500 : 250);
+    await page.waitForTimeout(process.env.CI ? 375 : 250);
     await page.waitForLoadState("networkidle", {
-      timeout: process.env.CI ? 10000 : 5000,
+      timeout: process.env.CI ? 7500 : 5000,
     });
   } catch {
     console.log(
       `Network idle at the start of captcha attempt, retries left: ${maxRetries - 1}`,
     );
   }
-  await page.waitForTimeout(process.env.CI ? 4000 : 2000);
+  await page.waitForTimeout(process.env.CI ? 3000 : 2000);
 
   if (!page.url().includes("google.com")) {
     return;
