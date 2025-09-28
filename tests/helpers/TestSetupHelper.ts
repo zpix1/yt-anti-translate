@@ -191,6 +191,7 @@ export async function loadPageAndVerifyAuth(
 
   // Wait for the page to load
   try {
+    await page.waitForTimeout(process.env.CI ? 500 : 250);
     await page.waitForLoadState("networkidle", {
       timeout: process.env.CI ? 10000 : 5000,
     });
@@ -243,6 +244,7 @@ export async function waitForSelectorOrRetryWithPageReload(
     }
     await page.reload();
     try {
+      await page.waitForTimeout(process.env.CI ? 500 : 250);
       await page.waitForLoadState("networkidle", {
         timeout: process.env.CI ? 10000 : 5000,
       });
@@ -277,6 +279,7 @@ export async function waitForVisibleLocatorOrRetryWithPageReload(
     }
     await page.reload();
     try {
+      await page.waitForTimeout(process.env.CI ? 500 : 250);
       await page.waitForLoadState("networkidle", {
         timeout: process.env.CI ? 10000 : 5000,
       });

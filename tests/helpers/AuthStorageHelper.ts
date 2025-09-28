@@ -236,6 +236,7 @@ export async function findLoginButton(
         await subscribeButtonHeader.click();
 
         try {
+          await page.waitForTimeout(process.env.CI ? 500 : 250);
           await page.waitForLoadState("networkidle", {
             timeout: process.env.CI ? 10000 : 5000,
           });
@@ -317,6 +318,7 @@ export async function findLoginButton(
           await youTab.click();
 
           try {
+            await page.waitForTimeout(process.env.CI ? 500 : 250);
             await page.waitForLoadState("networkidle", {
               timeout: process.env.CI ? 10000 : 5000,
             });
@@ -419,6 +421,7 @@ export async function handleGoogleLogin(
   );
 
   try {
+    await page.waitForTimeout(process.env.CI ? 500 : 250);
     await page.waitForLoadState("networkidle", {
       timeout: process.env.CI ? 10000 : 5000,
     });
@@ -469,6 +472,7 @@ export async function handleGoogleLogin(
     await page.goto("https://m.youtube.com/select_site");
 
     try {
+      await page.waitForTimeout(process.env.CI ? 500 : 250);
       await page.waitForLoadState("networkidle", {
         timeout: process.env.CI ? 10000 : 5000,
       });
@@ -493,6 +497,7 @@ export async function handleGoogleLogin(
         await settingsButton.click();
 
         try {
+          await page.waitForTimeout(process.env.CI ? 500 : 250);
           await page.waitForLoadState("networkidle", {
             timeout: process.env.CI ? 10000 : 5000,
           });
@@ -541,6 +546,7 @@ export async function handleGoogleLogin(
       await avatarButton.click();
       await page.waitForTimeout(process.env.CI ? 1000 : 500);
       try {
+        await page.waitForTimeout(process.env.CI ? 500 : 250);
         await page.waitForLoadState("networkidle", {
           timeout: process.env.CI ? 10000 : 5000,
         });
@@ -576,6 +582,7 @@ export async function handleGoogleLogin(
 
   await page.waitForTimeout(process.env.CI ? 1000 : 500);
   try {
+    await page.waitForTimeout(process.env.CI ? 500 : 250);
     await page.waitForLoadState("networkidle", {
       timeout: process.env.CI ? 10000 : 5000,
     });
@@ -639,6 +646,7 @@ export async function handleGoogleLogin(
     });
   }
   try {
+    await page.waitForTimeout(process.env.CI ? 500 : 250);
     await page.waitForLoadState("networkidle", {
       timeout: process.env.CI ? 10000 : 5000,
     });
@@ -665,6 +673,7 @@ async function continueLoginSteps(
   );
 
   try {
+    await page.waitForTimeout(process.env.CI ? 500 : 250);
     await page.waitForLoadState("networkidle", {
       timeout: process.env.CI ? 10000 : 5000,
     });
@@ -696,6 +705,7 @@ async function continueLoginSteps(
   await emailInput.fill(process.env.GOOGLE_USER!);
   await page.getByRole("button", { name: nextText }).click();
   try {
+    await page.waitForTimeout(process.env.CI ? 500 : 250);
     await page.waitForLoadState("networkidle", {
       timeout: process.env.CI ? 10000 : 5000,
     });
@@ -716,6 +726,7 @@ async function continueLoginSteps(
   await passwordInput.fill(process.env.GOOGLE_PWD!);
   await page.getByRole("button", { name: nextText }).click();
   try {
+    await page.waitForTimeout(process.env.CI ? 500 : 250);
     await page.waitForLoadState("networkidle", {
       timeout: process.env.CI ? 10000 : 5000,
     });
@@ -761,6 +772,7 @@ async function continueLoginSteps(
 
   await page.waitForTimeout(process.env.CI ? 10000 : 5000);
   try {
+    await page.waitForTimeout(process.env.CI ? 500 : 250);
     await page.waitForLoadState("networkidle", {
       timeout: process.env.CI ? 10000 : 5000,
     });
@@ -873,6 +885,7 @@ export async function solveCaptcha(
 
   await page.waitForTimeout(process.env.CI ? 4000 : 2000);
   try {
+    await page.waitForTimeout(process.env.CI ? 500 : 250);
     await page.waitForLoadState("networkidle", {
       timeout: process.env.CI ? 10000 : 5000,
     });

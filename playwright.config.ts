@@ -17,7 +17,7 @@ export const test = base.extend<TestOptions>({
 
 export default defineConfig<TestOptions>({
   globalTimeout: 55 * 60 * 1000,
-  timeout: process.env.CI ? 18 * 60 * 1000 : 6 * 60 * 1000,
+  timeout: process.env.CI ? 18 * 60 * 1000 : 9 * 60 * 1000,
   expect: {
     timeout: process.env.CI ? 10_000 : 5_000,
   },

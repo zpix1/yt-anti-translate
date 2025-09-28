@@ -235,6 +235,7 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
       await page.mouse.wheel(0, 500);
       await originalPlaylist.scrollIntoViewIfNeeded();
       try {
+        await page.waitForTimeout(process.env.CI ? 500 : 250);
         await page.waitForLoadState("networkidle", {
           timeout: process.env.CI ? 10000 : 5000,
         });
@@ -306,6 +307,7 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
       await page.mouse.wheel(0, 500);
       await originalPlaylist.scrollIntoViewIfNeeded();
       try {
+        await page.waitForTimeout(process.env.CI ? 500 : 250);
         await page.waitForLoadState("networkidle", {
           timeout: process.env.CI ? 10000 : 5000,
         });
@@ -372,6 +374,7 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
       await page.mouse.wheel(0, 500);
       await originalPlaylist.scrollIntoViewIfNeeded();
       try {
+        await page.waitForTimeout(process.env.CI ? 500 : 250);
         await page.waitForLoadState("networkidle", {
           timeout: process.env.CI ? 10000 : 5000,
         });

@@ -110,6 +110,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     await uploadInfo.scrollIntoViewIfNeeded();
     await uploadInfo.click();
     try {
+      await page.waitForTimeout(process.env.CI ? 500 : 250);
       await page.waitForLoadState("networkidle", {
         timeout: process.env.CI ? 10000 : 5000,
       });
@@ -214,6 +215,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
       )
       .click();
     try {
+      await page.waitForTimeout(process.env.CI ? 500 : 250);
       await page.waitForLoadState("networkidle", {
         timeout: process.env.CI ? 10000 : 5000,
       });
@@ -266,6 +268,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     );
     await closeButton.click();
     try {
+      await page.waitForTimeout(process.env.CI ? 500 : 250);
       await page.waitForLoadState("networkidle", {
         timeout: process.env.CI ? 10000 : 5000,
       });
@@ -284,6 +287,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
       )
       .click();
     try {
+      await page.waitForTimeout(process.env.CI ? 500 : 250);
       await page.waitForLoadState("networkidle", {
         timeout: process.env.CI ? 10000 : 5000,
       });
@@ -332,6 +336,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     );
     await closeButton2.click();
     try {
+      await page.waitForTimeout(process.env.CI ? 500 : 250);
       await page.waitForLoadState("networkidle", {
         timeout: process.env.CI ? 10000 : 5000,
       });
