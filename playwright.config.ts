@@ -29,7 +29,7 @@ export default defineConfig<TestOptions>({
   /* Retry 3 times on CI, or once locally */
   retries: process.env.CI ? 5 : 1,
   /* Limit parallel workers on CI as they cause random failures some of the times */
-  workers: process.env.CI ? 5 : undefined,
+  workers: process.env.CI ? 3 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [["github"], ["html"]],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
