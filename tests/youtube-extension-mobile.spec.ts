@@ -321,6 +321,7 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
     // Find the thumbnail image within the located video item
     const thumbnailImage = originalPlaylist.locator('img[src*="ytimg.com"]');
     await thumbnailImage.waitFor();
+    await page.waitForTimeout(process.env.CI ? 375 : 250);
     await expect(thumbnailImage).toHaveAttribute("src", expectedThumbnailSrc);
 
     // Take a screenshot for visual verification

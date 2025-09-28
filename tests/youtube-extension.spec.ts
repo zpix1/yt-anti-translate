@@ -1125,7 +1125,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     // Find the thumbnail image within the located video item
     const thumbnailImage = originalPlaylist.locator('img[src*="ytimg.com"]');
     await thumbnailImage.waitFor();
-    await thumbnailImage.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(process.env.CI ? 375 : 250);
     await expect(thumbnailImage).toHaveAttribute("src", expectedThumbnailSrc);
 
     // Take a screenshot for visual verification
@@ -1199,7 +1199,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     // Find the thumbnail image within the located video item
     const thumbnailImage = originalPlaylist.locator('img[src*="ytimg.com"]');
     await thumbnailImage.waitFor();
-    await thumbnailImage.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(process.env.CI ? 375 : 250);
     await expect(thumbnailImage).toHaveAttribute("src", expectedThumbnailSrc);
 
     // Take a screenshot for visual verification
