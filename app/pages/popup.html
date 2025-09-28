@@ -36,7 +36,7 @@
       text-align: center;
     }
 
-    .options-container {
+    .limited-width-container {
       padding: 0px 0px 0px 0px;
       width: auto;
       max-width: 350px;
@@ -378,12 +378,14 @@
     <div class="container">
       <div class="header">YT Anti Translate 1.20.0</div>
       <div id="permission-warning" style="display: none; margin-top: 15px;">
-        <div class="small" style="color: red;">
-          <p><strong>Permission to access YouTube is not granted.</strong></p>
-          <p>This extension needs access to <code>*.youtube.com/*</code> and <code>*.youtube-nocookie.com/*</code> to
-            function properly.</p>
+        <div class="limited-width-container">
+          <div class="small" style="color: red;">
+            <p><strong>Permission to access YouTube is not granted.</strong></p>
+            <p>This extension needs access to <code>*.youtube.com/*</code> and <code>*.youtube-nocookie.com/*</code> to
+              function properly.</p>
+          </div>
+          <button id="request-permission-button">Grant Permission</button>
         </div>
-        <button id="request-permission-button">Grant Permission</button>
       </div>
       <div>
         Status:
@@ -391,7 +393,7 @@
       </div>
       <button id="disable-button">Disable</button>
       <div class="options">
-        <div class="options-container">
+        <div class="limited-width-container">
           <div class="option">
             <span>Untranslate titles</span>
             <input id="title-checkbox" type="checkbox" checked />
