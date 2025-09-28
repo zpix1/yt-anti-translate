@@ -1080,7 +1080,7 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // --- Check Videos Tab ---
     const expectedThumbnailSrc =
-      "https://i.ytimg.com/vi/yhB3BgJyGl8/hqdefault.jpg";
+      /https:\/\/i\.ytimg\.com\/vi\/yhB3BgJyGl8\/hqdefault\.jpg\?youtube-anti-translate=[0-9]+/i;
     const originalVideoTitle = "7 Days Stranded At Sea";
     const videoSelector = `ytd-video-renderer:has-text("${originalVideoTitle}")`;
 
@@ -1152,7 +1152,7 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // --- Check Videos Tab ---
     const expectedThumbnailSrc =
-      "https://i.ytimg.com/vi/yhB3BgJyGl8/hqdefault.jpg";
+      /https:\/\/i\.ytimg\.com\/vi\/yhB3BgJyGl8\/hqdefault\.jpg\?youtube-anti-translate=[0-9]+/i;
     const originalPlaylistTitle = "owned-playlist-playwright-test";
     const videoSelector = `ytd-rich-item-renderer:has-text("${originalPlaylistTitle}")`;
 

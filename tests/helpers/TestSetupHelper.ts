@@ -258,13 +258,49 @@ export async function waitForSelectorOrRetryWithPageReload(
   }
 }
 
+export async function waitForVisibleLocatorOrRetryWithPageReload(
+  page: Page,
+  locator: Locator,
+  maxRetries: number = 3,
+  allowNotFound: boolean = false,
+): Promise<Locator> {
+  try {
+    const fistVisible = await getFirstVisibleLocator(locator);
+    return fistVisible;
+  } catch {
+    if (maxRetries <= 0) {
+      if (allowNotFound) {
+        return locator;
+      } else {
+        throw new Error(`Too many retries to find locator: ${locator}`);
+      }
+    }
+    await page.reload();
+    try {
+      await page.waitForLoadState("networkidle", {
+        timeout: process.env.CI ? 10000 : 5000,
+      });
+    } catch {
+      // empty
+    }
+    return waitForVisibleLocatorOrRetryWithPageReload(
+      page,
+      locator,
+      maxRetries - 1,
+      allowNotFound,
+    );
+  }
+}
+
 export async function getFirstVisibleLocator(
   locator: Locator,
   allowNotFound: boolean = false,
 ): Promise<Locator> {
   const elements: Locator[] = await locator.all();
   if (elements.length === 0) {
-    return locator;
+    if (allowNotFound) {
+      return locator;
+    }
   }
   let firstVisibleLocator: Locator | undefined = undefined;
   for (const element of elements) {

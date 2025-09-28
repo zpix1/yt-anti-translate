@@ -20,6 +20,7 @@ import {
 import { downloadAndExtractUBlock } from "./ExtensionsFilesHelper";
 import { handleYoutubeConsent } from "./YoutubeConsentHelper";
 import { waitForSelectorOrRetryWithPageReload } from "./TestSetupHelper";
+import { acquireLock, releaseLock } from "./lock";
 
 export async function setupUBlockAndAuth(
   allBrowserNameWithExtensions: string[],
@@ -32,6 +33,23 @@ export async function setupUBlockAndAuth(
   context?: BrowserContext | Browser;
   page?: Page;
 }> {
+  // Allow firefox to be always first
+  // Because google is more likely to serve a captcha on firefox
+  // So it needs to be the first to login to avoid that
+  if (allBrowserNameWithExtensions[0] !== "firefox") {
+    // wait 500ms
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  }
+
+  // use a lock to prevent multiple runs of this test at the same time
+  // this allow parallelism globally, but not when doing the setup
+  // (which is critical that is not flacky to avoid repeated fails and login attmpts)
+  await acquireLock(
+    "setupUBlockAndAuth",
+    100,
+    process.env.CI ? 18 * 60 * 1000 : 6 * 60 * 1000,
+  );
+
   try {
     for (const browserNameWithExtensions of allBrowserNameWithExtensions) {
       await downloadAndExtractUBlock(browserNameWithExtensions);
@@ -119,6 +137,7 @@ export async function setupUBlockAndAuth(
             page,
             browserNameWithExtensions,
             isMobile,
+            2,
           );
 
           isCorrectLocale = await isLocaleCorrect(
@@ -194,6 +213,8 @@ export async function setupUBlockAndAuth(
       context: undefined,
       page: undefined,
     };
+  } finally {
+    releaseLock("setupUBlockAndAuth");
   }
 
   async function openYoutubeStartingPage(

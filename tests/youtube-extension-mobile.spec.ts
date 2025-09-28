@@ -297,7 +297,7 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
 
     // --- Check Videos Tab ---
     const expectedThumbnailSrc =
-      "https://i.ytimg.com/vi/yhB3BgJyGl8/hqdefault.jpg";
+      /https:\/\/i\.ytimg\.com\/vi\/yhB3BgJyGl8\/hqdefault\.jpg\?youtube-anti-translate=[0-9]+/i;
     const originalPlaylistTitle = "owned-playlist-playwright-test";
     const videoSelector = `ytm-rich-item-renderer:has-text("${originalPlaylistTitle}")`;
 

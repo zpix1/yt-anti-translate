@@ -17,6 +17,7 @@ import { Browser, BrowserContext, Page } from "@playwright/test";
 import {
   getFirstVisibleLocator,
   waitForSelectorOrRetryWithPageReload,
+  waitForVisibleLocatorOrRetryWithPageReload,
 } from "./TestSetupHelper";
 
 /**
@@ -203,6 +204,7 @@ export async function findLoginButton(
   page: Page,
   browserName?: string,
   isMobile: boolean = false,
+  maxLocatorsRetry: number = 0,
   needsCompleteFind: boolean = false,
 ) {
   if (isMobile) {
@@ -210,14 +212,109 @@ export async function findLoginButton(
       console.log(
         `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Searching for "Subscribe" button on mobile videos/shorts`,
       );
-      const possibleLabels = ["Subscribe", "Подписаться", "ติดตาม"];
-      for (const label of possibleLabels) {
-        const subscribeButtonHeader = page
-          .getByRole("button", { name: label, disabled: false })
-          .first();
-        if (await subscribeButtonHeader.isVisible()) {
-          await subscribeButtonHeader.scrollIntoViewIfNeeded();
-          await subscribeButtonHeader.click();
+      const possibleLabels = /Subscribe|Подписаться|ติดตาม/i;
+
+      const subscribeButtonLocator = page
+        .locator(":visible")
+        .getByRole("button", {
+          name: possibleLabels,
+          disabled: false,
+        });
+      const subscribeButtonHeader =
+        maxLocatorsRetry > 0
+          ? (
+              await waitForVisibleLocatorOrRetryWithPageReload(
+                page,
+                subscribeButtonLocator,
+                maxLocatorsRetry,
+                true,
+              )
+            ).first()
+          : subscribeButtonLocator.first();
+      if (await subscribeButtonHeader.isVisible()) {
+        await subscribeButtonHeader.scrollIntoViewIfNeeded();
+        await subscribeButtonHeader.click();
+
+        try {
+          await page.waitForLoadState("networkidle", {
+            timeout: process.env.CI ? 10000 : 5000,
+          });
+        } catch {
+          console.log(
+            `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Network idle timeout after subscribe click`,
+          );
+        }
+
+        await page.waitForTimeout(process.env.CI ? 2000 : 1000);
+
+        if (needsCompleteFind) {
+          const possibleLabels2 = /Sign in|Войти|ลงชื่อเข้าใช้/i;
+
+          console.log(
+            `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Checking for login button with label: "${possibleLabels2}"`,
+          );
+          const buttonLocator = page
+            .locator(":visible")
+            .getByRole(`link`, { name: possibleLabels2 });
+          const button = (
+            maxLocatorsRetry > 0
+              ? (
+                  await waitForVisibleLocatorOrRetryWithPageReload(
+                    page,
+                    buttonLocator,
+                    maxLocatorsRetry,
+                    true,
+                  )
+                ).first()
+              : buttonLocator
+          ).first();
+          if (await button.isVisible()) {
+            console.log(
+              `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Found login button with label: "${possibleLabels2}"`,
+            );
+            return button;
+          }
+        }
+        console.warn(
+          `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] [WARNING] FOR MOBILE The test account must be subscribed to the channel of any test playing videos/shorts`,
+        );
+        console.log(
+          `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Found login button with label: "${possibleLabels}"`,
+        );
+        return subscribeButtonHeader;
+      }
+    } else {
+      console.log(
+        `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Searching for login button on mobile`,
+      );
+      const possibleLabels = /You|Вы|คุณ/i;
+
+      const youTabLocator = page
+        .locator(":visible")
+        .getByRole("tab", { name: possibleLabels });
+      const youTab =
+        maxLocatorsRetry > 0
+          ? (
+              await waitForVisibleLocatorOrRetryWithPageReload(
+                page,
+                youTabLocator,
+                maxLocatorsRetry,
+                true,
+              )
+            ).first()
+          : youTabLocator.first();
+      const containsIconLocator = await getFirstVisibleLocator(
+        youTab.locator("svg"),
+        true,
+      );
+      if (
+        (await youTab.isVisible()) &&
+        (await containsIconLocator.isVisible())
+      ) {
+        // If this is not setup we can skip this as it already confirms the test is not logged in
+        if (needsCompleteFind) {
+          await youTab.scrollIntoViewIfNeeded();
+          await youTab.click();
 
           try {
             await page.waitForLoadState("networkidle", {
@@ -225,87 +322,42 @@ export async function findLoginButton(
             });
           } catch {
             console.log(
-              `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Network idle timeout after subscribe click`,
+              `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Network idle timeout after 'You' Tab click`,
             );
           }
 
           await page.waitForTimeout(process.env.CI ? 2000 : 1000);
 
-          if (needsCompleteFind) {
-            const possibleLabels2 = ["Sign in", "Войти", "ลงชื่อเข้าใช้"];
-            for (const label of possibleLabels2) {
-              console.log(
-                `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Checking for login button with label: "${label}"`,
-              );
-              const button = page.getByRole(`link`, { name: label }).first();
-              if (await button.isVisible()) {
-                console.log(
-                  `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Found login button with label: "${label}"`,
-                );
-                return button;
-              }
-            }
-          }
-          console.warn(
-            `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] [WARNING] FOR MOBILE The test account must be subscribed to the channel of any test playing videos/shorts`,
-          );
+          const possibleLabels2 = /Sign in|Войти|ลงชื่อเข้าใช้/i;
+
           console.log(
-            `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Found login button with label: "${label}"`,
+            `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Checking for login button with label: "${possibleLabels2}"`,
           );
-          return subscribeButtonHeader;
+          const buttonLocator = page
+            .locator(":visible")
+            .getByRole(`link`, { name: possibleLabels2 });
+          const button =
+            maxLocatorsRetry > 0
+              ? (
+                  await waitForVisibleLocatorOrRetryWithPageReload(
+                    page,
+                    buttonLocator,
+                    maxLocatorsRetry,
+                    true,
+                  )
+                ).first()
+              : buttonLocator.first();
+          if (await button.isVisible()) {
+            console.log(
+              `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Found login button with label: "${possibleLabels2}"`,
+            );
+            return button;
+          }
         }
-      }
-    } else {
-      console.log(
-        `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Searching for login button on mobile`,
-      );
-      const possibleLabels = ["You", "Вы", "คุณ"];
-      for (const label of possibleLabels) {
-        const youTab = page.getByRole("tab", { name: label }).first();
-        const containsIconLocator = await getFirstVisibleLocator(
-          youTab.locator("svg"),
-          true,
+        console.log(
+          `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Found login button with label: "${possibleLabels}"`,
         );
-        if (
-          (await youTab.isVisible()) &&
-          (await containsIconLocator.isVisible())
-        ) {
-          // If this is not setup we can skip this as it already confirms the test is not logged in
-          if (needsCompleteFind) {
-            await youTab.scrollIntoViewIfNeeded();
-            await youTab.click();
-
-            try {
-              await page.waitForLoadState("networkidle", {
-                timeout: process.env.CI ? 10000 : 5000,
-              });
-            } catch {
-              console.log(
-                `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Network idle timeout after 'You' Tab click`,
-              );
-            }
-
-            await page.waitForTimeout(process.env.CI ? 2000 : 1000);
-
-            const possibleLabels2 = ["Sign in", "Войти", "ลงชื่อเข้าใช้"];
-            for (const label of possibleLabels2) {
-              console.log(
-                `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Checking for login button with label: "${label}"`,
-              );
-              const button = page.getByRole(`link`, { name: label }).first();
-              if (await button.isVisible()) {
-                console.log(
-                  `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Found login button with label: "${label}"`,
-                );
-                return button;
-              }
-            }
-          }
-          console.log(
-            `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Found login button with label: "${label}"`,
-          );
-          return youTab;
-        }
+        return youTab;
       }
     }
     console.log(
@@ -315,19 +367,32 @@ export async function findLoginButton(
     console.log(
       `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Searching for login button`,
     );
-    const possibleLabels = ["Sign in", "Войти", "ลงชื่อเข้าใช้"];
-    for (const label of possibleLabels) {
+    const possibleLabels = /Sign in|Войти|ลงชื่อเข้าใช้/i;
+
+    console.log(
+      `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Checking for login button with label: "${possibleLabels}"`,
+    );
+    const buttonLocator = page
+      .locator(":visible")
+      .getByRole("link", { name: possibleLabels });
+    const button =
+      maxLocatorsRetry > 0
+        ? (
+            await waitForVisibleLocatorOrRetryWithPageReload(
+              page,
+              buttonLocator,
+              maxLocatorsRetry,
+              true,
+            )
+          ).first()
+        : buttonLocator.first();
+    if (await button.isVisible()) {
       console.log(
-        `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Checking for login button with label: "${label}"`,
+        `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Found login button with label: "${possibleLabels}"`,
       );
-      const button = page.locator(`#masthead a:has-text("${label}")`).first();
-      if (await button.isVisible()) {
-        console.log(
-          `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Found login button with label: "${label}"`,
-        );
-        return button;
-      }
+      return button;
     }
+
     console.log(
       `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] No login button found`,
     );
@@ -364,7 +429,7 @@ export async function handleGoogleLogin(
   }
 
   //Check if we need to login
-  const button = await findLoginButton(page, browserName, isMobile, true);
+  const button = await findLoginButton(page, browserName, isMobile, 2, true);
   if (button && (await button.isVisible())) {
     console.log(
       `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Login required, clicking login button`,
@@ -465,8 +530,9 @@ export async function handleGoogleLogin(
       }
     }
   } else {
-    const avatarButton = page.locator("#masthead #avatar-btn");
-    await avatarButton.waitFor();
+    const avatarButton = page
+      .locator(":visible")
+      .locator("#masthead #avatar-btn");
     if (await avatarButton.isVisible()) {
       console.log(
         `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Avatar button found, clicking to access settings`,
@@ -608,10 +674,11 @@ async function continueLoginSteps(
     );
   }
 
+  await page.waitForTimeout(process.env.CI ? 2000 : 1000);
   // Sometimes clicking the "Sign In" button is sufficient to log in directly
   if (
     !page.url().includes("google.com") &&
-    !(await findLoginButton(page, browserName, isMobile))
+    !(await findLoginButton(page, browserName, isMobile, 1))
   ) {
     return { isEarlyLogin: true };
   }
@@ -805,6 +872,20 @@ export async function solveCaptcha(
   const nextText = /Next|Далее|ถัดไป/i;
 
   await page.waitForTimeout(process.env.CI ? 4000 : 2000);
+  try {
+    await page.waitForLoadState("networkidle", {
+      timeout: process.env.CI ? 10000 : 5000,
+    });
+  } catch {
+    console.log(
+      `Network idle at the start of captcha attempt, retries left: ${maxRetries - 1}`,
+    );
+  }
+  await page.waitForTimeout(process.env.CI ? 4000 : 2000);
+
+  if (!page.url().includes("google.com")) {
+    return;
+  }
 
   const captchalocatorSearch = await getFirstVisibleLocator(
     page.locator(captchaSelector),
@@ -873,17 +954,6 @@ export async function solveCaptcha(
 
     // Click next
     await page.getByRole("button", { name: nextText }).click();
-
-    await page.waitForTimeout(process.env.CI ? 4000 : 2000);
-    try {
-      await page.waitForLoadState("networkidle", {
-        timeout: process.env.CI ? 10000 : 5000,
-      });
-    } catch {
-      console.log(
-        `Network idle captcha attempt, retries left: ${maxRetries - 1}`,
-      );
-    }
 
     // Check if captcha is still visible or retry
     await solveCaptcha(page, maxRetries - 1);
