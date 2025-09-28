@@ -82,14 +82,14 @@ export async function downloadAndExtractUBlock(browserName: string) {
     case "chromium":
       //To get the following url if it changes you can do a `curl 'https://clients2.google.com/service/update2/crx?response=redirect&os=win&arch=x86-64&os_arch=x86-64&nacl_arch=x86-64&prod=chromiumcrx&prodchannel=unknown&prodversion=9999.0.9999.0&acceptformat=crx2,crx3&x=id%3Dddkjiahejlhfcafbddmgiahcphecmpfh%26uc'`
       //and copy the redirect URL to the file
-      uBlockUri = `https://clients2.googleusercontent.com/crx/blobs/AR5vvToUznjd4HPtq2Qf2ofykf5cygX6Wm7Q7cmg2zGc61WE49beD-vBuuew0okjXIj8lJ8TJMfGenI2Dg8DAJT_dNWWaFrSeW5UApwk5Nxh05G5vVNqQYKOcrQeYkJ2fxBgAMZSmuWEL6hqLeWkBX6RZY0yRQi9IjkaXg/DDKJIAHEJLHFCAFBDDMGIAHCPHECMPFH_2025_512_1008_0.crx`;
-      expectedVersion = "2025.512.1008";
+      uBlockUri = `https://clients2.googleusercontent.com/crx/blobs/AcLY-yTwGVsujPgeyaunSeAvdClIxMVRVx02e2MoF2O4ilPjLPJh1fv59Iz_8b0RSn0xY64R5swJVM3eYSWuV38pVy4d1sVAOHNc7hPbphjhEV-GQ8CI30vlyU93h7-yiiaGAMZSmuXJ8MiIWRYgzDrCdWjAYSuyGQHc1Q/DDKJIAHEJLHFCAFBDDMGIAHCPHECMPFH_2025_921_2008_0.crx`;
+      expectedVersion = "2025.921.2008";
       destDirUBlock = path.join(__dirname, "../testUBlockOriginLite");
       break;
     case "firefox":
       uBlockUri =
-        "https://addons.mozilla.org/firefox/downloads/file/4458450/ublock_origin-1.63.2.xpi";
-      expectedVersion = "1.63.2";
+        "https://addons.mozilla.org/firefox/downloads/file/4578681/ublock_origin-1.66.4.xpi";
+      expectedVersion = "1.66.4";
       destDirUBlock = path.join(__dirname, "../testUBlockOrigin");
       break;
     default:

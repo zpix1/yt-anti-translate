@@ -183,7 +183,7 @@ export async function setupPageWithAuth(
 export async function loadPageAndVerifyAuth(
   page: Page,
   url: string,
-  browserNameWithExtensions?: string,
+  browserNameWithExtensions: string,
   isMobile: boolean = false,
 ) {
   // Navigate to the specified YouTube page

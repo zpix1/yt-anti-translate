@@ -157,7 +157,11 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     localeString: string,
     addToScreenshotName: string = "",
   ) {
-    await loadPageAndVerifyAuth(page, "https://www.youtube.com/@MrBeast");
+    await loadPageAndVerifyAuth(
+      page,
+      "https://www.youtube.com/@MrBeast",
+      browserNameWithExtensions,
+    );
 
     // Take a screenshot for visual verification
     await page.screenshot({
@@ -372,6 +376,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     await loadPageAndVerifyAuth(
       page,
       "https://www.youtube.com/watch?v=l-nMKJ5J3Uc",
+      browserNameWithExtensions,
     );
 
     // Take a screenshot for visual verification

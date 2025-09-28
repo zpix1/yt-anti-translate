@@ -202,7 +202,7 @@ export async function newPageWithStorageStateIfItExists(
  */
 export async function findLoginButton(
   page: Page,
-  browserName?: string,
+  browserName: string,
   isMobile: boolean = false,
   maxLocatorsRetry: number = 0,
   needsCompleteFind: boolean = false,
