@@ -1692,6 +1692,8 @@ ytm-shorts-lockup-view-model`,
       return;
     }
 
+    await this.setSessionCache(requestIdentifier, result);
+
     return result;
   },
 
@@ -1875,8 +1877,8 @@ ytm-shorts-lockup-view-model`,
       return false;
     }
     try {
-      const response = await fetch(src, { method: "GET", redirect: "manual" });
-      return response.ok && response.status >= 200 && response.status < 300;
+      const response = await this.cachedRequest(src);
+      return response?.ok && response?.status >= 200 && response?.status < 300;
     } catch {
       return false;
     }

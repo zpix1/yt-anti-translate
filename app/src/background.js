@@ -930,7 +930,7 @@ async function untranslateOtherVideos(intersectElements = null) {
             if (settings.untranslateChannelBranding && mainAuthor) {
               // Locate avatar stacks for collaborators videos
               const avatarStacks = video.querySelectorAll(
-                "#channel-info #avatar yt-avatar-stack-view-model yt-avatar-shape img",
+                "yt-avatar-stack-view-model yt-avatar-shape img",
               );
 
               const authors = [];
@@ -957,7 +957,7 @@ async function untranslateOtherVideos(intersectElements = null) {
                   authors.push(originalItem.name);
                 }
               } else {
-                // Falback using video id filtered list
+                // Fallback using video id filtered list
                 const originalCollaborators =
                   await window.YoutubeAntiTranslate.getOriginalCollaboratorsItemsWithYoutubeI(
                     originalTitle,
@@ -996,7 +996,8 @@ async function untranslateOtherVideos(intersectElements = null) {
                     );
                   } else {
                     const authorsElement = video.querySelector(
-                      `#channel-info yt-formatted-string > a.yt-simple-endpoint, div.media-item-metadata .YtmBadgeAndBylineRendererHost span${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}`,
+                      `#channel-info yt-formatted-string > a.yt-simple-endpoint, div.media-item-metadata .YtmBadgeAndBylineRendererHost span${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR},
+                      yt-content-metadata-view-model ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR} a`,
                     );
                     const authorsTooltipElement = video.querySelector(
                       `#channel-info .ytd-channel-name #tooltip`,
