@@ -511,6 +511,7 @@ function updateChannelRendererAuthor(container, originalBrandingData) {
   const authorTextContainer = container.querySelector(
     `#channel-title yt-formatted-string,
     #channel-info #title,
+    #endpoint yt-formatted-string.title,
     h4.compact-media-item-headline > .yt-core-attributed-string,
     h4.YtmCompactMediaItemHeadline > .yt-core-attributed-string`,
   );
@@ -538,11 +539,24 @@ async function restoreOriginalBrandingChannelRenderers() {
     20,
   );
 
-  if (!channelRenderers || channelRenderers.length === 0) {
+  // We allow ytd-guide-entry-renderer even if hidden because it is used in the sidebar that is often collapsed
+  // Showing the sidebar triggers a mutation but element remain "visibility:hidden" until out of the mutation observer debounce window
+  const guideChannelRenderers = document.querySelectorAll(
+    "ytd-guide-entry-renderer",
+  );
+
+  if (
+    (!channelRenderers || channelRenderers.length === 0) &&
+    (!guideChannelRenderers || guideChannelRenderers.length === 0)
+  ) {
     return;
   }
 
-  const tasks = channelRenderers.map(async (renderer) => {
+  const allChannelRenderers = (
+    channelRenderers ? Array.from(channelRenderers) : []
+  ).concat(Array.from(guideChannelRenderers));
+
+  const tasks = allChannelRenderers.map(async (renderer) => {
     const linkElement =
       renderer.querySelector("a.channel-link") ||
       renderer.querySelector("a#main-link") ||
