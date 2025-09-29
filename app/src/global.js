@@ -117,6 +117,7 @@ const lruCache = new SessionLRUCache();
 window.YoutubeAntiTranslate = {
   VIEWPORT_EXTENSION_PERCENTAGE_FRACTION: 0.5,
   VIEWPORT_OUTSIDE_LIMIT_FRACTION: 0.5,
+  MAX_ATTEMPTS: 2,
   LOG_PREFIX: "[YoutubeAntiTranslate]",
   LOG_LEVELS: {
     NONE: 0,

@@ -14,6 +14,7 @@ interface Window {
 
     VIEWPORT_EXTENSION_PERCENTAGE_FRACTION: number;
     VIEWPORT_OUTSIDE_LIMIT_FRACTION: number;
+    MAX_ATTEMPTS: number;
     LOG_PREFIX: string;
     LOG_LEVELS: { [key: string]: number };
     currentLogLevel: number;
@@ -377,8 +378,8 @@ interface Window {
      */
     detectSupportedLanguage: (
       text: string,
-      maxRetries?: number = 3,
-      minProbability?: number = 50,
+      maxRetries?: number,
+      minProbability?: number,
     ) => Promise<string[] | null>;
 
     /**

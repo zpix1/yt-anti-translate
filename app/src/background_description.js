@@ -992,19 +992,21 @@ async function updateCollaboratorAuthors(avatarStack, originalAuthor) {
                 `#attributed-channel-name ${ATTRIBUTED_STRING_CLASS_SELECTOR} a > span`,
               ),
           );
+
+        const localizedAnd = window.YoutubeAntiTranslate.getLocalizedAnd(
+          document.documentElement.lang,
+        );
+        const untranslatedCollaboratorText = `${localizedAnd} ${collaboratorAuthorsOnly[0]}`;
         if (
           multipleChannelNameContainer &&
           !multipleChannelNameContainer.textContent.includes(
-            collaboratorAuthorsOnly[0],
+            untranslatedCollaboratorText,
           )
         ) {
-          const localizedAnd = window.YoutubeAntiTranslate.getLocalizedAnd(
-            document.documentElement.lang,
-          );
           replaceTextNodeContent(
             multipleChannelNameContainer,
             1,
-            `${localizedAnd} ${collaboratorAuthorsOnly[0]}`,
+            untranslatedCollaboratorText,
           );
         }
       }
