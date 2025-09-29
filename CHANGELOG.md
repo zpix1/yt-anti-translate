@@ -11,8 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### New Feature
 
+- Add YouTube Mini Player untranslation
 - [#114](https://github.com/zpix1/yt-anti-translate/issues/114) Thumbnails Untranslate
-- [#135](https://github.com/zpix1/yt-anti-translate/issues/135) Untranslate Collaborator authors on search and watch
+- [#135](https://github.com/zpix1/yt-anti-translate/issues/135) Untranslate Collaborator authors on everywhere
 - [#119](https://github.com/zpix1/yt-anti-translate/issues/119) Untranslate Embeded videos outside of YouTube (e.g. On filmot.com) - iFrame support
 - [#57](https://github.com/zpix1/yt-anti-translate/issues/57) Add support for youtube-nocookie.com
 - [#138](https://github.com/zpix1/yt-anti-translate/issues/138) Add option to toggle Titles Untranslation

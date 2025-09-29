@@ -505,63 +505,6 @@ function setupChapters(originalDescription) {
 }
 
 /**
- * Retrieves the YouTube player response object in a resilient way that works
- * across desktop and mobile layouts.
- *
- * @param {HTMLElement|null} playerEl - Player element if already located.
- * @returns {object|null} The player response object or null if it cannot be found.
- */
-function getPlayerResponseSafely(playerEl) {
-  let response = null;
-
-  // Attempt standard desktop API first
-  try {
-    if (playerEl && typeof playerEl.getPlayerResponse === "function") {
-      response = playerEl.getPlayerResponse();
-    }
-  } catch (err) {
-    window.YoutubeAntiTranslate?.logDebug?.("getPlayerResponse failed", err);
-  }
-
-  // Fallback to embedded player API
-  if (!response) {
-    try {
-      if (
-        playerEl &&
-        typeof playerEl.getEmbeddedPlayerResponse === "function"
-      ) {
-        response = playerEl.getEmbeddedPlayerResponse();
-      }
-    } catch (err) {
-      window.YoutubeAntiTranslate?.logDebug?.(
-        "getEmbeddedPlayerResponse failed",
-        err,
-      );
-    }
-  }
-
-  // Legacy/alternate location used by some mobile builds
-  if (
-    !response &&
-    window.ytplayer &&
-    window.ytplayer.config &&
-    window.ytplayer.config.args &&
-    window.ytplayer.config.args.player_response
-  ) {
-    try {
-      response = JSON.parse(window.ytplayer.config.args.player_response);
-    } catch (err) {
-      window.YoutubeAntiTranslate.logWarning(
-        "Failed to parse ytplayer.config.args.player_response",
-        err,
-      );
-    }
-  }
-
-  return response || null;
-}
-
-/**
  * Uses the YouTube player API to obtain the original (untranslated) video description.
  *
  * @returns {{shortDescription: string|null, channelId: string|null}} The original description or null if it cannot be retrieved.
@@ -571,7 +514,8 @@ async function fetchOriginalDescription() {
     document.querySelectorAll(window.YoutubeAntiTranslate.getPlayerSelector()),
   );
 
-  const playerResponse = getPlayerResponseSafely(player);
+  const playerResponse =
+    window.YoutubeAntiTranslate.getPlayerResponseSafely(player);
   if (!playerResponse && window.YoutubeAntiTranslate.isMobile()) {
     // Fallback for mobile layout when player response is unavailable
     const mobileDescription = await getDescriptionMobile();
@@ -601,7 +545,8 @@ function fetchOriginalAuthor() {
     document.querySelectorAll(window.YoutubeAntiTranslate.getPlayerSelector()),
   );
 
-  const playerResponse = getPlayerResponseSafely(player);
+  const playerResponse =
+    window.YoutubeAntiTranslate.getPlayerResponseSafely(player);
   if (!playerResponse && window.YoutubeAntiTranslate.isMobile()) {
     // Fallback for mobile layout when player response is unavailable
     const mobileAuthor = getAuthorMobile();
@@ -753,7 +698,7 @@ async function handleAuthor(originalAuthor, originalTitle = null) {
         originalTitle,
       );
     } else {
-      window.YoutubeAntiTranslate.logWarning(
+      window.YoutubeAntiTranslate.logInfo(
         "Video Avatar Stack container not found",
       );
     }
@@ -895,7 +840,7 @@ function updateAuthorContent(container, originalText) {
     !singularChannelNameTextContainer &&
     !multipleChannelNameContainers
   ) {
-    window.YoutubeAntiTranslate.logWarning(
+    window.YoutubeAntiTranslate.logInfo(
       `No video author text containers found`,
     );
     return;

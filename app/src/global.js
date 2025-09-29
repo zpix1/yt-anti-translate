@@ -2071,4 +2071,54 @@ ytm-shorts-lockup-view-model`,
 
     return result;
   },
+
+  getPlayerResponseSafely: function (playerEl) {
+    let response = null;
+
+    // Attempt standard desktop API first
+    try {
+      if (playerEl && typeof playerEl.getPlayerResponse === "function") {
+        response = playerEl.getPlayerResponse();
+      }
+    } catch (err) {
+      window.YoutubeAntiTranslate?.logDebug?.("getPlayerResponse failed", err);
+    }
+
+    // Fallback to embedded player API
+    if (!response) {
+      try {
+        if (
+          playerEl &&
+          typeof playerEl.getEmbeddedPlayerResponse === "function"
+        ) {
+          response = playerEl.getEmbeddedPlayerResponse();
+        }
+      } catch (err) {
+        window.YoutubeAntiTranslate?.logDebug?.(
+          "getEmbeddedPlayerResponse failed",
+          err,
+        );
+      }
+    }
+
+    // Legacy/alternate location used by some mobile builds
+    if (
+      !response &&
+      window.ytplayer &&
+      window.ytplayer.config &&
+      window.ytplayer.config.args &&
+      window.ytplayer.config.args.player_response
+    ) {
+      try {
+        response = JSON.parse(window.ytplayer.config.args.player_response);
+      } catch (err) {
+        window.YoutubeAntiTranslate.logWarning(
+          "Failed to parse ytplayer.config.args.player_response",
+          err,
+        );
+      }
+    }
+
+    return response || null;
+  },
 };

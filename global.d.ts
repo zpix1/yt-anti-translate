@@ -628,5 +628,15 @@ interface Window {
       | null
       | undefined
     >;
+
+    /**
+     * Retrieves the YouTube player response object in a resilient way that works
+     * across desktop and mobile layouts.
+     * @param playerEl - Player element if already located.
+     * @returns The player response object or null if it cannot be found.
+     */
+    getPlayerResponseSafely: (
+      playerEl: HTMLElement | null | undefined,
+    ) => object | null;
   };
 }

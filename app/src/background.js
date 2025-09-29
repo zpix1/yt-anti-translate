@@ -287,6 +287,58 @@ async function untranslateCurrentMobileFeaturedVideoChannel() {
   );
 }
 
+// Untranslate mini player video channel title for Desktop layout only
+async function untranslateCurrentMiniPlayerVideo() {
+  if (window.YoutubeAntiTranslate.isMobile()) {
+    return;
+  }
+  if (
+    !window.YoutubeAntiTranslate.getFirstVisible(
+      document.querySelectorAll(
+        `ytd-miniplayer ${window.YoutubeAntiTranslate.getPlayerSelector()}`,
+      ),
+    )
+  ) {
+    return;
+  }
+
+  const fakeNodeID = "yt-anti-translate-fake-node-mini-player-video-channel";
+  const originalNodeSelector = `ytd-miniplayer-info-bar .ytdMiniplayerInfoBarTitle ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}:not(#${fakeNodeID})`;
+  const originalNodePartialSelector = `${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}:not(#${fakeNodeID})`;
+
+  const authorFakeNodeID = `${fakeNodeID}-author`;
+  const videoAuthorSelector = `ytd-miniplayer-info-bar .ytdMiniplayerInfoBarSubtitle ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}:not(#${authorFakeNodeID})`;
+
+  await createOrUpdateUntranslatedFakeNode(
+    fakeNodeID,
+    originalNodeSelector,
+    originalNodePartialSelector,
+    () => {
+      const miniPlayer = window.YoutubeAntiTranslate.getFirstVisible(
+        document.querySelectorAll(
+          `ytd-miniplayer ${window.YoutubeAntiTranslate.getPlayerSelector()}`,
+        ),
+      );
+      const playerResponse =
+        window.YoutubeAntiTranslate.getPlayerResponseSafely(miniPlayer);
+      if (
+        playerResponse &&
+        playerResponse.videoDetails &&
+        playerResponse.videoDetails.videoId
+      ) {
+        return `${document.location.origin}/watch?v=${playerResponse.videoDetails.videoId}`;
+      }
+      return null;
+    },
+    "span",
+    true,
+    false,
+    videoAuthorSelector,
+    authorFakeNodeID,
+    "span",
+  );
+}
+
 /**
  * Create or Updates an untranslated fake node for the translated element with a video title
  * @param {string} fakeNodeID
@@ -1969,6 +2021,9 @@ async function untranslate() {
   const currentPlaylistThumbnailPromise = settings.untranslateThumbnail
     ? untranslateCurrentPlaylistHeaderThumbnail()
     : Promise.resolve();
+  const currentMiniPlayerPromise = settings.untranslateTitle
+    ? untranslateCurrentMiniPlayerVideo()
+    : Promise.resolve();
 
   // Wait for all promises to resolve concurrently
   await Promise.all([
@@ -1987,6 +2042,7 @@ async function untranslate() {
     currentEmbeddedVideoMobileFullScreenPromise,
     currentPlayerThumbnailPromise,
     currentPlaylistThumbnailPromise,
+    currentMiniPlayerPromise,
   ]);
 
   // update intersect observers
