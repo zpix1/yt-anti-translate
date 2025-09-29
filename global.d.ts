@@ -2,11 +2,14 @@
 /* eslint-disable  @typescript-eslint/no-unsafe-function-type */
 /* eslint-disable  @typescript-eslint/no-wrapper-object-types */
 
+// Extend the Window interface to include the YoutubeAntiTranslate global object
+// This allows TypeScript to recognize and provide type checking for window.YoutubeAntiTranslate
+// when it is used in other parts of the codebase.
 interface Window {
-  /** Access the global YoutubeAntiTranslate object defined in `/app/src/global.js` */
+  /** The extension global window.YoutubeAntiTranslate object implemented in `/app/src/global.js` */
   YoutubeAntiTranslate: {
     // Describe the shape of the YoutubeAntiTranslate object in `/app/src/global.js`
-    // Please keep this in sync with the actual implementation in `global.js` for intellisense support
+    // Please keep this in sync with the implementation in `/app/src/global.js` for IntelliSense support
     // and type checking when using this global object in other parts of the codebase.
 
     VIEWPORT_EXTENSION_PERCENTAGE_FRACTION: number;
