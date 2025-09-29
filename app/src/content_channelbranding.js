@@ -583,25 +583,56 @@ async function restoreCollaboratorsDialog() {
   }
 
   const listItems = dialog.querySelectorAll(
-    "yt-list-item-view-model .yt-list-item-view-model__text-wrapper",
+    "yt-list-item-view-model .yt-list-item-view-model__label",
   );
   if (!listItems || listItems.length === 0) {
     return;
   }
 
   const tasks = Array.from(listItems).map(async (item) => {
-    if (item.getAttribute("data-ytat-collab-untranslated") === "true") {
+    if (
+      item.getAttribute("data-ytat-collab-untranslated") ===
+      document.location.href
+    ) {
       return;
     }
 
     // Anchor that contains the channel name (bold title area)
-    const linkEl =
+    let linkEl =
       item.querySelector(
         ".yt-list-item-view-model__text-wrapper a.yt-core-attributed-string__link",
       ) || item.querySelector("a.yt-core-attributed-string__link");
     if (!linkEl) {
-      // Fallback to searching for the channel name filtered by search query and avatar image
+      const channelInfoEl = item.querySelector(
+        `.yt-list-item-view-model__text-wrapper > span${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}`,
+      );
+      const channelNameEl = item.querySelector(
+        ".yt-list-item-view-model__title-wrapper .yt-core-attributed-string > span > span",
+      );
+      if (channelInfoEl) {
+        // Create a link element from the channel handle text if found
+        // extract the handle from the text content (e.g. ‎⁨@MarkRober⁩ • ⁨ผู้ติดตาม 71.2 ล้าน คน⁩)
+        const handleMatch = channelInfoEl.textContent.match(
+          /^[\u2000-\u2099]{0,3}(@[^ \u2000-\u2099]+)/,
+        );
+        if (handleMatch) {
+          const handle = handleMatch[1];
+          const href = `https://www.youtube.com/${handle.trim()}`;
+          if (channelNameEl) {
+            channelNameEl.setAttribute("href", href);
+            linkEl = channelNameEl;
+          } else {
+            const a = document.createElement("a");
+            a.href = href;
+            linkEl = a;
+          }
+        }
+      }
+
       if (
+        !linkEl &&
+        !channelNameEl &&
+        // Fallback searching for the channel name filtered by search query and avatar image
         document.location.pathname.startsWith("/results") &&
         document.location.search.includes("search_query=")
       ) {
@@ -623,9 +654,6 @@ async function restoreCollaboratorsDialog() {
           (item) => item.avatarImage === imgSrc,
         );
 
-        const channelNameEl = item.querySelector(
-          ".yt-list-item-view-model__title-wrapper .yt-core-attributed-string > span > span",
-        );
         if (!originalItem?.name || !channelNameEl) {
           return;
         }
@@ -658,7 +686,10 @@ async function restoreCollaboratorsDialog() {
         }
         return;
       }
-      return;
+
+      if (!linkEl) {
+        return;
+      }
     }
 
     const href = linkEl.getAttribute("href");
@@ -698,7 +729,7 @@ async function restoreCollaboratorsDialog() {
       window.YoutubeAntiTranslate.replaceTextOnly(linkEl, branding.title);
     }
 
-    item.setAttribute("data-ytat-collab-untranslated", "true");
+    item.setAttribute("data-ytat-collab-untranslated", document.location.href);
   });
 
   await Promise.allSettled(tasks);

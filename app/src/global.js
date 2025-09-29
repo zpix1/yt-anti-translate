@@ -332,6 +332,7 @@ ytm-shorts-lockup-view-model`,
    * @param {boolean} [options.ignoreCase=true] - If true, converts to lowercase. Default true
    * @param {boolean} [options.normalizeSpaces=true] - If true, replaces consecutive whitespace with a single space. Default true
    * @param {boolean} [options.normalizeNFKC=true] - If true, applies Unicode Normalization Form Compatibility Composition (NFKC). Default true
+   * @param {boolean} [options.ignoreInvisible=true] - If true, removes invisible/zero-width Unicode characters. Default true
    * @param {boolean} [options.trim=true] - If true, trims both leading and trailing whitespace. Default true
    * @param {boolean} [options.trimLeft=false] - If true, trims leading whitespace. Ignored if `trim` is true. Default false
    * @param {boolean} [options.trimRight=false] - If true, trims trailing whitespace. Ignored if `trim` is true. Default false
@@ -342,6 +343,7 @@ ytm-shorts-lockup-view-model`,
       ignoreCase = true,
       normalizeSpaces = true,
       normalizeNFKC = true,
+      ignoreInvisible = true,
       trim = true,
       trimLeft = false,
       trimRight = false,
@@ -353,6 +355,11 @@ ytm-shorts-lockup-view-model`,
 
     if (normalizeNFKC) {
       str = str.normalize("NFKC");
+    }
+
+    if (ignoreInvisible) {
+      // Strip zero-width and invisible formatting characters
+      str = str.replace(/[\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g, "");
     }
 
     if (normalizeSpaces) {
@@ -385,6 +392,7 @@ ytm-shorts-lockup-view-model`,
    * @param {boolean} [options.ignoreCase=true] - If true, comparison is case-insensitive. Default true
    * @param {boolean} [options.normalizeSpaces=true] - If true, replaces consecutive whitespace with a single space. Default true
    * @param {boolean} [options.normalizeNFKC=true] - If true, applies Unicode Normalization Form Compatibility Composition (NFKC). Default true
+   * @param {boolean} [options.ignoreInvisible=true] - If true, removes invisible/zero-width Unicode characters. Default true
    * @param {boolean} [options.trim=true] - If true, trims both leading and trailing whitespace. Default true
    * @param {boolean} [options.trimLeft=false] - If true, trims leading whitespace. Ignored if `trim` is true. Default false
    * @param {boolean} [options.trimRight=false] - If true, trims trailing whitespace. Ignored if `trim` is true. Default false
@@ -404,6 +412,7 @@ ytm-shorts-lockup-view-model`,
    * @param {boolean} [options.ignoreCase=true] - If true, comparison is case-insensitive. Default true
    * @param {boolean} [options.normalizeSpaces=true] - If true, replaces consecutive whitespace with a single space. Default true
    * @param {boolean} [options.normalizeNFKC=true] - If true, applies Unicode Normalization Form Compatibility Composition (NFKC). Default true
+   * @param {boolean} [options.ignoreInvisible=true] - If true, removes invisible/zero-width Unicode characters. Default true
    * @param {boolean} [options.trim=true] - If true, trims both leading and trailing whitespace. Default true
    * @param {boolean} [options.trimLeft=false] - If true, trims leading whitespace. Ignored if `trim` is true. Default false
    * @param {boolean} [options.trimRight=false] - If true, trims trailing whitespace. Ignored if `trim` is true. Default false
@@ -424,6 +433,7 @@ ytm-shorts-lockup-view-model`,
    * @param {boolean} [options.ignoreCase=true] - If true, performs case-insensitive replacement. Default true
    * @param {boolean} [options.normalizeSpaces=true] - If true, replaces all whitespace sequences with a single space before matching. Default true
    * @param {boolean} [options.normalizeNFKC=true] - If true, applies Unicode Normalization Form Compatibility Composition (NFKC). Default true
+   * @param {boolean} [options.ignoreInvisible=true] - If true, removes invisible/zero-width Unicode characters. Default true
    * @param {boolean} [options.trim=true] - If true, trims leading and trailing whitespace before processing. Default true
    * @param {boolean} [options.trimLeft=false] - If true, trims leading whitespace (ignored if `trim` is true). Default false
    * @param {boolean} [options.trimRight=false] - If true, trims trailing whitespace (ignored if `trim` is true). Default false
@@ -2083,7 +2093,6 @@ ytm-shorts-lockup-view-model`,
       return storedResponse;
     }
 
-    // TODO: Validate mobile (MWEB) support
     const search = `https://${this.isMobile() ? "m" : "www"}.youtube.com/youtubei/v1/search?prettyPrint=false`;
     const result = await this.cachedRequest(
       search,
@@ -2111,9 +2120,15 @@ ytm-shorts-lockup-view-model`,
       for (const itemRenderedContent of sectionContent?.itemSectionRenderer
         ?.contents || []) {
         if (
-          itemRenderedContent?.channelRenderer?.title?.simpleText === query ||
-          itemRenderedContent?.channelRenderer?.subscriberCountText
-            ?.simpleText === query
+          this.isStringEqual(
+            itemRenderedContent?.channelRenderer?.title?.simpleText,
+            query,
+          ) ||
+          this.isStringEqual(
+            itemRenderedContent?.channelRenderer?.subscriberCountText
+              ?.simpleText,
+            query,
+          )
         ) {
           channelUcid = itemRenderedContent?.channelRenderer?.channelId;
           channelHandle =
@@ -2124,7 +2139,6 @@ ytm-shorts-lockup-view-model`,
       }
     }
 
-    // TODO: Validate mobile (MWEB) support
     for (const sectionContent of json.contents?.sectionListRenderer?.contents ||
       []) {
       for (const itemRenderedContent of sectionContent?.itemSectionRenderer
@@ -2132,7 +2146,7 @@ ytm-shorts-lockup-view-model`,
         let /** @type {boolean} */ itemMatchChannelName = false;
         for (const runs of itemRenderedContent?.compactChannelRenderer
           ?.displayName?.runs || []) {
-          if (runs.text === query) {
+          if (this.isStringEqual(runs.text, query)) {
             itemMatchChannelName = true;
             break;
           }
@@ -2142,7 +2156,7 @@ ytm-shorts-lockup-view-model`,
         let /** @type {number} */ itemMatchChannelHandleIndex = -1;
         for (const runs of itemRenderedContent?.compactChannelRenderer
           ?.subscriberCountText?.runs || []) {
-          if (runs.text === query) {
+          if (this.isStringEqual(runs.text, query)) {
             itemMatchChannelHandle = true;
             itemMatchChannelHandleIndex =
               itemRenderedContent?.compactChannelRenderer?.subscriberCountText?.runs.indexOf(
@@ -2296,7 +2310,6 @@ ytm-shorts-lockup-view-model`,
         }
       }
     }
-    // TODO: Validate mobile (MWEB) support
 
     const result = {
       title: metadata?.title, // channel name
