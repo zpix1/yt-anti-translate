@@ -127,10 +127,6 @@ window.YoutubeAntiTranslate = {
   },
   currentLogLevel: 2, // Default to WARN
 
-  /**
-   * Sets the current log level.
-   * @param {string} levelName - The name of the log level (e.g., "INFO", "DEBUG").
-   */
   setLogLevel: function (levelName) {
     const newLevel = this.LOG_LEVELS[levelName.toUpperCase()];
     if (typeof newLevel === "number") {
@@ -178,7 +174,6 @@ ytm-shorts-lockup-view-model`,
     }
   },
 
-  /** Use only for app errors */
   logError: function (...args) {
     if (this.currentLogLevel >= this.LOG_LEVELS.ERROR) {
       console.error(`${this.LOG_PREFIX} [ERROR]`, ...args);
@@ -191,19 +186,7 @@ ytm-shorts-lockup-view-model`,
     }
   },
 
-  /**
-   * Creates a debounced version of a function that will be executed at most once
-   * during the given wait interval. The wrapped function is invoked immediately
-   * on the first call and then suppressed for the remainder of the interval so
-   * that the real function runs **no more than once every `waitMinMs` milliseconds**.
-   *
-   * Uses `requestAnimationFrame` to align with the browser's repaint cycle.
-   *
-   * @param {Function} func - The function to debounce/throttle.
-   * @param {number} waitMinMs - The minimum time between invocations in milliseconds.
-   * @returns {Function} A debounced function.
-   */
-  debounce: function (func, wait = 30) {
+  debounce: function (func, waitMinMs = 30) {
     let isScheduled = false;
     let lastExecTime = 0;
     // Helper to schedule the next frame. Falls back to setTimeout when the
@@ -230,7 +213,7 @@ ytm-shorts-lockup-view-model`,
 
       const elapsed = time - lastExecTime;
 
-      if (elapsed >= wait) {
+      if (elapsed >= waitMinMs) {
         func.apply(context, args);
         lastExecTime = time;
         isScheduled = false; // allow next schedule
@@ -256,27 +239,14 @@ ytm-shorts-lockup-view-model`,
     };
   },
 
-  /**
-   * Retrieves a deserialized object from session storage.
-   * @param {string} key
-   * @return {any|null}
-   */
   getSessionCache: function (key) {
     return lruCache.get(key);
   },
 
-  /**
-   * Stores a value in session storage after serializing
-   * @param {string} key
-   * @param {any} value
-   */
   setSessionCache: function (key, value) {
     return lruCache.set(key, value);
   },
 
-  /**
-   * @returns {string}
-   */
   getPlayerSelector: function () {
     if (window.location.hostname === "m.youtube.com") {
       return "#player-container-id";
@@ -290,17 +260,11 @@ ytm-shorts-lockup-view-model`,
     return selector;
   },
 
-  /**
-   * @returns {string}
-   */
   getBrowserOrChrome: function () {
     const result = typeof browser !== "undefined" ? browser : chrome;
     return result;
   },
 
-  /**
-   * @returns {bool}
-   */
   isFirefoxBasedBrowser: function () {
     const result =
       typeof browser !== "undefined" &&
@@ -309,35 +273,16 @@ ytm-shorts-lockup-view-model`,
     return result;
   },
 
-  // Detects if we are currently on the mobile YouTube site (m.youtube.com)
   isMobile: function () {
     const result = window.location.hostname === "m.youtube.com";
     return result;
   },
 
-  /**
-   * Normalize spaces in a string so that there are no more than 1 space between words
-   * @param {string} str
-   * @returns
-   */
   normalizeSpaces: function (str) {
     const result = str.replace(/\s+/g, " ").trim();
     return result;
   },
 
-  /**
-   * Processes a string with normalization and trimming options.
-   * @param {string} str - The string to process.
-   * @param {object} [options] - Configuration options for processing.
-   * @param {boolean} [options.ignoreCase=true] - If true, converts to lowercase. Default true
-   * @param {boolean} [options.normalizeSpaces=true] - If true, replaces consecutive whitespace with a single space. Default true
-   * @param {boolean} [options.normalizeNFKC=true] - If true, applies Unicode Normalization Form Compatibility Composition (NFKC). Default true
-   * @param {boolean} [options.ignoreInvisible=true] - If true, removes invisible/zero-width Unicode characters. Default true
-   * @param {boolean} [options.trim=true] - If true, trims both leading and trailing whitespace. Default true
-   * @param {boolean} [options.trimLeft=false] - If true, trims leading whitespace. Ignored if `trim` is true. Default false
-   * @param {boolean} [options.trimRight=false] - If true, trims trailing whitespace. Ignored if `trim` is true. Default false
-   * @returns {string} The processed string.
-   */
   processString: function (str, options = {}) {
     const {
       ignoreCase = true,
@@ -384,61 +329,18 @@ ytm-shorts-lockup-view-model`,
     return str;
   },
 
-  /**
-   * Advanced string equality comparison with optional normalization and trimming.
-   * @param {string} str1 - First string to compare.
-   * @param {string} str2 - Second string to compare.
-   * @param {object} [options] - Configuration options for comparison.
-   * @param {boolean} [options.ignoreCase=true] - If true, comparison is case-insensitive. Default true
-   * @param {boolean} [options.normalizeSpaces=true] - If true, replaces consecutive whitespace with a single space. Default true
-   * @param {boolean} [options.normalizeNFKC=true] - If true, applies Unicode Normalization Form Compatibility Composition (NFKC). Default true
-   * @param {boolean} [options.ignoreInvisible=true] - If true, removes invisible/zero-width Unicode characters. Default true
-   * @param {boolean} [options.trim=true] - If true, trims both leading and trailing whitespace. Default true
-   * @param {boolean} [options.trimLeft=false] - If true, trims leading whitespace. Ignored if `trim` is true. Default false
-   * @param {boolean} [options.trimRight=false] - If true, trims trailing whitespace. Ignored if `trim` is true. Default false
-   * @returns {boolean} Whether the two processed strings are equal.
-   */
   isStringEqual: function (str1, str2, options = {}) {
     return (
       this.processString(str1, options) === this.processString(str2, options)
     );
   },
 
-  /**
-   * Advanced string includes check with optional normalization and trimming.
-   * @param {string} container - The string to check in.
-   * @param {string} substring - The string to look for.
-   * @param {object} [options] - Configuration options for comparison.
-   * @param {boolean} [options.ignoreCase=true] - If true, comparison is case-insensitive. Default true
-   * @param {boolean} [options.normalizeSpaces=true] - If true, replaces consecutive whitespace with a single space. Default true
-   * @param {boolean} [options.normalizeNFKC=true] - If true, applies Unicode Normalization Form Compatibility Composition (NFKC). Default true
-   * @param {boolean} [options.ignoreInvisible=true] - If true, removes invisible/zero-width Unicode characters. Default true
-   * @param {boolean} [options.trim=true] - If true, trims both leading and trailing whitespace. Default true
-   * @param {boolean} [options.trimLeft=false] - If true, trims leading whitespace. Ignored if `trim` is true. Default false
-   * @param {boolean} [options.trimRight=false] - If true, trims trailing whitespace. Ignored if `trim` is true. Default false
-   * @returns {boolean} Whether the processed container includes the processed substring.
-   */
   doesStringInclude: function (container, substring, options = {}) {
     return this.processString(container, options).includes(
       this.processString(substring, options),
     );
   },
 
-  /**
-   * Advanced string replace with optional normalization and trimming.
-   * @param {string} input - The original string to operate on.
-   * @param {string|RegExp} pattern - The pattern to replace. If a string, treated as a literal substring.
-   * @param {string} replacement - The replacement string.
-   * @param {object} [options] - Configuration options.
-   * @param {boolean} [options.ignoreCase=true] - If true, performs case-insensitive replacement. Default true
-   * @param {boolean} [options.normalizeSpaces=true] - If true, replaces all whitespace sequences with a single space before matching. Default true
-   * @param {boolean} [options.normalizeNFKC=true] - If true, applies Unicode Normalization Form Compatibility Composition (NFKC). Default true
-   * @param {boolean} [options.ignoreInvisible=true] - If true, removes invisible/zero-width Unicode characters. Default true
-   * @param {boolean} [options.trim=true] - If true, trims leading and trailing whitespace before processing. Default true
-   * @param {boolean} [options.trimLeft=false] - If true, trims leading whitespace (ignored if `trim` is true). Default false
-   * @param {boolean} [options.trimRight=false] - If true, trims trailing whitespace (ignored if `trim` is true). Default false
-   * @returns {string} The resulting string after replacement.
-   */
   stringReplaceWithOptions: function (
     input,
     pattern,
@@ -482,17 +384,6 @@ ytm-shorts-lockup-view-model`,
     return processedInput.replace(regex, replacement);
   },
 
-  /**
-   * Given a Node it uses computed style to determine if it is visible
-   * @param {Node} node - A Node of type ELEMENT_NODE
-   * @param {boolean} shouldCheckViewport - Optional. If true the element position is checked to be inside or outside the viewport. Viewport is extended based on
-   *                                        VIEWPORT_EXTENSION_PERCENTAGE_FRACTION. Defaults true
-   * @param {boolean} onlyOutsideViewport - Optional. only relevant when `shouldCheckViewport` is true. When this is also true the element is returned only if fully outside
-   *                                        the viewport. By default the element is returned only if inside the viewport. Defaults false
-   * @param {boolean} useOutsideLimit - Optional. when true, outside elements are limited to those contained inside the frame between the extended viewport and the
-   *                                    limit based on VIEWPORT_OUTSIDE_LIMIT_FRACTION. Defaults false
-   * @return {boolean} - true if the node is computed as visible
-   */
   isVisible: function (
     node,
     shouldCheckViewport = true,
@@ -606,12 +497,6 @@ ytm-shorts-lockup-view-model`,
     return true;
   },
 
-  /**
-   * Given an Array of HTMLElements it returns visible HTMLElement or null
-   * @param {Node|NodeList} nodes - A NodeList or single Node of type ELEMENT_NODE
-   * @param {boolean} shouldBeInsideViewport - Optional. If true the element should also be inside the viewport to be considered visible. Defaults true
-   * @returns {Node|null} - The first visible Node or null
-   */
   getFirstVisible: function (nodes, shouldBeInsideViewport = true) {
     if (!nodes) {
       return null;
@@ -632,14 +517,6 @@ ytm-shorts-lockup-view-model`,
     return null;
   },
 
-  /**
-   * Given an Array of HTMLElements it returns visible HTMLElement or null
-   * @param {Node|NodeList} nodes - A NodeList or single Node of type ELEMENT_NODE
-   * @param {boolean} shouldBeInsideViewport - Optional. If true the element should also be inside the viewport to be considered visible. Defaults true
-   * @param {Number} lengthLimit - Optional. Limit the number of items in the array. As soon as the correspoinding array length is reached,
-   *                               the array is returned prematurelly. Defaults to Number.MAX_VALUE
-   * @returns {Array<Node>|null} - A array of all the visible nodes or null
-   */
   getAllVisibleNodes: function (
     nodes,
     shouldBeInsideViewport = true,
@@ -674,13 +551,6 @@ ytm-shorts-lockup-view-model`,
     return visibleNodes;
   },
 
-  /**
-   * Given an Array of HTMLElements it returns visible HTMLElement or null only if they are loaded outside the viewport
-   * @param {Node|NodeList} nodes - A NodeList or single Node of type ELEMENT_NODE
-   * @param {boolean} useOutsideLimit - Optional. when true, outside elements are limited to those contained inside the frame between
-   *                                    the extended viewport and the limit based on VIEWPORT_OUTSIDE_LIMIT_FRACTION. Defaults false
-   * @returns {Array<Node>|null} - A array of all the visible nodes or null that are outside the viewport
-   */
   getAllVisibleNodesOutsideViewport: function (nodes, useOutsideLimit = false) {
     if (!nodes) {
       return null;
@@ -707,11 +577,6 @@ ytm-shorts-lockup-view-model`,
     return visibleNodes;
   },
 
-  /**
-   * Creates a link element with proper YouTube styling
-   * @param {string} url - URL to create a link for
-   * @returns {HTMLElement} - Anchor element
-   */
   createLinkElement: function (url) {
     this.logDebug(`createLinkElement called for URL: ${url}`);
     const link = document.createElement("a");
@@ -725,11 +590,6 @@ ytm-shorts-lockup-view-model`,
     return link;
   },
 
-  /**
-   * Converts a timecode string to seconds
-   * @param {string} timecode - Timecode in format HH:MM:SS or MM:SS
-   * @returns {number} - Total seconds
-   */
   convertTimecodeToSeconds: function (timecode) {
     this.logDebug(`convertTimecodeToSeconds called with: ${timecode}`);
     const parts = timecode.split(":").map(Number);
@@ -749,13 +609,6 @@ ytm-shorts-lockup-view-model`,
     return result;
   },
 
-  /**
-   * Strips all query params except "v" from "/watch" URL to:
-   *  - avoid 404 when passed to YT oembed API (see https://github.com/zpix1/yt-anti-translate/issues/45)
-   *  - improve cache lookups (different "t" params don't mean different vids, "v" is the only important one)
-   * @param {string} url "/watch?app=desktop&v=ghuLDyUEZmY&t=472s" or https://www.youtube.com/watch?app=desktop&v=ghuLDyUEZmY&t=472s)
-   * @returns {string} "/watch?v=ghuLDyUEZmY" or "https://www.youtube.com/watch?v=ghuLDyUEZmY"
-   */
   stripNonEssentialParams: function (url) {
     //shorts URLs don't have search parameters afaik, so don't call this on shorts only
     //this return is here for background.js/createOrUpdateUntranslatedFakeNode, which is called for everything
@@ -768,22 +621,13 @@ ytm-shorts-lockup-view-model`,
     return `${url.split("?")[0]}?v=${videoId}`;
   },
 
-  /**
-   * Identify if the href is advertisement
-   * @param {string} href - the href to check
-   * @returns {boolean} - true if href is recognized as advertisement
-   */
-  isAdvertisementHref(href) {
+  isAdvertisementHref: function (href) {
     if (href.includes("www.googleadservices.com")) {
       return true;
     }
     return false;
   },
 
-  /**
-   * Gets the current video ID from the URL
-   * @returns {string} - The YouTube video ID
-   */
   getCurrentVideoId: function () {
     this.logDebug(`getCurrentVideoId called`);
     const urlParams = new URLSearchParams(window.location.search);
@@ -792,20 +636,10 @@ ytm-shorts-lockup-view-model`,
     return videoId;
   },
 
-  /**
-   * Gets current theme
-   * link color in dark theme: rgb(62, 166, 255)
-   * link color in light theme: rgb(6, 95, 212)
-   */
   isDarkTheme: function () {
     return window.matchMedia("(prefers-color-scheme: dark)").matches;
   },
 
-  /**
-   * Creates a timecode link element with proper YouTube styling
-   * @param {string} timecode - Timecode string (e.g., "05:36")
-   * @returns {HTMLElement} - Span element containing the timecode link
-   */
   createTimecodeLink: function (timecode) {
     this.logDebug(`createTimecodeLink called with: ${timecode}`);
     // Convert timecode to seconds for the URL
@@ -834,12 +668,6 @@ ytm-shorts-lockup-view-model`,
     return span;
   },
 
-  /**
-   * Creates a styled link for hashtag or mention
-   * @param {"hashtag"|"mention"} type - Type of link to create
-   * @param {string} value - Hashtag (without #) or mention (without @)
-   * @returns {HTMLElement} - Span element containing the styled link
-   */
   createTagLink: function (type, value) {
     this.logDebug(`createTagLink called with: ${type}: ${value}`);
 
@@ -870,11 +698,6 @@ ytm-shorts-lockup-view-model`,
     return span;
   },
 
-  /**
-   * Converts URLs and timecodes in text to clickable links
-   * @param {string} text - Text that may contain URLs and timecodes
-   * @returns {HTMLElement} - Span element with clickable links
-   */
   convertUrlsToLinks: function (text) {
     this.logDebug(`convertUrlsToLinks called with text length: ${text.length}`);
     const container = document.createElement("span");
@@ -966,11 +789,6 @@ ytm-shorts-lockup-view-model`,
     return container;
   },
 
-  /**
-   * Creates a formatted content element from the original text
-   * @param {string} text - The original description text
-   * @returns {HTMLElement} - Formatted span element
-   */
   createFormattedContent: function (text) {
     this.logDebug(
       `createFormattedContent called with text length: ${text.length}`,
@@ -999,12 +817,6 @@ ytm-shorts-lockup-view-model`,
     return contentElement;
   },
 
-  /**
-   * Replace the first text node of the element
-   * Any other node is retained as is
-   * @param {HTMLElement} element - The element to update
-   * @param {string} replaceText - The new text to insert
-   */
   replaceTextOnly: function (element, replaceText) {
     this.logDebug(
       `replaceTextOnly called with text length: ${replaceText.length}`,
@@ -1019,11 +831,6 @@ ytm-shorts-lockup-view-model`,
     }
   },
 
-  /**
-   * Get the first text node of the element
-   * Any other node is retained as is
-   * @param {HTMLElement} element - The element to inspect
-   */
   getFirstTextNode: function (element) {
     // Loop through child nodes to find the first text node
     for (const node of element.childNodes) {
@@ -1033,11 +840,6 @@ ytm-shorts-lockup-view-model`,
     }
   },
 
-  /**
-   * Replaces the content of a container with new content
-   * @param {HTMLElement} container - The container to update
-   * @param {HTMLElement} newContent - The new content to insert
-   */
   replaceContainerContent: function (container, newContent) {
     this.logDebug(`replaceContainerContent called`);
     // Clear existing content
@@ -1210,15 +1012,6 @@ ytm-shorts-lockup-view-model`,
     zu: "zu-ZA",
   },
 
-  /**
-   * Attempts to detect the closest YouTube Supported BCP-47 language code(s) from the given text.
-   * Uses the browser/chrome i18n.detectLanguage API with retries and filtering.
-   * @param {string} text - The input text to detect the language from.
-   * @param {number} [maxRetries=3] - Optional - Maximum number of retries if detection results are not valid. Defaults to 3
-   * @param {number} [minProbability=50] - Optional - Minimum confidence percentage (0-100) to accept a detected language. Defaults to 50
-   * @returns {Promise<string[] | null>} - Resolves with an array of valid BCP-47 language codes that match or closely fallback to supported languages,
-   *                                       or null on failure or if no suitable match is found within retries.
-   */
   detectSupportedLanguage: async function (
     text,
     maxRetries = 3,
@@ -1290,6 +1083,7 @@ ytm-shorts-lockup-view-model`,
     );
     return null;
   },
+
   getSettings: async function () {
     // First try to read from the DOM
     const element = document.querySelector(
@@ -1327,20 +1121,7 @@ ytm-shorts-lockup-view-model`,
     // Absolute fallback: return empty object
     return {};
   },
-  /**
-   * Make a GET request. Its result will be cached in sessionStorage and will return same promise for parallel requests.
-   * @param {string} url - The URL to fetch data from
-   * @param {string} postData - Optional. If passed, will make a POST request with this data
-   * @param {object} headersData - Optional. Headers to be sent with the request, defaults to {"content-type": "application/json"}
-   * @param {boolean} doNotCache - Optional. If true, the result will not be cached in sessionStorage, only same promise will be returned for parallel requests
-   * @param {string} cacheDotNotationProperty - Optional. Specify the property name to extract from the response data json for limited caching
-   *                       (e.g. "title" to cache only the title of the response data or "videoDetails.title" to cache the title of the object videoDetails).
-   *                       If not specified, and doNotCache is false, the whole response data will be cached
-   *                       NOTE: Must be a valid property of the response data json starting from the root level. Use "." for nested properties.
-   *                       If the property is not found, it will cache null.
-   *                       When cached by this cacheDotNotationProperty, when retieved "data" will be null and value will be set in "cachedWithDotNotation" property
-   * @returns { response: Response, data: any, cachedWithDotNotation: any } - The response object and the data from the response
-   */
+
   cachedRequest: async function cachedRequest(
     url,
     postData = null,
@@ -1442,12 +1223,6 @@ ytm-shorts-lockup-view-model`,
     return requestPromise;
   },
 
-  /**
-   * Converts a value to a JSON hierarchy based on dot notation properties.
-   * @param {any} value - The value to convert.
-   * @param {string} dotNotationProperty - The dot notation property to create the hierarchy
-   * @returns {object} - The resulting JSON hierarchy.
-   */
   jsonHierarchy: function (value, dotNotationProperty) {
     // If no dots, just return { property: value }
     if (!dotNotationProperty.includes(".")) {
@@ -1474,12 +1249,6 @@ ytm-shorts-lockup-view-model`,
     return result;
   },
 
-  /**
-   * Gets a property from a JSON object using dot notation.
-   * @param {object} json - The JSON object to search.
-   * @param {string} dotNotationProperty - The dot notation property with hierarchy to retrieve.
-   * @returns {any|null} - The value of the property or null if not found
-   * */
   getPropertyByDotNotation: function (json, dotNotationProperty) {
     if (!dotNotationProperty) {
       return null;
@@ -1501,12 +1270,6 @@ ytm-shorts-lockup-view-model`,
     return current;
   },
 
-  /**
-   * Extracts the YouTube video ID from a given URL.
-   * Supports /watch?v=, /shorts/, and full URLs.
-   * @param {string} url
-   * @returns {string|null}
-   */
   extractVideoIdFromUrl: function (url) {
     try {
       const u = new URL(url, window.location.origin);
@@ -1894,16 +1657,6 @@ ytm-shorts-lockup-view-model`,
     }
   },
 
-  /**
-   * Check if a channel is whitelisted.
-   * @param {string} whiteStoragePropertyName - The type of whitelist to check against.
-   * @param {string} handle - The channel handle (e.g. "@mrbeast").
-   * @param {string} channelId - The channel ID (e.g. "UC123456").
-   * @param {string} channelUrl - The channel URL (e.g. "https://www.youtube.com/@mrbeast" or "https://www.youtube.com/channel/UCX6OQ3DkcsbYNE6H8uQQuVA").
-   *                              URL like /user/ or /c/ are not supported.
-   * @param {string} channelName - Optional. The channel name (not used for whitelist check, only for logging).
-   * @returns {Promise<boolean>} - True if the channel is whitelisted, false otherwise.
-   */
   isWhitelistedChannel: async function (
     whiteStoragePropertyName,
     handle = null,
@@ -2055,11 +1808,6 @@ ytm-shorts-lockup-view-model`,
     }
   },
 
-  /**
-   * Retrieve the UCID of a channel using youtubei/v1/search
-   * @param {string} query the YouTube channel handle (e.g. "@mrbeast" or "MrBeast")
-   * @returns {string} channel UCID
-   */
   lookupChannelId: async function (query) {
     if (!query) {
       return null;
@@ -2215,10 +1963,6 @@ ytm-shorts-lockup-view-model`,
     return null;
   },
 
-  /**
-   * Retrieved the Channel UCID (UC...) for the current Channel page using window.location and lookupChannelId() search
-   * @returns {string} channel UCID
-   */
   getChannelUCID: async function () {
     if (window.location.pathname.startsWith("/channel/")) {
       var match = window.location.pathname.match(/\/channel\/([^/?]+)/);
@@ -2240,12 +1984,6 @@ ytm-shorts-lockup-view-model`,
     return lookupResult?.channelUcid;
   },
 
-  /**
-   * Fetch the About/branding section of a YouTube channel.
-   * @param {string} ucid   Optional Channel ID (starts with "UC…"). Defaults to UCID of the current channel
-   * @param {string} locale Optional BCP-47 tag, e.g. "it-IT" or "fr". Defaults to the user's browser language.
-   * @returns {object}      The title and description branding.
-   */
   getChannelBrandingWithYoutubeI: async function (ucid = null) {
     if (!ucid) {
       ucid = await this.getChannelUCID();
