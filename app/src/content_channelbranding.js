@@ -443,15 +443,17 @@ async function untranslateBranding() {
       const brandingHeaderPromise = restoreOriginalBrandingHeader();
       const brandingAboutPromise = restoreOriginalBrandingAbout();
       const collaboratorsPromise = restoreCollaboratorsDialog();
+      const featuredChannelsPromise = restoreOriginalBrandingChannelRenderers();
       await Promise.all([
         brandingHeaderPromise,
         brandingAboutPromise,
         collaboratorsPromise,
+        featuredChannelsPromise,
       ]);
     }
   } else {
     await Promise.all([
-      restoreOriginalBrandingSearchResults(),
+      restoreOriginalBrandingChannelRenderers(),
       restoreCollaboratorsDialog(),
     ]);
   }
@@ -475,7 +477,10 @@ chrome.storage.sync.get(
   },
 );
 
-function updateSearchResultDescriptionContent(container, originalBrandingData) {
+function updateChannelRendererDescriptionContent(
+  container,
+  originalBrandingData,
+) {
   if (!originalBrandingData?.description) {
     return;
   }
@@ -498,13 +503,14 @@ function updateSearchResultDescriptionContent(container, originalBrandingData) {
   }
 }
 
-function updateSearchResultChannelAuthor(container, originalBrandingData) {
+function updateChannelRendererAuthor(container, originalBrandingData) {
   if (!originalBrandingData?.title) {
     return;
   }
 
   const authorTextContainer = container.querySelector(
     `#channel-title yt-formatted-string,
+    #channel-info #title,
     h4.compact-media-item-headline > .yt-core-attributed-string,
     h4.YtmCompactMediaItemHeadline > .yt-core-attributed-string`,
   );
@@ -521,12 +527,12 @@ function updateSearchResultChannelAuthor(container, originalBrandingData) {
 }
 
 /**
- * Restores original channel branding for channel renderers visible in search results.
+ * Restores original channel branding for channel renderers visible in search results and featured channels.
  */
-async function restoreOriginalBrandingSearchResults() {
+async function restoreOriginalBrandingChannelRenderers() {
   const channelRenderers = window.YoutubeAntiTranslate.getAllVisibleNodes(
     document.querySelectorAll(
-      "ytd-channel-renderer, ytm-compact-channel-renderer",
+      "ytd-channel-renderer, ytd-grid-channel-renderer, ytm-compact-channel-renderer",
     ),
     true,
     20,
@@ -541,6 +547,7 @@ async function restoreOriginalBrandingSearchResults() {
       renderer.querySelector("a.channel-link") ||
       renderer.querySelector("a#main-link") ||
       renderer.querySelector("a.compact-media-item-image") ||
+      renderer.querySelector("a#channel-info") ||
       renderer.querySelector("a.YtmCompactMediaItemImage") ||
       renderer.querySelector("a.compact-media-item-metadata-content") ||
       renderer.querySelector("a.YtmCompactMediaItemMetadataContent") ||
@@ -563,8 +570,8 @@ async function restoreOriginalBrandingSearchResults() {
       return;
     }
 
-    updateSearchResultDescriptionContent(renderer, originalBrandingData);
-    updateSearchResultChannelAuthor(renderer, originalBrandingData);
+    updateChannelRendererDescriptionContent(renderer, originalBrandingData);
+    updateChannelRendererAuthor(renderer, originalBrandingData);
   });
 
   await Promise.allSettled(tasks);

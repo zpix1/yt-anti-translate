@@ -159,6 +159,7 @@ a.ytp-videowall-still,
 a.ytp-ce-covering-overlay,
 a.ytp-suggestion-link,
 div.fullscreen-recommendation,
+ytm-item-section-renderer,
 ytm-playlist-card-renderer` /*this last one is a playlist element but is used for thumbnail*/,
   ALL_ARRAYS_SHORTS_SELECTOR: `div.style-scope.ytd-rich-item-renderer,
 ytm-shorts-lockup-view-model`,
@@ -2120,5 +2121,18 @@ ytm-shorts-lockup-view-model`,
     }
 
     return response || null;
+  },
+
+  increaseVideoAttemptAttribute: function (element, attributeName, videoId) {
+    const getCount = element.getAttribute(attributeName);
+    const getCountNumber = parseInt(
+      getCount
+        ? getCount.match(new RegExp(`^${videoId}__([0-9]+)$`))?.[1] || 0
+        : 0,
+    );
+    element.setAttribute(
+      attributeName,
+      `${videoId}__${getCountNumber >= window.YoutubeAntiTranslate.MAX_ATTEMPTS ? window.YoutubeAntiTranslate.MAX_ATTEMPTS : getCountNumber + 1}`,
+    );
   },
 };

@@ -815,15 +815,10 @@ async function untranslateOtherVideos(intersectElements = null) {
 
           if (!titleElement) {
             // Mark if title element is missing to avoid repeated failed attempts
-            const getCount = video.getAttribute(
+            window.YoutubeAntiTranslate.increaseVideoAttemptAttribute(
+              video,
               "data-ytat-untranslated-video-title",
-            );
-            const getCountNumber = getCount
-              ? getCount.match(new RegExp(`^${videoId}__([0-9]+)$`))?.[1] || 0
-              : 0;
-            video.setAttribute(
-              "data-ytat-untranslated-video-title",
-              `${videoId}__${getCountNumber >= window.YoutubeAntiTranslate.MAX_ATTEMPTS ? window.YoutubeAntiTranslate.MAX_ATTEMPTS : getCountNumber + 1}`,
+              videoId,
             );
           }
         }
@@ -834,15 +829,10 @@ async function untranslateOtherVideos(intersectElements = null) {
         );
         if (!thumbnailElements || thumbnailElements.length === 0) {
           // Mark if thumbnail elements are missing to avoid repeated failed attempts
-          const getCount = video.getAttribute(
+          window.YoutubeAntiTranslate.increaseVideoAttemptAttribute(
+            video,
             "data-ytat-untranslated-video-thumbnail",
-          );
-          const getCountNumber = getCount
-            ? getCount.match(new RegExp(`^${videoId}__([0-9]+)$`))?.[1] || 0
-            : 0;
-          video.setAttribute(
-            "data-ytat-untranslated-video-thumbnail",
-            `${videoId}__${getCountNumber >= window.YoutubeAntiTranslate.MAX_ATTEMPTS ? window.YoutubeAntiTranslate.MAX_ATTEMPTS : getCountNumber + 1}`,
+            videoId,
           );
         }
 
@@ -852,46 +842,31 @@ async function untranslateOtherVideos(intersectElements = null) {
         );
         if (!snippetElements || snippetElements.length === 0) {
           // Mark if description snippet elements are missing to avoid repeated failed attempts
-          const getCount = video.getAttribute(
+          window.YoutubeAntiTranslate.increaseVideoAttemptAttribute(
+            video,
             "data-ytat-untranslated-video-desc",
-          );
-          const getCountNumber = getCount
-            ? getCount.match(new RegExp(`^${videoId}__([0-9]+)$`))?.[1] || 0
-            : 0;
-          video.setAttribute(
-            "data-ytat-untranslated-video-desc",
-            `${videoId}__${getCountNumber >= window.YoutubeAntiTranslate.MAX_ATTEMPTS ? window.YoutubeAntiTranslate.MAX_ATTEMPTS : getCountNumber + 1}`,
+            videoId,
           );
         }
 
         // Get authors container elements for collaborators videos
-        const authorsElement =
-          video.querySelector(
-            `#channel-info yt-formatted-string > a.yt-simple-endpoint`,
-          ) ||
-          video.querySelector(
-            `yt-content-metadata-view-model ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR} a`,
-          ) ||
-          video.querySelector(`.ytd-channel-name a.yt-simple-endpoint`) ||
-          video.querySelector(`.ytd-playlist-panel-video-renderer #byline`) ||
-          video.querySelector(
-            `div.media-item-metadata .YtmBadgeAndBylineRendererHost span${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}`,
-          ) ||
-          video.querySelector(
-            `.YtmCompactMediaItemByline span${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}`,
-          );
+        const authorsElement = window.YoutubeAntiTranslate.getFirstVisible(
+          video.querySelectorAll(
+            `#channel-info yt-formatted-string > a.yt-simple-endpoint,
+            yt-content-metadata-view-model ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR} a,
+            .ytd-channel-name a.yt-simple-endpoint,
+            .ytd-playlist-panel-video-renderer #byline,
+            div.media-item-metadata .YtmBadgeAndBylineRendererHost span${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR},
+            .YtmCompactMediaItemByline span${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}`,
+          ),
+        );
 
         if (!authorsElement) {
           // Mark if authors elements are missing to avoid repeated failed attempts
-          const getCount = video.getAttribute(
+          window.YoutubeAntiTranslate.increaseVideoAttemptAttribute(
+            video,
             "data-ytat-untranslated-video-channel-branding",
-          );
-          const getCountNumber = getCount
-            ? getCount.match(new RegExp(`^${videoId}__([0-9]+)$`))?.[1] || 0
-            : 0;
-          video.setAttribute(
-            "data-ytat-untranslated-video-channel-branding",
-            `${videoId}__${getCountNumber >= window.YoutubeAntiTranslate.MAX_ATTEMPTS ? window.YoutubeAntiTranslate.MAX_ATTEMPTS : getCountNumber + 1}`,
+            videoId,
           );
         }
 
@@ -928,31 +903,20 @@ async function untranslateOtherVideos(intersectElements = null) {
                   `YoutubeI title request failed for video ${videoId}`,
                 );
                 // Mark as failed attempt on no data
-                const getCount = video.getAttribute(
+                window.YoutubeAntiTranslate.increaseVideoAttemptAttribute(
+                  video,
                   "data-ytat-untranslated-video-failed-attempts",
+                  videoId,
                 );
-                const getCountNumber = getCount
-                  ? getCount.match(new RegExp(`^${videoId}__([0-9]+)$`))?.[1] ||
-                    0
-                  : 0;
-                video.setAttribute(
-                  "data-ytat-untranslated-video-failed-attempts",
-                  `${videoId}__${getCountNumber >= window.YoutubeAntiTranslate.MAX_ATTEMPTS ? window.YoutubeAntiTranslate.MAX_ATTEMPTS : getCountNumber + 1}`,
-                );
-                return;
+                return; // Skip if no video data
               }
             } else {
               // console.debug(`No oEmbed data for video:`, videoHref);
               // Mark as failed attempt if no oEmbed data
-              const getCount = video.getAttribute(
+              window.YoutubeAntiTranslate.increaseVideoAttemptAttribute(
+                video,
                 "data-ytat-untranslated-video-failed-attempts",
-              );
-              const getCountNumber = getCount
-                ? getCount.match(new RegExp(`^${videoId}__([0-9]+)$`))?.[1] || 0
-                : 0;
-              video.setAttribute(
-                "data-ytat-untranslated-video-failed-attempts",
-                `${videoId}__${getCountNumber >= window.YoutubeAntiTranslate.MAX_ATTEMPTS ? window.YoutubeAntiTranslate.MAX_ATTEMPTS : getCountNumber + 1}`,
+                videoId,
               );
               return; // Skip if no oEmbed data
             }
@@ -1015,15 +979,10 @@ async function untranslateOtherVideos(intersectElements = null) {
           } else {
             // console.debug(`Video title unchanged or element missing:`, { href: videoHref, originalTitle, currentTitle });
             // Mark as attempted if no changes are needed
-            const getCount = video.getAttribute(
+            window.YoutubeAntiTranslate.increaseVideoAttemptAttribute(
+              video,
               "data-ytat-untranslated-video-title",
-            );
-            const getCountNumber = getCount
-              ? getCount.match(new RegExp(`^${videoId}__([0-9]+)$`))?.[1] || 0
-              : 0;
-            video.setAttribute(
-              "data-ytat-untranslated-video-title",
-              `${videoId}__${getCountNumber >= window.YoutubeAntiTranslate.MAX_ATTEMPTS ? window.YoutubeAntiTranslate.MAX_ATTEMPTS : getCountNumber + 1}`,
+              videoId,
             );
           }
 
@@ -1097,15 +1056,10 @@ async function untranslateOtherVideos(intersectElements = null) {
             }
           } else {
             // Mark as attempted if no changes are needed
-            const getCount = video.getAttribute(
+            window.YoutubeAntiTranslate.increaseVideoAttemptAttribute(
+              video,
               "data-ytat-untranslated-video-thumbnail",
-            );
-            const getCountNumber = getCount
-              ? getCount.match(new RegExp(`^${videoId}__([0-9]+)$`))?.[1] || 0
-              : 0;
-            video.setAttribute(
-              "data-ytat-untranslated-video-thumbnail",
-              `${videoId}__${getCountNumber >= window.YoutubeAntiTranslate.MAX_ATTEMPTS ? window.YoutubeAntiTranslate.MAX_ATTEMPTS : getCountNumber + 1}`,
+              videoId,
             );
           }
 
@@ -1171,15 +1125,10 @@ async function untranslateOtherVideos(intersectElements = null) {
             }
           } else {
             // Mark as attempted if no changes are needed
-            const getCount = video.getAttribute(
+            window.YoutubeAntiTranslate.increaseVideoAttemptAttribute(
+              video,
               "data-ytat-untranslated-video-desc",
-            );
-            const getCountNumber = getCount
-              ? getCount.match(new RegExp(`^${videoId}__([0-9]+)$`))?.[1] || 0
-              : 0;
-            video.setAttribute(
-              "data-ytat-untranslated-video-desc",
-              `${videoId}__${getCountNumber >= window.YoutubeAntiTranslate.MAX_ATTEMPTS ? window.YoutubeAntiTranslate.MAX_ATTEMPTS : getCountNumber + 1}`,
+              videoId,
             );
           }
 
@@ -1216,7 +1165,8 @@ async function untranslateOtherVideos(intersectElements = null) {
 
                 authors.push(originalItem.name);
               }
-            } else {
+            }
+            if (authors.length === 0) {
               // Fallback using video id filtered list
               // Needed on mobile where avatar stacks are not used
               const originalCollaborators =
@@ -1264,8 +1214,8 @@ async function untranslateOtherVideos(intersectElements = null) {
                     `${videoId}__${window.YoutubeAntiTranslate.MAX_ATTEMPTS}`,
                   );
                 } else {
-                  const authorsTooltipElement = video.querySelector(
-                    `#channel-info .ytd-channel-name #tooltip`,
+                  const authorsTooltipElements = video.querySelectorAll(
+                    `.ytd-channel-name #tooltip`,
                   );
                   const localizedAnd =
                     window.YoutubeAntiTranslate.getLocalizedAnd(
@@ -1278,9 +1228,14 @@ async function untranslateOtherVideos(intersectElements = null) {
                   ) {
                     authorsElement.textContent = untranslatedAuthorText;
                     // Update tooltip if exists
-                    if (authorsTooltipElement) {
-                      authorsTooltipElement.textContent =
-                        untranslatedAuthorText;
+                    if (
+                      authorsTooltipElements &&
+                      authorsTooltipElements.length > 0
+                    ) {
+                      for (const authorsTooltipElement of authorsTooltipElements) {
+                        authorsTooltipElement.textContent =
+                          untranslatedAuthorText;
+                      }
                     }
                     // Mark as untranslated
                     video.setAttribute(
@@ -1293,15 +1248,10 @@ async function untranslateOtherVideos(intersectElements = null) {
             }
           } else {
             // Mark as attempted if no changes are needed
-            const getCount = video.getAttribute(
+            window.YoutubeAntiTranslate.increaseVideoAttemptAttribute(
+              video,
               "data-ytat-untranslated-video-channel-branding",
-            );
-            const getCountNumber = getCount
-              ? getCount.match(new RegExp(`^${videoId}__([0-9]+)$`))?.[1] || 0
-              : 0;
-            video.setAttribute(
-              "data-ytat-untranslated-video-channel-branding",
-              `${videoId}__${getCountNumber >= window.YoutubeAntiTranslate.MAX_ATTEMPTS ? window.YoutubeAntiTranslate.MAX_ATTEMPTS : getCountNumber + 1}`,
+              videoId,
             );
           }
         } catch (error) {
@@ -1311,15 +1261,10 @@ async function untranslateOtherVideos(intersectElements = null) {
             error,
           );
           // Mark as failed attempt on error
-          const getCount = video.getAttribute(
+          window.YoutubeAntiTranslate.increaseVideoAttemptAttribute(
+            video,
             "data-ytat-untranslated-video-failed-attempts",
-          );
-          const getCountNumber = getCount
-            ? getCount.match(new RegExp(`^${videoId}__([0-9]+)$`))?.[1] || 0
-            : 0;
-          video.setAttribute(
-            "data-ytat-untranslated-video-failed-attempts",
-            `${videoId}__${getCountNumber >= window.YoutubeAntiTranslate.MAX_ATTEMPTS ? window.YoutubeAntiTranslate.MAX_ATTEMPTS : getCountNumber + 1}`,
+            videoId,
           );
         }
         // End of processing for this video
@@ -1441,15 +1386,10 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
         );
         if (!titleElement) {
           // Mark if title element is missing to avoid repeated failed attempts
-          const getCount = shortElement.getAttribute(
+          window.YoutubeAntiTranslate.increaseVideoAttemptAttribute(
+            shortElement,
             "data-ytat-untranslated-other-title",
-          );
-          const getCountNumber = getCount
-            ? getCount.match(new RegExp(`^${videoId}__([0-9]+)$`))?.[1] || 0
-            : 0;
-          shortElement.setAttribute(
-            "data-ytat-untranslated-other-title",
-            `${videoId}__${getCountNumber >= window.YoutubeAntiTranslate.MAX_ATTEMPTS ? window.YoutubeAntiTranslate.MAX_ATTEMPTS : getCountNumber + 1}`,
+            videoId,
           );
         }
 
@@ -1459,15 +1399,10 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
         );
         if (!thumbnailElements || thumbnailElements.length === 0) {
           // Mark if thumbnail elements are missing to avoid repeated failed attempts
-          const getCount = shortElement.getAttribute(
+          window.YoutubeAntiTranslate.increaseVideoAttemptAttribute(
+            shortElement,
             "data-ytat-untranslated-other-thumbnail",
-          );
-          const getCountNumber = getCount
-            ? getCount.match(new RegExp(`^${videoId}__([0-9]+)$`))?.[1] || 0
-            : 0;
-          shortElement.setAttribute(
-            "data-ytat-untranslated-other-thumbnail",
-            `${videoId}__${getCountNumber >= window.YoutubeAntiTranslate.MAX_ATTEMPTS ? window.YoutubeAntiTranslate.MAX_ATTEMPTS : getCountNumber + 1}`,
+            videoId,
           );
         }
 
@@ -1502,32 +1437,21 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
                   `YoutubeI title request failed for video ${videoId}`,
                 );
                 // Mark as failed attempt on no data
-                const getCount = shortElement.getAttribute(
+                window.YoutubeAntiTranslate.increaseVideoAttemptAttribute(
+                  shortElement,
                   "data-ytat-untranslated-other-failed-attempts",
+                  videoId,
                 );
-                const getCountNumber = getCount
-                  ? getCount.match(new RegExp(`^${videoId}__([0-9]+)$`))?.[1] ||
-                    0
-                  : 0;
-                shortElement.setAttribute(
-                  "data-ytat-untranslated-other-failed-attempts",
-                  `${videoId}__${getCountNumber >= window.YoutubeAntiTranslate.MAX_ATTEMPTS ? window.YoutubeAntiTranslate.MAX_ATTEMPTS : getCountNumber + 1}`,
-                );
-                return;
+                return; // Skip if no video data
               }
             } else {
               // Mark as failed attempt if no oEmbed data is found
-              const getCount = shortElement.getAttribute(
+              window.YoutubeAntiTranslate.increaseVideoAttemptAttribute(
+                shortElement,
                 "data-ytat-untranslated-other-failed-attempts",
+                videoId,
               );
-              const getCountNumber = getCount
-                ? getCount.match(new RegExp(`^${videoId}__([0-9]+)$`))?.[1] || 0
-                : 0;
-              shortElement.setAttribute(
-                "data-ytat-untranslated-other-failed-attempts",
-                `${videoId}__${getCountNumber >= window.YoutubeAntiTranslate.MAX_ATTEMPTS ? window.YoutubeAntiTranslate.MAX_ATTEMPTS : getCountNumber + 1}`,
-              );
-              return;
+              return; // Skip if no oEmbed data
             }
           }
 
@@ -1582,15 +1506,10 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
               }
             } else {
               // Mark attempt to avoid checking again if no changes are needed
-              const getCount = shortElement.getAttribute(
+              window.YoutubeAntiTranslate.increaseVideoAttemptAttribute(
+                shortElement,
                 "data-ytat-untranslated-other-title",
-              );
-              const getCountNumber = getCount
-                ? getCount.match(new RegExp(`^${videoId}__([0-9]+)$`))?.[1] || 0
-                : 0;
-              shortElement.setAttribute(
-                "data-ytat-untranslated-other-title",
-                `${videoId}__${getCountNumber >= window.YoutubeAntiTranslate.MAX_ATTEMPTS ? window.YoutubeAntiTranslate.MAX_ATTEMPTS : getCountNumber + 1}`,
+                videoId,
               );
             }
 
@@ -1699,15 +1618,10 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
               }
             } else {
               // Mark attempt to avoid checking again if no changes are needed
-              const getCount = shortElement.getAttribute(
+              window.YoutubeAntiTranslate.increaseVideoAttemptAttribute(
+                shortElement,
                 "data-ytat-untranslated-other-thumbnail",
-              );
-              const getCountNumber = getCount
-                ? getCount.match(new RegExp(`^${videoId}__([0-9]+)$`))?.[1] || 0
-                : 0;
-              shortElement.setAttribute(
-                "data-ytat-untranslated-other-thumbnail",
-                `${videoId}__${getCountNumber >= window.YoutubeAntiTranslate.MAX_ATTEMPTS ? window.YoutubeAntiTranslate.MAX_ATTEMPTS : getCountNumber + 1}`,
+                videoId,
               );
             }
           }
@@ -1718,15 +1632,10 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
             error,
           );
           // Mark as failed attempt on error
-          const getCount = shortElement.getAttribute(
+          window.YoutubeAntiTranslate.increaseVideoAttemptAttribute(
+            shortElement,
             "data-ytat-untranslated-other-failed-attempts",
-          );
-          const getCountNumber = getCount
-            ? getCount.match(new RegExp(`^${videoId}__([0-9]+)$`))?.[1] || 0
-            : 0;
-          shortElement.setAttribute(
-            "data-ytat-untranslated-other-failed-attempts",
-            `${videoId}__${getCountNumber >= window.YoutubeAntiTranslate.MAX_ATTEMPTS ? window.YoutubeAntiTranslate.MAX_ATTEMPTS : getCountNumber + 1}`,
+            videoId,
           );
         }
         // End of processing for this short

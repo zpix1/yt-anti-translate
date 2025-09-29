@@ -638,5 +638,19 @@ interface Window {
     getPlayerResponseSafely: (
       playerEl: HTMLElement | null | undefined,
     ) => object | null;
+
+    /**
+     * Increases the video attempt attribute for a specific video element.
+     * If the attribute does not exist, it initializes it to 1.
+     * If the attribute exists, it increments its value by 1, up to a maximum defined by window.YoutubeAntiTranslate.MAX_ATTEMPTS
+     * @param {HTMLElement} element - The HTML element to update the attribute on.
+     * @param {string} attributeName - The name of the attribute to update.
+     * @param {string} videoId - The video ID to associate with the attempt count.
+     */
+    increaseVideoAttemptAttribute: (
+      element: HTMLElement,
+      attributeName: string,
+      videoId: string,
+    ) => void;
   };
 }
