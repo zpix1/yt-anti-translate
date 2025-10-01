@@ -505,6 +505,17 @@ async function createOrUpdateUntranslatedFakeNode(
       }
 
       if (
+        fakeNode &&
+        window.YoutubeAntiTranslate.isVisible(fakeNode) &&
+        translatedElement &&
+        window.YoutubeAntiTranslate.isVisible(translatedElement)
+      ) {
+        // Hide the translated element if both are visible
+        translatedElement.style.visibility = "hidden";
+        translatedElement.style.display = "none";
+      }
+
+      if (
         window.YoutubeAntiTranslate.isStringEqual(
           fakeNode?.textContent,
           realTitle,
@@ -608,6 +619,17 @@ async function createOrUpdateUntranslatedFakeNodeAuthor(
   }
 
   const oldAuthor = translatedElement?.textContent || fakeNode?.textContent;
+
+  if (
+    fakeNode &&
+    window.YoutubeAntiTranslate.isVisible(fakeNode) &&
+    translatedElement &&
+    window.YoutubeAntiTranslate.isVisible(translatedElement)
+  ) {
+    // Hide the translated element if both are visible
+    translatedElement.style.visibility = "hidden";
+    translatedElement.style.display = "none";
+  }
 
   if (
     window.YoutubeAntiTranslate.isStringEqual(fakeNode?.textContent, realAuthor)

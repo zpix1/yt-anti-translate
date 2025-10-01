@@ -512,6 +512,7 @@ function setupChapters(originalDescription) {
 async function fetchOriginalDescription() {
   const player = window.YoutubeAntiTranslate.getFirstVisible(
     document.querySelectorAll(window.YoutubeAntiTranslate.getPlayerSelector()),
+    /*shouldBeInsideViewport=*/ false,
   );
 
   const playerResponse =
@@ -543,6 +544,7 @@ async function fetchOriginalDescription() {
 function fetchOriginalAuthor() {
   const player = window.YoutubeAntiTranslate.getFirstVisible(
     document.querySelectorAll(window.YoutubeAntiTranslate.getPlayerSelector()),
+    /*shouldBeInsideViewport=*/ false,
   );
 
   const playerResponse =
@@ -972,6 +974,7 @@ async function handleDescriptionMutation() {
 
   const player = window.YoutubeAntiTranslate.getFirstVisible(
     document.querySelectorAll(window.YoutubeAntiTranslate.getPlayerSelector()),
+    /*shouldBeInsideViewport=*/ false,
   );
 
   if (

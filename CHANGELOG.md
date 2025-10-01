@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#60](https://github.com/zpix1/yt-anti-translate/issues/60#issuecomment-3316129585) Titles of playlists inside of user feed changed to the title of the first video on them. again
 - [#137](https://github.com/zpix1/yt-anti-translate/issues/137) Videos description in searches sometimes shows older videos description
 - Add missing selector to handle branding of feutured channels and sidebar channels
+- Fix video description not translating of fundraising videos if viewport is below 1000x500
 
 ## [1.19.13] - 2025-09-20
 
