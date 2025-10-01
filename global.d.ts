@@ -40,20 +40,30 @@ interface Window {
     logError: (message?: string, ...optionalParams: any[]) => void;
 
     /**
-     * Creates a debounced version of a function that will be executed at most once
-     * during the given wait interval. The wrapped function is invoked immediately
-     * on the first call and then suppressed for the remainder of the interval so
-     * that the real function runs **no more than once every `waitMinMs` milliseconds**.
+     * Creates a debounced version of a function with per-signature queueing.
+     * The function will be executed at most once during the given wait interval
      *
-     * Uses `requestAnimationFrame` to align with the browser's repaint cycle.
+     * Ensures any unique signature:
+     * - First call executes immediately at the first callback. (and saves in an "executed" map)
+     * - The first identical call within waitMinMs is added to a queue.
+     * - Further identical calls within waitMinMs are neither executed nor queued.
+     * - On new time frame window: a new empty executed map is created and the queued calls are executed. Any calls executed from the queue are also saved in the new "executed" map.
+     *
+     * The minimum time in the queue is measured from the last execution time and uses `requestAnimationFrame` to align with the browser's repaint cycle
+     * (or falls back to setTimeout ~16 if document.hidden).
      *
      * @param func - The function to debounce/throttle.
-     * @param waitMinMs - The minimum time between invocations in milliseconds.
-     * @returns A debounced function.
+     * @param waitMinMs - Minimum time between invocations (ms) - defaults to 90 milliseconds.
+     * @param includeArgsInSignature - If true, the function arguments are included in the signature to differentiate
+     *                                 calls with different args. Default: false.
+     * @param getSignature - Optional function to derive signature from (ctx, args).
+     *                       Default: func ref + JSON.stringify(args).
      */
     debounce: (
       func: Function,
       waitMinMs: number,
+      includeArgsInSignature?: boolean,
+      getSignature?: (ctx: any, args: any[]) => string,
     ) => (...args: any[]) => Function;
 
     /**

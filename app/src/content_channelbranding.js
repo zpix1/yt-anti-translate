@@ -468,7 +468,12 @@ chrome.storage.sync.get(
   async (items) => {
     if (!items.disabled && items.untranslateChannelBranding) {
       const targetNode = document.body;
-      const observerConfig = { childList: true, subtree: true };
+      const observerConfig = {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ["style", "class"],
+      };
       const brandingObserver = new MutationObserver(
         window.YoutubeAntiTranslate.debounce(untranslateBranding),
       );
@@ -533,30 +538,17 @@ function updateChannelRendererAuthor(container, originalBrandingData) {
 async function restoreOriginalBrandingChannelRenderers() {
   const channelRenderers = window.YoutubeAntiTranslate.getAllVisibleNodes(
     document.querySelectorAll(
-      "ytd-channel-renderer, ytd-grid-channel-renderer, ytm-compact-channel-renderer",
+      "ytd-channel-renderer, ytd-grid-channel-renderer, ytm-compact-channel-renderer, ytd-guide-entry-renderer",
     ),
     true,
     20,
   );
 
-  // We allow ytd-guide-entry-renderer even if hidden because it is used in the sidebar that is often collapsed
-  // Showing the sidebar triggers a mutation but element remain "visibility:hidden" until out of the mutation observer debounce window
-  const guideChannelRenderers = document.querySelectorAll(
-    "ytd-guide-entry-renderer",
-  );
-
-  if (
-    (!channelRenderers || channelRenderers.length === 0) &&
-    (!guideChannelRenderers || guideChannelRenderers.length === 0)
-  ) {
+  if (!channelRenderers || channelRenderers.length === 0) {
     return;
   }
 
-  const allChannelRenderers = (
-    channelRenderers ? Array.from(channelRenderers) : []
-  ).concat(Array.from(guideChannelRenderers));
-
-  const tasks = allChannelRenderers.map(async (renderer) => {
+  const tasks = channelRenderers.map(async (renderer) => {
     const linkElement =
       renderer.querySelector("a.channel-link") ||
       renderer.querySelector("a#main-link") ||

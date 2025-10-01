@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-this-alias */
+
 const pendingRequests = new Map();
 
 class SessionLRUCache {
@@ -188,12 +190,23 @@ ytm-shorts-lockup-view-model`,
     }
   },
 
-  debounce: function (func, waitMinMs = 30) {
-    let isScheduled = false;
-    let lastExecTime = 0;
-    // Helper to schedule the next frame. Falls back to setTimeout when the
-    // document is in the background where requestAnimationFrame callbacks are
-    // throttled or do not fire at all.
+  debounce: function (
+    func,
+    waitMinMs = 90,
+    includeArgsInSignature = false,
+    getSignature = undefined,
+  ) {
+    // Assign a stable ID to this func if not already present
+    if (!func.__debounceId) {
+      Object.defineProperty(func, "__debounceId", {
+        value: Symbol(),
+        writable: false,
+        configurable: false,
+      });
+    }
+
+    const signatures = new Map(); // signature → { lastExecTime, queued: {ctx,args}|null }
+
     function schedule(callback) {
       if (document.hidden || typeof requestAnimationFrame === "undefined") {
         return setTimeout(() => {
@@ -203,40 +216,65 @@ ytm-shorts-lockup-view-model`,
               ? performance.now()
               : Date.now();
           callback(now);
-        }, 16); // Approx. one frame at 60fps
+        }, 16);
       }
       return requestAnimationFrame(callback);
     }
 
-    function tick(time, context, args) {
-      if (!isScheduled) {
+    function tickQueue(signature, time) {
+      const entry = signatures.get(signature);
+      if (!entry || !entry.queued) {
         return;
       }
 
-      const elapsed = time - lastExecTime;
-
+      const elapsed = time - entry.lastExecTime;
       if (elapsed >= waitMinMs) {
-        func.apply(context, args);
-        lastExecTime = time;
-        isScheduled = false; // allow next schedule
+        // Execute queued call
+        func.apply(entry.queued.context, entry.queued.args);
+        entry.lastExecTime = time;
+        entry.queued = null;
       } else {
-        schedule((t) => tick(t, context, args));
+        // Still within wait window → reschedule
+        schedule((t) => tickQueue(signature, t));
       }
     }
 
     return function (...args) {
-      if (!isScheduled) {
-        isScheduled = true;
+      const context = this;
+
+      const signature =
+        getSignature?.(context, args) ||
+        (includeArgsInSignature
+          ? `${String(func.__debounceId)}::${JSON.stringify(args)}`
+          : String(func.__debounceId));
+
+      const now =
+        typeof performance !== "undefined" &&
+        typeof performance.now === "function"
+          ? performance.now()
+          : Date.now();
+
+      let entry = signatures.get(signature);
+      if (!entry) {
+        // First call for this signature → execute immediately
+        entry = { lastExecTime: now, queued: null };
+        signatures.set(signature, entry);
+
         schedule((time) => {
-          if (lastExecTime === 0) {
-            // first invocation: run immediately
-            func.apply(this, args);
-            lastExecTime = time;
-            isScheduled = false;
-          } else {
-            tick(time, this, args);
-          }
+          func.apply(context, args);
+          entry.lastExecTime = time;
         });
+      } else {
+        // Already exists
+        if (!entry.queued) {
+          // Queue exactly one call per signature
+          entry.queued = { context, args };
+          schedule((time) => tickQueue(signature, time));
+        } else {
+          // Already queued → overwrite args/context, keep only latest
+          entry.queued.context = context;
+          entry.queued.args = args;
+        }
       }
     };
   },

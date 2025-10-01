@@ -828,18 +828,8 @@ function updateAuthorContent(container, originalText) {
         .reel-player-header-channel-title > ${ATTRIBUTED_STRING_CLASS_SELECTOR}`,
       ),
     );
-  const multipleChannelNameContainers =
-    window.YoutubeAntiTranslate.getFirstVisible(
-      container.querySelectorAll(
-        `#attributed-channel-name ${ATTRIBUTED_STRING_CLASS_SELECTOR} a > span`,
-      ),
-    );
 
-  if (
-    !singularChannelNameTitleContainer &&
-    !singularChannelNameTextContainer &&
-    !multipleChannelNameContainers
-  ) {
+  if (!singularChannelNameTitleContainer && !singularChannelNameTextContainer) {
     window.YoutubeAntiTranslate.logInfo(
       `No video author text containers found`,
     );
@@ -864,15 +854,6 @@ function updateAuthorContent(container, originalText) {
         singularChannelNameTextContainer.parentElement.style.display =
           storeStyleDisplay;
       }, 50);
-    }
-  }
-
-  if (multipleChannelNameContainers) {
-    const firstTextNode = window.YoutubeAntiTranslate.getFirstTextNode(
-      multipleChannelNameContainers,
-    );
-    if (firstTextNode && firstTextNode.textContent !== originalText) {
-      firstTextNode.textContent = originalText;
     }
   }
 }
@@ -941,7 +922,7 @@ async function updateCollaboratorAuthors(avatarStack, originalAuthor) {
         const localizedAnd = window.YoutubeAntiTranslate.getLocalizedAnd(
           document.documentElement.lang,
         );
-        const untranslatedCollaboratorText = `${localizedAnd} ${collaboratorAuthorsOnly[0]}`;
+        const untranslatedCollaboratorText = `${mainAuthor} ${localizedAnd} ${collaboratorAuthorsOnly[0]}`;
         if (
           multipleChannelNameContainer &&
           !multipleChannelNameContainer.textContent.includes(
@@ -950,7 +931,7 @@ async function updateCollaboratorAuthors(avatarStack, originalAuthor) {
         ) {
           replaceTextNodeContent(
             multipleChannelNameContainer,
-            1,
+            0,
             untranslatedCollaboratorText,
           );
         }
@@ -1029,7 +1010,12 @@ async function handleDescriptionMutation() {
     typeof window.YoutubeAntiTranslate.debounce === "function"
   ) {
     const target = document.body;
-    const config = { childList: true, subtree: true };
+    const config = {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["style", "class"],
+    };
     const observer = new MutationObserver(
       window.YoutubeAntiTranslate.debounce(handleDescriptionMutation),
     );
@@ -1171,6 +1157,8 @@ function setupHorizontalChaptersObserver() {
     childList: true,
     subtree: true,
     characterData: true,
+    attributes: true,
+    attributeFilter: ["style", "class"],
   });
 
   // Initial update

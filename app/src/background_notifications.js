@@ -85,13 +85,17 @@ function setupNotificationTitlesObserver() {
     return;
   }
 
-  notificationMutationObserver = new MutationObserver(() => {
-    refreshNotificationTitles();
-  });
+  notificationMutationObserver = new MutationObserver(
+    window.YoutubeAntiTranslate.debounce(() => {
+      refreshNotificationTitles();
+    }),
+  );
 
   notificationMutationObserver.observe(contentWrapper, {
     childList: true,
     subtree: true,
+    attributes: true,
+    attributeFilter: ["style", "class"],
   });
 }
 
@@ -209,22 +213,26 @@ async function refreshNotificationTitles() {
 // --- Auto setup similar to background.js ---
 
 // Observe DOM changes and (re)initialize notification observer when the pop-up appears/disappears
-const notificationDropdownObserver = new MutationObserver(() => {
-  const dropdownExists = document.querySelector(
-    'ytd-popup-container tp-yt-iron-dropdown[vertical-align="top"]',
-  );
-  if (dropdownExists) {
-    setupNotificationTitlesObserver();
-  } else {
-    // In case the pop-up has been closed/remove, disconnect our inner observer
-    cleanupNotificationTitlesObserver();
-  }
-});
+const notificationDropdownObserver = new MutationObserver(
+  window.YoutubeAntiTranslate.debounce(() => {
+    const dropdownExists = document.querySelector(
+      'ytd-popup-container tp-yt-iron-dropdown[vertical-align="top"]',
+    );
+    if (dropdownExists) {
+      setupNotificationTitlesObserver();
+    } else {
+      // In case the pop-up has been closed/remove, disconnect our inner observer
+      cleanupNotificationTitlesObserver();
+    }
+  }),
+);
 
 // Start observing the whole document body for relevant changes
 if (document.body) {
   notificationDropdownObserver.observe(document.body, {
     childList: true,
     subtree: true,
+    attributes: true,
+    attributeFilter: ["style", "class"],
   });
 }

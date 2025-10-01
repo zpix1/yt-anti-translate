@@ -1975,7 +1975,12 @@ async function untranslate() {
     typeof window.YoutubeAntiTranslate.debounce === "function"
   ) {
     const target = document.body;
-    const config = { childList: true, subtree: true };
+    const config = {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["style", "class"],
+    };
     const observer = new MutationObserver(
       window.YoutubeAntiTranslate.debounce(untranslate),
     );
