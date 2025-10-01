@@ -166,9 +166,13 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     );
 
     // Take a screenshot for visual verification
-    await page.screenshot({
-      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-channel-branding-about${addToScreenshotName}-test.png`,
-    });
+    try {
+      await page.screenshot({
+        path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-channel-branding-about${addToScreenshotName}-test.png`,
+      });
+    } catch {
+      // First screenshot is not essential so it is allowed to fail
+    }
 
     // Wait for the video grid to appear
     const channelHeaderSelector = "#page-header-container #page-header";
@@ -386,9 +390,13 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     );
 
     // Take a screenshot for visual verification
-    await page.screenshot({
-      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-video-author-test.png`,
-    });
+    try {
+      await page.screenshot({
+        path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-video-author-test.png`,
+      });
+    } catch {
+      // First screenshot is not essential so it is allowed to fail
+    }
 
     // Wait for the video player to appear
     await waitForSelectorOrRetryWithPageReload(page, "#movie_player");
@@ -438,9 +446,13 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     await loadPageAndVerifyAuth(page, searchUrl, browserNameWithExtensions);
 
     // Screenshot for visual verification
-    await page.screenshot({
-      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-channel-search-result-test-description.png`,
-    });
+    try {
+      await page.screenshot({
+        path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-channel-search-result-test-description.png`,
+      });
+    } catch {
+      // First screenshot is not essential so it is allowed to fail
+    }
 
     // Wait until at least one channel renderer for MrBeast appears
     const channelRenderer = (
@@ -508,9 +520,13 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     await loadPageAndVerifyAuth(page, searchUrl, browserNameWithExtensions);
 
     // Screenshot for visual verification
-    await page.screenshot({
-      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-collaborator-video-search-result-test.png`,
-    });
+    try {
+      await page.screenshot({
+        path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-collaborator-video-search-result-test.png`,
+      });
+    } catch {
+      // First screenshot is not essential so it is allowed to fail
+    }
 
     // Wait until at least one video renderer for Mark Rober appears
     const videoRenderer = (
@@ -566,9 +582,13 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     await loadPageAndVerifyAuth(page, channelUrl, browserNameWithExtensions);
 
     // Take a screenshot for visual verification
-    await page.screenshot({
-      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-cartonimorti-channel-test.png`,
-    });
+    try {
+      await page.screenshot({
+        path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-cartonimorti-channel-test.png`,
+      });
+    } catch {
+      // First screenshot is not essential so it is allowed to fail
+    }
 
     // Wait for the channel header to appear
     const channelHeaderSelector = "#page-header-container #page-header";

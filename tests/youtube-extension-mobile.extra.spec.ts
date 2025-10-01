@@ -35,10 +35,14 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
       isMobile,
     );
 
-    // Screenshot for visual verification
-    await page.screenshot({
-      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-channel-search-result-mobile-test.png`,
-    });
+    try {
+      // Screenshot for visual verification
+      await page.screenshot({
+        path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-channel-search-result-mobile-test.png`,
+      });
+    } catch {
+      // First screenshot is not essential so it is allowed to fail
+    }
 
     // Wait until at least one channel renderer for MrBeast appears
     const channelRenderer = (
@@ -93,9 +97,13 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
     );
 
     // Screenshot for visual verification
-    await page.screenshot({
-      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-collaborator-video-search-result-mobile-test.png`,
-    });
+    try {
+      await page.screenshot({
+        path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-collaborator-video-search-result-mobile-test.png`,
+      });
+    } catch {
+      // First screenshot is not essential so it is allowed to fail
+    }
 
     // Wait until at least one video renderer for Mark Rober appears
     const videoRenderer = (

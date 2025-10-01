@@ -37,9 +37,13 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
     );
 
     // Capture a screenshot for visual verification
-    await page.screenshot({
-      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-extension-mobile-test-title.png`,
-    });
+    try {
+      await page.screenshot({
+        path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-extension-mobile-test-title.png`,
+      });
+    } catch {
+      // First screenshot is not essential so it is allowed to fail
+    }
 
     // The mobile layout renders the video title inside a slim container.
     // Wait for the extension to inject its fake untranslated node.
@@ -114,9 +118,13 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
     );
 
     // Take a screenshot for visual verification
-    await page.screenshot({
-      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-channel-branding-header-mobile-test.png`,
-    });
+    try {
+      await page.screenshot({
+        path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-channel-branding-header-mobile-test.png`,
+      });
+    } catch {
+      // First screenshot is not essential so it is allowed to fail
+    }
 
     await waitForSelectorOrRetryWithPageReload(
       page,
@@ -165,9 +173,13 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
     );
 
     // Take a screenshot for visual verification
-    await page.screenshot({
-      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-playlists-mobile-test.png`,
-    });
+    try {
+      await page.screenshot({
+        path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-playlists-mobile-test.png`,
+      });
+    } catch {
+      // First screenshot is not essential so it is allowed to fail
+    }
 
     // Locate the elements with the text "Popular Shorts"
     const popularShortsLocator = await waitForSelectorOrRetryWithPageReload(
@@ -219,9 +231,13 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
     );
 
     // Take a screenshot for visual verification
-    await page.screenshot({
-      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-owned-playlists-mobile-test.png`,
-    });
+    try {
+      await page.screenshot({
+        path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-owned-playlists-mobile-test.png`,
+      });
+    } catch {
+      // First screenshot is not essential so it is allowed to fail
+    }
 
     // Wait for the video grid to appear
     await waitForSelectorOrRetryWithPageReload(page, "ytm-rich-item-renderer");
@@ -290,9 +306,13 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
     );
 
     // Take a screenshot for visual verification
-    await page.screenshot({
-      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-video-playlist-thumbnail-test-mobile.png`,
-    });
+    try {
+      await page.screenshot({
+        path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-video-playlist-thumbnail-test-mobile.png`,
+      });
+    } catch {
+      // First screenshot is not essential so it is allowed to fail
+    }
 
     // Wait for the video grid to appear
     await waitForSelectorOrRetryWithPageReload(page, "ytm-rich-item-renderer");
@@ -358,9 +378,13 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
     );
 
     // Take a screenshot for visual verification
-    await page.screenshot({
-      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-search-result-playlist-mobile-test.png`,
-    });
+    try {
+      await page.screenshot({
+        path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-search-result-playlist-mobile-test.png`,
+      });
+    } catch {
+      // First screenshot is not essential so it is allowed to fail
+    }
 
     // Wait for the video grid to appear
     await waitForSelectorOrRetryWithPageReload(

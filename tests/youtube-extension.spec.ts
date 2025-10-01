@@ -444,9 +444,13 @@ test.describe("YouTube Anti-Translate extension", () => {
     );
 
     // Take a screenshot for visual verification
-    await page.screenshot({
-      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-shorts-test.png`,
-    });
+    try {
+      await page.screenshot({
+        path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-shorts-test.png`,
+      });
+    } catch {
+      // First screenshot is not essential so it is allowed to fail
+    }
 
     // Wait for the shorts title element to be present
     const shortsTitleSelector =
@@ -518,9 +522,13 @@ test.describe("YouTube Anti-Translate extension", () => {
     );
 
     // Take a screenshot for visual verification
-    await page.screenshot({
-      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-channel-tabs-test.png`,
-    });
+    try {
+      await page.screenshot({
+        path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-channel-tabs-test.png`,
+      });
+    } catch {
+      // First screenshot is not essential so it is allowed to fail
+    }
 
     // Wait for the video grid to appear
     await waitForSelectorOrRetryWithPageReload(page, "ytd-rich-grid-media");
@@ -915,9 +923,13 @@ test.describe("YouTube Anti-Translate extension", () => {
     );
 
     // Take a screenshot for visual verification
-    await page.screenshot({
-      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-playlists-test.png`,
-    });
+    try {
+      await page.screenshot({
+        path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-playlists-test.png`,
+      });
+    } catch {
+      // First screenshot is not essential so it is allowed to fail
+    }
 
     // Locate the elements with the text "Popular Shorts"
     const popularShortsLocator = await waitForSelectorOrRetryWithPageReload(
@@ -968,9 +980,13 @@ test.describe("YouTube Anti-Translate extension", () => {
     );
 
     // Take a screenshot for visual verification
-    await page.screenshot({
-      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-owned-playlists-test.png`,
-    });
+    try {
+      await page.screenshot({
+        path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-owned-playlists-test.png`,
+      });
+    } catch {
+      // First screenshot is not essential so it is allowed to fail
+    }
 
     // Wait for the video grid to appear
     await waitForSelectorOrRetryWithPageReload(page, "ytd-rich-item-renderer");
@@ -1031,9 +1047,13 @@ test.describe("YouTube Anti-Translate extension", () => {
     );
 
     // Take a screenshot for visual verification
-    await page.screenshot({
-      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-search-result-playlist-test.png`,
-    });
+    try {
+      await page.screenshot({
+        path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-search-result-playlist-test.png`,
+      });
+    } catch {
+      // First screenshot is not essential so it is allowed to fail
+    }
 
     // Wait for the video grid to appear
     await waitForSelectorOrRetryWithPageReload(page, "yt-lockup-view-model");
@@ -1094,9 +1114,13 @@ test.describe("YouTube Anti-Translate extension", () => {
     );
 
     // Take a screenshot for visual verification
-    await page.screenshot({
-      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-video-thumbnail-test.png`,
-    });
+    try {
+      await page.screenshot({
+        path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-video-thumbnail-test.png`,
+      });
+    } catch {
+      // First screenshot is not essential so it is allowed to fail
+    }
 
     // Wait for the video grid to appear
     await waitForSelectorOrRetryWithPageReload(page, "ytd-video-renderer");
@@ -1168,9 +1192,13 @@ test.describe("YouTube Anti-Translate extension", () => {
     );
 
     // Take a screenshot for visual verification
-    await page.screenshot({
-      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-video-playlist-thumbnail-test.png`,
-    });
+    try {
+      await page.screenshot({
+        path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-video-playlist-thumbnail-test.png`,
+      });
+    } catch {
+      // First screenshot is not essential so it is allowed to fail
+    }
 
     // Wait for the video grid to appear
     await waitForSelectorOrRetryWithPageReload(page, "ytd-rich-item-renderer");
@@ -1236,9 +1264,13 @@ test.describe("YouTube Anti-Translate extension", () => {
     );
 
     // Screenshot for manual visual verification when needed
-    await page.screenshot({
-      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-chapters-test.png`,
-    });
+    try {
+      await page.screenshot({
+        path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-chapters-test.png`,
+      });
+    } catch {
+      // First screenshot is not essential so it is allowed to fail
+    }
 
     // Wait until the chapter button next to the progress bar is rendered
     await waitForSelectorOrRetryWithPageReload(
