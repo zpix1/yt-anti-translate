@@ -19,6 +19,7 @@ import {
   waitForSelectorOrRetryWithPageReload,
   waitForVisibleLocatorOrRetryWithPageReload,
 } from "./TestSetupHelper";
+import { decryptAuthFile, encryptAuthFile } from "./CryptAuthHelper";
 
 /**
  * @param {BrowserContext} context
@@ -40,7 +41,9 @@ export async function newPageWithStorageStateIfItExists(
     !process.env.GOOGLE_USER ||
     process.env.GOOGLE_USER.trim() === "" ||
     !process.env.GOOGLE_PWD ||
-    process.env.GOOGLE_PWD.trim() === ""
+    process.env.GOOGLE_PWD.trim() === "" ||
+    !process.env.GOOGLE_OTP_SECRET ||
+    process.env.GOOGLE_OTP_SECRET.trim() === ""
   ) {
     console.error(
       `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Google auth environment variables not set`,
@@ -48,17 +51,19 @@ export async function newPageWithStorageStateIfItExists(
     throw "Google auth env must be set.";
   }
 
-  let authFile;
+  let baseAuthFile;
+  let baseAuthFileName;
   switch (browserName) {
     case "chromium":
     case "firefox":
-      authFile = path.join(
+      baseAuthFileName = `${authFileBase}${isMobile ? "_mobile" : ""}.json`;
+      baseAuthFile = path.join(
         authFileLocationBase,
         browserName,
-        `${authFileBase}${isMobile ? "_mobile" : ""}.json`,
+        baseAuthFileName,
       );
       console.log(
-        `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Auth file path: ${authFile}`,
+        `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Auth file path: ${baseAuthFile}`,
       );
       break;
     default:
@@ -68,18 +73,20 @@ export async function newPageWithStorageStateIfItExists(
       throw "newPageWithStorageStateIfItExists: Unsupported browserName";
   }
 
-  let file = "";
+  let localeAuthFile = "";
+  let localeAuthFileName = "";
 
   switch (locale) {
     case "ru-RU":
     case "th-TH":
-      file = path.join(
+      localeAuthFileName = `${authFileBase}_${locale}${isMobile ? "_mobile" : ""}.json`;
+      localeAuthFile = path.join(
         authFileLocationBase,
         browserName,
-        `${authFileBase}_${locale}${isMobile ? "_mobile" : ""}.json`,
+        localeAuthFileName,
       );
       console.log(
-        `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Locale-specific auth file: ${file}`,
+        `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Locale-specific auth file: ${localeAuthFile}`,
       );
       break;
     default:
@@ -153,12 +160,24 @@ export async function newPageWithStorageStateIfItExists(
     return null;
   };
 
-  if (file !== "") {
-    if (fs.existsSync(file)) {
+  if (localeAuthFile !== "") {
+    if (!fs.existsSync(localeAuthFile)) {
+      console.log(
+        `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Locale-specific auth file does not exist, attempting to decrypt`,
+      );
+      decryptAuthFile(browserName, localeAuthFileName);
+    }
+    if (fs.existsSync(localeAuthFile)) {
       console.log(
         `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Locale-specific auth file exists, attempting to load`,
       );
-      const result = await loadStorage(context, file, true, 24, isMobile);
+      const result = await loadStorage(
+        context,
+        localeAuthFile,
+        true,
+        24,
+        isMobile,
+      );
       if (result) {
         console.log(
           `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Successfully loaded locale-specific auth`,
@@ -167,16 +186,28 @@ export async function newPageWithStorageStateIfItExists(
       }
     } else {
       console.log(
-        `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Locale-specific auth file does not exist: ${file}`,
+        `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Locale-specific auth file does not exist: ${localeAuthFile}`,
       );
     }
   }
 
-  if (fs.existsSync(authFile)) {
+  if (!fs.existsSync(baseAuthFile)) {
+    console.log(
+      `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Base auth file does not exist, attempting to decrypt`,
+    );
+    decryptAuthFile(browserName, baseAuthFileName);
+  }
+  if (fs.existsSync(baseAuthFile)) {
     console.log(
       `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Base auth file exists, attempting to load`,
     );
-    const result = await loadStorage(context, authFile, false, 24, isMobile);
+    const result = await loadStorage(
+      context,
+      baseAuthFile,
+      false,
+      24,
+      isMobile,
+    );
     if (result) {
       console.log(
         `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Successfully loaded base auth`,
@@ -185,7 +216,7 @@ export async function newPageWithStorageStateIfItExists(
     }
   } else {
     console.log(
-      `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Base auth file does not exist: ${authFile}`,
+      `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Base auth file does not exist: ${baseAuthFile}`,
     );
   }
 
@@ -631,10 +662,11 @@ export async function handleGoogleLogin(
   );
   await page.waitForTimeout(process.env.CI ? 7500 : 5000);
 
+  const localeAuthFileName = `${authFileBase}_${locale}${isMobile ? "_mobile" : ""}.json`;
   const localeStoragePath = path.join(
     authFileLocationBase,
     browserName,
-    `${authFileBase}_${locale}${isMobile ? "_mobile" : ""}.json`,
+    localeAuthFileName,
   );
 
   if (browserName === "chromium") {
@@ -662,6 +694,9 @@ export async function handleGoogleLogin(
     console.log(
       `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Network idle timeout after language change`,
     );
+  }
+  if (!process.env.CI) {
+    encryptAuthFile(browserName, localeAuthFileName);
   }
 
   await page.waitForTimeout(process.env.CI ? 2250 : 1500);
@@ -790,10 +825,11 @@ async function continueLoginSteps(
     );
   }
 
+  const baseAuthFileName = `${authFileBase}${isMobile ? "_mobile" : ""}.json`;
   const baseStoragePath = path.join(
     authFileLocationBase,
     browserName,
-    `${authFileBase}${isMobile ? "_mobile" : ""}.json`,
+    baseAuthFileName,
   );
 
   if (browserName === "chromium") {
@@ -815,6 +851,11 @@ async function continueLoginSteps(
   console.log(
     `[AuthStorage] [${isMobile ? "Mobile" : "Desktop"} ${browserName}] Login process completed successfully`,
   );
+
+  if (!process.env.CI) {
+    encryptAuthFile(browserName, baseAuthFileName);
+  }
+
   return { isEarlyLogin: false };
 }
 

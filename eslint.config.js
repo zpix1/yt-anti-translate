@@ -19,6 +19,9 @@ export default tseslint.config([
   },
   {
     ignores: [
+      "playwright/.auth",
+      "playwright/.crypt.auth",
+      "*.enc",
       "node_modules/",
       "dist/",
       "build/",
