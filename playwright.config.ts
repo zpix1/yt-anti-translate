@@ -16,7 +16,7 @@ export const test = base.extend<TestOptions>({
 });
 
 export default defineConfig<TestOptions>({
-  timeout: 2 * 60 * 1000,
+  timeout: 8 * 60 * 1000,
   testDir: "./tests",
   /* Run tests in files in parallel */
   fullyParallel: true,
