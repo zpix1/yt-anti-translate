@@ -1,6 +1,12 @@
 /* eslint-disable  @typescript-eslint/no-explicit-any */
 
-import { expect } from "@playwright/test";
+import {
+  Browser,
+  BrowserContext,
+  Page,
+  TestInfo,
+  expect,
+} from "@playwright/test";
 import { test } from "../playwright.config";
 import {
   setupTestEnvironment,
@@ -1340,16 +1346,7 @@ test.describe("YouTube Anti-Translate extension", () => {
         "#movie_player > div.ytp-cued-thumbnail-overlay > button",
       );
     } catch {
-      await page.waitForSelector(
-        "div.ytp-error-content-wrap-subreason > span:has-text('153')",
-      );
-      // If we hit a 153 error (playback not available) then skip the rest of the test
-      console.log(
-        "Video playback not available, skipping the rest of the test.",
-      );
-      await context.close();
-      testInfo.skip();
-      return;
+      await checkFor153Error(page, context, testInfo);
     }
 
     await page.screenshot({
@@ -1357,15 +1354,16 @@ test.describe("YouTube Anti-Translate extension", () => {
     });
 
     try {
-      await overlayButton.click();
+      await overlayButton!.click();
     } catch {
-      /* empty */
+      await checkFor153Error(page, context, testInfo);
     }
     // Wait for the overlay button to disappear
     await page.waitForTimeout(process.env.CI ? 750 : 500);
 
-    await expect(overlayButton).not.toBeVisible();
+    await expect(overlayButton!).not.toBeVisible();
     await page.waitForTimeout(process.env.CI ? 3000 : 2000);
+    await checkFor153Error(page, context, testInfo);
 
     function getTrackLanguageFieldObjectName(track: object) {
       let languageFieldName: string;
@@ -1470,16 +1468,7 @@ test.describe("YouTube Anti-Translate extension", () => {
         "#movie_player > div.ytp-cued-thumbnail-overlay > button",
       );
     } catch {
-      await page.waitForSelector(
-        "div.ytp-error-content-wrap-subreason > span:has-text('153')",
-      );
-      // If we hit a 153 error (playback not available) then skip the rest of the test
-      console.log(
-        "Video playback not available, skipping the rest of the test.",
-      );
-      await context.close();
-      testInfo.skip();
-      return;
+      await checkFor153Error(page, context, testInfo);
     }
 
     await page.screenshot({
@@ -1487,15 +1476,16 @@ test.describe("YouTube Anti-Translate extension", () => {
     });
 
     try {
-      await overlayButton.click();
+      await overlayButton!.click();
     } catch {
-      /* empty */
+      await checkFor153Error(page, context, testInfo);
     }
     // Wait for the overlay button to disappear
     await page.waitForTimeout(process.env.CI ? 750 : 500);
 
-    await expect(overlayButton).not.toBeVisible();
+    await expect(overlayButton!).not.toBeVisible();
     await page.waitForTimeout(process.env.CI ? 3000 : 2000);
+    await checkFor153Error(page, context, testInfo);
 
     function getTrackLanguageFieldObjectName(track: object) {
       let languageFieldName: string;
@@ -1576,3 +1566,17 @@ test.describe("YouTube Anti-Translate extension", () => {
     await context.close();
   });
 });
+async function checkFor153Error(
+  page: Page,
+  context: BrowserContext | Browser,
+  testInfo: TestInfo,
+) {
+  await page.waitForSelector(
+    "div.ytp-error-content-wrap-subreason > span:has-text('153')",
+  );
+  // If we hit a 153 error (playback not available) then skip the rest of the test
+  console.log("Video playback not available, skipping the rest of the test.");
+  await context.close();
+  testInfo.skip();
+  return;
+}
