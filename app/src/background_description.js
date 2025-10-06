@@ -831,7 +831,18 @@ function updateAuthorContent(container, originalText) {
       ),
     );
 
-  if (!singularChannelNameTitleContainer && !singularChannelNameTextContainer) {
+  const multipleChannelNameContainers =
+    window.YoutubeAntiTranslate.getFirstVisible(
+      container.querySelectorAll(
+        `#attributed-channel-name ${ATTRIBUTED_STRING_CLASS_SELECTOR} a > span`,
+      ),
+    );
+
+  if (
+    !singularChannelNameTitleContainer &&
+    !singularChannelNameTextContainer &&
+    !multipleChannelNameContainers
+  ) {
     window.YoutubeAntiTranslate.logInfo(
       `No video author text containers found`,
     );
@@ -856,6 +867,31 @@ function updateAuthorContent(container, originalText) {
         singularChannelNameTextContainer.parentElement.style.display =
           storeStyleDisplay;
       }, 50);
+    }
+  }
+
+  if (multipleChannelNameContainers) {
+    // Check that we have two text nodes before replacing
+    const textNodes = Array.from(
+      multipleChannelNameContainers.childNodes,
+    ).filter((node) => node.nodeType === Node.TEXT_NODE);
+
+    if (!textNodes) {
+      return;
+    }
+
+    if (textNodes.length < 2) {
+      window.YoutubeAntiTranslate.logDebug(
+        `Not enough text nodes found for this type of updateAuthorContent`,
+      );
+      return;
+    }
+
+    const firstTextNode = window.YoutubeAntiTranslate.getFirstTextNode(
+      multipleChannelNameContainers,
+    );
+    if (firstTextNode && firstTextNode.textContent !== originalText) {
+      firstTextNode.textContent = originalText;
     }
   }
 }
@@ -924,7 +960,21 @@ async function updateCollaboratorAuthors(avatarStack, originalAuthor) {
         const localizedAnd = window.YoutubeAntiTranslate.getLocalizedAnd(
           document.documentElement.lang,
         );
-        const untranslatedCollaboratorText = `${mainAuthor} ${localizedAnd} ${collaboratorAuthorsOnly[0]}`;
+
+        // Count text nodes to know if we need to include the main author before the and
+        const textNodes = Array.from(
+          multipleChannelNameContainer.childNodes,
+        ).filter((node) => node.nodeType === Node.TEXT_NODE);
+
+        if (!textNodes) {
+          return;
+        }
+
+        let includeMainAuthor = false;
+        if (textNodes.length < 2) {
+          includeMainAuthor = true;
+        }
+        const untranslatedCollaboratorText = `${includeMainAuthor ? `${mainAuthor} ` : ""}${localizedAnd} ${collaboratorAuthorsOnly[0]}`;
         if (
           multipleChannelNameContainer &&
           !multipleChannelNameContainer.textContent.includes(
@@ -933,7 +983,7 @@ async function updateCollaboratorAuthors(avatarStack, originalAuthor) {
         ) {
           replaceTextNodeContent(
             multipleChannelNameContainer,
-            0,
+            includeMainAuthor ? 0 : 1,
             untranslatedCollaboratorText,
           );
         }
