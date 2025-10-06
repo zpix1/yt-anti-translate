@@ -860,7 +860,7 @@ async function untranslateOtherVideos(intersectElements = null) {
 
         // Get description snippet container elements
         const snippetElements = video.querySelectorAll(
-          ".metadata-snippet-text, .metadata-snippet-text-navigation",
+          ".metadata-snippet-text, .metadata-snippet-text-navigation, #dismissible #description-text",
         );
         if (!snippetElements || snippetElements.length === 0) {
           // Mark if description snippet elements are missing to avoid repeated failed attempts
