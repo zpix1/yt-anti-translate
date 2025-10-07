@@ -1566,17 +1566,25 @@ test.describe("YouTube Anti-Translate extension", () => {
     await context.close();
   });
 });
+
 async function checkFor153Error(
   page: Page,
   context: BrowserContext | Browser,
   testInfo: TestInfo,
 ) {
-  await page.waitForSelector(
+  const errorLocator = page.locator(
     "div.ytp-error-content-wrap-subreason > span:has-text('153')",
   );
-  // If we hit a 153 error (playback not available) then skip the rest of the test
-  console.log("Video playback not available, skipping the rest of the test.");
-  await context.close();
-  testInfo.skip();
-  return;
+
+  if (await errorLocator.isVisible()) {
+    // If we hit a 153 error (playback not available) then skip the rest of the test
+
+    console.log("Video playback not available, skipping the rest of the test.");
+
+    await context.close();
+
+    testInfo.skip();
+
+    return;
+  }
 }
