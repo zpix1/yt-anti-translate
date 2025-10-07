@@ -1898,6 +1898,122 @@ async function untranslateCurrentPlaylistHeaderThumbnail() {
   }
 }
 
+async function untranslateCurrentVideoPreviewThumbnail() {
+  const videoPreview = window.YoutubeAntiTranslate.getFirstVisible(
+    document.querySelectorAll("#video-preview-container a.ytd-video-preview"),
+  );
+  if (!videoPreview) {
+    return;
+  }
+
+  const thumbnailElements = window.YoutubeAntiTranslate.getAllVisibleNodes(
+    videoPreview.querySelectorAll('img[src*="i.ytimg.com"]'),
+  );
+
+  let thumbnailNeedsUpdate = false;
+  if (thumbnailElements && thumbnailElements.length > 0) {
+    for (const thumbnailElement of thumbnailElements) {
+      if (!thumbnailElement || !thumbnailElement.src) {
+        continue;
+      }
+      const currentImageSrc = thumbnailElement.src;
+
+      if (
+        currentImageSrc.includes("https://i.ytimg.com/vi/") || // path of not-localized thumbnails
+        currentImageSrc.includes("?youtube-anti-translate")
+      ) {
+        continue;
+      }
+      thumbnailNeedsUpdate = true;
+      break;
+    }
+
+    if (!thumbnailNeedsUpdate) {
+      return;
+    }
+
+    const currentVideoHref = videoPreview.href;
+    if (!currentVideoHref || currentVideoHref.trim() === "") {
+      return;
+    }
+
+    const videoId =
+      window.YoutubeAntiTranslate.extractVideoIdFromUrl(currentVideoHref);
+    if (!videoId) {
+      return;
+    }
+
+    const oembedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}`;
+
+    try {
+      let response = await cachedRequest(oembedUrl);
+      if (
+        !response ||
+        !response.response ||
+        !response.response.ok ||
+        !response.data?.thumbnail_url
+      ) {
+        if (response?.response?.status === 401) {
+          // 401 likely means the video is restricted try again with youtubeI
+          response =
+            await window.YoutubeAntiTranslate.getVideoTitleFromYoutubeI(
+              videoId,
+            );
+          if (!response?.response?.ok || !response.data?.title) {
+            window.YoutubeAntiTranslate.logWarning(
+              `YoutubeI title request failed for video ${videoId}`,
+            );
+            return;
+          }
+        }
+      }
+
+      if (
+        await window.YoutubeAntiTranslate.isWhitelistedChannel(
+          "whiteListUntranslateThumbnail",
+          null,
+          response.data.author_url,
+        )
+      ) {
+        window.YoutubeAntiTranslate.logInfo(
+          "Channel is whitelisted, skipping video thumbnail untranslation",
+        );
+        return;
+      }
+
+      const originalThumbnail = response.data.thumbnail_url;
+
+      for (const thumbnailElement of thumbnailElements) {
+        // Only update if the thumbnail is different
+        if (!thumbnailElement.src.includes(originalThumbnail)) {
+          const { width, height } =
+            await window.YoutubeAntiTranslate.getImageSize(
+              thumbnailElement.src,
+            );
+          thumbnailElement.src =
+            originalThumbnail + `?youtube-anti-translate=${Date.now()}`;
+          // Add crop ratio to image
+          if (width && height) {
+            const cropRatio = width / height;
+            if (cropRatio) {
+              // match crop ratio of current thumbnail
+              thumbnailElement.style.aspectRatio = cropRatio;
+              thumbnailElement.style.objectFit = "cover";
+            }
+          }
+        }
+      }
+    } catch (error) {
+      window.YoutubeAntiTranslate.logInfo(
+        `Error fetching oEmbed for current player thumbnail:`,
+        videoId,
+        error,
+      );
+      return;
+    }
+  }
+}
+
 async function untranslate() {
   const settings = await window.YoutubeAntiTranslate.getSettings();
 
@@ -1955,6 +2071,9 @@ async function untranslate() {
   const currentMiniPlayerPromise = settings.untranslateTitle
     ? untranslateCurrentMiniPlayerVideo()
     : Promise.resolve();
+  const currentVideoPreviewThumbnailPromise = settings.untranslateThumbnail
+    ? untranslateCurrentVideoPreviewThumbnail()
+    : Promise.resolve();
 
   // Wait for all promises to resolve concurrently
   await Promise.all([
@@ -1974,6 +2093,7 @@ async function untranslate() {
     currentPlayerThumbnailPromise,
     currentPlaylistThumbnailPromise,
     currentMiniPlayerPromise,
+    currentVideoPreviewThumbnailPromise,
   ]);
 
   // update intersect observers
