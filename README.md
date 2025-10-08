@@ -91,7 +91,7 @@ You can also show your support by:
   - Star the fork [namakeingo/yt-anti-translate-firefox](https://github.com/namakeingo/yt-anti-translate-firefox)
 - [artisticfox8](https://github.com/artisticfox8/yt-anti-translate) - Firefox MV3 Developer
   - Star the fork [artisticfox8/yt-anti-translate](https://github.com/artisticfox8/yt-anti-translate)
-- [ajayyy](https://github.com/ayayyy) - DeArrow compatibility [#18](https://github.com/zpix1/yt-anti-translate/pull/18) & [#19](https://github.com/zpix1/yt-anti-translate/pull/19)
+- [ajayyy](https://github.com/ayayyy) - DeArrow compatibility [#18](https://github.com/zpix1/yt-anti-translate/pull/18) & [#20](https://github.com/zpix1/yt-anti-translate/pull/20)
 - [YuriiMaiboroda](https://github.com/YuriiMaiboroda) - Fix translating for playlist panel [#14](https://github.com/zpix1/yt-anti-translate/pull/14)
 - [BlackLanzer](https://github.com/BlackLanzer) - Translate title attribute [#24](https://github.com/zpix1/yt-anti-translate/pull/24)
 - [NRngnl](https://github.com/NRngnl) - Replace 'chrome.extension.getURL' with 'chrome.runtime.getURL' [#12](https://github.com/zpix1/yt-anti-translate/pull/12)
