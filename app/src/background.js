@@ -80,7 +80,7 @@ async function untranslateCurrentShortVideo() {
 // Changes short title on "/shorts/shortid" pages inside of the Description Panel
 async function untranslateCurrentShortVideoDescriptionPanelHeader() {
   const fakeNodeID =
-    "yt-anti-translate-fake-node-current-short-video-description-panel-heaeder";
+    "yt-anti-translate-fake-node-current-short-video-description-panel-header";
   const originalNodeSelector = `#anchored-panel ytd-video-description-header-renderer > #title > yt-formatted-string:not(#${fakeNodeID})`;
   const originalNodePartialSelector = `span:not(#${fakeNodeID})`;
 
