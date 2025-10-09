@@ -234,8 +234,21 @@ export async function waitForSelectorOrRetryWithPageReload(
     } else {
       attributedSelector = selector;
     }
-    const locator = page.locator(`${attributedSelector}:${state}`);
-    await locator.first().waitFor({ state });
+
+    let locator;
+    if (state === "visible" || state === "hidden") {
+      locator = page.locator(`${attributedSelector}:${state}`);
+      await locator.first().waitFor({ state });
+    } else {
+      locator = page.locator(attributedSelector);
+      for (const elem of await locator.all()) {
+        await elem.waitFor({ state });
+        if (state === "attached") {
+          // when state "attached", is enough to wait just one
+          break;
+        }
+      }
+    }
     await page.waitForTimeout(process.env.CI ? 7500 : 5000);
     return locator;
   } catch {
