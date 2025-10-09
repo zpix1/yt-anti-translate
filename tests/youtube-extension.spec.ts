@@ -938,6 +938,21 @@ test.describe("YouTube Anti-Translate extension", () => {
     browserNameWithExtensions,
     localeString,
   }, testInfo) => {
+    async function checkFor153Error() {
+      const errorLocator = page.locator(
+        "div.ytp-error-content-wrap-subreason > span:has-text('153')",
+      );
+      if (await errorLocator.isVisible()) {
+        // If we hit a 153 error (playback not available) then skip the rest of the test
+        console.log(
+          "Video playback not available, skipping the rest of the test.",
+        );
+        await context.close();
+        testInfo.skip();
+        return;
+      }
+    }
+
     await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
 
     // Launch browser with the extension
@@ -1015,20 +1030,5 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Close the browser context
     await context.close();
-
-    async function checkFor153Error() {
-      const errorLocator = page.locator(
-        "div.ytp-error-content-wrap-subreason > span:has-text('153')",
-      );
-      if (await errorLocator.isVisible()) {
-        // If we hit a 153 error (playback not available) then skip the rest of the test
-        console.log(
-          "Video playback not available, skipping the rest of the test.",
-        );
-        await context.close();
-        testInfo.skip();
-        return;
-      }
-    }
   });
 });
