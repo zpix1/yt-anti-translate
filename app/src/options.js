@@ -265,7 +265,7 @@ function checkboxUpdate() {
   );
 }
 
-function validateAndSaveWhitelist(textareaId, statusTestId, storageKey) {
+function validateAndSaveWhitelist(textareaId, statusTextId, storageKey) {
   chrome.storage.sync.get(
     {
       autoreloadOption: true,
@@ -306,7 +306,7 @@ function validateAndSaveWhitelist(textareaId, statusTestId, storageKey) {
         }
       }
 
-      const status = document.getElementById(statusTestId);
+      const status = document.getElementById(statusTextId);
       if (invalidLines.length > 0) {
         if (status) {
           status.textContent = `❌ Invalid entries: ${invalidLines.join(", ")}`;
@@ -317,6 +317,14 @@ function validateAndSaveWhitelist(textareaId, statusTestId, storageKey) {
         }
       }
 
+      status.setAttribute("hidden", "true");
+      const button = textarea.parentElement.querySelector("button");
+      const buttonText = button.querySelector("span");
+      const originalText = buttonText.textContent;
+      buttonText.classList.add("saving");
+      buttonText.textContent = "Saving...";
+      button.disabled = true;
+
       chrome.storage.sync.set(
         {
           [storageKey]: validLines,
@@ -324,8 +332,15 @@ function validateAndSaveWhitelist(textareaId, statusTestId, storageKey) {
         () => {
           if (status) {
             if (invalidLines.length > 0) {
+              buttonText.textContent = `${validLines.length} Valid entries saved`;
               status.textContent += `\n✅ ${validLines.length} Valid entries saved: ${validLines.join(", ")}`;
               status.className = "whitelist-status partial-success";
+              status.removeAttribute("hidden");
+              setTimeout(() => {
+                buttonText.textContent = originalText;
+                button.disabled = false;
+                buttonText.classList.remove("saving");
+              }, 1500);
               setTimeout(() => {
                 status.textContent = status.textContent.split("\n")[0]; // Keep only the first line (errors)
                 status.className = "whitelist-status error";
@@ -335,12 +350,12 @@ function validateAndSaveWhitelist(textareaId, statusTestId, storageKey) {
               }
               return;
             }
-            status.textContent = `✅ ${validLines.length} Whitelist entries saved!`;
-            status.className = "success whitelist-status";
+            buttonText.textContent = `${validLines.length} Whitelist entries saved!`;
             setTimeout(() => {
-              status.textContent = "";
-              status.className = "whitelist-status";
-            }, 3000);
+              buttonText.textContent = originalText;
+              button.disabled = false;
+              buttonText.classList.remove("saving");
+            }, 1500);
             if (items.autoreloadOption && isPopup()) {
               reloadActiveYouTubeTab();
             }
@@ -407,6 +422,14 @@ function optionTabChanges() {
     const expandLink = document.getElementById("expand-popup-link");
     if (expandLink) {
       expandLink.style.visibility = "hidden";
+    }
+    const whitelistsSection = document.getElementById("whitelists");
+    if (whitelistsSection) {
+      whitelistsSection.removeAttribute("hidden");
+    }
+    const manageWhitelists = document.getElementById("manage-whitelists");
+    if (manageWhitelists) {
+      manageWhitelists.setAttribute("hidden", "true");
     }
   }
 }
