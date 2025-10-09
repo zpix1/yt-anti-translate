@@ -324,7 +324,7 @@ function validateAndSaveWhitelist(textareaId, statusTestId, storageKey) {
         () => {
           if (status) {
             if (invalidLines.length > 0) {
-              status.textContent += `\n✅ Valid entries saved: ${validLines.join(", ")}`;
+              status.textContent += `\n✅ ${validLines.length} Valid entries saved: ${validLines.join(", ")}`;
               status.className = "whitelist-status partial-success";
               setTimeout(() => {
                 status.textContent = status.textContent.split("\n")[0]; // Keep only the first line (errors)
@@ -335,7 +335,7 @@ function validateAndSaveWhitelist(textareaId, statusTestId, storageKey) {
               }
               return;
             }
-            status.textContent = "✅ Whitelist saved!";
+            status.textContent = `✅ ${validLines.length} Whitelist entries saved!`;
             status.className = "success whitelist-status";
             setTimeout(() => {
               status.textContent = "";
