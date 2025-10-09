@@ -35,7 +35,6 @@
     "@types/node": "^22.13.9",
     "@vitest/ui": "^3.2.4",
     "2captcha-ts": "^2.4.1",
-    "crx-util": "^1.0.0",
     "dotenv": "^16.5.0",
     "eslint": "^9.28.0",
     "eslint-config-prettier": "^10.1.5",

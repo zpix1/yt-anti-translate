@@ -6,7 +6,6 @@ import https from "https";
 import { pipeline } from "node:stream";
 import { promisify } from "node:util";
 
-import * as crx from "crx-util";
 import { fileURLToPath } from "node:url";
 
 const streamPipeline = promisify(pipeline);
@@ -149,8 +148,31 @@ export async function downloadAndExtractUBlock(browserName: string) {
                 await streamPipeline(response, crxfile);
                 console.log("Download finished, extracting CRX...");
 
-                await crx.parser.extract(crxPath, destDirUBlock);
+                // Read .crx file and strip header
+                // .crx v3 header: 4 bytes magic, 4 bytes version, 4 bytes header size, then header
+                const crxBuffer = fs.readFileSync(crxPath);
+
+                const magic = crxBuffer.subarray(0, 4).toString();
+                if (magic !== "Cr24") {
+                  throw new Error("Not a valid CRX file");
+                }
+                const version = crxBuffer.readUInt32LE(4);
+                if (version !== 3) {
+                  throw new Error("Only CRX3 is supported by this script");
+                }
+                const headerSize = crxBuffer.readUInt32LE(8);
+                const zipStartOffset = 12 + headerSize;
+                const zipBuffer = crxBuffer.subarray(zipStartOffset);
+                const zipPath = path.join(destDirUBlock, "ublock_clean.zip");
+                fs.writeFileSync(zipPath, zipBuffer);
+                console.log("uBlock Origin converted to ZIP...");
+
+                const crxFileStream = await unzipper.Open.file(zipPath);
+                await crxFileStream.extract({ path: destDirUBlock });
                 console.log("uBlock Origin extracted successfully!");
+
+                // Clean up temp zip
+                fs.unlinkSync(zipPath);
 
                 const backgroundJsPath = path.join(
                   destDirUBlock,
