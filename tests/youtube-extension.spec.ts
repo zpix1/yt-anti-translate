@@ -938,6 +938,21 @@ test.describe("YouTube Anti-Translate extension", () => {
     browserNameWithExtensions,
     localeString,
   }, testInfo) => {
+    async function checkFor153Error() {
+      const errorLocator = page.locator(
+        "div.ytp-error-content-wrap-subreason > span:has-text('153')",
+      );
+      if (await errorLocator.isVisible()) {
+        // If we hit a 153 error (playback not available) then skip the rest of the test
+        console.log(
+          "Video playback not available, skipping the rest of the test.",
+        );
+        await context.close();
+        testInfo.skip();
+        return;
+      }
+    }
+
     await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
 
     // Launch browser with the extension
@@ -956,24 +971,17 @@ test.describe("YouTube Anti-Translate extension", () => {
     try {
       await page.waitForSelector("video", { timeout: 10000 });
     } catch {
-      await page.waitForSelector(
-        "div.ytp-error-content-wrap-subreason > span:has-text('153')",
-        { timeout: 10000 },
-      );
-      // If we hit a 153 error (playback not available) then skip the rest of the test
-      console.log(
-        "Video playback not available, skipping the rest of the test.",
-      );
-      await context.close();
-      testInfo.skip();
+      await checkFor153Error();
     }
 
     await page.click("#movie_player > div.ytp-cued-thumbnail-overlay > button");
+    await checkFor153Error();
 
     await expect(
       page.locator("#movie_player > div.ytp-cued-thumbnail-overlay > button"),
     ).not.toBeVisible();
     await page.waitForTimeout(2000);
+    await checkFor153Error();
 
     function getTrackLanguageFieldObjectName(track: object) {
       let languageFieldName: string;

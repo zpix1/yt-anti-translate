@@ -639,6 +639,18 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
           return;
         }
 
+        // Check if current widget is a playlist, not video
+        if (
+          shortElement.querySelector('a[href*="/playlist?"]') ||
+          window.YoutubeAntiTranslate.getFirstVisible(
+            shortElement.querySelector(
+              "yt-collection-thumbnail-view-model, .media-item-thumbnail-container.stacked",
+            ),
+          )
+        ) {
+          return;
+        }
+
         // Find link element to get URL
         const linkElement =
           shortElement.querySelector("a.shortsLockupViewModelHostEndpoint") ||

@@ -2,11 +2,13 @@
 
 [![Chrome Web Store Rating](https://img.shields.io/chrome-web-store/rating/ndpmhjnlfkgfalaieeneneenijondgag?style=for-the-badge&logo=googlechrome&label=Get%20for%20Chrome%20%7C%7C%20Rating%3A&labelColor=lightblue&color=blue)](https://chromewebstore.google.com/detail/youtube-anti-translate/ndpmhjnlfkgfalaieeneneenijondgag)
 [![Mozilla Add-on Rating](https://img.shields.io/amo/rating/youtube-anti-translate-mv3?style=for-the-badge&logo=firefox&logoSize=auto&label=Get%20for%20Firefox%20%7C%7C%20Rating%3A&color=orange)](https://addons.mozilla.org/firefox/addon/youtube-anti-translate-mv3/)
+[![Edge Add-on Rating](https://img.shields.io/badge/%20-%2300BDA3?style=for-the-badge&logo=quarto&logoColor=white&logoSize=auto&label=Get%20For%20Edge&labelColor=%2332526e)](https://microsoftedge.microsoft.com/addons/detail/youtube-anti-translate/ifckldggiagmhblhahedklifdhpkcpje)
 
 ## Overview
 
 Source code of [YouTube Anti Translate](https://chrome.google.com/webstore/detail/yt-anti-translate/ndpmhjnlfkgfalaieeneneenijondgag) Chromium Extension created by [zpix1](https://github.com/zpix1),
 And [YouTube Anti Translate - mv3](https://addons.mozilla.org/firefox/addon/youtube-anti-translate-mv3/) Firefox Extension mantained by [namakeingo](https://github.com/namakeingo).
+Also available on the [Microsoft Edge Store](https://microsoftedge.microsoft.com/addons/detail/youtube-anti-translate/ifckldggiagmhblhahedklifdhpkcpje).
 
 All the people involved were annoyed by YouTube changing video titles to poorly user-translated versions. While it might be useful if you do not know the language, it quickly becomes annoying once you do.
 As there is no option provided by YouTube to disable it, we made this extension to retrieve original titles and change them back.
