@@ -834,7 +834,7 @@ function updateAuthorContent(container, originalText) {
   const multipleChannelNameContainers =
     window.YoutubeAntiTranslate.getFirstVisible(
       container.querySelectorAll(
-        `#attributed-channel-name ${ATTRIBUTED_STRING_CLASS_SELECTOR} a > span`,
+        `#attributed-channel-name ${ATTRIBUTED_STRING_CLASS_SELECTOR} a.yt-core-attributed-string__link`,
       ),
     );
 
@@ -876,20 +876,43 @@ function updateAuthorContent(container, originalText) {
       multipleChannelNameContainers.childNodes,
     ).filter((node) => node.nodeType === Node.TEXT_NODE);
 
-    if (!textNodes) {
+    // Check also the text node of the first span with no classes as some languages have that in the structure too
+    // e.g.: <span class style>...</span>
+    const firstSpan =
+      multipleChannelNameContainers.querySelector("span[class='']");
+    let firstSpanTextNodes;
+
+    if (firstSpan) {
+      firstSpanTextNodes = Array.from(firstSpan.childNodes).filter(
+        (node) => node.nodeType === Node.TEXT_NODE,
+      );
+    }
+
+    if (!textNodes && !firstSpanTextNodes) {
       return;
     }
 
-    if (textNodes.length < 2) {
+    if (
+      textNodes &&
+      textNodes.length < 2 &&
+      firstSpanTextNodes &&
+      firstSpanTextNodes.length < 2
+    ) {
       window.YoutubeAntiTranslate.logDebug(
         `Not enough text nodes found for this type of updateAuthorContent`,
       );
       return;
     }
 
-    const firstTextNode = window.YoutubeAntiTranslate.getFirstTextNode(
-      multipleChannelNameContainers,
-    );
+    let firstTextNode;
+    if (textNodes && textNodes.length >= 2) {
+      firstTextNode = window.YoutubeAntiTranslate.getFirstTextNode(
+        multipleChannelNameContainers,
+      );
+    } else if (firstSpanTextNodes && firstSpanTextNodes.length >= 2) {
+      firstTextNode = window.YoutubeAntiTranslate.getFirstTextNode(firstSpan);
+    }
+
     if (firstTextNode && firstTextNode.textContent !== originalText) {
       firstTextNode.textContent = originalText;
     }
@@ -953,7 +976,7 @@ async function updateCollaboratorAuthors(avatarStack, originalAuthor) {
             avatarStack
               .closest("#owner")
               .querySelectorAll(
-                `#attributed-channel-name ${ATTRIBUTED_STRING_CLASS_SELECTOR} a > span`,
+                `#attributed-channel-name ${ATTRIBUTED_STRING_CLASS_SELECTOR} a.yt-core-attributed-string__link`,
               ),
           );
 
@@ -966,16 +989,36 @@ async function updateCollaboratorAuthors(avatarStack, originalAuthor) {
           multipleChannelNameContainer.childNodes,
         ).filter((node) => node.nodeType === Node.TEXT_NODE);
 
-        if (!textNodes) {
+        // Check also the text node of the first span with no classes as some languages have that in the structure too
+        // e.g.: <span class style>...</span>
+        const firstSpan =
+          multipleChannelNameContainer.querySelector("span[class='']");
+        let firstSpanTextNodes;
+
+        if (firstSpan) {
+          firstSpanTextNodes = Array.from(firstSpan.childNodes).filter(
+            (node) => node.nodeType === Node.TEXT_NODE,
+          );
+        }
+
+        if (!textNodes && !firstSpanTextNodes) {
           return;
         }
 
         let includeMainAuthor = false;
-        if (textNodes.length < 2) {
+        if (
+          textNodes &&
+          textNodes.length < 2 &&
+          firstSpanTextNodes &&
+          firstSpanTextNodes.length < 2
+        ) {
           includeMainAuthor = true;
         }
         const untranslatedCollaboratorText = `${includeMainAuthor ? `${mainAuthor} ` : ""}${localizedAnd} ${collaboratorAuthorsOnly[0]}`;
+
         if (
+          textNodes &&
+          textNodes.length >= 2 &&
           multipleChannelNameContainer &&
           !multipleChannelNameContainer.textContent.includes(
             untranslatedCollaboratorText,
@@ -983,6 +1026,17 @@ async function updateCollaboratorAuthors(avatarStack, originalAuthor) {
         ) {
           replaceTextNodeContent(
             multipleChannelNameContainer,
+            includeMainAuthor ? 0 : 1,
+            untranslatedCollaboratorText,
+          );
+        } else if (
+          firstSpanTextNodes &&
+          firstSpanTextNodes.length >= 2 &&
+          firstSpan &&
+          !firstSpan.textContent.includes(untranslatedCollaboratorText)
+        ) {
+          replaceTextNodeContent(
+            firstSpan,
             includeMainAuthor ? 0 : 1,
             untranslatedCollaboratorText,
           );
