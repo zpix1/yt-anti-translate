@@ -677,7 +677,16 @@ ytm-shorts-lockup-view-model`,
   },
 
   isDarkTheme: function () {
-    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+    let isDarkTheme = false;
+    if (this.isMobile()) {
+      isDarkTheme =
+        document
+          .querySelector("head > #theme-meta")
+          ?.getAttribute("content") === "rgba(15, 15, 15, 0.7)";
+    } else {
+      isDarkTheme = document.documentElement.hasAttribute("dark");
+    }
+    return isDarkTheme;
   },
 
   createTimecodeLink: function (timecode) {
