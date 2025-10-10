@@ -516,7 +516,7 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
       );
 
     const searchUrl =
-      "https://www.youtube.com/results?search_query=Can+you+safely+drink+your+own+pee";
+      "https://www.youtube.com/results?search_query=mark+rober+can+you+safely+drink+your+own+pee";
     await loadPageAndVerifyAuth(page, searchUrl, browserNameWithExtensions);
 
     // Screenshot for visual verification
