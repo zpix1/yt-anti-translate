@@ -12,7 +12,8 @@
     "target": "es2022",
     "baseUrl": ".",
     "types": [
-      "chrome"
+      "chrome",
+      "firefox-webext-browser"
     ],
     "noEmit": true
   },

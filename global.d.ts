@@ -8,9 +8,8 @@
 export {};
 
 declare global {
-  const browser: any; // For Firefox based browsers supporting the WebExtensions API
-
-  // `chrome` is already defined in `@types/chrome` which is included via `jsconfig.json`
+  //type browser = typeof import("firefox-webext-browser");
+  //type chrome = typeof import("chrome");
 
   interface Window {
     /** The extension global window.YoutubeAntiTranslate object implemented in `/app/src/global.js` */
@@ -96,7 +95,7 @@ declare global {
        * Safely returns the browser API object, preferring `browser` over `chrome`.
        * @returns The browser API object.
        */
-      getBrowserOrChrome: () => any;
+      getBrowserOrChrome: () => typeof browser | typeof chrome;
 
       /**
        * Checks if the browser is Firefox or Firefox-based (like Waterfox, Pale Moon, etc.).
