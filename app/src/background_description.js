@@ -286,7 +286,7 @@ function getCurrentVideoTime() {
     document.querySelector("#movie_player video") ||
     document.querySelector("video");
   if (video && "currentTime" in video) {
-    const time = Math.floor(video.currentTime);
+    const time = Math.floor(Number(video.currentTime));
     return time;
   }
 
@@ -362,8 +362,11 @@ function setupChapterButtonObserver() {
     let shouldUpdate = false;
 
     mutations.forEach((mutation) => {
-      if (mutation.type === "childList" || mutation.type === "characterData") {
-        const target = mutation.target;
+      if (
+        (mutation.type === "childList" || mutation.type === "characterData") &&
+        mutation.target.nodeType === Node.ELEMENT_NODE
+      ) {
+        const target = /** @type {Element} */ (mutation.target);
         if (
           target.classList?.contains("ytp-chapter-title-content") ||
           target.closest(".ytp-chapter-title-content")
@@ -439,7 +442,7 @@ function setupChapters(originalDescription) {
       if (mutation.type === "childList") {
         mutation.addedNodes.forEach((node) => {
           if (node.nodeType === Node.ELEMENT_NODE) {
-            const element = node;
+            const element = /** @type {Element} */ (node);
             // More specific targeting
             if (
               element.classList?.contains("ytp-tooltip") &&
@@ -452,8 +455,11 @@ function setupChapters(originalDescription) {
       }
 
       // Watch for attribute changes (style changes that show/hide tooltips)
-      if (mutation.type === "attributes") {
-        const target = mutation.target;
+      if (
+        mutation.type === "attributes" &&
+        mutation.target.nodeType === Node.ELEMENT_NODE
+      ) {
+        const target = /** @type {Element} */ (mutation.target);
         if (
           target.classList?.contains("ytp-tooltip") &&
           target.classList?.contains("ytp-preview") &&
@@ -507,7 +513,7 @@ function setupChapters(originalDescription) {
 /**
  * Uses the YouTube player API to obtain the original (untranslated) video description.
  *
- * @returns {{shortDescription: string|null, channelId: string|null}} The original description or null if it cannot be retrieved.
+ * @returns {Promise<{shortDescription: string|null, title: string|null, channelId: string|null}>} The original description or null if it cannot be retrieved.
  */
 async function fetchOriginalDescription() {
   const player = window.YoutubeAntiTranslate.getFirstVisible(
@@ -528,11 +534,11 @@ async function fetchOriginalDescription() {
 
   return {
     shortDescription:
-      playerResponse?.videoDetails?.shortDescription ||
-      playerResponse?.videoDetails?.title ||
+      playerResponse?.["videoDetails"]?.shortDescription ||
+      playerResponse?.["videoDetails"]?.title ||
       null,
-    title: playerResponse?.videoDetails?.title || null,
-    channelId: playerResponse?.videoDetails?.channelId || null,
+    title: playerResponse?.["videoDetails"]?.title || null,
+    channelId: playerResponse?.["videoDetails"]?.channelId || null,
   };
 }
 
@@ -558,7 +564,7 @@ function fetchOriginalAuthor() {
     return null;
   }
 
-  return playerResponse?.videoDetails?.author || null;
+  return playerResponse?.["videoDetails"]?.author || null;
 }
 
 /**
@@ -694,11 +700,7 @@ async function handleAuthor(originalAuthor, originalTitle = null) {
       document.querySelectorAll("#owner #avatar-stack"),
     );
     if (avatarStack) {
-      await updateCollaboratorAuthors(
-        avatarStack,
-        originalAuthor,
-        originalTitle,
-      );
+      await updateCollaboratorAuthors(avatarStack, originalAuthor);
     } else {
       window.YoutubeAntiTranslate.logInfo(
         "Video Avatar Stack container not found",
@@ -710,7 +712,7 @@ async function handleAuthor(originalAuthor, originalTitle = null) {
 /**
  * Replaces the translated description shown to the user with the provided original text.
  *
- * @param {HTMLElement} container - Element that contains the description.
+ * @param {Element} container - Element that contains the description.
  * @param {string} originalText - Original (untranslated) description.
  */
 function updateDescriptionContent(container, originalText) {
@@ -814,7 +816,7 @@ function updateDescriptionContent(container, originalText) {
 /**
  * Replaces the translated author text shown to the user with the original one.
  *
- * @param {HTMLElement} container - Element that contains the author name.
+ * @param {Element} container - Element that contains the author name.
  * @param {string} originalText - Original (untranslated) author name.
  */
 function updateAuthorContent(container, originalText) {
@@ -851,17 +853,19 @@ function updateAuthorContent(container, originalText) {
 
   // Update both containers if they exist
   if (singularChannelNameTitleContainer) {
-    if (singularChannelNameTitleContainer.title !== originalText) {
-      singularChannelNameTitleContainer.title = originalText;
+    if (
+      singularChannelNameTitleContainer.getAttribute("title") !== originalText
+    ) {
+      singularChannelNameTitleContainer.setAttribute("title", originalText);
     }
   }
 
   if (singularChannelNameTextContainer) {
-    if (singularChannelNameTextContainer.innerText !== originalText) {
+    if (singularChannelNameTextContainer.textContent !== originalText) {
       const storeStyleDisplay =
         singularChannelNameTextContainer.parentElement.style.display;
       singularChannelNameTextContainer.parentElement.style.display = "none";
-      singularChannelNameTextContainer.innerText = originalText;
+      singularChannelNameTextContainer.textContent = originalText;
       // Force reflow
       setTimeout(() => {
         singularChannelNameTextContainer.parentElement.style.display =
@@ -935,7 +939,7 @@ async function updateCollaboratorAuthors(avatarStack, originalAuthor) {
 
       const originalCollaborators =
         await window.YoutubeAntiTranslate.getOriginalCollaboratorsItemsWithYoutubeI(
-          originalDescriptionData.title,
+          `${originalAuthor} ${originalDescriptionData.title}`,
         );
 
       const originalItem = originalCollaborators?.find(
@@ -1134,7 +1138,9 @@ async function handleDescriptionMutation() {
 
 // Add global click handler for timecode links
 document.addEventListener("click", (event) => {
-  const link = event.target.closest(".yt-timecode-link");
+  const link = /** @type {Element} */ (event.target).closest(
+    ".yt-timecode-link",
+  );
   if (!link) {
     return;
   }
@@ -1149,9 +1155,9 @@ document.addEventListener("click", (event) => {
   const player = window.YoutubeAntiTranslate.getFirstVisible(
     document.querySelectorAll(window.YoutubeAntiTranslate.getPlayerSelector()),
   );
-  if (player && typeof player.seekTo === "function") {
+  if (player && typeof player["seekTo"] === "function") {
     try {
-      player.seekTo(seconds, true);
+      player["seekTo"](seconds, true);
       window.YoutubeAntiTranslate.logInfo(
         `Seeking to ${link.textContent} (${seconds}s)`,
       );
@@ -1229,7 +1235,7 @@ function setupHorizontalChaptersObserver() {
       if (mutation.type === "childList") {
         mutation.addedNodes.forEach((node) => {
           if (node.nodeType === Node.ELEMENT_NODE) {
-            const element = node;
+            const element = /** @type {Element} */ (node);
             // Check if horizontal chapters were added
             if (
               element.matches?.(HORIZONTAL_CHAPTERS_SELECTOR) ||
@@ -1275,7 +1281,7 @@ function setupHorizontalChaptersObserver() {
 // Extract video metadata window.ytPubsubPubsubInstance
 function extractVideoDataField(fieldName) {
   try {
-    const pubsub = window.ytPubsubPubsubInstance;
+    const pubsub = window["ytPubsubPubsubInstance"];
     if (!pubsub) {
       return null;
     }
@@ -1363,13 +1369,14 @@ async function getTitle(url) {
 }
 
 /** Get Description from the VideoData
- * @return {Promise<{shortDescription:string|null, channelId: string|null}>} The original description or null if it cannot be retrieved.
+ * @return {Promise<{shortDescription:string|null, title: string|null, channelId: string|null}>} The original description or null if it cannot be retrieved.
  */
 async function getDescriptionMobile() {
   return {
     shortDescription:
       extractVideoDataField("shortDescription") ||
       (await getTitle(document.location.href)),
+    title: (await getTitle(document.location.href)) || null,
     channelId: extractVideoDataField("channelId") || null,
   };
 }

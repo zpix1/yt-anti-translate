@@ -10,8 +10,9 @@ const { debounce } = window.YoutubeAntiTranslate;
  * so it cooperates with Vitest's fake-timer clock.
  */
 function installRAFStub() {
-  global.requestAnimationFrame = (cb) => setTimeout(() => cb(Date.now()), 0);
-  global.cancelAnimationFrame = (id) => clearTimeout(id);
+  global.requestAnimationFrame = (cb) =>
+    window.setTimeout(() => cb(Date.now()), 0);
+  global.cancelAnimationFrame = (id) => window.clearTimeout(id);
 }
 
 function restoreRAFStub() {

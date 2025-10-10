@@ -150,11 +150,11 @@ async function restoreOriginalBrandingHeader() {
 
 /**
  * Updates the branding header element with the original content
- * @param {HTMLElement} container - The branding header container element
+ * @param {Element} container - The branding header container element
  * @param {JSON} originalBrandingData - The original branding title and description
  */
 function updateBrandingHeaderTitleContent(container, originalBrandingData) {
-  if (originalBrandingData.title) {
+  if (originalBrandingData["title"]) {
     // Find the title text containers
     const titleTextContainer = container.querySelector(
       `h1 ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}`,
@@ -178,7 +178,7 @@ function updateBrandingHeaderTitleContent(container, originalBrandingData) {
         const normalizedOldTitle =
           window.YoutubeAntiTranslate.normalizeSpaces(cachedOldTitle);
         const normalizeRealTitle = window.YoutubeAntiTranslate.normalizeSpaces(
-          originalBrandingData.title,
+          originalBrandingData["title"],
         );
         const realDocumentTitle = normalizedDocumentTitle.replace(
           normalizedOldTitle,
@@ -188,7 +188,7 @@ function updateBrandingHeaderTitleContent(container, originalBrandingData) {
           document.title = realDocumentTitle;
         }
       }
-      if (titleTextContainer.textContent !== originalBrandingData.title) {
+      if (titleTextContainer.textContent !== originalBrandingData["title"]) {
         // cache old title for future reference
         window.YoutubeAntiTranslate.setSessionCache(
           `pageTitle_${document.location.href}`,
@@ -197,7 +197,7 @@ function updateBrandingHeaderTitleContent(container, originalBrandingData) {
 
         window.YoutubeAntiTranslate.replaceTextOnly(
           titleTextContainer,
-          originalBrandingData.title,
+          originalBrandingData["title"],
         );
       }
     }
@@ -206,14 +206,14 @@ function updateBrandingHeaderTitleContent(container, originalBrandingData) {
 
 /**
  * Updates the branding header element with the original content
- * @param {HTMLElement} container - The branding header container element
+ * @param {Element} container - The branding header container element
  * @param {JSON} originalBrandingData - The original branding title and description
  */
 function updateBrandingHeaderDescriptionContent(
   container,
   originalBrandingData,
 ) {
-  if (originalBrandingData.description) {
+  if (originalBrandingData["description"]) {
     // Find the description text container
     const selector = `yt-description-preview-view-model .yt-truncated-text__truncated-text-content > ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}:nth-child(1), yt-description-preview-view-model .truncated-text-wiz__truncated-text-content > ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}:nth-child(1)`;
 
@@ -232,10 +232,10 @@ function updateBrandingHeaderDescriptionContent(
       );
     } else {
       const truncatedDescription =
-        originalBrandingData.truncatedDescription ||
-        originalBrandingData.description.split("\n")[0];
+        originalBrandingData["truncatedDescription"] ||
+        originalBrandingData["description"].split("\n")[0];
       if (
-        descriptionTextContainer.innerText?.trim() !==
+        descriptionTextContainer.textContent?.trim() !==
         truncatedDescription?.trim()
       ) {
         const storeStyleDisplay =
@@ -296,7 +296,7 @@ async function restoreOriginalBrandingAbout() {
           const aboutContainer = window.YoutubeAntiTranslate.getAllVisibleNodes(
             document.querySelectorAll(CHANNELBRANDING_ABOUT_SELECTOR),
           );
-          if (aboutContainer || aboutContainer.length > 0) {
+          if (aboutContainer && aboutContainer.length > 0) {
             aboutContainer.forEach((element) => {
               updateBrandingAboutDescriptionContent(
                 element,
@@ -317,11 +317,11 @@ async function restoreOriginalBrandingAbout() {
 
 /**
  * Updates the About element with the original content
- * @param {HTMLElement} container - The about container element
+ * @param {Element} container - The about container element
  * @param {JSON} originalBrandingData - The original branding title and description
  */
 function updateBrandingAboutTitleContent(container, originalBrandingData) {
-  if (!originalBrandingData.title) {
+  if (!originalBrandingData["title"]) {
     return;
   }
 
@@ -342,24 +342,24 @@ function updateBrandingAboutTitleContent(container, originalBrandingData) {
     return;
   }
 
-  if (titleTextContainer.innerText !== originalBrandingData.title) {
+  if (titleTextContainer.textContent !== originalBrandingData["title"]) {
     window.YoutubeAntiTranslate.replaceTextOnly(
       titleTextContainer,
-      originalBrandingData.title,
+      originalBrandingData["title"],
     );
   }
 }
 
 /**
  * Updates the About element with the original content
- * @param {HTMLElement} container - The about container element
+ * @param {Element} container - The about container element
  * @param {JSON} originalBrandingData - The original branding title and description
  */
 function updateBrandingAboutDescriptionContent(
   container,
   originalBrandingData,
 ) {
-  if (!originalBrandingData.description) {
+  if (!originalBrandingData["description"]) {
     return;
   }
 
@@ -384,8 +384,8 @@ function updateBrandingAboutDescriptionContent(
 
   let formattedContent;
   const originalTextFirstLine =
-    originalBrandingData.truncatedDescription ||
-    originalBrandingData.description.split("\n")[0];
+    originalBrandingData["truncatedDescription"] ||
+    originalBrandingData["description"].split("\n")[0];
 
   // Compare text first span>span against first line first to avoid wasting resources on formatting content
   if (
@@ -398,7 +398,7 @@ function updateBrandingAboutDescriptionContent(
   ) {
     // If identical create formatted content and compare with firstchild text content to determine if any change is needed
     formattedContent = window.YoutubeAntiTranslate.createFormattedContent(
-      originalBrandingData.description,
+      originalBrandingData["description"],
     );
     if (
       descriptionTextContainer.hasChildNodes() &&
@@ -413,7 +413,7 @@ function updateBrandingAboutDescriptionContent(
   } else {
     // First line was different so we can continue with untranslation
     formattedContent = window.YoutubeAntiTranslate.createFormattedContent(
-      originalBrandingData.description,
+      originalBrandingData["description"],
     );
     window.YoutubeAntiTranslate.replaceContainerContent(
       descriptionTextContainer,
@@ -423,6 +423,8 @@ function updateBrandingAboutDescriptionContent(
 }
 
 async function untranslateBranding() {
+  //const response = await window.YoutubeAntiTranslate.getPlayerResponseSafely();
+
   const url = document.location.href;
   const isChannelPage = CHANNEL_LOCATION_REGEXES.some((regex) =>
     regex.test(url),
@@ -564,7 +566,7 @@ async function restoreOriginalBrandingChannelRenderers() {
     if (!linkElement) {
       return;
     }
-    const href = linkElement.href;
+    const href = linkElement.getAttribute("href");
     const ucid = await window.YoutubeAntiTranslate.getChannelUCIDFromHref(href);
     if (!ucid) {
       return;
@@ -658,7 +660,7 @@ async function restoreCollaboratorsDialog() {
           );
 
         const nameEl = item.parentElement.querySelector("yt-avatar-shape img");
-        const imgSrc = nameEl?.src || null;
+        const imgSrc = nameEl?.getAttribute("src") || null;
         if (!imgSrc) {
           return;
         }

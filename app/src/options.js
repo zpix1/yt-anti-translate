@@ -205,37 +205,54 @@ function loadOptions() {
       document.getElementById("disable-button").className = items.disabled
         ? "disabled"
         : "enabled";
-      document.getElementById("reload-checkbox").checked =
-        items.autoreloadOption;
-      document.getElementById("title-checkbox").checked =
-        items.untranslateTitle;
-      document.getElementById("audio-checkbox").checked =
-        items.untranslateAudio;
-      document.getElementById("audio-only-ai-checkbox").checked =
-        items.untranslateAudioOnlyAI;
-      document.getElementById("description-checkbox").checked =
-        items.untranslateDescription;
-      document.getElementById("chapters-checkbox").checked =
-        items.untranslateChapters;
-      document.getElementById("channel-branding-checkbox").checked =
-        items.untranslateChannelBranding;
-      document.getElementById("notification-checkbox").checked =
-        items.untranslateNotification;
-      document.getElementById("api-key-input").value = items.youtubeDataApiKey;
-      document.getElementById("thumbnail-checkbox").checked =
-        items.untranslateThumbnail;
-      document.getElementById("whitelist-title-input").value =
-        items.whiteListUntranslateTitle.join("\n");
-      document.getElementById("whitelist-audio-input").value =
-        items.whiteListUntranslateAudio.join("\n");
-      document.getElementById("whitelist-description-input").value =
-        items.whiteListUntranslateDescription.join("\n");
-      document.getElementById("whitelist-chapters-input").value =
-        items.whiteListUntranslateChapters.join("\n");
-      document.getElementById("whitelist-channel-branding-input").value =
-        items.whiteListUntranslateChannelBranding.join("\n");
-      document.getElementById("whitelist-thumbnail-input").value =
-        items.whiteListUntranslateThumbnail.join("\n");
+      /** @type {HTMLInputElement} */ (
+        document.getElementById("reload-checkbox")
+      ).checked = items.autoreloadOption;
+      /** @type {HTMLInputElement} */ (
+        document.getElementById("title-checkbox")
+      ).checked = items.untranslateTitle;
+      /** @type {HTMLInputElement} */ (
+        document.getElementById("audio-checkbox")
+      ).checked = items.untranslateAudio;
+      /** @type {HTMLInputElement} */ (
+        document.getElementById("audio-only-ai-checkbox")
+      ).checked = items.untranslateAudioOnlyAI;
+      /** @type {HTMLInputElement} */ (
+        document.getElementById("description-checkbox")
+      ).checked = items.untranslateDescription;
+      /** @type {HTMLInputElement} */ (
+        document.getElementById("chapters-checkbox")
+      ).checked = items.untranslateChapters;
+      /** @type {HTMLInputElement} */ (
+        document.getElementById("channel-branding-checkbox")
+      ).checked = items.untranslateChannelBranding;
+      /** @type {HTMLInputElement} */ (
+        document.getElementById("notification-checkbox")
+      ).checked = items.untranslateNotification;
+      /** @type {HTMLInputElement} */ (
+        document.getElementById("api-key-input")
+      ).value = items.youtubeDataApiKey;
+      /** @type {HTMLInputElement} */ (
+        document.getElementById("thumbnail-checkbox")
+      ).checked = items.untranslateThumbnail;
+      /** @type {HTMLTextAreaElement} */ (
+        document.getElementById("whitelist-title-input")
+      ).value = items.whiteListUntranslateTitle.join("\n");
+      /** @type {HTMLTextAreaElement} */ (
+        document.getElementById("whitelist-audio-input")
+      ).value = items.whiteListUntranslateAudio.join("\n");
+      /** @type {HTMLTextAreaElement} */ (
+        document.getElementById("whitelist-description-input")
+      ).value = items.whiteListUntranslateDescription.join("\n");
+      /** @type {HTMLTextAreaElement} */ (
+        document.getElementById("whitelist-chapters-input")
+      ).value = items.whiteListUntranslateChapters.join("\n");
+      /** @type {HTMLTextAreaElement} */ (
+        document.getElementById("whitelist-channel-branding-input")
+      ).value = items.whiteListUntranslateChannelBranding.join("\n");
+      /** @type {HTMLTextAreaElement} */ (
+        document.getElementById("whitelist-thumbnail-input")
+      ).value = items.whiteListUntranslateThumbnail.join("\n");
     },
   );
 }
@@ -243,21 +260,33 @@ function loadOptions() {
 function checkboxUpdate() {
   chrome.storage.sync.set(
     {
-      autoreloadOption: document.getElementById("reload-checkbox").checked,
-      untranslateTitle: document.getElementById("title-checkbox").checked,
-      untranslateAudio: document.getElementById("audio-checkbox").checked,
-      untranslateAudioOnlyAI: document.getElementById("audio-only-ai-checkbox")
-        .checked,
-      untranslateDescription: document.getElementById("description-checkbox")
-        .checked,
-      untranslateChapters: document.getElementById("chapters-checkbox").checked,
-      untranslateChannelBranding: document.getElementById(
-        "channel-branding-checkbox",
+      autoreloadOption: /** @type {HTMLInputElement} */ (
+        document.getElementById("reload-checkbox")
       ).checked,
-      untranslateNotification: document.getElementById("notification-checkbox")
-        .checked,
-      untranslateThumbnail:
-        document.getElementById("thumbnail-checkbox").checked,
+      untranslateTitle: /** @type {HTMLInputElement} */ (
+        document.getElementById("title-checkbox")
+      ).checked,
+      untranslateAudio: /** @type {HTMLInputElement} */ (
+        document.getElementById("audio-checkbox")
+      ).checked,
+      untranslateAudioOnlyAI: /** @type {HTMLInputElement} */ (
+        document.getElementById("audio-only-ai-checkbox")
+      ).checked,
+      untranslateDescription: /** @type {HTMLInputElement} */ (
+        document.getElementById("description-checkbox")
+      ).checked,
+      untranslateChapters: /** @type {HTMLInputElement} */ (
+        document.getElementById("chapters-checkbox")
+      ).checked,
+      untranslateChannelBranding: /** @type {HTMLInputElement} */ (
+        document.getElementById("channel-branding-checkbox")
+      ).checked,
+      untranslateNotification: /** @type {HTMLInputElement} */ (
+        document.getElementById("notification-checkbox")
+      ).checked,
+      untranslateThumbnail: /** @type {HTMLInputElement} */ (
+        document.getElementById("thumbnail-checkbox")
+      ).checked,
     },
     () => {
       reloadActiveYouTubeTab();
@@ -279,10 +308,9 @@ function validateAndSaveWhitelist(textareaId, statusTextId, storageKey) {
       // note: underscores (_), hyphens (-), periods (.), Latin middle dots (·) allowed
       //       with exceptions of usage the beginning or end of a handle
 
-      const textarea = document.getElementById(textareaId);
-      if (!textarea) {
-        return;
-      }
+      const textarea = /** @type {HTMLTextAreaElement} */ (
+        document.getElementById(textareaId)
+      );
 
       const lines = textarea.value.split("\n");
       const validLines = [];
@@ -367,8 +395,12 @@ function validateAndSaveWhitelist(textareaId, statusTextId, storageKey) {
 }
 
 function apiKeyUpdate() {
-  const newApiKey = document.getElementById("api-key-input").value.trim();
-  const saveButton = document.getElementById("save-api-key-button");
+  const newApiKey = /** @type {HTMLInputElement} */ (
+    document.getElementById("api-key-input")
+  ).value.trim();
+  const saveButton = /** @type {HTMLButtonElement} */ (
+    document.getElementById("save-api-key-button")
+  );
   const saveButtonText = document.getElementById("save-api-key-text");
 
   chrome.storage.sync.get(
@@ -415,7 +447,9 @@ function optionTabChanges() {
   // if windows type is not popup
   // then remove 'max-height' restriction form '.scroll-wrapper'
   if (!isPopup()) {
-    const scrollWrapper = document.querySelector(".scroll-wrapper");
+    const scrollWrapper = /** @type {HTMLElement} */ (
+      document.querySelector(".scroll-wrapper")
+    );
     if (scrollWrapper) {
       scrollWrapper.style.maxHeight = "none";
     }

@@ -131,12 +131,22 @@ async function untranslateAudioTrack() {
     document.querySelectorAll(window.YoutubeAntiTranslate.getPlayerSelector()),
   );
 
-  if (!player) {
+  if (
+    !player ||
+    !player["getPlayerResponse"] ||
+    typeof player["getPlayerResponse"] !== "function" ||
+    !player["getAvailableAudioTracks"] ||
+    typeof player["getAvailableAudioTracks"] !== "function" ||
+    !player["getAudioTrack"] ||
+    typeof player["getAudioTrack"] !== "function" ||
+    !player["setAudioTrack"] ||
+    typeof player["setAudioTrack"] !== "function"
+  ) {
     return;
   }
-  const playerResponse = await player.getPlayerResponse();
-  const tracks = await player.getAvailableAudioTracks();
-  const currentTrack = await player.getAudioTrack();
+  const playerResponse = await player["getPlayerResponse"]();
+  const tracks = await player["getAvailableAudioTracks"]();
+  const currentTrack = await player["getAudioTrack"]();
 
   if (!playerResponse || !tracks || !currentTrack) {
     return;
@@ -154,7 +164,7 @@ async function untranslateAudioTrack() {
   const currentVideoId = playerResponse.videoDetails.videoId;
   if (
     !currentVideoId ||
-    player.lastUntranslated === `${currentVideoId}+${currentTrack}`
+    player["lastUntranslated"] === `${currentVideoId}+${currentTrack}`
   ) {
     return;
   }
@@ -179,15 +189,15 @@ async function untranslateAudioTrack() {
   if (originalTrack) {
     // skip set if we already have the right track
     if (`${originalTrack}` === `${currentTrack}`) {
-      if (player.lastUntranslated !== `${currentVideoId}+${currentTrack}`) {
+      if (player["lastUntranslated"] !== `${currentVideoId}+${currentTrack}`) {
         // video id changed so still update the value
-        player.lastUntranslated = `${currentVideoId}+${originalTrack}`;
+        player["lastUntranslated"] = `${currentVideoId}+${originalTrack}`;
       }
       return;
     }
-    const isAudioTrackSet = await player.setAudioTrack(originalTrack);
+    const isAudioTrackSet = await player["setAudioTrack"](originalTrack);
     if (isAudioTrackSet) {
-      player.lastUntranslated = `${currentVideoId}+${originalTrack}`;
+      player["lastUntranslated"] = `${currentVideoId}+${originalTrack}`;
     }
   }
 }

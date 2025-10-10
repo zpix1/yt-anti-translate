@@ -31,7 +31,7 @@ describe("YoutubeAntiTranslate.getSettings (actual async impl)", () => {
 
   it("falls back to chrome.storage.sync.get if DOM script tag is missing", async () => {
     document.querySelector = vi.fn().mockReturnValue(null);
-    window.chrome = {
+    window.chrome = /** @type {any} */ ({
       storage: {
         sync: {
           get: vi
@@ -39,7 +39,7 @@ describe("YoutubeAntiTranslate.getSettings (actual async impl)", () => {
             .mockImplementation(async (defaults) => ({ ...defaults, foo: 42 })),
         },
       },
-    };
+    });
     const settings = await getSettings();
     expect(settings).toHaveProperty("foo", 42);
     expect(settings).toHaveProperty("disabled", false);
@@ -50,7 +50,7 @@ describe("YoutubeAntiTranslate.getSettings (actual async impl)", () => {
     document.querySelector = vi.fn().mockReturnValue({
       dataset: { ytantitranslatesettings: "not-json" },
     });
-    window.chrome = {
+    window.chrome = /** @type {any} */ ({
       storage: {
         sync: {
           get: vi
@@ -58,7 +58,7 @@ describe("YoutubeAntiTranslate.getSettings (actual async impl)", () => {
             .mockImplementation(async (defaults) => ({ ...defaults, foo: 99 })),
         },
       },
-    };
+    });
     const settings = await getSettings();
     expect(settings).toHaveProperty("foo", 99);
     expect(settings).toHaveProperty("disabled", false);
@@ -72,7 +72,7 @@ describe("YoutubeAntiTranslate.getSettings (actual async impl)", () => {
   });
   it("falls back to chrome.storage.sync.get if DOM script tag has no dataset", async () => {
     document.querySelector = vi.fn().mockReturnValue({});
-    window.chrome = {
+    window.chrome = /** @type {any} */ ({
       storage: {
         sync: {
           get: vi.fn().mockImplementation(async (defaults) => ({
@@ -81,7 +81,7 @@ describe("YoutubeAntiTranslate.getSettings (actual async impl)", () => {
           })),
         },
       },
-    };
+    });
     const settings = await getSettings();
     expect(settings).toHaveProperty("foo", 123);
     expect(settings).toHaveProperty("disabled", false);
@@ -89,7 +89,7 @@ describe("YoutubeAntiTranslate.getSettings (actual async impl)", () => {
 
   it("falls back to chrome.storage.sync.get if DOM script tag has no ytantitranslatesettings", async () => {
     document.querySelector = vi.fn().mockReturnValue({ dataset: {} });
-    window.chrome = {
+    window.chrome = /** @type {any} */ ({
       storage: {
         sync: {
           get: vi.fn().mockImplementation(async (defaults) => ({
@@ -98,7 +98,7 @@ describe("YoutubeAntiTranslate.getSettings (actual async impl)", () => {
           })),
         },
       },
-    };
+    });
     const settings = await getSettings();
     expect(settings).toHaveProperty("foo", 456);
     expect(settings).toHaveProperty("disabled", false);
@@ -106,7 +106,7 @@ describe("YoutubeAntiTranslate.getSettings (actual async impl)", () => {
 
   it("returns {} if chrome.storage.sync.get is missing", async () => {
     document.querySelector = vi.fn().mockReturnValue(null);
-    window.chrome = { storage: { sync: {} } };
+    window.chrome = /** @type {any} */ ({ storage: { sync: {} } });
     const settings = await getSettings();
     expect(settings).toEqual({});
   });

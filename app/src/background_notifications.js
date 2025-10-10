@@ -212,27 +212,35 @@ async function refreshNotificationTitles() {
 }
 // --- Auto setup similar to background.js ---
 
-// Observe DOM changes and (re)initialize notification observer when the pop-up appears/disappears
-const notificationDropdownObserver = new MutationObserver(
-  window.YoutubeAntiTranslate.debounce(() => {
-    const dropdownExists = document.querySelector(
-      'ytd-popup-container tp-yt-iron-dropdown[vertical-align="top"]',
+// Observe DOM changes and (re)initialize notification observer when the pop-up appears/disappears, waiting for window.YoutubeAntiTranslate to be available
+(function waitForYoutubeAntiTranslate() {
+  if (
+    window.YoutubeAntiTranslate &&
+    typeof window.YoutubeAntiTranslate.debounce === "function"
+  ) {
+    const notificationDropdownObserver = new MutationObserver(
+      window.YoutubeAntiTranslate.debounce(() => {
+        const dropdownExists = document.querySelector(
+          'ytd-popup-container tp-yt-iron-dropdown[vertical-align="top"]',
+        );
+        if (dropdownExists) {
+          setupNotificationTitlesObserver();
+        } else {
+          // In case the pop-up has been closed/remove, disconnect our inner observer
+          cleanupNotificationTitlesObserver();
+        }
+      }),
     );
-    if (dropdownExists) {
-      setupNotificationTitlesObserver();
-    } else {
-      // In case the pop-up has been closed/remove, disconnect our inner observer
-      cleanupNotificationTitlesObserver();
+    // Start observing the whole document body for relevant changes
+    if (document.body) {
+      notificationDropdownObserver.observe(document.body, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ["style", "class"],
+      });
     }
-  }),
-);
-
-// Start observing the whole document body for relevant changes
-if (document.body) {
-  notificationDropdownObserver.observe(document.body, {
-    childList: true,
-    subtree: true,
-    attributes: true,
-    attributeFilter: ["style", "class"],
-  });
-}
+  } else {
+    setTimeout(waitForYoutubeAntiTranslate, 8);
+  }
+})();

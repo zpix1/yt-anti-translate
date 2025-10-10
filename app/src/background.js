@@ -220,7 +220,9 @@ async function untranslateCurrentEmbeddedVideoMobileFullScreen() {
     originalNodeSelector,
     originalNodePartialSelector,
     () =>
-      document.querySelector(`#player-controls a.ytmVideoInfoVideoTitle`)?.href,
+      document
+        .querySelector(`#player-controls a.ytmVideoInfoVideoTitle`)
+        ?.getAttribute("href"),
     "div",
     false,
     true,
@@ -323,10 +325,10 @@ async function untranslateCurrentMiniPlayerVideo() {
         window.YoutubeAntiTranslate.getPlayerResponseSafely(miniPlayer);
       if (
         playerResponse &&
-        playerResponse.videoDetails &&
-        playerResponse.videoDetails.videoId
+        playerResponse["videoDetails"] &&
+        playerResponse["videoDetails"].videoId
       ) {
-        return `${document.location.origin}/watch?v=${playerResponse.videoDetails.videoId}`;
+        return `${document.location.origin}/watch?v=${playerResponse["videoDetails"].videoId}`;
       }
       return null;
     },
@@ -511,8 +513,8 @@ async function createOrUpdateUntranslatedFakeNode(
         window.YoutubeAntiTranslate.isVisible(translatedElement)
       ) {
         // Hide the translated element if both are visible
-        translatedElement.style.visibility = "hidden";
-        translatedElement.style.display = "none";
+        translatedElement["style"]["visibility"] = "hidden";
+        translatedElement["style"]["display"] = "none";
       }
 
       if (
@@ -538,31 +540,39 @@ async function createOrUpdateUntranslatedFakeNode(
           `#${fakeNodeID}`,
         );
         const newFakeNode = document.createElement(createElementTag);
-        if (translatedElement.href) {
-          newFakeNode.href = translatedElement.href;
+        if (translatedElement.getAttribute("href")) {
+          newFakeNode.setAttribute(
+            "href",
+            translatedElement.getAttribute("href"),
+          );
         }
         newFakeNode.className = translatedElement.className;
-        newFakeNode.target = translatedElement.target;
-        newFakeNode.tabIndex = translatedElement.tabIndex;
+        newFakeNode.setAttribute(
+          "target",
+          translatedElement.getAttribute("target"),
+        );
+        newFakeNode.tabIndex = parseInt(
+          translatedElement.getAttribute("tabIndex") ?? "0",
+        );
         newFakeNode["data-sessionlink"] = translatedElement["data-sessionlink"];
         newFakeNode.id = fakeNodeID;
         newFakeNode.textContent = realTitle;
         newFakeNode.setAttribute("video-id", videoId);
         if (!existingFakeNode) {
           newFakeNode.style.visibility =
-            translatedElement.style?.visibility ?? "visible";
+            translatedElement["style"]?.["visibility"] ?? "visible";
           newFakeNode.style.display =
-            translatedElement.style?.display ?? "block";
+            translatedElement["style"]?.["display"] ?? "block";
           translatedElement.after(newFakeNode);
         } else {
           newFakeNode.style.visibility =
-            existingFakeNode.style?.visibility ?? "visible";
+            existingFakeNode["style"]?.["visibility"] ?? "visible";
           newFakeNode.style.display =
-            existingFakeNode.style?.display ?? "block";
+            existingFakeNode["style"]?.["display"] ?? "block";
           existingFakeNode.replaceWith(newFakeNode);
         }
-        translatedElement.style.visibility = "hidden";
-        translatedElement.style.display = "none";
+        translatedElement["style"]["visibility"] = "hidden";
+        translatedElement["style"]["display"] = "none";
       } else if (fakeNode) {
         fakeNode.textContent = realTitle;
         fakeNode.setAttribute("video-id", videoId);
@@ -627,8 +637,8 @@ async function createOrUpdateUntranslatedFakeNodeAuthor(
     window.YoutubeAntiTranslate.isVisible(translatedElement)
   ) {
     // Hide the translated element if both are visible
-    translatedElement.style.visibility = "hidden";
-    translatedElement.style.display = "none";
+    translatedElement["style"]["visibility"] = "hidden";
+    translatedElement["style"]["display"] = "none";
   }
 
   if (
@@ -647,28 +657,35 @@ async function createOrUpdateUntranslatedFakeNodeAuthor(
       `#${authorFakeNodeID}`,
     );
     const newFakeNode = document.createElement(authorCreateElementTag);
-    if (translatedElement.href) {
-      newFakeNode.href = translatedElement.href;
+    if (translatedElement.getAttribute("href")) {
+      newFakeNode.setAttribute("href", translatedElement.getAttribute("href"));
     }
     newFakeNode.className = translatedElement.className;
-    newFakeNode.target = translatedElement.target;
-    newFakeNode.tabIndex = translatedElement.tabIndex;
+    newFakeNode.setAttribute(
+      "target",
+      translatedElement.getAttribute("target"),
+    );
+    newFakeNode.tabIndex = parseInt(
+      translatedElement.getAttribute("tabIndex") ?? "0",
+    );
     newFakeNode["data-sessionlink"] = translatedElement["data-sessionlink"];
     newFakeNode.id = authorFakeNodeID;
     newFakeNode.textContent = realAuthor;
     if (!existingFakeNode) {
       newFakeNode.style.visibility =
-        translatedElement.style?.visibility ?? "visible";
-      newFakeNode.style.display = translatedElement.style?.display ?? "block";
+        translatedElement["style"]?.["visibility"] ?? "visible";
+      newFakeNode.style.display =
+        translatedElement["style"]?.["display"] ?? "block";
       translatedElement.after(newFakeNode);
     } else {
       newFakeNode.style.visibility =
-        existingFakeNode.style?.visibility ?? "visible";
-      newFakeNode.style.display = existingFakeNode.style?.display ?? "block";
+        existingFakeNode["style"]?.["visibility"] ?? "visible";
+      newFakeNode.style.display =
+        existingFakeNode["style"]?.["display"] ?? "block";
       existingFakeNode.replaceWith(newFakeNode);
     }
-    translatedElement.style.visibility = "hidden";
-    translatedElement.style.display = "none";
+    translatedElement["style"]["visibility"] = "hidden";
+    translatedElement["style"]["display"] = "none";
   } else if (fakeNode) {
     fakeNode.textContent = realAuthor;
   }
@@ -1175,7 +1192,7 @@ async function untranslateOtherVideos(intersectElements = null) {
 
                 const originalCollaborators =
                   await window.YoutubeAntiTranslate.getOriginalCollaboratorsItemsWithYoutubeI(
-                    originalTitle,
+                    `${mainAuthor} ${originalTitle}`,
                   );
 
                 const originalItem = originalCollaborators?.find(
@@ -1193,7 +1210,7 @@ async function untranslateOtherVideos(intersectElements = null) {
               // Needed on mobile where avatar stacks are not used
               const originalCollaborators =
                 await window.YoutubeAntiTranslate.getOriginalCollaboratorsItemsWithYoutubeI(
-                  originalTitle,
+                  `${mainAuthor} ${originalTitle}`,
                 );
               const originalItems = originalCollaborators?.filter(
                 (item) => item.videoId === videoId,
@@ -1692,13 +1709,15 @@ async function untranslateCurrentPlayerBackgroundThumbnail() {
     ".ytp-cued-thumbnail-overlay-image[style*='i.ytimg.com'][style*='background-image'][style*='maxresdefault']",
   );
   if (thumbnailBackground) {
-    const currentStyle = thumbnailBackground.style.backgroundImage;
+    const currentStyle =
+      thumbnailBackground["style"]?.["backgroundImage"] || "";
     // extract image src from style.backgroundImage(url("IMAGE_URL"))
     const currentImageSrc = currentStyle.match(
       /url\(["']?([^"']+)["']?\)/,
     )?.[1];
 
     if (
+      !currentImageSrc ||
       currentImageSrc.includes("https://i.ytimg.com/vi/") || // path of not-localized thumbnails
       currentImageSrc.includes("?youtube-anti-translate")
     ) {
@@ -1772,14 +1791,15 @@ async function untranslateCurrentPlayerBackgroundThumbnail() {
         if (!currentStyle || !currentStyle.includes(originalThumbnail)) {
           const { width, height } =
             await window.YoutubeAntiTranslate.getImageSize(currentImageSrc);
-          thumbnailBackground.style.backgroundImage = `url("${originalThumbnail}?youtube-anti-translate=${Date.now()}")`;
+          thumbnailBackground["style"]["backgroundImage"] =
+            `url("${originalThumbnail}?youtube-anti-translate=${Date.now()}")`;
           // Add crop ratio to image
           if (width && height) {
             const cropRatio = width / height;
             if (cropRatio) {
               // match crop ratio of current thumbnail
-              thumbnailBackground.style.aspectRatio = cropRatio;
-              thumbnailBackground.style.objectFit = "cover";
+              thumbnailBackground["style"]["aspectRatio"] = cropRatio;
+              thumbnailBackground["style"]["objectFit"] = "cover";
             }
           }
         }
@@ -1811,7 +1831,7 @@ async function untranslateCurrentPlaylistHeaderThumbnail() {
   }
 
   for (const playlistHeadersImage of playlistHeadersImages) {
-    const imageSrc = playlistHeadersImage.src;
+    const imageSrc = playlistHeadersImage.getAttribute("src");
     if (!imageSrc || imageSrc.trim() === "") {
       continue;
     }
@@ -1874,16 +1894,18 @@ async function untranslateCurrentPlaylistHeaderThumbnail() {
         const { width, height } =
           await window.YoutubeAntiTranslate.getImageSize(imageSrc);
 
-        playlistHeadersImage.src =
-          response.data.thumbnail_url + `?youtube-anti-translate=${Date.now()}`;
+        playlistHeadersImage.setAttribute(
+          "src",
+          response.data.thumbnail_url + `?youtube-anti-translate=${Date.now()}`,
+        );
 
         // Add crop ratio to image
         if (width && height) {
           const cropRatio = width / height;
           if (cropRatio) {
             // match crop ratio of current thumbnail
-            playlistHeadersImage.style.aspectRatio = cropRatio;
-            playlistHeadersImage.style.objectFit = "cover";
+            playlistHeadersImage["style"]["aspectRatio"] = cropRatio;
+            playlistHeadersImage["style"]["objectFit"] = "cover";
           }
         }
       }
@@ -1913,10 +1935,10 @@ async function untranslateCurrentVideoPreviewThumbnail() {
   let thumbnailNeedsUpdate = false;
   if (thumbnailElements && thumbnailElements.length > 0) {
     for (const thumbnailElement of thumbnailElements) {
-      if (!thumbnailElement || !thumbnailElement.src) {
+      if (!thumbnailElement || !thumbnailElement.getAttribute("src")) {
         continue;
       }
-      const currentImageSrc = thumbnailElement.src;
+      const currentImageSrc = thumbnailElement.getAttribute("src");
 
       if (
         currentImageSrc.includes("https://i.ytimg.com/vi/") || // path of not-localized thumbnails
@@ -1932,7 +1954,7 @@ async function untranslateCurrentVideoPreviewThumbnail() {
       return;
     }
 
-    const currentVideoHref = videoPreview.href;
+    const currentVideoHref = videoPreview.getAttribute("href");
     if (!currentVideoHref || currentVideoHref.trim() === "") {
       return;
     }
@@ -1985,20 +2007,22 @@ async function untranslateCurrentVideoPreviewThumbnail() {
 
       for (const thumbnailElement of thumbnailElements) {
         // Only update if the thumbnail is different
-        if (!thumbnailElement.src.includes(originalThumbnail)) {
+        if (!thumbnailElement.getAttribute("src").includes(originalThumbnail)) {
           const { width, height } =
             await window.YoutubeAntiTranslate.getImageSize(
-              thumbnailElement.src,
+              thumbnailElement.getAttribute("src"),
             );
-          thumbnailElement.src =
-            originalThumbnail + `?youtube-anti-translate=${Date.now()}`;
+          thumbnailElement.setAttribute(
+            "src",
+            originalThumbnail + `?youtube-anti-translate=${Date.now()}`,
+          );
           // Add crop ratio to image
           if (width && height) {
             const cropRatio = width / height;
             if (cropRatio) {
               // match crop ratio of current thumbnail
-              thumbnailElement.style.aspectRatio = cropRatio;
-              thumbnailElement.style.objectFit = "cover";
+              thumbnailElement["style"]["aspectRatio"] = cropRatio;
+              thumbnailElement["style"]["objectFit"] = "cover";
             }
           }
         }

@@ -197,7 +197,7 @@ ytm-shorts-lockup-view-model`,
     getSignature = undefined,
   ) {
     // Assign a stable ID to this func if not already present
-    if (!func.__debounceId) {
+    if (!func["__debounceId"]) {
       Object.defineProperty(func, "__debounceId", {
         value: Symbol(),
         writable: false,
@@ -245,8 +245,8 @@ ytm-shorts-lockup-view-model`,
       const signature =
         getSignature?.(context, args) ||
         (includeArgsInSignature
-          ? `${String(func.__debounceId)}::${JSON.stringify(args)}`
-          : String(func.__debounceId));
+          ? `${String(func["__debounceId"])}::${JSON.stringify(args)}`
+          : String(func["__debounceId"]));
 
       const now =
         typeof performance !== "undefined" &&
@@ -538,17 +538,21 @@ ytm-shorts-lockup-view-model`,
   },
 
   getFirstVisible: function (nodes, shouldBeInsideViewport = true) {
-    if (!nodes) {
+    if (
+      !nodes &&
+      (!(nodes instanceof Element) || !(nodes instanceof NodeList))
+    ) {
       return null;
     }
 
-    if (nodes instanceof Node) {
-      nodes = [nodes];
+    let /** @type {Element[]} */ nodeArray;
+    if (nodes instanceof Element) {
+      nodeArray = [/** @type {Element}*/ nodes];
     } else {
-      nodes = Array.from(nodes);
+      nodeArray = Array.from(/** @type {NodeListOf<Element>}*/ nodes);
     }
 
-    for (const node of nodes) {
+    for (const node of nodeArray) {
       if (this.isVisible(node, shouldBeInsideViewport, false, false)) {
         return node;
       }
@@ -562,19 +566,23 @@ ytm-shorts-lockup-view-model`,
     shouldBeInsideViewport = true,
     lengthLimit = Number.MAX_VALUE,
   ) {
-    if (!nodes) {
+    if (
+      !nodes &&
+      (!(nodes instanceof Element) || !(nodes instanceof NodeList))
+    ) {
       return null;
     }
 
-    if (nodes instanceof Node) {
-      nodes = [nodes];
+    let /** @type {Element[]} */ nodeArray;
+    if (nodes instanceof Element) {
+      nodeArray = [/** @type {Element}*/ nodes];
     } else {
-      nodes = Array.from(nodes);
+      nodeArray = Array.from(/** @type {NodeListOf<Element>}*/ nodes);
     }
 
     let visibleNodes = null;
 
-    for (const node of nodes) {
+    for (const node of nodeArray) {
       if (this.isVisible(node, shouldBeInsideViewport, false, false)) {
         if (visibleNodes) {
           visibleNodes.push(node);
@@ -592,19 +600,23 @@ ytm-shorts-lockup-view-model`,
   },
 
   getAllVisibleNodesOutsideViewport: function (nodes, useOutsideLimit = false) {
-    if (!nodes) {
+    if (
+      !nodes &&
+      (!(nodes instanceof Element) || !(nodes instanceof NodeList))
+    ) {
       return null;
     }
 
+    let /** @type {Element[]} */ nodeArray;
     if (nodes instanceof Node) {
-      nodes = [nodes];
+      nodeArray = [/** @type {Node}*/ nodes];
     } else {
-      nodes = Array.from(nodes);
+      nodeArray = Array.from(/** @type {NodeList}*/ nodes);
     }
 
     let visibleNodes = null;
 
-    for (const node of nodes) {
+    for (const node of nodeArray) {
       if (this.isVisible(node, true, true, useOutsideLimit)) {
         if (visibleNodes) {
           visibleNodes.push(node);
@@ -706,7 +718,7 @@ ytm-shorts-lockup-view-model`,
     const link = document.createElement("a");
     link.className =
       "yt-core-attributed-string__link yt-core-attributed-string__link--call-to-action-color yt-timecode-link";
-    link.tabIndex = "0";
+    link.tabIndex = 0;
     link.href = `/watch?v=${this.getCurrentVideoId()}&t=${seconds}s`;
     link.target = "";
     link.setAttribute("force-new-state", "true");
@@ -732,7 +744,7 @@ ytm-shorts-lockup-view-model`,
     const link = document.createElement("a");
     link.className =
       "yt-core-attributed-string__link yt-core-attributed-string__link--call-to-action-color";
-    link.tabIndex = "0";
+    link.tabIndex = 0;
     if (type === "hashtag") {
       link.href = `/hashtag/${encodeURIComponent(value)}`;
       link.textContent = `#${value}`;
@@ -871,7 +883,7 @@ ytm-shorts-lockup-view-model`,
       `replaceTextOnly called with text length: ${replaceText.length}`,
     );
     // Loop through child nodes to find the first text node
-    for (const node of element.childNodes) {
+    for (const node of Array.from(element.childNodes)) {
       if (node.nodeType === Node.TEXT_NODE) {
         node.textContent = replaceText;
         this.logDebug(`replaceTextOnly: replaced first text node`);
@@ -882,11 +894,12 @@ ytm-shorts-lockup-view-model`,
 
   getFirstTextNode: function (element) {
     // Loop through child nodes to find the first text node
-    for (const node of element.childNodes) {
+    for (const node of Array.from(element.childNodes)) {
       if (node.nodeType === Node.TEXT_NODE) {
-        return node;
+        return /** @type {Text} */ (node);
       }
     }
+    return null;
   },
 
   replaceContainerContent: function (container, newContent) {
@@ -1138,9 +1151,9 @@ ytm-shorts-lockup-view-model`,
     const element = document.querySelector(
       'script[type="module"][data-ytantitranslatesettings]',
     );
-    if (element?.dataset?.ytantitranslatesettings) {
+    if (element?.["dataset"]?.ytantitranslatesettings) {
       try {
-        return JSON.parse(element.dataset.ytantitranslatesettings);
+        return JSON.parse(element["dataset"].ytantitranslatesettings);
       } catch {
         // fallback to chrome storage if JSON is invalid
       }
@@ -1184,11 +1197,14 @@ ytm-shorts-lockup-view-model`,
       if (cacheDotNotationProperty) {
         return {
           response: new Response(
-            {
+            JSON.stringify({
               data: null,
               cachedWithDotNotation: storedResponse,
+            }),
+            {
+              status: storedResponse.status || 200,
+              headers: { "Content-Type": "application/json" },
             },
-            { status: storedResponse.status || 200 },
           ),
           data: null,
           cachedWithDotNotation: storedResponse,
@@ -1196,11 +1212,14 @@ ytm-shorts-lockup-view-model`,
       } else {
         return {
           response: new Response(
-            {
+            JSON.stringify({
               data: storedResponse,
               cachedWithDotNotation: null,
+            }),
+            {
+              status: storedResponse.status || 200,
+              headers: { "Content-Type": "application/json" },
             },
-            { status: storedResponse.status || 200 },
           ),
           data: storedResponse,
           cachedWithDotNotation: null,
@@ -1490,7 +1509,11 @@ ytm-shorts-lockup-view-model`,
     // Check cache
     const storedResponse =
       window.YoutubeAntiTranslate.getSessionCache(requestIdentifier);
-    if (storedResponse) {
+    if (
+      storedResponse &&
+      Array.isArray(storedResponse) &&
+      storedResponse.length > 0
+    ) {
       return storedResponse;
     }
 
@@ -1583,6 +1606,7 @@ ytm-shorts-lockup-view-model`,
             }
           }
         }
+        //}
       }
     }
 
@@ -1700,7 +1724,11 @@ ytm-shorts-lockup-view-model`,
     }
     try {
       const response = await this.cachedRequest(src);
-      return response?.ok && response?.status >= 200 && response?.status < 300;
+      return (
+        response?.response.ok &&
+        response?.response.status >= 200 &&
+        response?.response.status < 300
+      );
     } catch {
       return false;
     }
@@ -2125,8 +2153,12 @@ ytm-shorts-lockup-view-model`,
 
     // Attempt standard desktop API first
     try {
-      if (playerEl && typeof playerEl.getPlayerResponse === "function") {
-        response = playerEl.getPlayerResponse();
+      if (
+        playerEl &&
+        playerEl["getPlayerResponse"] &&
+        typeof playerEl["getPlayerResponse"] === "function"
+      ) {
+        response = playerEl["getPlayerResponse"]();
       }
     } catch (err) {
       window.YoutubeAntiTranslate?.logDebug?.("getPlayerResponse failed", err);
@@ -2137,9 +2169,10 @@ ytm-shorts-lockup-view-model`,
       try {
         if (
           playerEl &&
-          typeof playerEl.getEmbeddedPlayerResponse === "function"
+          playerEl["getEmbeddedPlayerResponse"] &&
+          typeof playerEl["getEmbeddedPlayerResponse"] === "function"
         ) {
-          response = playerEl.getEmbeddedPlayerResponse();
+          response = playerEl["getEmbeddedPlayerResponse"]();
         }
       } catch (err) {
         window.YoutubeAntiTranslate?.logDebug?.(
@@ -2152,13 +2185,13 @@ ytm-shorts-lockup-view-model`,
     // Legacy/alternate location used by some mobile builds
     if (
       !response &&
-      window.ytplayer &&
-      window.ytplayer.config &&
-      window.ytplayer.config.args &&
-      window.ytplayer.config.args.player_response
+      window["ytplayer"] &&
+      window["ytplayer"].config &&
+      window["ytplayer"].config.args &&
+      window["ytplayer"].config.args.player_response
     ) {
       try {
-        response = JSON.parse(window.ytplayer.config.args.player_response);
+        response = JSON.parse(window["ytplayer"].config.args.player_response);
       } catch (err) {
         window.YoutubeAntiTranslate.logWarning(
           "Failed to parse ytplayer.config.args.player_response",
@@ -2174,8 +2207,8 @@ ytm-shorts-lockup-view-model`,
     const getCount = element.getAttribute(attributeName);
     const getCountNumber = parseInt(
       getCount
-        ? getCount.match(new RegExp(`^${videoId}__([0-9]+)$`))?.[1] || 0
-        : 0,
+        ? getCount.match(new RegExp(`^${videoId}__([0-9]+)$`))?.[1] || "0"
+        : "0",
     );
     element.setAttribute(
       attributeName,
