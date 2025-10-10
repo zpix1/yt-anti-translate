@@ -423,8 +423,6 @@ function updateBrandingAboutDescriptionContent(
 }
 
 async function untranslateBranding() {
-  //const response = await window.YoutubeAntiTranslate.getPlayerResponseSafely();
-
   const url = document.location.href;
   const isChannelPage = CHANNEL_LOCATION_REGEXES.some((regex) =>
     regex.test(url),

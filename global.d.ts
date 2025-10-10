@@ -651,6 +651,7 @@ declare global {
       /**
        * Retrieves the YouTube player response object in a resilient way that works
        * across desktop and mobile layouts.
+       * - WARNING: this uses YouTube script/variables inside of the PAGE DOM. Only works on injected scripts, not in service workers or content scripts.
        * @param playerEl - Player element if already located.
        * @returns The player response object or null if it cannot be found.
        */
