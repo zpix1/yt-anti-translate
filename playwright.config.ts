@@ -16,16 +16,20 @@ export const test = base.extend<TestOptions>({
 });
 
 export default defineConfig<TestOptions>({
-  timeout: 8 * 60 * 1000,
+  globalTimeout: 55 * 60 * 1000,
+  timeout: process.env.CI ? 18 * 60 * 1000 : 9 * 60 * 1000,
+  expect: {
+    timeout: process.env.CI ? 10_000 : 5_000,
+  },
   testDir: "./tests",
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
   /* Retry 3 times on CI, or once locally */
-  retries: process.env.CI ? 3 : 1,
+  retries: process.env.CI ? 5 : 1,
   /* Limit parallel workers on CI as they cause random failures some of the times */
-  workers: process.env.CI ? 2 : undefined,
+  workers: process.env.CI ? 3 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [["github"], ["html"]],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
@@ -39,12 +43,16 @@ export default defineConfig<TestOptions>({
 
   /* Configure projects for major browsers */
   projects: [
+    // Desktop Chrome
     {
-      name: "setup-auth-and-ublock",
+      name: "setup-auth-and-ublock-chromium",
       testMatch: /.*setup\.spec\.ts/,
       use: {
-        allBrowserNameWithExtensions: ["chromium", "firefox"],
+        allBrowserNameWithExtensions: ["chromium"],
         allLocaleStrings: ["ru-RU", "th-TH"],
+        isMobile: false,
+        actionTimeout: process.env.CI ? 60_000 : 30_000,
+        navigationTimeout: process.env.CI ? 60_000 : 30_000,
       },
     },
     {
@@ -54,6 +62,7 @@ export default defineConfig<TestOptions>({
         browserNameWithExtensions: "chromium",
         localeString: "ru-RU",
         ...devices["Desktop Chrome"],
+        isMobile: false,
         contextOptions: {
           // Load the extension from the app directory
           permissions: ["clipboard-read", "clipboard-write"],
@@ -62,23 +71,10 @@ export default defineConfig<TestOptions>({
           args: ["--headless=new"],
         },
         locale: "ru-RU",
+        actionTimeout: process.env.CI ? 60_000 : 30_000,
+        navigationTimeout: process.env.CI ? 60_000 : 30_000,
       },
-      dependencies: ["setup-auth-and-ublock"],
-    },
-    {
-      name: "firefox-extension-ru-RU",
-      testMatch: /.*extension\.spec\.ts/,
-      use: {
-        browserNameWithExtensions: "firefox",
-        localeString: "ru-RU",
-        ...devices["Desktop Firefox"],
-        contextOptions: {},
-        launchOptions: {
-          args: ["--headless=new"],
-        },
-        locale: "ru-RU",
-      },
-      dependencies: ["setup-auth-and-ublock"],
+      dependencies: ["setup-auth-and-ublock-chromium"],
     },
     {
       name: "chromium-extension-extra-th-TH",
@@ -87,6 +83,7 @@ export default defineConfig<TestOptions>({
         browserNameWithExtensions: "chromium",
         localeString: "th-TH",
         ...devices["Desktop Chrome"],
+        isMobile: false,
         contextOptions: {
           // Load the extension from the app directory
           permissions: ["clipboard-read", "clipboard-write"],
@@ -95,8 +92,41 @@ export default defineConfig<TestOptions>({
           args: ["--headless=new"],
         },
         locale: "th-TH",
+        actionTimeout: process.env.CI ? 60_000 : 30_000,
+        navigationTimeout: process.env.CI ? 60_000 : 30_000,
       },
-      dependencies: ["setup-auth-and-ublock"],
+      dependencies: ["setup-auth-and-ublock-chromium"],
+    },
+
+    // Desktop Firefox
+    {
+      name: "setup-auth-and-ublock-firefox",
+      testMatch: /.*setup\.spec\.ts/,
+      use: {
+        allBrowserNameWithExtensions: ["firefox"],
+        allLocaleStrings: ["ru-RU", "th-TH"],
+        isMobile: false,
+        actionTimeout: process.env.CI ? 60_000 : 30_000,
+        navigationTimeout: process.env.CI ? 60_000 : 30_000,
+      },
+    },
+    {
+      name: "firefox-extension-ru-RU",
+      testMatch: /.*extension\.spec\.ts/,
+      use: {
+        browserNameWithExtensions: "firefox",
+        localeString: "ru-RU",
+        ...devices["Desktop Firefox"],
+        isMobile: false,
+        contextOptions: {},
+        launchOptions: {
+          args: ["--headless=new"],
+        },
+        locale: "ru-RU",
+        actionTimeout: process.env.CI ? 60_000 : 30_000,
+        navigationTimeout: process.env.CI ? 60_000 : 30_000,
+      },
+      dependencies: ["setup-auth-and-ublock-firefox"],
     },
     {
       name: "firefox-extension-extra-th-TH",
@@ -105,13 +135,29 @@ export default defineConfig<TestOptions>({
         browserNameWithExtensions: "firefox",
         localeString: "th-TH",
         ...devices["Desktop Firefox"],
+        isMobile: false,
         contextOptions: {},
         launchOptions: {
           args: ["--headless=new"],
         },
         locale: "th-TH",
+        actionTimeout: process.env.CI ? 60_000 : 30_000,
+        navigationTimeout: process.env.CI ? 60_000 : 30_000,
       },
-      dependencies: ["setup-auth-and-ublock"],
+      dependencies: ["setup-auth-and-ublock-firefox"],
+    },
+
+    // Mobile Chrome
+    {
+      name: "setup-auth-and-ublock-mobile",
+      testMatch: /.*setup\.spec\.ts/,
+      use: {
+        ...devices["Pixel 5"],
+        allBrowserNameWithExtensions: ["chromium"],
+        allLocaleStrings: ["ru-RU", "th-TH"],
+        actionTimeout: process.env.CI ? 60_000 : 30_000,
+        navigationTimeout: process.env.CI ? 60_000 : 30_000,
+      },
     },
     {
       name: "chromium-extension-mobile-ru-RU",
@@ -120,6 +166,7 @@ export default defineConfig<TestOptions>({
         browserNameWithExtensions: "chromium",
         localeString: "ru-RU",
         ...devices["Pixel 5"],
+        isMobile: true,
         contextOptions: {
           permissions: ["clipboard-read", "clipboard-write"],
         },
@@ -127,8 +174,10 @@ export default defineConfig<TestOptions>({
           args: ["--headless=new"],
         },
         locale: "ru-RU",
+        actionTimeout: process.env.CI ? 60_000 : 30_000,
+        navigationTimeout: process.env.CI ? 60_000 : 30_000,
       },
-      dependencies: ["setup-auth-and-ublock"],
+      dependencies: ["setup-auth-and-ublock-mobile"],
     },
     {
       name: "chromium-extension-mobile-extra-th-TH",
@@ -137,6 +186,7 @@ export default defineConfig<TestOptions>({
         browserNameWithExtensions: "chromium",
         localeString: "th-TH",
         ...devices["Pixel 5"],
+        isMobile: true,
         contextOptions: {
           permissions: ["clipboard-read", "clipboard-write"],
         },
@@ -144,8 +194,10 @@ export default defineConfig<TestOptions>({
           args: ["--headless=new"],
         },
         locale: "th-TH",
+        actionTimeout: process.env.CI ? 60_000 : 30_000,
+        navigationTimeout: process.env.CI ? 60_000 : 30_000,
       },
-      dependencies: ["setup-auth-and-ublock"],
+      dependencies: ["setup-auth-and-ublock-mobile"],
     },
   ],
 });

@@ -1,30 +1,34 @@
 /* eslint-disable  @typescript-eslint/no-explicit-any */
 
-import { expect } from "@playwright/test";
+import {
+  Browser,
+  BrowserContext,
+  Page,
+  TestInfo,
+  expect,
+} from "@playwright/test";
 import { test } from "../playwright.config";
 import {
-  handleRetrySetup,
-  createBrowserContext,
-  setupPageWithAuth,
+  setupTestEnvironment,
   loadPageAndVerifyAuth,
+  waitForSelectorOrRetryWithPageReload,
+  getFirstVisibleLocator,
 } from "./helpers/TestSetupHelper";
 
 test.describe("YouTube Anti-Translate extension", () => {
   test("Prevents current video title and description auto-translation", async ({
     browserNameWithExtensions,
     localeString,
+    isMobile,
   }, testInfo) => {
-    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
-
-    // Launch browser with the extension
-    const context = await createBrowserContext(browserNameWithExtensions);
-
-    // Create a new page
-    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
-      context,
-      browserNameWithExtensions,
-      localeString,
-    );
+    // Handle retries and prerequisite setup
+    const { context, page, consoleMessageCountContainer } =
+      await setupTestEnvironment(
+        testInfo,
+        browserNameWithExtensions,
+        localeString,
+        isMobile,
+      );
 
     await loadPageAndVerifyAuth(
       page,
@@ -33,7 +37,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     );
 
     // Wait for the video page to fully load
-    await page.waitForSelector("ytd-watch-metadata");
+    await waitForSelectorOrRetryWithPageReload(page, "ytd-watch-metadata");
 
     // Expand the description if it's collapsed
     const moreButton = page.locator(
@@ -42,21 +46,23 @@ test.describe("YouTube Anti-Translate extension", () => {
     if (await moreButton.isVisible()) {
       await moreButton.click();
       // Wait for the description to expand
-      await page.waitForTimeout(1000);
+      await page.waitForTimeout(process.env.CI ? 1500 : 1000);
     }
 
     // Get the description text
-    const descriptionText = await page
-      .locator("#description-inline-expander:visible")
-      .textContent();
+    const descriptionLocator = await getFirstVisibleLocator(
+      page.locator("#description-inline-expander"),
+    );
+    const descriptionText = await descriptionLocator.textContent();
     console.log("Description text:", descriptionText?.trim());
 
     // Get the video title
-    const videoTitle = await page
-      .locator(
-        "h1.ytd-watch-metadata #yt-anti-translate-fake-node-current-video:visible",
-      )
-      .textContent();
+    const videoTitleLocator = await getFirstVisibleLocator(
+      page.locator(
+        "h1.ytd-watch-metadata #yt-anti-translate-fake-node-current-video",
+      ),
+    );
+    const videoTitle = await videoTitleLocator.textContent();
     console.log("Video title:", videoTitle?.trim());
 
     // Check that the title is in English and not in Russian
@@ -81,14 +87,14 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Open full screen
     await page.keyboard.press("F");
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(process.env.CI ? 750 : 500);
 
     // Get the head link video title
-    const headLinkVideoTitle = await page
-      .locator(
-        "ytd-player .html5-video-player a.ytp-title-link#yt-anti-translate-fake-node-video-head-link",
-      )
-      .textContent();
+    const headLinkVideoTitleLocator = await page.locator(
+      "ytd-player .html5-video-player a.ytp-title-link#yt-anti-translate-fake-node-video-head-link",
+    );
+    await headLinkVideoTitleLocator.waitFor();
+    const headLinkVideoTitle = await headLinkVideoTitleLocator.textContent();
     console.log("Head Link Video title:", headLinkVideoTitle?.trim());
 
     // Check that the title is in English and not in Russian
@@ -100,20 +106,22 @@ test.describe("YouTube Anti-Translate extension", () => {
     );
 
     // Get the full screen footer video title
-    const fullStreenVideoTitleFooter = await page
+    const fullScreenVideoTitleFooterLocator = await page
       .locator(".ytp-title-text .ytp-title-fullerscreen-link")
-      .nth(1)
-      .textContent();
+      .nth(1);
+    await fullScreenVideoTitleFooterLocator.waitFor();
+    const fullScreenVideoTitleFooter =
+      await fullScreenVideoTitleFooterLocator.textContent();
     console.log(
       "Full Screen Head Link Video title:",
-      fullStreenVideoTitleFooter?.trim(),
+      fullScreenVideoTitleFooter?.trim(),
     );
 
     // Check that the title is in English and not in Russian
-    expect(fullStreenVideoTitleFooter).toContain(
+    expect(fullScreenVideoTitleFooter).toContain(
       "Ages 1 - 100 Decide Who Wins $250,000",
     );
-    expect(fullStreenVideoTitleFooter).not.toContain(
+    expect(fullScreenVideoTitleFooter).not.toContain(
       "Люди от 1 до 100 Лет Решают, кто Выиграет $250,000",
     );
 
@@ -124,17 +132,19 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Exit full screen
     await page.keyboard.press("F");
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(process.env.CI ? 750 : 500);
 
-    await page
-      .locator("#description-inline-expander:visible")
-      .scrollIntoViewIfNeeded();
+    const descriptionLocator2 = await getFirstVisibleLocator(
+      page.locator("#description-inline-expander"),
+    );
+    await descriptionLocator2.scrollIntoViewIfNeeded();
+    const descriptionText2 = await descriptionLocator2.textContent();
     // Check that the description contains the original English text and not the Russian translation
-    expect(descriptionText).toContain("believe who they picked");
-    expect(descriptionText).toContain(
+    expect(descriptionText2).toContain("believe who they picked");
+    expect(descriptionText2).toContain(
       "Thanks Top Troops for sponsoring this video",
     );
-    expect(descriptionText).not.toContain(
+    expect(descriptionText2).not.toContain(
       "Я не могу поверить, кого они выбрали",
     );
 
@@ -153,18 +163,16 @@ test.describe("YouTube Anti-Translate extension", () => {
   test("Prevents current video description to fallback to translated title", async ({
     browserNameWithExtensions,
     localeString,
+    isMobile,
   }, testInfo) => {
-    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
-
-    // Launch browser with the extension
-    const context = await createBrowserContext(browserNameWithExtensions);
-
-    // Create a new page
-    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
-      context,
-      browserNameWithExtensions,
-      localeString,
-    );
+    // Handle retries and prerequisite setup
+    const { context, page, consoleMessageCountContainer } =
+      await setupTestEnvironment(
+        testInfo,
+        browserNameWithExtensions,
+        localeString,
+        isMobile,
+      );
 
     await loadPageAndVerifyAuth(
       page,
@@ -173,7 +181,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     );
 
     // Wait for the video page to fully load
-    await page.waitForSelector("ytd-watch-metadata");
+    await waitForSelectorOrRetryWithPageReload(page, "ytd-watch-metadata");
 
     // Expand the description if it's collapsed
     const moreButton = page.locator(
@@ -182,18 +190,22 @@ test.describe("YouTube Anti-Translate extension", () => {
     if (await moreButton.isVisible()) {
       await moreButton.click();
       // Wait for the description to expand
-      await page.waitForTimeout(1000);
+      await page.waitForTimeout(process.env.CI ? 1500 : 1000);
     }
 
+    // Take a screenshot for visual verification
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-extension-test-description-fallback.png`,
+    });
+
     // Get the description text
-    const descriptionText = await page
-      .locator("#description-inline-expander:visible")
-      .textContent();
+    const descriptionLocator = await getFirstVisibleLocator(
+      page.locator("#description-inline-expander"),
+    );
+    await descriptionLocator.scrollIntoViewIfNeeded();
+    const descriptionText = await descriptionLocator.textContent();
     console.log("Description text:", descriptionText?.trim());
 
-    await page
-      .locator("#description-inline-expander:visible")
-      .scrollIntoViewIfNeeded();
     // Check that the description contains the original English title as fallback and not the Russian title translation fallback
     expect(descriptionText).toContain("Answer The Call, Win $10,000");
     expect(descriptionText).not.toContain("Ответь На Звонок, Выиграй $10,000");
@@ -213,18 +225,16 @@ test.describe("YouTube Anti-Translate extension", () => {
   test("YouTube timecode links in description work correctly with Anti-Translate extension", async ({
     browserNameWithExtensions,
     localeString,
+    isMobile,
   }, testInfo) => {
-    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
-
-    // Launch browser with the extension
-    const context = await createBrowserContext(browserNameWithExtensions);
-
-    // Create a new page
-    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
-      context,
-      browserNameWithExtensions,
-      localeString,
-    );
+    // Handle retries and prerequisite setup
+    const { context, page, consoleMessageCountContainer } =
+      await setupTestEnvironment(
+        testInfo,
+        browserNameWithExtensions,
+        localeString,
+        isMobile,
+      );
 
     await loadPageAndVerifyAuth(
       page,
@@ -233,7 +243,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     );
 
     // Wait for the video page to fully load
-    await page.waitForSelector("ytd-watch-metadata");
+    await waitForSelectorOrRetryWithPageReload(page, "ytd-watch-metadata");
 
     // Get the initial video time
     const initialTime = await page.evaluate(() => {
@@ -244,14 +254,17 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Expand the description if it's collapsed
     const moreButton = page.locator("#expand");
+    await moreButton.first().waitFor();
     await moreButton.first().click();
     // Wait for the description to expand
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(process.env.CI ? 1500 : 1000);
 
     // Get the description text to verify it's in English (not translated)
-    const descriptionText = await page
-      .locator("#description-inline-expander:visible")
-      .textContent();
+    const descriptionLocator = await getFirstVisibleLocator(
+      page.locator("#description-inline-expander"),
+    );
+    await descriptionLocator.scrollIntoViewIfNeeded();
+    const descriptionText = await descriptionLocator.textContent();
     console.log("Description text:", descriptionText?.trim());
 
     // Verify description contains expected English text
@@ -264,11 +277,15 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Click on the second timecode (05:36)
     const secondTimecodeSelector = 'a[href*="t=336"]'; // 5:36 = 336 seconds
-    await page.waitForSelector(secondTimecodeSelector);
-    await page.click(secondTimecodeSelector);
+    const timecodeLink = await getFirstVisibleLocator(
+      page.locator(secondTimecodeSelector),
+    );
+    await timecodeLink.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(process.env.CI ? 150 : 100);
+    await timecodeLink.click();
 
     // Wait for video to update its playback position
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(process.env.CI ? 3000 : 2000);
 
     // Verify the video time has changed to be near the clicked timecode
     const newTime = await page.evaluate(() => {
@@ -295,18 +312,16 @@ test.describe("YouTube Anti-Translate extension", () => {
   test("YouTube hashtags in description work correctly with Anti-Translate extension", async ({
     browserNameWithExtensions,
     localeString,
+    isMobile,
   }, testInfo) => {
-    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
-
-    // Launch browser with the extension
-    const context = await createBrowserContext(browserNameWithExtensions);
-
-    // Create a new page
-    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
-      context,
-      browserNameWithExtensions,
-      localeString,
-    );
+    // Handle retries and prerequisite setup
+    const { context, page, consoleMessageCountContainer } =
+      await setupTestEnvironment(
+        testInfo,
+        browserNameWithExtensions,
+        localeString,
+        isMobile,
+      );
 
     // Load a video known to have hashtags in the description
     await loadPageAndVerifyAuth(
@@ -316,23 +331,29 @@ test.describe("YouTube Anti-Translate extension", () => {
     );
 
     // Wait for the video page to fully load
-    await page.waitForSelector("ytd-watch-metadata");
+    await waitForSelectorOrRetryWithPageReload(page, "ytd-watch-metadata");
 
     // Expand the description if it's collapsed
     const moreButton = page.locator("#expand");
+    await moreButton.first().waitFor();
     await moreButton.first().click();
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(process.env.CI ? 1500 : 1000);
+
+    // Take a screenshot
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-hashtag-test.png`,
+    });
 
     // Verify hashtag link is exist
-    const hashtagLinks = page.locator(
-      "#description-inline-expander:visible a[href^='/hashtag/']",
+    const hashtagLinks = await getFirstVisibleLocator(
+      page.locator("#description-inline-expander a[href^='/hashtag/']"),
     );
     const hashtagCount = await hashtagLinks.count();
     expect(hashtagCount).toBeGreaterThan(0);
     console.log("Hashtag links count:", hashtagCount);
 
     // Get the first hashtag，verify href
-    const firstHashtagHref = await hashtagLinks.first().getAttribute("href");
+    const firstHashtagHref = await hashtagLinks.getAttribute("href");
     expect(firstHashtagHref).toBe(
       "/hashtag/%E6%AD%8C%E3%81%A3%E3%81%A6%E3%81%BF%E3%81%9F",
     );
@@ -352,15 +373,16 @@ test.describe("YouTube Anti-Translate extension", () => {
   test("YouTube mentions in description work correctly with Anti-Translate extension", async ({
     browserNameWithExtensions,
     localeString,
+    isMobile,
   }, testInfo) => {
-    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
-
-    const context = await createBrowserContext(browserNameWithExtensions);
-    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
-      context,
-      browserNameWithExtensions,
-      localeString,
-    );
+    // Handle retries and prerequisite setup
+    const { context, page, consoleMessageCountContainer } =
+      await setupTestEnvironment(
+        testInfo,
+        browserNameWithExtensions,
+        localeString,
+        isMobile,
+      );
 
     // Load a video known to have mentions in the description
     await loadPageAndVerifyAuth(
@@ -370,23 +392,29 @@ test.describe("YouTube Anti-Translate extension", () => {
     );
 
     // Wait for the video page to fully load
-    await page.waitForSelector("ytd-watch-metadata");
+    await waitForSelectorOrRetryWithPageReload(page, "ytd-watch-metadata");
 
     // Expand the description if it's collapsed
     const moreButton = page.locator("#expand");
+    await moreButton.first().waitFor();
     await moreButton.first().click();
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(process.env.CI ? 1500 : 1000);
+
+    // Take a screenshot
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-mention-test.png`,
+    });
 
     // Verify mention link is exist
-    const mentionLinks = page.locator(
-      "#description-inline-expander:visible a[href^='/@']",
+    const mentionLinks = await getFirstVisibleLocator(
+      page.locator("#description-inline-expander a[href^='/@']"),
     );
     const mentionCount = await mentionLinks.count();
     expect(mentionCount).toBeGreaterThan(0);
     console.log("Mention links count:", mentionCount);
 
     // Get the first mention, verify href
-    const firstMentionHref = await mentionLinks.first().getAttribute("href");
+    const firstMentionHref = await mentionLinks.getAttribute("href");
     expect(firstMentionHref).toBe("/@AitsukiNakuru");
 
     // Take a screenshot
@@ -404,18 +432,16 @@ test.describe("YouTube Anti-Translate extension", () => {
   test("YouTube Shorts title is not translated with Anti-Translate extension", async ({
     browserNameWithExtensions,
     localeString,
+    isMobile,
   }, testInfo) => {
-    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
-
-    // Launch browser with the extension
-    const context = await createBrowserContext(browserNameWithExtensions);
-
-    // Create a new page
-    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
-      context,
-      browserNameWithExtensions,
-      localeString,
-    );
+    // Handle retries and prerequisite setup
+    const { context, page, consoleMessageCountContainer } =
+      await setupTestEnvironment(
+        testInfo,
+        browserNameWithExtensions,
+        localeString,
+        isMobile,
+      );
 
     await loadPageAndVerifyAuth(
       page,
@@ -423,10 +449,19 @@ test.describe("YouTube Anti-Translate extension", () => {
       browserNameWithExtensions,
     );
 
+    // Take a screenshot for visual verification
+    try {
+      await page.screenshot({
+        path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-shorts-test.png`,
+      });
+    } catch {
+      // First screenshot is not essential so it is allowed to fail
+    }
+
     // Wait for the shorts title element to be present
     const shortsTitleSelector =
       "#yt-anti-translate-fake-node-current-short-video";
-    await page.waitForSelector(shortsTitleSelector);
+    await waitForSelectorOrRetryWithPageReload(page, shortsTitleSelector);
 
     // Get the title text
     const titleElement = page.locator(shortsTitleSelector);
@@ -446,12 +481,13 @@ test.describe("YouTube Anti-Translate extension", () => {
     expect(pageTitle).not.toContain("Достигни Вершины И Выиграй $10,000");
 
     // Wait for the shorts video link element to be present
-    const shortsVideoLinkSelector =
-      ".ytReelMultiFormatLinkViewModelEndpoint span.yt-core-attributed-string>span:visible";
-    await page.waitForSelector(shortsVideoLinkSelector);
+    const titleLinkElement = await getFirstVisibleLocator(
+      page.locator(
+        ".ytReelMultiFormatLinkViewModelEndpoint span.yt-core-attributed-string>span",
+      ),
+    );
 
     // Get the title text
-    const titleLinkElement = page.locator(shortsVideoLinkSelector);
     const shortsLinkTitle = await titleLinkElement.textContent();
     console.log("Shorts Link title:", shortsLinkTitle?.trim());
 
@@ -474,18 +510,16 @@ test.describe("YouTube Anti-Translate extension", () => {
   test("YouTube channel Videos and Shorts tabs retain original titles", async ({
     browserNameWithExtensions,
     localeString,
+    isMobile,
   }, testInfo) => {
-    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
-
-    // Launch browser with the extension
-    const context = await createBrowserContext(browserNameWithExtensions);
-
-    // Create a new page
-    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
-      context,
-      browserNameWithExtensions,
-      localeString,
-    );
+    // Handle retries and prerequisite setup
+    const { context, page, consoleMessageCountContainer } =
+      await setupTestEnvironment(
+        testInfo,
+        browserNameWithExtensions,
+        localeString,
+        isMobile,
+      );
 
     await loadPageAndVerifyAuth(
       page,
@@ -493,8 +527,17 @@ test.describe("YouTube Anti-Translate extension", () => {
       browserNameWithExtensions,
     );
 
+    // Take a screenshot for visual verification
+    try {
+      await page.screenshot({
+        path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-channel-tabs-test.png`,
+      });
+    } catch {
+      // First screenshot is not essential so it is allowed to fail
+    }
+
     // Wait for the video grid to appear
-    await page.waitForSelector("ytd-rich-grid-media");
+    await waitForSelectorOrRetryWithPageReload(page, "ytd-rich-grid-media");
 
     // --- Check Videos Tab ---
     const originalVideoTitle = "World's Fastest Car Vs Cheetah!";
@@ -505,9 +548,13 @@ test.describe("YouTube Anti-Translate extension", () => {
     const originalVideo = page.locator(videoSelector).first();
     if (await originalVideo.isVisible()) {
       await page.mouse.wheel(0, 500);
+      await page.waitForTimeout(process.env.CI ? 150 : 100);
       await originalVideo.scrollIntoViewIfNeeded();
       try {
-        await page.waitForLoadState("networkidle", { timeout: 5000 });
+        await page.waitForTimeout(process.env.CI ? 375 : 250);
+        await page.waitForLoadState("networkidle", {
+          timeout: process.env.CI ? 7500 : 5000,
+        });
       } catch {
         // empty
       }
@@ -515,15 +562,20 @@ test.describe("YouTube Anti-Translate extension", () => {
     const translatedVideo = page.locator(translatedVideoSelector).first();
     if (await translatedVideo.isVisible()) {
       await page.mouse.wheel(0, 500);
+      await page.waitForTimeout(process.env.CI ? 150 : 100);
       await translatedVideo.scrollIntoViewIfNeeded();
       try {
-        await page.waitForLoadState("networkidle", { timeout: 5000 });
+        await page.waitForTimeout(process.env.CI ? 375 : 250);
+        await page.waitForLoadState("networkidle", {
+          timeout: process.env.CI ? 7500 : 5000,
+        });
       } catch {
         // empty
       }
     }
 
     console.log("Checking Videos tab for original title...");
+    await originalVideo.waitFor();
     await expect(originalVideo).toBeVisible();
     await expect(translatedVideo).not.toBeVisible();
     console.log("Original video title found, translated title not found.");
@@ -532,15 +584,20 @@ test.describe("YouTube Anti-Translate extension", () => {
     console.log("Clicking Shorts tab...");
     await page.locator("#tabsContent").getByText("Shorts").click();
     try {
-      await page.waitForLoadState("networkidle", { timeout: 5000 });
+      await page.waitForTimeout(process.env.CI ? 375 : 250);
+      await page.waitForLoadState("networkidle", {
+        timeout: process.env.CI ? 7500 : 5000,
+      });
     } catch {
       // empty
     }
-    await page.waitForTimeout(1000); // Give it a moment to load more items if needed
+    // Wait for the video grid to appear
+    await waitForSelectorOrRetryWithPageReload(page, "ytd-rich-item-renderer");
+    await expect(page.url()).toContain("/shorts");
 
     // --- Check Shorts Tab ---
-    const originalShortTitle = "Find This Briefcase, Win $10,000";
-    const translatedShortTitle = "Найдите Этот Портфель, Выиграй $10,000"; // Adjust if needed
+    const originalShortTitle = "Answer The Call, Win $10,000";
+    const translatedShortTitle = "Ответь На Звонок, Выиграй $10,000"; // Adjust if needed
     const shortSelector = `ytd-rich-item-renderer:has-text("${originalShortTitle}")`;
     const translatedShortSelector = `ytd-rich-item-renderer:has-text("${translatedShortTitle}")`;
 
@@ -549,9 +606,13 @@ test.describe("YouTube Anti-Translate extension", () => {
     const originalShort = page.locator(shortSelector).first();
     if (await originalShort.isVisible()) {
       await page.mouse.wheel(0, 500);
+      await page.waitForTimeout(process.env.CI ? 150 : 100);
       await originalShort.scrollIntoViewIfNeeded();
       try {
-        await page.waitForLoadState("networkidle", { timeout: 5000 });
+        await page.waitForTimeout(process.env.CI ? 375 : 250);
+        await page.waitForLoadState("networkidle", {
+          timeout: process.env.CI ? 7500 : 5000,
+        });
       } catch {
         // empty
       }
@@ -559,17 +620,21 @@ test.describe("YouTube Anti-Translate extension", () => {
     const translatedShort = page.locator(translatedShortSelector).first();
     if (await translatedShort.isVisible()) {
       await page.mouse.wheel(0, 500);
+      await page.waitForTimeout(process.env.CI ? 150 : 100);
       await translatedShort.scrollIntoViewIfNeeded();
       try {
-        await page.waitForLoadState("networkidle", { timeout: 5000 });
+        await page.waitForTimeout(process.env.CI ? 375 : 250);
+        await page.waitForLoadState("networkidle", {
+          timeout: process.env.CI ? 7500 : 5000,
+        });
       } catch {
         // empty
       }
     }
-    await page.waitForTimeout(1000); // Give it a moment to load more items if needed
 
-    await expect(page.locator(shortSelector)).toBeVisible({ timeout: 10000 }); // Increased timeout for dynamic loading
-    await expect(page.locator(translatedShortSelector)).not.toBeVisible();
+    await originalShort.waitFor();
+    await expect(originalShort).toBeVisible(); // Increased timeout for dynamic loading
+    await expect(translatedShort).not.toBeVisible();
     console.log(
       "Original short title found, translated short title not found.",
     );
@@ -578,14 +643,16 @@ test.describe("YouTube Anti-Translate extension", () => {
     console.log("Clicking Videos tab...");
     await page.locator("#tabsContent").getByText("Видео").click();
     try {
-      await page.waitForLoadState("networkidle", { timeout: 5000 });
+      await page.waitForTimeout(process.env.CI ? 375 : 250);
+      await page.waitForLoadState("networkidle", {
+        timeout: process.env.CI ? 7500 : 5000,
+      });
     } catch {
       // empty
     }
-    await page.waitForSelector(
-      "ytd-rich-grid-media >> ytd-thumbnail-overlay-time-status-renderer:not([overlay-style='SHORTS'])",
-      { state: "visible" },
-    ); // Wait for videos to load
+    // Wait for the video grid to appear
+    await waitForSelectorOrRetryWithPageReload(page, "ytd-rich-grid-media");
+    await expect(page.url()).toContain("/videos");
 
     // --- Re-check Videos Tab ---
     console.log("Re-checking Videos tab for original title...");
@@ -608,18 +675,16 @@ test.describe("YouTube Anti-Translate extension", () => {
   test("YouTube Shorts audio dubbing is untranslated with Anti-Translate extension", async ({
     browserNameWithExtensions,
     localeString,
+    isMobile,
   }, testInfo) => {
-    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
-
-    // Launch browser with the extension
-    const context = await createBrowserContext(browserNameWithExtensions);
-
-    // Create a new page
-    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
-      context,
-      browserNameWithExtensions,
-      localeString,
-    );
+    // Handle retries and prerequisite setup
+    const { context, page, consoleMessageCountContainer } =
+      await setupTestEnvironment(
+        testInfo,
+        browserNameWithExtensions,
+        localeString,
+        isMobile,
+      );
 
     await loadPageAndVerifyAuth(
       page,
@@ -628,20 +693,24 @@ test.describe("YouTube Anti-Translate extension", () => {
     );
 
     // Wait for the video page to fully load
-    await page.waitForSelector("ytd-rich-item-renderer");
+    await waitForSelectorOrRetryWithPageReload(page, "ytd-rich-item-renderer");
 
     // Find the first short and click to open
     const firstShort = page.locator("ytd-rich-item-renderer").first();
     if (await firstShort.isVisible()) {
       await firstShort.scrollIntoViewIfNeeded();
+      await page.waitForTimeout(process.env.CI ? 150 : 100);
       await firstShort.click();
       try {
-        await page.waitForLoadState("networkidle", { timeout: 5000 });
+        await page.waitForTimeout(process.env.CI ? 375 : 250);
+        await page.waitForLoadState("networkidle", {
+          timeout: process.env.CI ? 7500 : 5000,
+        });
       } catch {
         // empty
       }
     }
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(process.env.CI ? 3000 : 2000);
 
     // Wait for the video page to fully load
     await page.waitForSelector("#shorts-player");
@@ -669,7 +738,7 @@ test.describe("YouTube Anti-Translate extension", () => {
       const video = document.querySelector(
         "#shorts-player",
       ) as HTMLVideoElement & {
-        getAudioTrack?: () => Promise<unknown>;
+        getAudioTrack?: () => Promise<any>;
         getPlayerResponse?: () => Promise<PlayerResponse>;
       };
       return [
@@ -694,14 +763,18 @@ test.describe("YouTube Anti-Translate extension", () => {
     const buttonDown = page.locator("#navigation-button-down button").first();
     if (await buttonDown.isVisible()) {
       await buttonDown.scrollIntoViewIfNeeded();
+      await page.waitForTimeout(process.env.CI ? 150 : 100);
       await buttonDown.click();
       try {
-        await page.waitForLoadState("networkidle", { timeout: 5000 });
+        await page.waitForTimeout(process.env.CI ? 375 : 250);
+        await page.waitForLoadState("networkidle", {
+          timeout: process.env.CI ? 7500 : 5000,
+        });
       } catch {
         // empty
       }
     }
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(process.env.CI ? 3000 : 2000);
 
     let [currentTrack2, currentId2] = await page.evaluate(async () => {
       type PlayerResponse = {
@@ -710,7 +783,7 @@ test.describe("YouTube Anti-Translate extension", () => {
       const video = document.querySelector(
         "#shorts-player",
       ) as HTMLVideoElement & {
-        getAudioTrack?: () => Promise<unknown>;
+        getAudioTrack?: () => Promise<any>;
         getPlayerResponse?: () => Promise<PlayerResponse>;
       };
       return [
@@ -735,14 +808,18 @@ test.describe("YouTube Anti-Translate extension", () => {
     const buttonDown2 = page.locator("#navigation-button-down button").first();
     if (await buttonDown2.isVisible()) {
       await buttonDown2.scrollIntoViewIfNeeded();
+      await page.waitForTimeout(process.env.CI ? 150 : 100);
       await buttonDown2.click();
       try {
-        await page.waitForLoadState("networkidle", { timeout: 5000 });
+        await page.waitForTimeout(process.env.CI ? 375 : 250);
+        await page.waitForLoadState("networkidle", {
+          timeout: process.env.CI ? 7500 : 5000,
+        });
       } catch {
         // empty
       }
     }
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(process.env.CI ? 3000 : 2000);
 
     let [currentTrack3, currentId3] = await page.evaluate(async () => {
       type PlayerResponse = {
@@ -751,7 +828,7 @@ test.describe("YouTube Anti-Translate extension", () => {
       const video = document.querySelector(
         "#shorts-player",
       ) as HTMLVideoElement & {
-        getAudioTrack?: () => Promise<unknown>;
+        getAudioTrack?: () => Promise<any>;
         getPlayerResponse?: () => Promise<PlayerResponse>;
       };
       return [
@@ -786,8 +863,8 @@ test.describe("YouTube Anti-Translate extension", () => {
      */
     async function IfAdvertThenReturnNext(
       currentTrack: any,
-      currentVideoId: string | null,
-    ) {
+      currentVideoId: string | undefined,
+    ): Promise<[any, string | undefined]> {
       if (
         currentTrack[getTrackLanguageFieldObjectName(currentTrack)!]?.name ===
         "Default"
@@ -797,14 +874,18 @@ test.describe("YouTube Anti-Translate extension", () => {
           .first();
         if (await buttonDown2.isVisible()) {
           await buttonDown2.scrollIntoViewIfNeeded();
+          await page.waitForTimeout(process.env.CI ? 150 : 100);
           await buttonDown2.click();
           try {
-            await page.waitForLoadState("networkidle", { timeout: 5000 });
+            await page.waitForTimeout(process.env.CI ? 375 : 250);
+            await page.waitForLoadState("networkidle", {
+              timeout: process.env.CI ? 7500 : 5000,
+            });
           } catch {
             // empty
           }
         }
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(process.env.CI ? 3000 : 2000);
 
         return await page.evaluate(async () => {
           type PlayerResponse = {
@@ -813,7 +894,7 @@ test.describe("YouTube Anti-Translate extension", () => {
           const video = document.querySelector(
             "#shorts-player",
           ) as HTMLVideoElement & {
-            getAudioTrack?: () => Promise<unknown>;
+            getAudioTrack?: () => Promise<any>;
             getPlayerResponse?: () => Promise<PlayerResponse>;
           };
           return [
@@ -827,29 +908,38 @@ test.describe("YouTube Anti-Translate extension", () => {
     }
   });
 
-  test("YouTube playlist page contains Popular Shorts playlist", async ({
+  test("YouTube channel playlist page contains 'Popular Shorts' playlist", async ({
     browserNameWithExtensions,
     localeString,
+    isMobile,
   }, testInfo) => {
-    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
-
-    // Launch browser with the extension
-    const context = await createBrowserContext(browserNameWithExtensions);
-
-    // Create a new page
-    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
-      context,
-      browserNameWithExtensions,
-      localeString,
-    );
+    // Handle retries and prerequisite setup
+    const { context, page, consoleMessageCountContainer } =
+      await setupTestEnvironment(
+        testInfo,
+        browserNameWithExtensions,
+        localeString,
+        isMobile,
+      );
 
     await loadPageAndVerifyAuth(
       page,
       "https://www.youtube.com/@NileRed/playlists",
       browserNameWithExtensions,
     );
+
+    // Take a screenshot for visual verification
+    try {
+      await page.screenshot({
+        path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-playlists-test.png`,
+      });
+    } catch {
+      // First screenshot is not essential so it is allowed to fail
+    }
+
     // Locate the elements with the text "Popular Shorts"
-    const popularShortsLocator = page.locator(
+    const popularShortsLocator = await waitForSelectorOrRetryWithPageReload(
+      page,
       '.yt-lockup-metadata-view-model__heading-reset span:has-text("Popular Shorts")',
     );
 
@@ -869,21 +959,308 @@ test.describe("YouTube Anti-Translate extension", () => {
     await context.close();
   });
 
+  test("YouTube owned feed playlists page contains 'owned-playlist-playwright-test' playlist", async ({
+    browserNameWithExtensions,
+    localeString,
+    isMobile,
+  }, testInfo) => {
+    /**
+     * NOTE WELL
+     * This test requires the account in use to have a playlist named "owned-playlist-playwright-test" with at least one video in it.
+     * If missing you must create it manually as part of setting up the test account.
+     */
+
+    // Handle retries and prerequisite setup
+    const { context, page, consoleMessageCountContainer } =
+      await setupTestEnvironment(
+        testInfo,
+        browserNameWithExtensions,
+        localeString,
+        isMobile,
+      );
+
+    await loadPageAndVerifyAuth(
+      page,
+      "https://www.youtube.com/feed/playlists",
+      browserNameWithExtensions,
+    );
+
+    // Take a screenshot for visual verification
+    try {
+      await page.screenshot({
+        path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-owned-playlists-test.png`,
+      });
+    } catch {
+      // First screenshot is not essential so it is allowed to fail
+    }
+
+    // Wait for the video grid to appear
+    await waitForSelectorOrRetryWithPageReload(page, "ytd-rich-item-renderer");
+
+    // --- Check Videos Tab ---
+    const originalPlaylistTitle = "owned-playlist-playwright-test";
+    const videoSelector = `ytd-rich-item-renderer:has-text("${originalPlaylistTitle}")`;
+
+    const originalPlaylist = page.locator(videoSelector).first();
+    if (await originalPlaylist.isVisible()) {
+      await page.mouse.wheel(0, 500);
+      await page.waitForTimeout(process.env.CI ? 150 : 100);
+      await originalPlaylist.scrollIntoViewIfNeeded();
+      try {
+        await page.waitForTimeout(process.env.CI ? 375 : 250);
+        await page.waitForLoadState("networkidle", {
+          timeout: process.env.CI ? 7500 : 5000,
+        });
+      } catch {
+        // empty
+      }
+    }
+
+    console.log("Checking Videos tab for original title...");
+    await expect(originalPlaylist).toBeVisible();
+    console.log("Original video title found.");
+
+    // Take a screenshot for visual verification
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-owned-playlists-test.png`,
+    });
+
+    // Check console message count
+    expect(consoleMessageCountContainer.count).toBeLessThan(2000);
+
+    // Close the browser context
+    await context.close();
+  });
+
+  test("YouTube search results page contains NileRed 'Popular Shorts' playlist", async ({
+    browserNameWithExtensions,
+    localeString,
+    isMobile,
+  }, testInfo) => {
+    // Handle retries and prerequisite setup
+    const { context, page, consoleMessageCountContainer } =
+      await setupTestEnvironment(
+        testInfo,
+        browserNameWithExtensions,
+        localeString,
+        isMobile,
+      );
+
+    await loadPageAndVerifyAuth(
+      page,
+      "https://www.youtube.com/results?search_query=nilered+popular+shorts",
+      browserNameWithExtensions,
+    );
+
+    // Take a screenshot for visual verification
+    try {
+      await page.screenshot({
+        path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-search-result-playlist-test.png`,
+      });
+    } catch {
+      // First screenshot is not essential so it is allowed to fail
+    }
+
+    // Wait for the video grid to appear
+    await waitForSelectorOrRetryWithPageReload(page, "yt-lockup-view-model");
+
+    // --- Check Videos Tab ---
+    const originalPlaylistTitle = "Popular Shorts";
+    const videoSelector = `yt-lockup-view-model:has-text("${originalPlaylistTitle}")`;
+
+    const originalPlaylist = page.locator(videoSelector).first();
+    if (await originalPlaylist.isVisible()) {
+      await page.mouse.wheel(0, 500);
+      await page.waitForTimeout(process.env.CI ? 150 : 100);
+      await originalPlaylist.scrollIntoViewIfNeeded();
+      try {
+        await page.waitForTimeout(process.env.CI ? 375 : 250);
+        await page.waitForLoadState("networkidle", {
+          timeout: process.env.CI ? 7500 : 5000,
+        });
+      } catch {
+        // empty
+      }
+    }
+
+    console.log("Checking Videos tab for original title...");
+    await expect(originalPlaylist).toBeVisible();
+    console.log("Original video title found.");
+
+    // Take a screenshot for visual verification
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-search-result-playlist-test.png`,
+    });
+
+    // Check console message count
+    expect(consoleMessageCountContainer.count).toBeLessThan(2000);
+
+    // Close the browser context
+    await context.close();
+  });
+
+  test("YouTube video retains original thumbnail", async ({
+    browserNameWithExtensions,
+    localeString,
+    isMobile,
+  }, testInfo) => {
+    // Handle retries and prerequisite setup
+    const { context, page, consoleMessageCountContainer } =
+      await setupTestEnvironment(
+        testInfo,
+        browserNameWithExtensions,
+        localeString,
+        isMobile,
+      );
+
+    await loadPageAndVerifyAuth(
+      page,
+      "https://www.youtube.com/results?search_query=mrbeast+7+Days+Stranded+At+Sea",
+      browserNameWithExtensions,
+    );
+
+    // Take a screenshot for visual verification
+    try {
+      await page.screenshot({
+        path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-video-thumbnail-test.png`,
+      });
+    } catch {
+      // First screenshot is not essential so it is allowed to fail
+    }
+
+    // Wait for the video grid to appear
+    await waitForSelectorOrRetryWithPageReload(page, "ytd-video-renderer");
+
+    // --- Check Videos Tab ---
+    const expectedThumbnailSrc =
+      /https:\/\/i\.ytimg\.com\/vi\/yhB3BgJyGl8\/hqdefault\.jpg\?youtube-anti-translate=[0-9]+/i;
+    const originalVideoTitle = "7 Days Stranded At Sea";
+    const videoSelector = `ytd-video-renderer:has-text("${originalVideoTitle}")`;
+
+    const originalPlaylist = page.locator(videoSelector).first();
+    if (await originalPlaylist.isVisible()) {
+      await page.mouse.wheel(0, 500);
+      await page.waitForTimeout(process.env.CI ? 150 : 100);
+      await originalPlaylist.scrollIntoViewIfNeeded();
+      try {
+        await page.waitForTimeout(process.env.CI ? 375 : 250);
+        await page.waitForLoadState("networkidle", {
+          timeout: process.env.CI ? 7500 : 5000,
+        });
+      } catch {
+        // empty
+      }
+    }
+
+    // Find the thumbnail image within the located video item
+    const thumbnailImage = originalPlaylist.locator('img[src*="ytimg.com"]');
+    await thumbnailImage.waitFor();
+    await page.waitForTimeout(process.env.CI ? 375 : 250);
+    await expect(thumbnailImage).toHaveAttribute("src", expectedThumbnailSrc);
+
+    // Take a screenshot for visual verification
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-video-thumbnail-test.png`,
+    });
+
+    // Check console message count
+    expect(consoleMessageCountContainer.count).toBeLessThan(2000);
+
+    // Close the browser context
+    await context.close();
+  });
+
+  test("YouTube video playlist retains original thumbnail of the first video", async ({
+    browserNameWithExtensions,
+    localeString,
+    isMobile,
+  }, testInfo) => {
+    /**
+     * NOTE WELL
+     * This test requires the account in use to have a playlist named "owned-playlist-playwright-test"
+     * with as first video [@MrBeast "7 Days Stranded At Sea"](https://www.youtube.com/watch?v=yhB3BgJyGl8).
+     * If missing you must create it manually as part of setting up the test account.
+     */
+
+    // Handle retries and prerequisite setup
+    const { context, page, consoleMessageCountContainer } =
+      await setupTestEnvironment(
+        testInfo,
+        browserNameWithExtensions,
+        localeString,
+        isMobile,
+      );
+
+    await loadPageAndVerifyAuth(
+      page,
+      "https://www.youtube.com/feed/playlists",
+      browserNameWithExtensions,
+    );
+
+    // Take a screenshot for visual verification
+    try {
+      await page.screenshot({
+        path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-video-playlist-thumbnail-test.png`,
+      });
+    } catch {
+      // First screenshot is not essential so it is allowed to fail
+    }
+
+    // Wait for the video grid to appear
+    await waitForSelectorOrRetryWithPageReload(page, "ytd-rich-item-renderer");
+
+    // --- Check Videos Tab ---
+    const expectedThumbnailSrc =
+      /https:\/\/i\.ytimg\.com\/vi\/yhB3BgJyGl8\/hqdefault\.jpg\?youtube-anti-translate=[0-9]+/i;
+    const originalPlaylistTitle = "owned-playlist-playwright-test";
+    const videoSelector = `ytd-rich-item-renderer:has-text("${originalPlaylistTitle}")`;
+
+    const originalPlaylist = page.locator(videoSelector).first();
+    if (await originalPlaylist.isVisible()) {
+      await page.mouse.wheel(0, 500);
+      await page.waitForTimeout(process.env.CI ? 150 : 100);
+      await originalPlaylist.scrollIntoViewIfNeeded();
+      try {
+        await page.waitForTimeout(process.env.CI ? 375 : 250);
+        await page.waitForLoadState("networkidle", {
+          timeout: process.env.CI ? 7500 : 5000,
+        });
+      } catch {
+        // empty
+      }
+    }
+
+    // Find the thumbnail image within the located video item
+    const thumbnailImage = originalPlaylist.locator('img[src*="ytimg.com"]');
+    await thumbnailImage.waitFor();
+    await page.waitForTimeout(process.env.CI ? 375 : 250);
+    await expect(thumbnailImage).toHaveAttribute("src", expectedThumbnailSrc);
+
+    // Take a screenshot for visual verification
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-video-playlist-thumbnail-test.png`,
+    });
+
+    // Check console message count
+    expect(consoleMessageCountContainer.count).toBeLessThan(2000);
+
+    // Close the browser context
+    await context.close();
+  });
+
   test("YouTube chapters titles are not translated and chapter 2 has expected text", async ({
     browserNameWithExtensions,
     localeString,
+    isMobile,
   }, testInfo) => {
-    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
-
-    // Launch browser with the extension
-    const context = await createBrowserContext(browserNameWithExtensions);
-
-    // Create a new page with the extension already authenticated
-    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
-      context,
-      browserNameWithExtensions,
-      localeString,
-    );
+    // Handle retries and prerequisite setup
+    const { context, page, consoleMessageCountContainer } =
+      await setupTestEnvironment(
+        testInfo,
+        browserNameWithExtensions,
+        localeString,
+        isMobile,
+      );
 
     // Open a video which contains chapters (used in time-code test)
     await loadPageAndVerifyAuth(
@@ -892,10 +1269,19 @@ test.describe("YouTube Anti-Translate extension", () => {
       browserNameWithExtensions,
     );
 
+    // Screenshot for manual visual verification when needed
+    try {
+      await page.screenshot({
+        path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-chapters-test.png`,
+      });
+    } catch {
+      // First screenshot is not essential so it is allowed to fail
+    }
+
     // Wait until the chapter button next to the progress bar is rendered
-    await page.waitForSelector(
+    await waitForSelectorOrRetryWithPageReload(
+      page,
       ".ytp-chapter-title .ytp-chapter-title-content",
-      { timeout: 15000 },
     );
 
     // Seek near the start to allow the extension to map chapters then later to chapter 2 time (≈ 40s based on timecode)
@@ -915,13 +1301,15 @@ test.describe("YouTube Anti-Translate extension", () => {
         ".ytp-chapter-title .ytp-chapter-title-content[data-original-chapter-button]",
       )
       .first();
+    await chapterButtonLocator.waitFor();
+    await chapterButtonLocator.scrollIntoViewIfNeeded();
 
     // Wait until the attribute appears and matches exactly
     await expect(chapterButtonLocator).toHaveAttribute(
       "data-original-chapter-button",
       expectedChapterTitle,
-      { timeout: 10000 },
     );
+
     // Screenshot for manual visual verification when needed
     await page.screenshot({
       path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-chapters-test.png`,
@@ -937,51 +1325,45 @@ test.describe("YouTube Anti-Translate extension", () => {
   test("Works on embedded videos", async ({
     browserNameWithExtensions,
     localeString,
+    isMobile,
   }, testInfo) => {
-    async function checkFor153Error() {
-      const errorLocator = page.locator(
-        "div.ytp-error-content-wrap-subreason > span:has-text('153')",
+    // Handle retries and prerequisite setup
+    const { context, page, consoleMessageCountContainer } =
+      await setupTestEnvironment(
+        testInfo,
+        browserNameWithExtensions,
+        localeString,
+        isMobile,
       );
-      if (await errorLocator.isVisible()) {
-        // If we hit a 153 error (playback not available) then skip the rest of the test
-        console.log(
-          "Video playback not available, skipping the rest of the test.",
-        );
-        await context.close();
-        testInfo.skip();
-        return;
-      }
-    }
-
-    await handleRetrySetup(testInfo, browserNameWithExtensions, localeString);
-
-    // Launch browser with the extension
-    const context = await createBrowserContext(browserNameWithExtensions);
-
-    // Create a new page with the extension already authenticated
-    const { page, consoleMessageCountContainer } = await setupPageWithAuth(
-      context,
-      browserNameWithExtensions,
-      localeString,
-    );
 
     await page.goto("https://www.youtube.com/embed/iLU0CE2c2HQ");
 
-    // Wait for the video to load
+    // Wait for the video to load safely
+    let overlayButton;
     try {
-      await page.waitForSelector("video", { timeout: 10000 });
+      overlayButton = await waitForSelectorOrRetryWithPageReload(
+        page,
+        "#movie_player > div.ytp-cued-thumbnail-overlay > button",
+      );
     } catch {
-      await checkFor153Error();
+      await checkFor153Error(page, context, testInfo);
     }
 
-    await page.click("#movie_player > div.ytp-cued-thumbnail-overlay > button");
-    await checkFor153Error();
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-embedded-test.png`,
+    });
 
-    await expect(
-      page.locator("#movie_player > div.ytp-cued-thumbnail-overlay > button"),
-    ).not.toBeVisible();
-    await page.waitForTimeout(2000);
-    await checkFor153Error();
+    try {
+      await overlayButton!.click();
+    } catch {
+      await checkFor153Error(page, context, testInfo);
+    }
+    // Wait for the overlay button to disappear
+    await page.waitForTimeout(process.env.CI ? 750 : 500);
+
+    await expect(overlayButton!).not.toBeVisible();
+    await page.waitForTimeout(process.env.CI ? 3000 : 2000);
+    await checkFor153Error(page, context, testInfo);
 
     function getTrackLanguageFieldObjectName(track: object) {
       let languageFieldName: string;
@@ -1000,30 +1382,182 @@ test.describe("YouTube Anti-Translate extension", () => {
     }
 
     // Check that audio track is set to original
-    const currentTrack = await page.evaluate(async () => {
+    let currentTrack = await page.evaluate(async () => {
       const video = document.querySelector(
         "#movie_player",
       ) as HTMLVideoElement & {
-        getAudioTrack?: () => Promise<unknown>;
+        getAudioTrack?: () => Promise<any>;
       };
       return await video?.getAudioTrack?.();
     });
 
     expect(currentTrack).toBeTruthy();
 
-    // Check original track is the selected one
-    const trackLanguageField = getTrackLanguageFieldObjectName(currentTrack);
+    // Get track the selected name
+    let trackLanguageField = getTrackLanguageFieldObjectName(currentTrack);
     if (trackLanguageField) {
-      expect(currentTrack[trackLanguageField]?.name).toContain("оригинал");
+      // If value is "Default" then it is an advert
+      // Wait for 5 seconds and get a new track
+      await page.waitForTimeout(process.env.CI ? 7500 : 5000);
+
+      if (currentTrack[trackLanguageField]?.name === "Default") {
+        // Check that audio track is set to original
+        currentTrack = await page.evaluate(async () => {
+          const video = document.querySelector(
+            "#movie_player",
+          ) as HTMLVideoElement & {
+            getAudioTrack?: () => Promise<any>;
+          };
+          return await video?.getAudioTrack?.();
+        });
+
+        expect(currentTrack).toBeTruthy();
+
+        // Get track the selected name again
+        trackLanguageField = getTrackLanguageFieldObjectName(currentTrack);
+      }
+
+      if (trackLanguageField) {
+        // If value is still "Default" then it is an advert again so skip the check this time
+        if (currentTrack[trackLanguageField]?.name === "Default") {
+          console.log("Skipping advert track check.");
+        } else {
+          expect(currentTrack[trackLanguageField]?.name).toContain("оригинал");
+        }
+      }
     }
+
+    const titleLink = page.locator(".ytp-title-link.yt-uix-sessionlink");
+    await titleLink.waitFor({ state: "attached" });
+    await expect(titleLink).toContainText(
+      "NAJTAŃSZY DYSK PCIe 5.0 – MA TO SENS W 2025?",
+    );
 
     await page.screenshot({
       path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-embedded-test.png`,
     });
 
-    await expect(
-      page.locator(".ytp-title-link.yt-uix-sessionlink"),
-    ).toContainText("NAJTAŃSZY DYSK PCIe 5.0 – MA TO SENS W 2025?");
+    // Check console message count
+    expect(consoleMessageCountContainer.count).toBeLessThan(2000);
+
+    // Close the browser context
+    await context.close();
+  });
+
+  test("Works on youtube-nocookie videos", async ({
+    browserNameWithExtensions,
+    localeString,
+    isMobile,
+  }, testInfo) => {
+    // Handle retries and prerequisite setup
+    const { context, page, consoleMessageCountContainer } =
+      await setupTestEnvironment(
+        testInfo,
+        browserNameWithExtensions,
+        localeString,
+        isMobile,
+      );
+
+    await page.goto("https://www.youtube-nocookie.com/embed/iLU0CE2c2HQ");
+
+    // Wait for the video to load safely
+    let overlayButton;
+    try {
+      overlayButton = await waitForSelectorOrRetryWithPageReload(
+        page,
+        "#movie_player > div.ytp-cued-thumbnail-overlay > button",
+      );
+    } catch {
+      await checkFor153Error(page, context, testInfo);
+    }
+
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-nocookie-test.png`,
+    });
+
+    try {
+      await overlayButton!.click();
+    } catch {
+      await checkFor153Error(page, context, testInfo);
+    }
+    // Wait for the overlay button to disappear
+    await page.waitForTimeout(process.env.CI ? 750 : 500);
+
+    await expect(overlayButton!).not.toBeVisible();
+    await page.waitForTimeout(process.env.CI ? 3000 : 2000);
+    await checkFor153Error(page, context, testInfo);
+
+    function getTrackLanguageFieldObjectName(track: object) {
+      let languageFieldName: string;
+
+      for (const [fieldName, field] of Object.entries(track)) {
+        if (field && typeof field === "object" && field.name) {
+          languageFieldName = fieldName;
+          break;
+        }
+      }
+      if (!languageFieldName!) {
+        return;
+      } else {
+        return languageFieldName;
+      }
+    }
+
+    // Check that audio track is set to original
+    let currentTrack = await page.evaluate(async () => {
+      const video = document.querySelector(
+        "#movie_player",
+      ) as HTMLVideoElement & {
+        getAudioTrack?: () => Promise<any>;
+      };
+      return await video?.getAudioTrack?.();
+    });
+
+    expect(currentTrack).toBeTruthy();
+
+    // Get track the selected name
+    let trackLanguageField = getTrackLanguageFieldObjectName(currentTrack);
+    if (trackLanguageField) {
+      // If value is "Default" then it is an advert
+      // Wait for 5 seconds and get a new track
+      await page.waitForTimeout(process.env.CI ? 7500 : 5000);
+
+      if (currentTrack[trackLanguageField]?.name === "Default") {
+        // Check that audio track is set to original
+        currentTrack = await page.evaluate(async () => {
+          const video = document.querySelector(
+            "#movie_player",
+          ) as HTMLVideoElement & {
+            getAudioTrack?: () => Promise<any>;
+          };
+          return await video?.getAudioTrack?.();
+        });
+
+        expect(currentTrack).toBeTruthy();
+
+        // Get track the selected name again
+        trackLanguageField = getTrackLanguageFieldObjectName(currentTrack);
+      }
+
+      if (trackLanguageField) {
+        // If value is still "Default" then it is an advert again so skip the check this time
+        if (currentTrack[trackLanguageField]?.name === "Default") {
+          console.log("Skipping advert track check.");
+        } else {
+          expect(currentTrack[trackLanguageField]?.name).toContain("оригинал");
+        }
+      }
+    }
+
+    const titleLink = page.locator(".ytp-title-link.yt-uix-sessionlink");
+    await titleLink.waitFor({ state: "attached" });
+    await expect(titleLink).toContainText(
+      "NAJTAŃSZY DYSK PCIe 5.0 – MA TO SENS W 2025?",
+    );
+
+    await page.screenshot({
+      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-nocookie-test.png`,
+    });
 
     // Check console message count
     expect(consoleMessageCountContainer.count).toBeLessThan(2000);
@@ -1032,3 +1566,25 @@ test.describe("YouTube Anti-Translate extension", () => {
     await context.close();
   });
 });
+
+async function checkFor153Error(
+  page: Page,
+  context: BrowserContext | Browser,
+  testInfo: TestInfo,
+) {
+  const errorLocator = page.locator(
+    "div.ytp-error-content-wrap-subreason > span:has-text('153')",
+  );
+
+  if (await errorLocator.isVisible()) {
+    // If we hit a 153 error (playback not available) then skip the rest of the test
+
+    console.log("Video playback not available, skipping the rest of the test.");
+
+    await context.close();
+
+    testInfo.skip();
+
+    return;
+  }
+}

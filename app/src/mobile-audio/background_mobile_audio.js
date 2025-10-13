@@ -65,8 +65,8 @@
     }
 
     // Check if ytInitialPlayerResponse already exists
-    if (window.ytInitialPlayerResponse) {
-      originalPlayerResponse = window.ytInitialPlayerResponse;
+    if (window["ytInitialPlayerResponse"]) {
+      originalPlayerResponse = window["ytInitialPlayerResponse"];
       log("Found existing ytInitialPlayerResponse, storing original");
     }
 
@@ -164,9 +164,9 @@
 
     /* 4-c. if ytNetworkFetch was already present before our script ran,
             wrap it immediately (covers the 'parsed-but-not-executed' case) */
-    if (window.ytNetworkFetch) {
+    if (window["ytNetworkFetch"]) {
       log("ytNetworkFetch pre-existing → wrapping immediately");
-      window.fetch = createRewriter(window.ytNetworkFetch);
+      window.fetch = createRewriter(window["ytNetworkFetch"]);
     }
   })();
 })();

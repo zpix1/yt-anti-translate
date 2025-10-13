@@ -7,7 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.19.13.1] - 2025-09-27
+## [1.20.0] - 2025-10-13
+
+### New Feature
+
+- Add YouTube Mini Player untranslation
+- [#114](https://github.com/zpix1/yt-anti-translate/issues/114) Thumbnails Untranslate
+- [#135](https://github.com/zpix1/yt-anti-translate/issues/135) Untranslate Collaborator authors on everywhere
+- [#119](https://github.com/zpix1/yt-anti-translate/issues/119) Untranslate Embeded videos outside of YouTube (e.g. On filmot.com) - iFrame support
+- [#57](https://github.com/zpix1/yt-anti-translate/issues/57) Add support for youtube-nocookie.com
+- [#138](https://github.com/zpix1/yt-anti-translate/issues/138) Add option to toggle Titles Untranslation
+- [#55](https://github.com/zpix1/yt-anti-translate/issues/55) Whitelist channels to allow translations/dubbing - Advanced Settings
+
+### Fixed
+
+- [#137](https://github.com/zpix1/yt-anti-translate/issues/137) Videos description in searches sometimes shows older videos description
+- Add missing selector to handle branding of feutured channels and sidebar channels
+- Fix video description not translating of fundraising videos if viewport is below 1000x500
+- Added missing selector to handle description of dismissable featured channel video
+
+## [1.19.13.1] - 2025-10-09
 
 ### Fixed
 

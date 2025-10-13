@@ -3,7 +3,20 @@
 chrome.storage.sync.get(
   {
     disabled: false,
+    untranslateTitle: true,
+    whiteListUntranslateTitle: [],
+    untranslateAudio: true,
     untranslateAudioOnlyAI: false,
+    whiteListUntranslateAudio: [],
+    untranslateDescription: true,
+    whiteListUntranslateDescription: [],
+    untranslateChapters: true,
+    whiteListUntranslateChapters: [],
+    untranslateChannelBranding: true,
+    whiteListUntranslateChannelBranding: [],
+    untranslateNotification: true,
+    untranslateThumbnail: true,
+    whiteListUntranslateThumbnail: [],
   },
   async function (items) {
     if (!items.disabled) {

@@ -8,9 +8,20 @@ test.describe("Setup Auth And UBlock", () => {
   test("Create storage states if missing and download uBlock for both Chromium and Firefox", async ({
     allBrowserNameWithExtensions,
     allLocaleStrings,
+    isMobile,
   }) => {
-    expect(
-      await setupUBlockAndAuth(allBrowserNameWithExtensions, allLocaleStrings),
-    ).toBe(true);
+    // If this test is retrying then check uBlock and Auth again
+    const { status, error } = await setupUBlockAndAuth(
+      allBrowserNameWithExtensions,
+      allLocaleStrings,
+      isMobile,
+      false,
+    );
+
+    if (error) {
+      console.error("Error during setupUBlockAndAuth:", error);
+    }
+    await expect(error).toBeUndefined();
+    await expect(status).toBe(true);
   });
 });

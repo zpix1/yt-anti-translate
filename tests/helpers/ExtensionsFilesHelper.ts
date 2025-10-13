@@ -6,7 +6,6 @@ import https from "https";
 import { pipeline } from "node:stream";
 import { promisify } from "node:util";
 
-import * as crx from "crx-util";
 import { fileURLToPath } from "node:url";
 
 const streamPipeline = promisify(pipeline);
@@ -82,14 +81,14 @@ export async function downloadAndExtractUBlock(browserName: string) {
     case "chromium":
       //To get the following url if it changes you can do a `curl 'https://clients2.google.com/service/update2/crx?response=redirect&os=win&arch=x86-64&os_arch=x86-64&nacl_arch=x86-64&prod=chromiumcrx&prodchannel=unknown&prodversion=9999.0.9999.0&acceptformat=crx2,crx3&x=id%3Dddkjiahejlhfcafbddmgiahcphecmpfh%26uc'`
       //and copy the redirect URL to the file
-      uBlockUri = `https://clients2.googleusercontent.com/crx/blobs/AR5vvToUznjd4HPtq2Qf2ofykf5cygX6Wm7Q7cmg2zGc61WE49beD-vBuuew0okjXIj8lJ8TJMfGenI2Dg8DAJT_dNWWaFrSeW5UApwk5Nxh05G5vVNqQYKOcrQeYkJ2fxBgAMZSmuWEL6hqLeWkBX6RZY0yRQi9IjkaXg/DDKJIAHEJLHFCAFBDDMGIAHCPHECMPFH_2025_512_1008_0.crx`;
-      expectedVersion = "2025.512.1008";
+      uBlockUri = `https://clients2.googleusercontent.com/crx/blobs/AcLY-yTwGVsujPgeyaunSeAvdClIxMVRVx02e2MoF2O4ilPjLPJh1fv59Iz_8b0RSn0xY64R5swJVM3eYSWuV38pVy4d1sVAOHNc7hPbphjhEV-GQ8CI30vlyU93h7-yiiaGAMZSmuXJ8MiIWRYgzDrCdWjAYSuyGQHc1Q/DDKJIAHEJLHFCAFBDDMGIAHCPHECMPFH_2025_921_2008_0.crx`;
+      expectedVersion = "2025.921.2008";
       destDirUBlock = path.join(__dirname, "../testUBlockOriginLite");
       break;
     case "firefox":
       uBlockUri =
-        "https://addons.mozilla.org/firefox/downloads/file/4458450/ublock_origin-1.63.2.xpi";
-      expectedVersion = "1.63.2";
+        "https://addons.mozilla.org/firefox/downloads/file/4578681/ublock_origin-1.66.4.xpi";
+      expectedVersion = "1.66.4";
       destDirUBlock = path.join(__dirname, "../testUBlockOrigin");
       break;
     default:
@@ -149,8 +148,31 @@ export async function downloadAndExtractUBlock(browserName: string) {
                 await streamPipeline(response, crxfile);
                 console.log("Download finished, extracting CRX...");
 
-                await crx.parser.extract(crxPath, destDirUBlock);
+                // Read .crx file and strip header
+                // .crx v3 header: 4 bytes magic, 4 bytes version, 4 bytes header size, then header
+                const crxBuffer = fs.readFileSync(crxPath);
+
+                const magic = crxBuffer.subarray(0, 4).toString();
+                if (magic !== "Cr24") {
+                  throw new Error("Not a valid CRX file");
+                }
+                const version = crxBuffer.readUInt32LE(4);
+                if (version !== 3) {
+                  throw new Error("Only CRX3 is supported by this script");
+                }
+                const headerSize = crxBuffer.readUInt32LE(8);
+                const zipStartOffset = 12 + headerSize;
+                const zipBuffer = crxBuffer.subarray(zipStartOffset);
+                const zipPath = path.join(destDirUBlock, "ublock_clean.zip");
+                fs.writeFileSync(zipPath, zipBuffer);
+                console.log("uBlock Origin converted to ZIP...");
+
+                const crxFileStream = await unzipper.Open.file(zipPath);
+                await crxFileStream.extract({ path: destDirUBlock });
                 console.log("uBlock Origin extracted successfully!");
+
+                // Clean up temp zip
+                fs.unlinkSync(zipPath);
 
                 const backgroundJsPath = path.join(
                   destDirUBlock,

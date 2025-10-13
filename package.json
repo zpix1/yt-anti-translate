@@ -32,9 +32,12 @@
   "devDependencies": {
     "@eslint/js": "^9.28.0",
     "@playwright/test": "^1.52.0",
+    "@types/chrome": "^0.1.22",
+    "@types/firefox-webext-browser": "^120.0.5",
     "@types/node": "^22.13.9",
+    "@types/unzipper": "^0.10.11",
     "@vitest/ui": "^3.2.4",
-    "crx-util": "^1.0.0",
+    "2captcha-ts": "^2.4.1",
     "dotenv": "^16.5.0",
     "eslint": "^9.28.0",
     "eslint-config-prettier": "^10.1.5",

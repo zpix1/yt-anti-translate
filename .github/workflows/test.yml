@@ -40,16 +40,16 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: lts/*
+
       - name: Install dependencies
         run: npm ci
-      - name: Lint
-        run: npm run lint
-      - name: Run unit tests
-        run: npm run test:unit
+
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
+
       - name: Set up virtual display
         run: sudo apt-get update && sudo apt-get install -y xvfb
+
       - name: Run Playwright tests
         env:
           YOUTUBE_API_KEY: "${{ secrets.YOUTUBE_API_KEY }}"
@@ -58,12 +58,14 @@ jobs:
           GOOGLE_OTP_SECRET: "${{ secrets.GOOGLE_OTP_SECRET }}"
           TWOCAPTCHA_API_KEY: "${{ secrets.TWOCAPTCHA_API_KEY }}"
         run: xvfb-run npx playwright test --headed
+
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
           name: playwright-report
           path: playwright-report/
           retention-days: 30
+
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:

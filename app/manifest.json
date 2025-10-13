@@ -1,7 +1,7 @@
 {
   "name": "YouTube Anti Translate",
   "author": "zpix1",
-  "version": "1.19.13.1",
+  "version": "1.20.0",
   "description": "A small extension to disable YouTube video titles/audio/descriptions autotranslation.",
   "manifest_version": 3,
   "browser_specific_settings": {
@@ -15,13 +15,24 @@
   },
   "content_scripts": [
     {
-      "matches": ["*://*.youtube.com/*"],
-      "js": ["src/global.js", "src/content_injectglobal.js"],
-      "run_at": "document_end"
+      "matches": ["*://*.youtube.com/*", "*://*.youtube-nocookie.com/*"],
+      "js": ["src/content_injectglobal.js"],
+      "run_at": "document_end",
+      "all_frames": true
     },
     {
       "matches": ["*://*.youtube.com/*"],
-      "js": ["src/content_start.js", "src/content_channelbranding.js"]
+      "js": ["src/global.js"],
+      "run_at": "document_end"
+    },
+    {
+      "matches": ["*://*.youtube.com/*", "*://*.youtube-nocookie.com/*"],
+      "js": ["src/content_start.js"],
+      "all_frames": true
+    },
+    {
+      "matches": ["*://*.youtube.com/*"],
+      "js": ["src/content_channelbranding.js"]
     },
     {
       "matches": ["*://m.youtube.com/*"],
@@ -39,7 +50,7 @@
         "src/background_notifications.js",
         "src/mobile-audio/background_mobile_audio.js"
       ],
-      "matches": ["*://*.youtube.com/*"]
+      "matches": ["*://*.youtube.com/*", "*://*.youtube-nocookie.com/*"]
     }
   ],
   "action": {
@@ -50,7 +61,7 @@
     "open_in_tab": true
   },
   "permissions": ["storage"],
-  "host_permissions": ["*://*.youtube.com/*"],
+  "host_permissions": ["*://*.youtube.com/*", "*://*.youtube-nocookie.com/*"],
   "icons": {
     "48": "icon48.png"
   }

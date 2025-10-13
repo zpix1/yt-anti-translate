@@ -18,15 +18,23 @@ It is much easier to use than its analogues (such as [YoutubeAutotranslateCancel
 
 ## Features
 
-- Restores original video titles on YouTube (Title Anti-Translation)
+- Restores original video titles on YouTube (can be toggled in settings "Untranslate titles")
 - Restores original video descriptions on YouTube (can be toggled in settings "Untranslate description")
-- Restores original video chapters
+- Restores original video chapters (can be toggled in settings "Untranslate video chapters")
 - Disables automatic audio (dubbing) translation (can be toggled in settings "Untranslate audio track")
+- Restores original video thumbnails on YouTube (can be toggled in settings "Untranslate video thumbnails")
 - Restores original channel branding header and about on YouTube (can be toggled in settings "Untranslate channel branding")
-- Restores original channels' names almost everywhere
+- Restores original channels' names everywhere else
 - Untranslates YouTube Shorts audio and titles
 - Works on m.youtube.com too (some mobile features are still unsupported and/or experimental)
+- Works on youtube-nocookie.com
+- Works on embeded YouTube videos
 - Works automatically without any configuration
+- "Advanced Settings" to allow translations for specified channels (using the @ handle of any channel)
+
+> [!WARNING]
+> For compatibility with [DeArrow](https://github.com/ajayyy/DeArrow) it is recommended do disable "Untranslate titles" and "Untranslate video thumbnails".
+> You can then use [DeArrow](https://github.com/ajayyy/DeArrow)'s options page, under "Behavior" menu section, and enable "Default to Original Video Information" to still have translated titles and thumbnail from [DeArrow](https://github.com/ajayyy/DeArrow).
 
 ### Enhanced Features Reliability Option
 
@@ -52,6 +60,11 @@ There's also a [Firefox Manifest v3 version](https://addons.mozilla.org/firefox/
    - Before running the tests, you will need to install playwright browsers and dependencies
      `npx playwright install --with-deps`
    - Please create or update tests if adding new capabilities
+   - For running tests on your machine you need a `.env` file with values for `GOOGLE_USER`, `GOOGLE_PWD` and `GOOGLE_OTP_SECRET`.
+     > [!NOTE]
+     > These `.env` values should be valid credentials to a Google (YouTube) Account with 2FA OTP enabled and OTP as the highest level of security on the account (aka no "Google prompt" or "Passkeys and security keys" configured).
+     > `GOOGLE_OTP_SECRET` is the "secret" query parameter of the QR Code that is provided when configuring the 2FA OTP Authenticathor. You can use a QR Code reader to read the text value.
+     > It is recommended that you create a test account for this purpose.
 
 #### Testing in Browser
 
@@ -88,7 +101,7 @@ You can also show your support by:
 
 ### Contributors
 
-- [namakeingo](https://github.com/namakeingo) - Firefox MV3 Developer
+- [namakeingo](https://github.com/namakeingo) - Collaborator and Main Maintainer - Firefox MV3 Developer
   - [Donate to namakeingo](https://github.com/sponsors/namakeingo)
   - Star the fork [namakeingo/yt-anti-translate-firefox](https://github.com/namakeingo/yt-anti-translate-firefox)
 - [artisticfox8](https://github.com/artisticfox8/yt-anti-translate) - Firefox MV3 Developer

@@ -286,7 +286,7 @@ function getCurrentVideoTime() {
     document.querySelector("#movie_player video") ||
     document.querySelector("video");
   if (video && "currentTime" in video) {
-    const time = Math.floor(video.currentTime);
+    const time = Math.floor(Number(video.currentTime));
     return time;
   }
 
@@ -362,8 +362,11 @@ function setupChapterButtonObserver() {
     let shouldUpdate = false;
 
     mutations.forEach((mutation) => {
-      if (mutation.type === "childList" || mutation.type === "characterData") {
-        const target = mutation.target;
+      if (
+        (mutation.type === "childList" || mutation.type === "characterData") &&
+        mutation.target.nodeType === Node.ELEMENT_NODE
+      ) {
+        const target = /** @type {Element} */ (mutation.target);
         if (
           target.classList?.contains("ytp-chapter-title-content") ||
           target.closest(".ytp-chapter-title-content")
@@ -439,7 +442,7 @@ function setupChapters(originalDescription) {
       if (mutation.type === "childList") {
         mutation.addedNodes.forEach((node) => {
           if (node.nodeType === Node.ELEMENT_NODE) {
-            const element = node;
+            const element = /** @type {Element} */ (node);
             // More specific targeting
             if (
               element.classList?.contains("ytp-tooltip") &&
@@ -452,8 +455,11 @@ function setupChapters(originalDescription) {
       }
 
       // Watch for attribute changes (style changes that show/hide tooltips)
-      if (mutation.type === "attributes") {
-        const target = mutation.target;
+      if (
+        mutation.type === "attributes" &&
+        mutation.target.nodeType === Node.ELEMENT_NODE
+      ) {
+        const target = /** @type {Element} */ (mutation.target);
         if (
           target.classList?.contains("ytp-tooltip") &&
           target.classList?.contains("ytp-preview") &&
@@ -505,73 +511,18 @@ function setupChapters(originalDescription) {
 }
 
 /**
- * Retrieves the YouTube player response object in a resilient way that works
- * across desktop and mobile layouts.
- *
- * @param {HTMLElement|null} playerEl - Player element if already located.
- * @returns {object|null} The player response object or null if it cannot be found.
- */
-function getPlayerResponseSafely(playerEl) {
-  let response = null;
-
-  // Attempt standard desktop API first
-  try {
-    if (playerEl && typeof playerEl.getPlayerResponse === "function") {
-      response = playerEl.getPlayerResponse();
-    }
-  } catch (err) {
-    window.YoutubeAntiTranslate?.logDebug?.("getPlayerResponse failed", err);
-  }
-
-  // Fallback to embedded player API
-  if (!response) {
-    try {
-      if (
-        playerEl &&
-        typeof playerEl.getEmbeddedPlayerResponse === "function"
-      ) {
-        response = playerEl.getEmbeddedPlayerResponse();
-      }
-    } catch (err) {
-      window.YoutubeAntiTranslate?.logDebug?.(
-        "getEmbeddedPlayerResponse failed",
-        err,
-      );
-    }
-  }
-
-  // Legacy/alternate location used by some mobile builds
-  if (
-    !response &&
-    window.ytplayer &&
-    window.ytplayer.config &&
-    window.ytplayer.config.args &&
-    window.ytplayer.config.args.player_response
-  ) {
-    try {
-      response = JSON.parse(window.ytplayer.config.args.player_response);
-    } catch (err) {
-      window.YoutubeAntiTranslate.logWarning(
-        "Failed to parse ytplayer.config.args.player_response",
-        err,
-      );
-    }
-  }
-
-  return response || null;
-}
-
-/**
  * Uses the YouTube player API to obtain the original (untranslated) video description.
  *
- * @returns {string|null} The original description or null if it cannot be retrieved.
+ * @returns {Promise<{shortDescription: string|null, title: string|null, channelId: string|null}>} The original description or null if it cannot be retrieved.
  */
 async function fetchOriginalDescription() {
   const player = window.YoutubeAntiTranslate.getFirstVisible(
     document.querySelectorAll(window.YoutubeAntiTranslate.getPlayerSelector()),
+    /*shouldBeInsideViewport=*/ false,
   );
 
-  const playerResponse = getPlayerResponseSafely(player);
+  const playerResponse =
+    window.YoutubeAntiTranslate.getPlayerResponseSafely(player);
   if (!playerResponse && window.YoutubeAntiTranslate.isMobile()) {
     // Fallback for mobile layout when player response is unavailable
     const mobileDescription = await getDescriptionMobile();
@@ -581,11 +532,14 @@ async function fetchOriginalDescription() {
     return null;
   }
 
-  return (
-    playerResponse?.videoDetails?.shortDescription ||
-    playerResponse?.videoDetails?.title ||
-    null
-  );
+  return {
+    shortDescription:
+      playerResponse?.["videoDetails"]?.shortDescription ||
+      playerResponse?.["videoDetails"]?.title ||
+      null,
+    title: playerResponse?.["videoDetails"]?.title || null,
+    channelId: playerResponse?.["videoDetails"]?.channelId || null,
+  };
 }
 
 /**
@@ -596,9 +550,11 @@ async function fetchOriginalDescription() {
 function fetchOriginalAuthor() {
   const player = window.YoutubeAntiTranslate.getFirstVisible(
     document.querySelectorAll(window.YoutubeAntiTranslate.getPlayerSelector()),
+    /*shouldBeInsideViewport=*/ false,
   );
 
-  const playerResponse = getPlayerResponseSafely(player);
+  const playerResponse =
+    window.YoutubeAntiTranslate.getPlayerResponseSafely(player);
   if (!playerResponse && window.YoutubeAntiTranslate.isMobile()) {
     // Fallback for mobile layout when player response is unavailable
     const mobileAuthor = getAuthorMobile();
@@ -608,7 +564,7 @@ function fetchOriginalAuthor() {
     return null;
   }
 
-  return playerResponse?.videoDetails?.author || null;
+  return playerResponse?.["videoDetails"]?.author || null;
 }
 
 /**
@@ -616,74 +572,147 @@ function fetchOriginalAuthor() {
  * triggers the chapters replacement logic.
  */
 async function restoreOriginalDescriptionAndAuthor() {
-  const originalDescription = await fetchOriginalDescription();
-  const originalAuthor = fetchOriginalAuthor();
+  const settings = await window.YoutubeAntiTranslate.getSettings();
 
-  if (!originalDescription && !originalAuthor) {
+  const originalDescriptionData =
+    settings.untranslateDescription || settings.untranslateChapters
+      ? await fetchOriginalDescription()
+      : null;
+  const originalAuthor = fetchOriginalAuthor();
+  const originalTitle = settings.untranslateChannelBranding
+    ? await getTitle(document.location.href)
+    : null;
+
+  if (!originalDescriptionData && !originalAuthor && !originalTitle) {
     return;
   }
 
-  if (originalDescription) {
-    const descriptionContainer = window.YoutubeAntiTranslate.getFirstVisible(
-      document.querySelectorAll(DESCRIPTION_SELECTOR),
-    );
-
-    if (descriptionContainer) {
-      updateDescriptionContent(descriptionContainer, originalDescription);
-    } else {
-      window.YoutubeAntiTranslate.logWarning(
-        `Video Description container not found`,
+  if (originalDescriptionData.shortDescription) {
+    if (settings.untranslateDescription) {
+      const descriptionContainer = window.YoutubeAntiTranslate.getFirstVisible(
+        document.querySelectorAll(DESCRIPTION_SELECTOR),
       );
+
+      if (descriptionContainer) {
+        if (
+          await window.YoutubeAntiTranslate.isWhitelistedChannel(
+            "whiteListUntranslateDescription",
+            null,
+            null,
+            originalDescriptionData.channelId,
+          )
+        ) {
+          window.YoutubeAntiTranslate.logInfo(
+            "Channel is whitelisted, skipping video description untranslation",
+          );
+        } else {
+          updateDescriptionContent(
+            descriptionContainer,
+            originalDescriptionData.shortDescription,
+          );
+        }
+      } else {
+        window.YoutubeAntiTranslate.logWarning(
+          `Video Description container not found`,
+        );
+      }
     }
 
-    setupChapters(originalDescription);
+    if (settings.untranslateChapters) {
+      if (
+        await window.YoutubeAntiTranslate.isWhitelistedChannel(
+          "whiteListUntranslateChapters",
+          null,
+          null,
+          null,
+          originalAuthor,
+        )
+      ) {
+        window.YoutubeAntiTranslate.logInfo(
+          "Channel is whitelisted, skipping video chapters untranslation",
+        );
+      } else {
+        setupChapters(originalDescriptionData.shortDescription);
+      }
+    }
   }
 
-  if (originalAuthor) {
-    handleAuthor(originalAuthor);
+  if (settings.untranslateChannelBranding && originalAuthor) {
+    await handleAuthor(originalAuthor, originalTitle);
   }
 }
 
 /**
  * Restores the original (untranslated) author name only
  */
-function restoreOriginalAuthorOnly() {
+async function restoreOriginalAuthorOnly() {
   const originalAuthor = fetchOriginalAuthor();
 
   if (!originalAuthor) {
     return;
   }
 
-  handleAuthor(originalAuthor);
+  await handleAuthor(originalAuthor);
 }
 
 // Author handler
-function handleAuthor(originalAuthor) {
-  // We should skip this operation if the video player was embedded as it does not have the author above the description
-  const player = window.YoutubeAntiTranslate.getFirstVisible(
-    document.querySelectorAll(window.YoutubeAntiTranslate.getPlayerSelector()),
-  );
-  if (player && player.id === "c4-player") {
-    return;
+async function handleAuthor(originalAuthor, originalTitle = null) {
+  if (
+    await window.YoutubeAntiTranslate.isWhitelistedChannel(
+      "whiteListUntranslateChannelBranding",
+      null,
+      null,
+      null,
+      originalAuthor,
+    )
+  ) {
+    window.YoutubeAntiTranslate.logInfo(
+      "Channel is whitelisted, skipping channel branding untranslation",
+    );
+  } else {
+    // We should skip this operation if the video player was embedded as it does not have the author above the description
+    const player = window.YoutubeAntiTranslate.getFirstVisible(
+      document.querySelectorAll(
+        window.YoutubeAntiTranslate.getPlayerSelector(),
+      ),
+    );
+    if (player && player.id === "c4-player") {
+      return;
+    }
+
+    const authorContainers = window.YoutubeAntiTranslate.getAllVisibleNodes(
+      document.querySelectorAll(AUTHOR_SELECTOR),
+    );
+
+    if (authorContainers) {
+      for (const authorContainer of authorContainers) {
+        updateAuthorContent(authorContainer, originalAuthor);
+      }
+    } else {
+      window.YoutubeAntiTranslate.logWarning(
+        `Video Author container not found`,
+      );
+    }
   }
 
-  const authorContainers = window.YoutubeAntiTranslate.getAllVisibleNodes(
-    document.querySelectorAll(AUTHOR_SELECTOR),
-  );
-
-  if (authorContainers) {
-    for (const authorContainer of authorContainers) {
-      updateAuthorContent(authorContainer, originalAuthor);
+  if (originalTitle) {
+    const avatarStack = window.YoutubeAntiTranslate.getFirstVisible(
+      document.querySelectorAll("#owner #avatar-stack"),
+    );
+    if (avatarStack) {
+      await updateCollaboratorAuthors(avatarStack, originalAuthor);
+    } else {
+      window.YoutubeAntiTranslate.logInfo(
+        "Video Avatar Stack container not found",
+      );
     }
-  } else {
-    window.YoutubeAntiTranslate.logWarning(`Video Author container not found`);
   }
 }
 
 /**
  * Replaces the translated description shown to the user with the provided original text.
  *
- * @param {HTMLElement} container - Element that contains the description.
+ * @param {Element} container - Element that contains the description.
  * @param {string} originalText - Original (untranslated) description.
  */
 function updateDescriptionContent(container, originalText) {
@@ -742,9 +771,15 @@ function updateDescriptionContent(container, originalText) {
       !mainTextContainer.querySelector(
         "#description-placeholder",
       ) /*ignore placeholder*/ &&
-      !mainTextContainer.querySelector(
-        '[style="color: rgb(170, 170, 170);"',
-      ) /*ignore grey text*/ &&
+      (!window.YoutubeAntiTranslate.isMobile ||
+        (window.YoutubeAntiTranslate.isDarkTheme() &&
+          !mainTextContainer.querySelector(
+            '[style="color: rgb(170, 170, 170);"]',
+          )) ||
+        (!window.YoutubeAntiTranslate.isDarkTheme() &&
+          !mainTextContainer.querySelector(
+            '[style="color: rgb(96, 96, 96);"]',
+          ))) /*ignore grey text on mobile*/ &&
       needsUpdate(mainTextContainer)
     : false;
   const snippetNeedsUpdate = snippetTextContainer
@@ -781,7 +816,7 @@ function updateDescriptionContent(container, originalText) {
 /**
  * Replaces the translated author text shown to the user with the original one.
  *
- * @param {HTMLElement} container - Element that contains the author name.
+ * @param {Element} container - Element that contains the author name.
  * @param {string} originalText - Original (untranslated) author name.
  */
 function updateAuthorContent(container, originalText) {
@@ -797,10 +832,11 @@ function updateAuthorContent(container, originalText) {
         .reel-player-header-channel-title > ${ATTRIBUTED_STRING_CLASS_SELECTOR}`,
       ),
     );
+
   const multipleChannelNameContainers =
     window.YoutubeAntiTranslate.getFirstVisible(
       container.querySelectorAll(
-        `#attributed-channel-name ${ATTRIBUTED_STRING_CLASS_SELECTOR} a > span`,
+        `#attributed-channel-name ${ATTRIBUTED_STRING_CLASS_SELECTOR} a.yt-core-attributed-string__link`,
       ),
     );
 
@@ -809,7 +845,7 @@ function updateAuthorContent(container, originalText) {
     !singularChannelNameTextContainer &&
     !multipleChannelNameContainers
   ) {
-    window.YoutubeAntiTranslate.logWarning(
+    window.YoutubeAntiTranslate.logInfo(
       `No video author text containers found`,
     );
     return;
@@ -817,17 +853,19 @@ function updateAuthorContent(container, originalText) {
 
   // Update both containers if they exist
   if (singularChannelNameTitleContainer) {
-    if (singularChannelNameTitleContainer.title !== originalText) {
-      singularChannelNameTitleContainer.title = originalText;
+    if (
+      singularChannelNameTitleContainer.getAttribute("title") !== originalText
+    ) {
+      singularChannelNameTitleContainer.setAttribute("title", originalText);
     }
   }
 
   if (singularChannelNameTextContainer) {
-    if (singularChannelNameTextContainer.innerText !== originalText) {
+    if (singularChannelNameTextContainer.textContent !== originalText) {
       const storeStyleDisplay =
         singularChannelNameTextContainer.parentElement.style.display;
       singularChannelNameTextContainer.parentElement.style.display = "none";
-      singularChannelNameTextContainer.innerText = originalText;
+      singularChannelNameTextContainer.textContent = originalText;
       // Force reflow
       setTimeout(() => {
         singularChannelNameTextContainer.parentElement.style.display =
@@ -837,29 +875,235 @@ function updateAuthorContent(container, originalText) {
   }
 
   if (multipleChannelNameContainers) {
-    const firstTextNode = window.YoutubeAntiTranslate.getFirstTextNode(
-      multipleChannelNameContainers,
-    );
+    // Check that we have two text nodes before replacing
+    const textNodes = Array.from(
+      multipleChannelNameContainers.childNodes,
+    ).filter((node) => node.nodeType === Node.TEXT_NODE);
+
+    // Check also the text node of the first span with no classes as some languages have that in the structure too
+    // e.g.: <span class style>...</span>
+    const firstSpan =
+      multipleChannelNameContainers.querySelector("span[class='']");
+    let firstSpanTextNodes;
+
+    if (firstSpan) {
+      firstSpanTextNodes = Array.from(firstSpan.childNodes).filter(
+        (node) => node.nodeType === Node.TEXT_NODE,
+      );
+    }
+
+    if (!textNodes && !firstSpanTextNodes) {
+      return;
+    }
+
+    if (
+      textNodes &&
+      textNodes.length < 2 &&
+      firstSpanTextNodes &&
+      firstSpanTextNodes.length < 2
+    ) {
+      window.YoutubeAntiTranslate.logDebug(
+        `Not enough text nodes found for this type of updateAuthorContent`,
+      );
+      return;
+    }
+
+    let firstTextNode;
+    if (textNodes && textNodes.length >= 2) {
+      firstTextNode = window.YoutubeAntiTranslate.getFirstTextNode(
+        multipleChannelNameContainers,
+      );
+    } else if (firstSpanTextNodes && firstSpanTextNodes.length >= 2) {
+      firstTextNode = window.YoutubeAntiTranslate.getFirstTextNode(firstSpan);
+    }
+
     if (firstTextNode && firstTextNode.textContent !== originalText) {
       firstTextNode.textContent = originalText;
     }
   }
 }
 
-async function handleDescriptionMutation() {
-  const descriptionElement = window.YoutubeAntiTranslate.getFirstVisible(
-    document.querySelectorAll(DESCRIPTION_SELECTOR),
+async function updateCollaboratorAuthors(avatarStack, originalAuthor) {
+  const avatarStackImages = avatarStack.querySelectorAll("yt-avatar-shape img");
+
+  const authors = [];
+
+  if (avatarStackImages) {
+    for (const avatarImage of avatarStackImages) {
+      const imgSrc = avatarImage.src;
+      if (!imgSrc || imgSrc.trim() === "") {
+        continue;
+      }
+
+      const originalDescriptionData = await fetchOriginalDescription();
+
+      const originalCollaborators =
+        await window.YoutubeAntiTranslate.getOriginalCollaboratorsItemsWithYoutubeI(
+          `${originalAuthor} ${originalDescriptionData.title}`,
+        );
+
+      const originalItem = originalCollaborators?.find(
+        (item) => item.avatarImage === avatarImage.src,
+      );
+      if (!originalItem) {
+        continue;
+      }
+
+      authors.push(originalItem.name);
+    }
+
+    if (authors.length > 0) {
+      const mainAuthor = originalAuthor;
+      // Remove main author from collaborators list
+      const collaboratorAuthorsOnly = authors.filter(
+        (name) => name !== mainAuthor,
+      );
+
+      if (collaboratorAuthorsOnly && collaboratorAuthorsOnly.length === 1) {
+        if (
+          await window.YoutubeAntiTranslate.isWhitelistedChannel(
+            "whiteListUntranslateChannelBranding",
+            null,
+            null,
+            null,
+            collaboratorAuthorsOnly[0],
+          )
+        ) {
+          window.YoutubeAntiTranslate.logInfo(
+            "Channel is whitelisted, skipping channel branding untranslation",
+          );
+          return;
+        }
+
+        const multipleChannelNameContainer =
+          window.YoutubeAntiTranslate.getFirstVisible(
+            avatarStack
+              .closest("#owner")
+              .querySelectorAll(
+                `#attributed-channel-name ${ATTRIBUTED_STRING_CLASS_SELECTOR} a.yt-core-attributed-string__link`,
+              ),
+          );
+
+        const localizedAnd = window.YoutubeAntiTranslate.getLocalizedAnd(
+          document.documentElement.lang,
+        );
+
+        // Count text nodes to know if we need to include the main author before the and
+        const textNodes = Array.from(
+          multipleChannelNameContainer.childNodes,
+        ).filter((node) => node.nodeType === Node.TEXT_NODE);
+
+        // Check also the text node of the first span with no classes as some languages have that in the structure too
+        // e.g.: <span class style>...</span>
+        const firstSpan =
+          multipleChannelNameContainer.querySelector("span[class='']");
+        let firstSpanTextNodes;
+
+        if (firstSpan) {
+          firstSpanTextNodes = Array.from(firstSpan.childNodes).filter(
+            (node) => node.nodeType === Node.TEXT_NODE,
+          );
+        }
+
+        if (!textNodes && !firstSpanTextNodes) {
+          return;
+        }
+
+        let includeMainAuthor = false;
+        if (
+          textNodes &&
+          textNodes.length < 2 &&
+          firstSpanTextNodes &&
+          firstSpanTextNodes.length < 2
+        ) {
+          includeMainAuthor = true;
+        }
+        const untranslatedCollaboratorText = `${includeMainAuthor ? `${mainAuthor} ` : ""}${localizedAnd} ${collaboratorAuthorsOnly[0]}`;
+
+        if (
+          textNodes &&
+          textNodes.length >= 2 &&
+          multipleChannelNameContainer &&
+          !multipleChannelNameContainer.textContent.includes(
+            untranslatedCollaboratorText,
+          )
+        ) {
+          replaceTextNodeContent(
+            multipleChannelNameContainer,
+            includeMainAuthor ? 0 : 1,
+            untranslatedCollaboratorText,
+          );
+        } else if (
+          firstSpanTextNodes &&
+          firstSpanTextNodes.length >= 2 &&
+          firstSpan &&
+          !firstSpan.textContent.includes(untranslatedCollaboratorText)
+        ) {
+          replaceTextNodeContent(
+            firstSpan,
+            includeMainAuthor ? 0 : 1,
+            untranslatedCollaboratorText,
+          );
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Replaces the content of a specific text node within a container.
+ * @param {*} container - The parent element containing text nodes.
+ * @param {*} textNodeIndex - The index of the text node to replace. 0-based.
+ * @param {*} newText - The new text content to set.
+ */
+function replaceTextNodeContent(container, textNodeIndex, newText) {
+  const textNodes = Array.from(container.childNodes).filter(
+    (node) => node.nodeType === Node.TEXT_NODE,
   );
+
+  if (textNodes.length > textNodeIndex) {
+    const targetTextNode = textNodes[textNodeIndex];
+    if (targetTextNode.textContent !== newText) {
+      targetTextNode.textContent = newText;
+    }
+  }
+}
+
+async function handleDescriptionMutation() {
+  const settings = await window.YoutubeAntiTranslate.getSettings();
+
+  if (
+    !settings.untranslateDescription &&
+    !settings.untranslateChapters &&
+    !settings.untranslateChannelBranding
+  ) {
+    return;
+  }
+
   const player = window.YoutubeAntiTranslate.getFirstVisible(
     document.querySelectorAll(window.YoutubeAntiTranslate.getPlayerSelector()),
+    /*shouldBeInsideViewport=*/ false,
   );
-  if (descriptionElement && player) {
-    await restoreOriginalDescriptionAndAuthor();
+
+  if (
+    settings.untranslateDescription ||
+    settings.untranslateChapters ||
+    settings.untranslateChannelBranding
+  ) {
+    const descriptionElement = window.YoutubeAntiTranslate.getFirstVisible(
+      document.querySelectorAll(DESCRIPTION_SELECTOR),
+    );
+    if (descriptionElement && player) {
+      await restoreOriginalDescriptionAndAuthor();
+    }
   }
 
   // On mobile the author is visible even when the description is not
   // so we need to check separately
-  if (window.YoutubeAntiTranslate.isMobile()) {
+  if (
+    window.YoutubeAntiTranslate.isMobile() &&
+    settings.untranslateChannelBranding
+  ) {
     const authorElement = window.YoutubeAntiTranslate.getFirstVisible(
       document.querySelectorAll(AUTHOR_SELECTOR),
     );
@@ -869,17 +1113,34 @@ async function handleDescriptionMutation() {
     }
   }
 }
-// Initialize the mutation observer for description
-const targetNode = document.body;
-const observerConfig = { childList: true, subtree: true };
-const descriptionObserver = new MutationObserver(
-  window.YoutubeAntiTranslate.debounce(handleDescriptionMutation, 100),
-);
-descriptionObserver.observe(targetNode, observerConfig);
+
+// Initialize the extension, waiting for window.YoutubeAntiTranslate to be available
+(function waitForYoutubeAntiTranslate() {
+  if (
+    window.YoutubeAntiTranslate &&
+    typeof window.YoutubeAntiTranslate.debounce === "function"
+  ) {
+    const target = document.body;
+    const config = {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["style", "class"],
+    };
+    const observer = new MutationObserver(
+      window.YoutubeAntiTranslate.debounce(handleDescriptionMutation),
+    );
+    observer.observe(target, config);
+  } else {
+    setTimeout(waitForYoutubeAntiTranslate, 8);
+  }
+})();
 
 // Add global click handler for timecode links
 document.addEventListener("click", (event) => {
-  const link = event.target.closest(".yt-timecode-link");
+  const link = /** @type {Element} */ (event.target).closest(
+    ".yt-timecode-link",
+  );
   if (!link) {
     return;
   }
@@ -894,9 +1155,9 @@ document.addEventListener("click", (event) => {
   const player = window.YoutubeAntiTranslate.getFirstVisible(
     document.querySelectorAll(window.YoutubeAntiTranslate.getPlayerSelector()),
   );
-  if (player && typeof player.seekTo === "function") {
+  if (player && typeof player["seekTo"] === "function") {
     try {
-      player.seekTo(seconds, true);
+      player["seekTo"](seconds, true);
       window.YoutubeAntiTranslate.logInfo(
         `Seeking to ${link.textContent} (${seconds}s)`,
       );
@@ -974,7 +1235,7 @@ function setupHorizontalChaptersObserver() {
       if (mutation.type === "childList") {
         mutation.addedNodes.forEach((node) => {
           if (node.nodeType === Node.ELEMENT_NODE) {
-            const element = node;
+            const element = /** @type {Element} */ (node);
             // Check if horizontal chapters were added
             if (
               element.matches?.(HORIZONTAL_CHAPTERS_SELECTOR) ||
@@ -1009,6 +1270,8 @@ function setupHorizontalChaptersObserver() {
     childList: true,
     subtree: true,
     characterData: true,
+    attributes: true,
+    attributeFilter: ["style", "class"],
   });
 
   // Initial update
@@ -1018,7 +1281,7 @@ function setupHorizontalChaptersObserver() {
 // Extract video metadata window.ytPubsubPubsubInstance
 function extractVideoDataField(fieldName) {
   try {
-    const pubsub = window.ytPubsubPubsubInstance;
+    const pubsub = window["ytPubsubPubsubInstance"];
     if (!pubsub) {
       return null;
     }
@@ -1071,8 +1334,8 @@ function extractVideoDataField(fieldName) {
   }
 }
 
-// Get Title using oembed for mobile
-async function getTitleMobile(url) {
+// Get Title using oembed
+async function getTitle(url) {
   const videoId = window.YoutubeAntiTranslate.extractVideoIdFromUrl(url);
   if (!videoId) {
     return null;
@@ -1105,12 +1368,17 @@ async function getTitleMobile(url) {
   return response.data.title;
 }
 
-// Get Description from the VideoData
+/** Get Description from the VideoData
+ * @return {Promise<{shortDescription:string|null, title: string|null, channelId: string|null}>} The original description or null if it cannot be retrieved.
+ */
 async function getDescriptionMobile() {
-  return (
-    extractVideoDataField("shortDescription") ||
-    (await getTitleMobile(document.location.href))
-  );
+  return {
+    shortDescription:
+      extractVideoDataField("shortDescription") ||
+      (await getTitle(document.location.href)),
+    title: (await getTitle(document.location.href)) || null,
+    channelId: extractVideoDataField("channelId") || null,
+  };
 }
 
 // Get Author from the VideoData

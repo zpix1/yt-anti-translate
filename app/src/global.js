@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-this-alias */
+
 const pendingRequests = new Map();
 
 class SessionLRUCache {
@@ -117,6 +119,7 @@ const lruCache = new SessionLRUCache();
 window.YoutubeAntiTranslate = {
   VIEWPORT_EXTENSION_PERCENTAGE_FRACTION: 0.5,
   VIEWPORT_OUTSIDE_LIMIT_FRACTION: 0.5,
+  MAX_ATTEMPTS: 2,
   LOG_PREFIX: "[YoutubeAntiTranslate]",
   LOG_LEVELS: {
     NONE: 0,
@@ -127,10 +130,6 @@ window.YoutubeAntiTranslate = {
   },
   currentLogLevel: 2, // Default to WARN
 
-  /**
-   * Sets the current log level.
-   * @param {string} levelName - The name of the log level (e.g., "INFO", "DEBUG").
-   */
   setLogLevel: function (levelName) {
     const newLevel = this.LOG_LEVELS[levelName.toUpperCase()];
     if (typeof newLevel === "number") {
@@ -150,6 +149,7 @@ ytd-compact-video-renderer,
 ytd-grid-video-renderer,
 ytd-playlist-video-renderer,
 ytd-playlist-panel-video-renderer,
+ytm-playlist-panel-video-renderer,
 yt-lockup-view-model,
 ytm-compact-video-renderer,
 ytm-rich-item-renderer,
@@ -158,7 +158,11 @@ ytm-video-card-renderer,
 ytm-media-item,
 ytm-playlist-video-renderer,
 a.ytp-videowall-still,
-a.ytp-ce-covering-overlay`,
+a.ytp-ce-covering-overlay,
+a.ytp-suggestion-link,
+div.fullscreen-recommendation,
+ytm-item-section-renderer,
+ytm-playlist-card-renderer` /*this last one is a playlist element but is used for thumbnail*/,
   ALL_ARRAYS_SHORTS_SELECTOR: `div.style-scope.ytd-rich-item-renderer,
 ytm-shorts-lockup-view-model`,
 
@@ -174,7 +178,6 @@ ytm-shorts-lockup-view-model`,
     }
   },
 
-  /** Use only for app errors */
   logError: function (...args) {
     if (this.currentLogLevel >= this.LOG_LEVELS.ERROR) {
       console.error(`${this.LOG_PREFIX} [ERROR]`, ...args);
@@ -187,24 +190,23 @@ ytm-shorts-lockup-view-model`,
     }
   },
 
-  /**
-   * Creates a debounced version of a function that will be executed at most once
-   * during the given wait interval. The wrapped function is invoked immediately
-   * on the first call and then suppressed for the remainder of the interval so
-   * that the real function runs **no more than once every `waitMinMs` milliseconds**.
-   *
-   * Uses `requestAnimationFrame` to align with the browser's repaint cycle.
-   *
-   * @param {Function} func - The function to debounce/throttle.
-   * @param {number} waitMinMs - The minimum time between invocations in milliseconds.
-   * @returns {Function} A debounced function.
-   */
-  debounce: function (func, wait = 30) {
-    let isScheduled = false;
-    let lastExecTime = 0;
-    // Helper to schedule the next frame. Falls back to setTimeout when the
-    // document is in the background where requestAnimationFrame callbacks are
-    // throttled or do not fire at all.
+  debounce: function (
+    func,
+    waitMinMs = 90,
+    includeArgsInSignature = false,
+    getSignature = undefined,
+  ) {
+    // Assign a stable ID to this func if not already present
+    if (!func["__debounceId"]) {
+      Object.defineProperty(func, "__debounceId", {
+        value: Symbol(),
+        writable: false,
+        configurable: false,
+      });
+    }
+
+    const signatures = new Map(); // signature → { lastExecTime, queued: {ctx,args}|null }
+
     function schedule(callback) {
       if (document.hidden || typeof requestAnimationFrame === "undefined") {
         return setTimeout(() => {
@@ -214,65 +216,77 @@ ytm-shorts-lockup-view-model`,
               ? performance.now()
               : Date.now();
           callback(now);
-        }, 16); // Approx. one frame at 60fps
+        }, 16);
       }
       return requestAnimationFrame(callback);
     }
 
-    function tick(time, context, args) {
-      if (!isScheduled) {
+    function tickQueue(signature, time) {
+      const entry = signatures.get(signature);
+      if (!entry || !entry.queued) {
         return;
       }
 
-      const elapsed = time - lastExecTime;
-
-      if (elapsed >= wait) {
-        func.apply(context, args);
-        lastExecTime = time;
-        isScheduled = false; // allow next schedule
+      const elapsed = time - entry.lastExecTime;
+      if (elapsed >= waitMinMs) {
+        // Execute queued call
+        func.apply(entry.queued.context, entry.queued.args);
+        entry.lastExecTime = time;
+        entry.queued = null;
       } else {
-        schedule((t) => tick(t, context, args));
+        // Still within wait window → reschedule
+        schedule((t) => tickQueue(signature, t));
       }
     }
 
     return function (...args) {
-      if (!isScheduled) {
-        isScheduled = true;
+      const context = this;
+
+      const signature =
+        getSignature?.(context, args) ||
+        (includeArgsInSignature
+          ? `${String(func["__debounceId"])}::${JSON.stringify(args)}`
+          : String(func["__debounceId"]));
+
+      const now =
+        typeof performance !== "undefined" &&
+        typeof performance.now === "function"
+          ? performance.now()
+          : Date.now();
+
+      let entry = signatures.get(signature);
+      if (!entry) {
+        // First call for this signature → execute immediately
+        entry = { lastExecTime: now, queued: null };
+        signatures.set(signature, entry);
+
         schedule((time) => {
-          if (lastExecTime === 0) {
-            // first invocation: run immediately
-            func.apply(this, args);
-            lastExecTime = time;
-            isScheduled = false;
-          } else {
-            tick(time, this, args);
-          }
+          func.apply(context, args);
+          entry.lastExecTime = time;
         });
+      } else {
+        // Already exists
+        if (!entry.queued) {
+          // Queue exactly one call per signature
+          entry.queued = { context, args };
+          schedule((time) => tickQueue(signature, time));
+        } else {
+          // Already queued → overwrite args/context, keep only latest
+          entry.queued.context = context;
+          entry.queued.args = args;
+        }
       }
     };
   },
 
-  /**
-   * Retrieves a deserialized object from session storage.
-   * @param {string} key
-   * @return {any|null}
-   */
   getSessionCache: function (key) {
     return lruCache.get(key);
   },
 
-  /**
-   * Stores a value in session storage after serializing
-   * @param {string} key
-   * @param {any} value
-   */
   setSessionCache: function (key, value) {
     return lruCache.set(key, value);
   },
 
-  /**
-   * @returns {string}
-   */
   getPlayerSelector: function () {
     if (window.location.hostname === "m.youtube.com") {
       return "#player-container-id";
@@ -286,17 +300,11 @@ ytm-shorts-lockup-view-model`,
     return selector;
   },
 
-  /**
-   * @returns {string}
-   */
   getBrowserOrChrome: function () {
     const result = typeof browser !== "undefined" ? browser : chrome;
     return result;
   },
 
-  /**
-   * @returns {bool}
-   */
   isFirefoxBasedBrowser: function () {
     const result =
       typeof browser !== "undefined" &&
@@ -305,39 +313,22 @@ ytm-shorts-lockup-view-model`,
     return result;
   },
 
-  // Detects if we are currently on the mobile YouTube site (m.youtube.com)
   isMobile: function () {
     const result = window.location.hostname === "m.youtube.com";
     return result;
   },
 
-  /**
-   * Normalize spaces in a string so that there are no more than 1 space between words
-   * @param {string} str
-   * @returns
-   */
   normalizeSpaces: function (str) {
     const result = str.replace(/\s+/g, " ").trim();
     return result;
   },
 
-  /**
-   * Processes a string with normalization and trimming options.
-   * @param {string} str - The string to process.
-   * @param {object} [options] - Configuration options for processing.
-   * @param {boolean} [options.ignoreCase=true] - If true, converts to lowercase. Default true
-   * @param {boolean} [options.normalizeSpaces=true] - If true, replaces consecutive whitespace with a single space. Default true
-   * @param {boolean} [options.normalizeNFKC=true] - If true, applies Unicode Normalization Form Compatibility Composition (NFKC). Default true
-   * @param {boolean} [options.trim=true] - If true, trims both leading and trailing whitespace. Default true
-   * @param {boolean} [options.trimLeft=false] - If true, trims leading whitespace. Ignored if `trim` is true. Default false
-   * @param {boolean} [options.trimRight=false] - If true, trims trailing whitespace. Ignored if `trim` is true. Default false
-   * @returns {string} The processed string.
-   */
   processString: function (str, options = {}) {
     const {
       ignoreCase = true,
       normalizeSpaces = true,
       normalizeNFKC = true,
+      ignoreInvisible = true,
       trim = true,
       trimLeft = false,
       trimRight = false,
@@ -349,6 +340,11 @@ ytm-shorts-lockup-view-model`,
 
     if (normalizeNFKC) {
       str = str.normalize("NFKC");
+    }
+
+    if (ignoreInvisible) {
+      // Strip zero-width and invisible formatting characters
+      str = str.replace(/[\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g, "");
     }
 
     if (normalizeSpaces) {
@@ -373,58 +369,18 @@ ytm-shorts-lockup-view-model`,
     return str;
   },
 
-  /**
-   * Advanced string equality comparison with optional normalization and trimming.
-   * @param {string} str1 - First string to compare.
-   * @param {string} str2 - Second string to compare.
-   * @param {object} [options] - Configuration options for comparison.
-   * @param {boolean} [options.ignoreCase=true] - If true, comparison is case-insensitive. Default true
-   * @param {boolean} [options.normalizeSpaces=true] - If true, replaces consecutive whitespace with a single space. Default true
-   * @param {boolean} [options.normalizeNFKC=true] - If true, applies Unicode Normalization Form Compatibility Composition (NFKC). Default true
-   * @param {boolean} [options.trim=true] - If true, trims both leading and trailing whitespace. Default true
-   * @param {boolean} [options.trimLeft=false] - If true, trims leading whitespace. Ignored if `trim` is true. Default false
-   * @param {boolean} [options.trimRight=false] - If true, trims trailing whitespace. Ignored if `trim` is true. Default false
-   * @returns {boolean} Whether the two processed strings are equal.
-   */
   isStringEqual: function (str1, str2, options = {}) {
     return (
       this.processString(str1, options) === this.processString(str2, options)
     );
   },
 
-  /**
-   * Advanced string includes check with optional normalization and trimming.
-   * @param {string} container - The string to check in.
-   * @param {string} substring - The string to look for.
-   * @param {object} [options] - Configuration options for comparison.
-   * @param {boolean} [options.ignoreCase=true] - If true, comparison is case-insensitive. Default true
-   * @param {boolean} [options.normalizeSpaces=true] - If true, replaces consecutive whitespace with a single space. Default true
-   * @param {boolean} [options.normalizeNFKC=true] - If true, applies Unicode Normalization Form Compatibility Composition (NFKC). Default true
-   * @param {boolean} [options.trim=true] - If true, trims both leading and trailing whitespace. Default true
-   * @param {boolean} [options.trimLeft=false] - If true, trims leading whitespace. Ignored if `trim` is true. Default false
-   * @param {boolean} [options.trimRight=false] - If true, trims trailing whitespace. Ignored if `trim` is true. Default false
-   * @returns {boolean} Whether the processed container includes the processed substring.
-   */
   doesStringInclude: function (container, substring, options = {}) {
     return this.processString(container, options).includes(
       this.processString(substring, options),
     );
   },
 
-  /**
-   * Advanced string replace with optional normalization and trimming.
-   * @param {string} input - The original string to operate on.
-   * @param {string|RegExp} pattern - The pattern to replace. If a string, treated as a literal substring.
-   * @param {string} replacement - The replacement string.
-   * @param {object} [options] - Configuration options.
-   * @param {boolean} [options.ignoreCase=true] - If true, performs case-insensitive replacement. Default true
-   * @param {boolean} [options.normalizeSpaces=true] - If true, replaces all whitespace sequences with a single space before matching. Default true
-   * @param {boolean} [options.normalizeNFKC=true] - If true, applies Unicode Normalization Form Compatibility Composition (NFKC). Default true
-   * @param {boolean} [options.trim=true] - If true, trims leading and trailing whitespace before processing. Default true
-   * @param {boolean} [options.trimLeft=false] - If true, trims leading whitespace (ignored if `trim` is true). Default false
-   * @param {boolean} [options.trimRight=false] - If true, trims trailing whitespace (ignored if `trim` is true). Default false
-   * @returns {string} The resulting string after replacement.
-   */
   stringReplaceWithOptions: function (
     input,
     pattern,
@@ -468,17 +424,6 @@ ytm-shorts-lockup-view-model`,
     return processedInput.replace(regex, replacement);
   },
 
-  /**
-   * Given a Node it uses computed style to determine if it is visible
-   * @param {Node} node - A Node of type ELEMENT_NODE
-   * @param {boolean} shouldCheckViewport - Optional. If true the element position is checked to be inside or outside the viewport. Viewport is extended based on
-   *                                        VIEWPORT_EXTENSION_PERCENTAGE_FRACTION. Defaults true
-   * @param {boolean} onlyOutsideViewport - Optional. only relevant when `shouldCheckViewport` is true. When this is also true the element is returned only if fully outside
-   *                                        the viewport. By default the element is returned only if inside the viewport. Defaults false
-   * @param {boolean} useOutsideLimit - Optional. when true, outside elements are limited to those contained inside the frame between the extended viewport and the
-   *                                    limit based on VIEWPORT_OUTSIDE_LIMIT_FRACTION. Defaults false
-   * @return {boolean} - true if the node is computed as visible
-   */
   isVisible: function (
     node,
     shouldCheckViewport = true,
@@ -592,24 +537,22 @@ ytm-shorts-lockup-view-model`,
     return true;
   },
 
-  /**
-   * Given an Array of HTMLElements it returns visible HTMLElement or null
-   * @param {Node|NodeList} nodes - A NodeList or single Node of type ELEMENT_NODE
-   * @param {boolean} shouldBeInsideViewport - Optional. If true the element should also be inside the viewport to be considered visible. Defaults true
-   * @returns {Node|null} - The first visible Node or null
-   */
   getFirstVisible: function (nodes, shouldBeInsideViewport = true) {
-    if (!nodes) {
+    if (
+      !nodes &&
+      (!(nodes instanceof Element) || !(nodes instanceof NodeList))
+    ) {
       return null;
     }
 
-    if (nodes instanceof Node) {
-      nodes = [nodes];
+    let /** @type {Element[]} */ nodeArray;
+    if (nodes instanceof Element) {
+      nodeArray = [/** @type {Element}*/ nodes];
     } else {
-      nodes = Array.from(nodes);
+      nodeArray = Array.from(/** @type {NodeListOf<Element>}*/ nodes);
     }
 
-    for (const node of nodes) {
+    for (const node of nodeArray) {
       if (this.isVisible(node, shouldBeInsideViewport, false, false)) {
         return node;
       }
@@ -618,32 +561,28 @@ ytm-shorts-lockup-view-model`,
     return null;
   },
 
-  /**
-   * Given an Array of HTMLElements it returns visible HTMLElement or null
-   * @param {Node|NodeList} nodes - A NodeList or single Node of type ELEMENT_NODE
-   * @param {boolean} shouldBeInsideViewport - Optional. If true the element should also be inside the viewport to be considered visible. Defaults true
-   * @param {Number} lengthLimit - Optional. Limit the number of items in the array. As soon as the correspoinding array length is reached,
-   *                               the array is returned prematurelly. Defaults to Number.MAX_VALUE
-   * @returns {Array<Node>|null} - A array of all the visible nodes or null
-   */
   getAllVisibleNodes: function (
     nodes,
     shouldBeInsideViewport = true,
     lengthLimit = Number.MAX_VALUE,
   ) {
-    if (!nodes) {
+    if (
+      !nodes &&
+      (!(nodes instanceof Element) || !(nodes instanceof NodeList))
+    ) {
       return null;
     }
 
-    if (nodes instanceof Node) {
-      nodes = [nodes];
+    let /** @type {Element[]} */ nodeArray;
+    if (nodes instanceof Element) {
+      nodeArray = [/** @type {Element}*/ nodes];
     } else {
-      nodes = Array.from(nodes);
+      nodeArray = Array.from(/** @type {NodeListOf<Element>}*/ nodes);
     }
 
     let visibleNodes = null;
 
-    for (const node of nodes) {
+    for (const node of nodeArray) {
       if (this.isVisible(node, shouldBeInsideViewport, false, false)) {
         if (visibleNodes) {
           visibleNodes.push(node);
@@ -660,27 +599,24 @@ ytm-shorts-lockup-view-model`,
     return visibleNodes;
   },
 
-  /**
-   * Given an Array of HTMLElements it returns visible HTMLElement or null only if they are loaded outside the viewport
-   * @param {Node|NodeList} nodes - A NodeList or single Node of type ELEMENT_NODE
-   * @param {boolean} useOutsideLimit - Optional. when true, outside elements are limited to those contained inside the frame between
-   *                                    the extended viewport and the limit based on VIEWPORT_OUTSIDE_LIMIT_FRACTION. Defaults false
-   * @returns {Array<Node>|null} - A array of all the visible nodes or null that are outside the viewport
-   */
   getAllVisibleNodesOutsideViewport: function (nodes, useOutsideLimit = false) {
-    if (!nodes) {
+    if (
+      !nodes &&
+      (!(nodes instanceof Element) || !(nodes instanceof NodeList))
+    ) {
       return null;
     }
 
+    let /** @type {Element[]} */ nodeArray;
     if (nodes instanceof Node) {
-      nodes = [nodes];
+      nodeArray = [/** @type {Node}*/ nodes];
     } else {
-      nodes = Array.from(nodes);
+      nodeArray = Array.from(/** @type {NodeList}*/ nodes);
     }
 
     let visibleNodes = null;
 
-    for (const node of nodes) {
+    for (const node of nodeArray) {
       if (this.isVisible(node, true, true, useOutsideLimit)) {
         if (visibleNodes) {
           visibleNodes.push(node);
@@ -693,11 +629,6 @@ ytm-shorts-lockup-view-model`,
     return visibleNodes;
   },
 
-  /**
-   * Creates a link element with proper YouTube styling
-   * @param {string} url - URL to create a link for
-   * @returns {HTMLElement} - Anchor element
-   */
   createLinkElement: function (url) {
     this.logDebug(`createLinkElement called for URL: ${url}`);
     const link = document.createElement("a");
@@ -711,11 +642,6 @@ ytm-shorts-lockup-view-model`,
     return link;
   },
 
-  /**
-   * Converts a timecode string to seconds
-   * @param {string} timecode - Timecode in format HH:MM:SS or MM:SS
-   * @returns {number} - Total seconds
-   */
   convertTimecodeToSeconds: function (timecode) {
     this.logDebug(`convertTimecodeToSeconds called with: ${timecode}`);
     const parts = timecode.split(":").map(Number);
@@ -735,13 +661,6 @@ ytm-shorts-lockup-view-model`,
     return result;
   },
 
-  /**
-   * Strips all query params except "v" from "/watch" URL to:
-   *  - avoid 404 when passed to YT oembed API (see https://github.com/zpix1/yt-anti-translate/issues/45)
-   *  - improve cache lookups (different "t" params don't mean different vids, "v" is the only important one)
-   * @param {string} url "/watch?app=desktop&v=ghuLDyUEZmY&t=472s" or https://www.youtube.com/watch?app=desktop&v=ghuLDyUEZmY&t=472s)
-   * @returns {string} "/watch?v=ghuLDyUEZmY" or "https://www.youtube.com/watch?v=ghuLDyUEZmY"
-   */
   stripNonEssentialParams: function (url) {
     //shorts URLs don't have search parameters afaik, so don't call this on shorts only
     //this return is here for background.js/createOrUpdateUntranslatedFakeNode, which is called for everything
@@ -754,22 +673,13 @@ ytm-shorts-lockup-view-model`,
     return `${url.split("?")[0]}?v=${videoId}`;
   },
 
-  /**
-   * Identify if the href is advertisement
-   * @param {string} href - the href to check
-   * @returns {boolean} - true if href is recognized as advertisement
-   */
-  isAdvertisementHref(href) {
+  isAdvertisementHref: function (href) {
     if (href.includes("www.googleadservices.com")) {
       return true;
     }
     return false;
   },
 
-  /**
-   * Gets the current video ID from the URL
-   * @returns {string} - The YouTube video ID
-   */
   getCurrentVideoId: function () {
     this.logDebug(`getCurrentVideoId called`);
     const urlParams = new URLSearchParams(window.location.search);
@@ -778,20 +688,19 @@ ytm-shorts-lockup-view-model`,
     return videoId;
   },
 
-  /**
-   * Gets current theme
-   * link color in dark theme: rgb(62, 166, 255)
-   * link color in light theme: rgb(6, 95, 212)
-   */
   isDarkTheme: function () {
-    return document.documentElement.hasAttribute("dark");
+    let isDarkTheme = false;
+    if (this.isMobile()) {
+      isDarkTheme =
+        document
+          .querySelector("head > #theme-meta")
+          ?.getAttribute("content") === "rgba(15, 15, 15, 0.7)";
+    } else {
+      isDarkTheme = document.documentElement.hasAttribute("dark");
+    }
+    return isDarkTheme;
   },
 
-  /**
-   * Creates a timecode link element with proper YouTube styling
-   * @param {string} timecode - Timecode string (e.g., "05:36")
-   * @returns {HTMLElement} - Span element containing the timecode link
-   */
   createTimecodeLink: function (timecode) {
     this.logDebug(`createTimecodeLink called with: ${timecode}`);
     // Convert timecode to seconds for the URL
@@ -809,7 +718,7 @@ ytm-shorts-lockup-view-model`,
     const link = document.createElement("a");
     link.className =
       "yt-core-attributed-string__link yt-core-attributed-string__link--call-to-action-color yt-timecode-link";
-    link.tabIndex = "0";
+    link.tabIndex = 0;
     link.href = `/watch?v=${this.getCurrentVideoId()}&t=${seconds}s`;
     link.target = "";
     link.setAttribute("force-new-state", "true");
@@ -820,12 +729,6 @@ ytm-shorts-lockup-view-model`,
     return span;
   },
 
-  /**
-   * Creates a styled link for hashtag or mention
-   * @param {"hashtag"|"mention"} type - Type of link to create
-   * @param {string} value - Hashtag (without #) or mention (without @)
-   * @returns {HTMLElement} - Span element containing the styled link
-   */
   createTagLink: function (type, value) {
     this.logDebug(`createTagLink called with: ${type}: ${value}`);
 
@@ -841,7 +744,7 @@ ytm-shorts-lockup-view-model`,
     const link = document.createElement("a");
     link.className =
       "yt-core-attributed-string__link yt-core-attributed-string__link--call-to-action-color";
-    link.tabIndex = "0";
+    link.tabIndex = 0;
     if (type === "hashtag") {
       link.href = `/hashtag/${encodeURIComponent(value)}`;
       link.textContent = `#${value}`;
@@ -856,11 +759,6 @@ ytm-shorts-lockup-view-model`,
     return span;
   },
 
-  /**
-   * Converts URLs and timecodes in text to clickable links
-   * @param {string} text - Text that may contain URLs and timecodes
-   * @returns {HTMLElement} - Span element with clickable links
-   */
   convertUrlsToLinks: function (text) {
     this.logDebug(`convertUrlsToLinks called with text length: ${text.length}`);
     const container = document.createElement("span");
@@ -952,11 +850,6 @@ ytm-shorts-lockup-view-model`,
     return container;
   },
 
-  /**
-   * Creates a formatted content element from the original text
-   * @param {string} text - The original description text
-   * @returns {HTMLElement} - Formatted span element
-   */
   createFormattedContent: function (text) {
     this.logDebug(
       `createFormattedContent called with text length: ${text.length}`,
@@ -985,18 +878,12 @@ ytm-shorts-lockup-view-model`,
     return contentElement;
   },
 
-  /**
-   * Replace the first text node of the element
-   * Any other node is retained as is
-   * @param {HTMLElement} element - The element to update
-   * @param {string} replaceText - The new text to insert
-   */
   replaceTextOnly: function (element, replaceText) {
     this.logDebug(
       `replaceTextOnly called with text length: ${replaceText.length}`,
     );
     // Loop through child nodes to find the first text node
-    for (const node of element.childNodes) {
+    for (const node of Array.from(element.childNodes)) {
       if (node.nodeType === Node.TEXT_NODE) {
         node.textContent = replaceText;
         this.logDebug(`replaceTextOnly: replaced first text node`);
@@ -1005,25 +892,16 @@ ytm-shorts-lockup-view-model`,
     }
   },
 
-  /**
-   * Get the first text node of the element
-   * Any other node is retained as is
-   * @param {HTMLElement} element - The element to inspect
-   */
   getFirstTextNode: function (element) {
     // Loop through child nodes to find the first text node
-    for (const node of element.childNodes) {
+    for (const node of Array.from(element.childNodes)) {
       if (node.nodeType === Node.TEXT_NODE) {
-        return node;
+        return /** @type {Text} */ (node);
       }
     }
+    return null;
   },
 
-  /**
-   * Replaces the content of a container with new content
-   * @param {HTMLElement} container - The container to update
-   * @param {HTMLElement} newContent - The new content to insert
-   */
   replaceContainerContent: function (container, newContent) {
     this.logDebug(`replaceContainerContent called`);
     // Clear existing content
@@ -1196,15 +1074,6 @@ ytm-shorts-lockup-view-model`,
     zu: "zu-ZA",
   },
 
-  /**
-   * Attempts to detect the closest YouTube Supported BCP-47 language code(s) from the given text.
-   * Uses the browser/chrome i18n.detectLanguage API with retries and filtering.
-   * @param {string} text - The input text to detect the language from.
-   * @param {number} [maxRetries=3] - Optional - Maximum number of retries if detection results are not valid. Defaults to 3
-   * @param {number} [minProbability=50] - Optional - Minimum confidence percentage (0-100) to accept a detected language. Defaults to 50
-   * @returns {Promise<string[] | null>} - Resolves with an array of valid BCP-47 language codes that match or closely fallback to supported languages,
-   *                                       or null on failure or if no suitable match is found within retries.
-   */
   detectSupportedLanguage: async function (
     text,
     maxRetries = 3,
@@ -1276,26 +1145,45 @@ ytm-shorts-lockup-view-model`,
     );
     return null;
   },
-  getSettings: function () {
+
+  getSettings: async function () {
+    // First try to read from the DOM
     const element = document.querySelector(
       'script[type="module"][data-ytantitranslatesettings]',
     );
-    return JSON.parse(element?.dataset?.ytantitranslatesettings ?? "{}");
+    if (element?.["dataset"]?.ytantitranslatesettings) {
+      try {
+        return JSON.parse(element["dataset"].ytantitranslatesettings);
+      } catch {
+        // fallback to chrome storage if JSON is invalid
+      }
+    }
+
+    // Fallback: read from Chrome storage
+    if (chrome?.storage?.sync?.get) {
+      return await chrome.storage.sync.get({
+        disabled: false,
+        untranslateTitle: true,
+        whiteListUntranslateTitle: [],
+        untranslateAudio: true,
+        untranslateAudioOnlyAI: false,
+        whiteListUntranslateAudio: [],
+        untranslateDescription: true,
+        whiteListUntranslateDescription: [],
+        untranslateChapters: true,
+        whiteListUntranslateChapters: [],
+        untranslateChannelBranding: true,
+        whiteListUntranslateChannelBranding: [],
+        untranslateNotification: true,
+        untranslateThumbnail: true,
+        whiteListUntranslateThumbnail: [],
+      });
+    }
+
+    // Absolute fallback: return empty object
+    return {};
   },
-  /**
-   * Make a GET request. Its result will be cached in sessionStorage and will return same promise for parallel requests.
-   * @param {string} url - The URL to fetch data from
-   * @param {string} postData - Optional. If passed, will make a POST request with this data
-   * @param {object} headersData - Optional. Headers to be sent with the request, defaults to {"content-type": "application/json"}
-   * @param {boolean} doNotCache - Optional. If true, the result will not be cached in sessionStorage, only same promise will be returned for parallel requests
-   * @param {string} cacheDotNotationProperty - Optional. Specify the property name to extract from the response data json for limited caching
-   *                       (e.g. "title" to cache only the title of the response data or "videoDetails.title" to cache the title of the object videoDetails).
-   *                       If not specified, and doNotCache is false, the whole response data will be cached
-   *                       NOTE: Must be a valid property of the response data json starting from the root level. Use "." for nested properties.
-   *                       If the property is not found, it will cache null.
-   *                       When cached by this cacheDotNotationProperty, when retieved "data" will be null and value will be set in "cachedWithDotNotation" property
-   * @returns { response: Response, data: any, cachedWithDotNotation: any } - The response object and the data from the response
-   */
+
   cachedRequest: async function cachedRequest(
     url,
     postData = null,
@@ -1309,11 +1197,14 @@ ytm-shorts-lockup-view-model`,
       if (cacheDotNotationProperty) {
         return {
           response: new Response(
-            {
+            JSON.stringify({
               data: null,
               cachedWithDotNotation: storedResponse,
+            }),
+            {
+              status: storedResponse.status || 200,
+              headers: { "Content-Type": "application/json" },
             },
-            { status: storedResponse.status || 200 },
           ),
           data: null,
           cachedWithDotNotation: storedResponse,
@@ -1321,11 +1212,14 @@ ytm-shorts-lockup-view-model`,
       } else {
         return {
           response: new Response(
-            {
+            JSON.stringify({
               data: storedResponse,
               cachedWithDotNotation: null,
+            }),
+            {
+              status: storedResponse.status || 200,
+              headers: { "Content-Type": "application/json" },
             },
-            { status: storedResponse.status || 200 },
           ),
           data: storedResponse,
           cachedWithDotNotation: null,
@@ -1397,12 +1291,6 @@ ytm-shorts-lockup-view-model`,
     return requestPromise;
   },
 
-  /**
-   * Converts a value to a JSON hierarchy based on dot notation properties.
-   * @param {any} value - The value to convert.
-   * @param {string} dotNotationProperty - The dot notation property to create the hierarchy
-   * @returns {object} - The resulting JSON hierarchy.
-   */
   jsonHierarchy: function (value, dotNotationProperty) {
     // If no dots, just return { property: value }
     if (!dotNotationProperty.includes(".")) {
@@ -1429,12 +1317,6 @@ ytm-shorts-lockup-view-model`,
     return result;
   },
 
-  /**
-   * Gets a property from a JSON object using dot notation.
-   * @param {object} json - The JSON object to search.
-   * @param {string} dotNotationProperty - The dot notation property with hierarchy to retrieve.
-   * @returns {any|null} - The value of the property or null if not found
-   * */
   getPropertyByDotNotation: function (json, dotNotationProperty) {
     if (!dotNotationProperty) {
       return null;
@@ -1456,12 +1338,6 @@ ytm-shorts-lockup-view-model`,
     return current;
   },
 
-  /**
-   * Extracts the YouTube video ID from a given URL.
-   * Supports /watch?v=, /shorts/, and full URLs.
-   * @param {string} url
-   * @returns {string|null}
-   */
   extractVideoIdFromUrl: function (url) {
     try {
       const u = new URL(url, window.location.origin);
@@ -1470,6 +1346,16 @@ ytm-shorts-lockup-view-model`,
       }
       if (u.pathname.startsWith("/shorts/")) {
         return u.pathname.split("/")[2] || null;
+      }
+      if (u.pathname.startsWith("/embed/")) {
+        return u.pathname.split("/")[2] || null;
+      }
+      if (u.hostname.includes("i.ytimg.com")) {
+        // https://i.ytimg.com/vi_lc/**yhB3BgJyGl8**/mqdefault_th.jpg?sqp=COiW0cYG&rs=AOn4CLCEvTmuT5DfKOB-bYHzp00LiI4wlw
+        const parts = u.pathname.split("/");
+        if (parts.length >= 3 && (parts[1] === "vi_lc" || parts[1] === "vi")) {
+          return parts[2];
+        }
       }
       return null;
     } catch {
@@ -1495,14 +1381,54 @@ ytm-shorts-lockup-view-model`,
       JSON.stringify(body),
       headers,
       false,
-      "videoDetails.title",
+      "videoDetails",
     );
     const title =
-      response?.cachedWithDotNotation ||
+      response?.cachedWithDotNotation?.title ||
       response?.data?.videoDetails?.title ||
       null;
+    const author_name =
+      response?.cachedWithDotNotation?.author ||
+      response?.data?.videoDetails?.author ||
+      null;
+
+    const /**@type {Array<{url: string}>}*/ thumbnails =
+        response?.cachedWithDotNotation?.thumbnail?.thumbnails ||
+        response?.data?.videoDetails?.thumbnail?.thumbnails ||
+        null;
+    // try to get the thumbnail with width 320 first, if not found get the first one
+    let thumbnail_url = thumbnails?.[0]?.url || null;
+
+    const maxresdefault_url =
+      thumbnails?.find((thumb) => thumb.url.includes("maxresdefault"))?.url ||
+      null;
+
+    const channelId =
+      response?.cachedWithDotNotation?.channelId ||
+      response?.data?.videoDetails?.channelId ||
+      null;
+    const author_url = channelId
+      ? `https://www.youtube.com/channel/${channelId}`
+      : null;
+
+    // if thumbnail_url is not null strip it of any query parameters
+    if (thumbnail_url) {
+      const urlObj = new URL(thumbnail_url);
+      urlObj.search = "";
+      thumbnail_url = urlObj.toString();
+    }
+
     if (title) {
-      return { response: response.response, data: { title: title } };
+      return {
+        response: response.response,
+        data: {
+          title: title,
+          author_name: author_name,
+          author_url: author_url,
+          thumbnail_url: thumbnail_url,
+          maxresdefault_url: maxresdefault_url,
+        },
+      };
     }
     return { response: response?.response, data: null };
   },
@@ -1558,5 +1484,735 @@ ytm-shorts-lockup-view-model`,
       "X-Youtube-Client-Name": "1",
       "X-Youtube-Client-Version": "2.20250731.09.00",
     };
+  },
+
+  getOriginalCollaboratorsItemsWithYoutubeI: async function (search_query) {
+    if (!search_query || search_query.trim() === "") {
+      return null;
+    }
+
+    // build the request body
+    const body = {
+      context: {
+        client: {
+          clientName: this.isMobile() ? "MWEB" : "WEB",
+          clientVersion: "2.20250527.00.00",
+          hl: "lo", // Using "Lao" as default that is an unsupported (but valid) language of youtube
+          // That always get the original language as a result
+        },
+      },
+      query: search_query,
+    };
+
+    const requestIdentifier = `youtubei/v1/results_${JSON.stringify(body)}`;
+
+    // Check cache
+    const storedResponse =
+      window.YoutubeAntiTranslate.getSessionCache(requestIdentifier);
+    if (
+      storedResponse &&
+      Array.isArray(storedResponse) &&
+      storedResponse.length > 0
+    ) {
+      return storedResponse;
+    }
+
+    const search = `https://${this.isMobile() ? "m" : "www"}.youtube.com/youtubei/v1/search?prettyPrint=false`;
+    const response = await this.cachedRequest(
+      search,
+      JSON.stringify(body),
+      await this.getYoutubeIHeadersWithCredentials(),
+      // doNotCache true as would take too much space
+      true,
+    );
+
+    if (!response?.data) {
+      this.logWarning(`Failed to fetch ${search} or parse response`);
+      return;
+    }
+
+    const result = this.extractCollaboratorsItemsFromSearch(response.data);
+
+    if (!result) {
+      return;
+    }
+
+    await this.setSessionCache(requestIdentifier, result);
+
+    return result;
+  },
+
+  extractCollaboratorsItemsFromSearch: function (json) {
+    const results = [];
+
+    const sections =
+      json?.contents?.twoColumnSearchResultsRenderer?.primaryContents
+        ?.sectionListRenderer?.contents ||
+      json?.contents?.sectionListRenderer?.contents ||
+      [];
+
+    for (const section of sections) {
+      const items = section?.itemSectionRenderer?.contents || [];
+      for (const item of items) {
+        const video = item?.videoRenderer || item?.videoWithContextRenderer;
+        if (!video) {
+          continue;
+        }
+
+        const byline = video.shortBylineText || video.longBylineText;
+        const runs = byline?.runs || [];
+        for (const run of runs) {
+          const showDialog =
+            run?.navigationEndpoint?.showDialogCommand ||
+            run?.navigationEndpoint?.showSheetCommand;
+          if (!showDialog) {
+            continue;
+          }
+
+          const listItems =
+            showDialog?.panelLoadingStrategy?.inlineContent?.dialogViewModel
+              ?.customContent?.listViewModel?.listItems ||
+            showDialog?.panelLoadingStrategy?.inlineContent?.sheetViewModel
+              ?.content?.listViewModel?.listItems;
+
+          if (Array.isArray(listItems)) {
+            for (const listItem of listItems) {
+              const view = listItem?.listItemViewModel || {};
+              const name = view.title?.content || null;
+              const avatarImage =
+                view.leadingAccessory?.avatarViewModel?.image?.sources?.[0]
+                  ?.url || null;
+              const url =
+                view.rendererContext?.commandContext?.onTap?.innertubeCommand
+                  ?.commandMetadata?.webCommandMetadata?.url || null;
+              const navigationEndpointUrl =
+                video.navigationEndpoint?.commandMetadata?.webCommandMetadata
+                  ?.url;
+              const videoId =
+                video.navigationEndpoint?.watchEndpoint?.videoId ||
+                this.extractVideoIdFromUrl(
+                  navigationEndpointUrl.startsWith("http")
+                    ? navigationEndpointUrl
+                    : window.location.origin + navigationEndpointUrl,
+                );
+
+              results.push({
+                name,
+                avatarImage,
+                url,
+                navigationEndpointUrl,
+                videoId,
+              });
+            }
+          }
+        }
+        //}
+      }
+    }
+
+    return results;
+  },
+
+  getLocalizedAnd: function (languageCode) {
+    const andTranslations = {
+      "af-ZA": "en",
+      "az-AZ": "və",
+      "id-ID": "dan",
+      "ms-MY": "dan",
+      "bs-BA": "i",
+      "ca-ES": "i",
+      "cs-CZ": "a",
+      "da-DK": "og",
+      "de-DE": "und",
+      "et-EE": "ja",
+      "en-IN": "and",
+      "en-GB": "and",
+      "en-US": "and",
+      "es-ES": "y",
+      "es-419": "y",
+      "es-US": "y",
+      "eu-ES": "eta",
+      "fil-PH": "at",
+      "fr-FR": "et",
+      "fr-CA": "et",
+      "gl-ES": "e",
+      "hr-HR": "i",
+      "zu-ZA": "futhi",
+      "is-IS": "og",
+      "it-IT": "e",
+      "sw-TZ": "na",
+      "lv-LV": "un",
+      "lt-LT": "ir",
+      "hu-HU": "és",
+      "nl-NL": "en",
+      "nb-NO": "og",
+      "uz-UZ": "va",
+      "pl-PL": "i",
+      "pt-PT": "e",
+      "pt-BR": "e",
+      "ro-RO": "și",
+      "sq-AL": "dhe",
+      "sk-SK": "a",
+      "sl-SI": "in",
+      "sr-RS": "и",
+      "fi-FI": "ja",
+      "sv-SE": "och",
+      "vi-VN": "và",
+      "tr-TR": "ve",
+      "be-BY": "і",
+      "bg-BG": "и",
+      "ky-KG": "жана",
+      "kk-KZ": "және",
+      "mk-MK": "и",
+      "mn-MN": "ба",
+      "ru-RU": "и",
+      "sr-BA": "и",
+      "uk-UA": "і",
+      "el-GR": "και",
+      "hy-AM": "եւ",
+      "he-IL": "ו",
+      "ur-PK": "اور",
+      "ar-SA": "و",
+      "fa-IR": "و",
+      "ne-NP": "र",
+      "mr-IN": "आणि",
+      "hi-IN": "और",
+      "as-IN": "আৰু",
+      "bn-BD": "এবং",
+      "pa-IN": "ਅਤੇ",
+      "gu-IN": "અને",
+      "or-IN": "ଏବଂ",
+      "ta-IN": "மற்றும்",
+      "te-IN": "మరియు",
+      "kn-IN": "ಮತ್ತು",
+      "ml-IN": "കൂടാതെ",
+      "si-LK": "සහ",
+      "th-TH": "และ",
+      "lo-LA": "ແລະ",
+      "my-MM": "နှင့်",
+      "ka-GE": "და",
+      "am-ET": "እና",
+      "km-KH": "និង",
+      "zh-CN": "和",
+      "zh-TW": "和",
+      "zh-HK": "和",
+      "ja-JP": "と",
+      "ko-KR": "그리고",
+    };
+    return andTranslations[languageCode] || "and";
+  },
+
+  getImageSize: async function (src) {
+    if (!src) {
+      return { width: null, height: null };
+    }
+    const img = new Image();
+    img.src = src;
+
+    // Wait for load or error events
+    await img.decode(); // built-in async method for images
+
+    return {
+      width: img.naturalWidth,
+      height: img.naturalHeight,
+    };
+  },
+
+  isFoundImageSrc: async function (src) {
+    if (!src) {
+      return false;
+    }
+    try {
+      const response = await this.cachedRequest(src);
+      return (
+        response?.response.ok &&
+        response?.response.status >= 200 &&
+        response?.response.status < 300
+      );
+    } catch {
+      return false;
+    }
+  },
+
+  isWhitelistedChannel: async function (
+    whiteStoragePropertyName,
+    handle = null,
+    channelUrl = null,
+    channelId = null,
+    channelName = null,
+  ) {
+    const settings = await this.getSettings();
+    const /** @type {string[]} */ whitelist =
+        settings?.[whiteStoragePropertyName];
+    if (!whitelist) {
+      throw new Error(`Unsupported whiteListType: ${whiteStoragePropertyName}`);
+    }
+
+    if (whitelist.length === 0) {
+      this.logDebug(
+        `isWhitelistedChannel: ${whiteStoragePropertyName} is empty, no channel is whitelisted`,
+      );
+      return false;
+    }
+
+    // lower case version for case insensitive comparison
+    const lowerCaseWhitelist = whitelist.map((item) => item.toLowerCase());
+
+    if (
+      (!channelId ||
+        typeof channelId !== "string" ||
+        channelId.trim() === "") &&
+      (!handle || typeof handle !== "string" || handle.trim() === "") &&
+      (!channelUrl ||
+        typeof channelUrl !== "string" ||
+        channelUrl.trim() === "") &&
+      (!channelName ||
+        typeof channelName !== "string" ||
+        channelName.trim() === "")
+    ) {
+      return false;
+    }
+
+    let /** @type {URL} */ channelURL = null;
+    if (channelUrl && typeof channelUrl === "string") {
+      const url = channelUrl.startsWith("http")
+        ? channelUrl
+        : window.location.origin + channelUrl;
+      try {
+        channelURL = new URL(url);
+      } catch {
+        this.logWarning(`isWhitelistedChannel: invalid channelUrl: ${url}`);
+      }
+    }
+
+    if (channelURL) {
+      // Extract id or handle from URL
+      if (!channelId && channelURL.pathname.startsWith("/channel/")) {
+        var match = channelURL.pathname.match(/\/channel\/([^/?]+)/);
+        channelId = match ? match[1] : null;
+      } else if (!handle && channelURL.pathname.startsWith("/@")) {
+        const match = channelURL.pathname.match(/\/(@[^/?]+)/);
+        handle = match ? match[1] : null;
+      }
+    }
+
+    if (
+      !handle ||
+      typeof handle !== "string" ||
+      handle.trim() === "" ||
+      !handle.trim().startsWith("@")
+    ) {
+      if (handle) {
+        this.logInfo(`isWhitelistedChannel: invalid handle: ${handle}`);
+      }
+      if (
+        (!channelId ||
+          typeof channelId !== "string" ||
+          channelId.trim() === "") &&
+        (!channelName ||
+          typeof channelName !== "string" ||
+          channelName.trim() === "")
+      ) {
+        return false;
+      }
+    } else {
+      return lowerCaseWhitelist.includes(handle.trim().toLowerCase());
+    }
+
+    if (
+      !channelId ||
+      typeof channelId !== "string" ||
+      channelId.trim() === ""
+    ) {
+      if (channelId) {
+        this.logInfo(`isWhitelistedChannel: invalid channelId: ${channelId}`);
+      }
+      if (
+        !channelName ||
+        typeof channelName !== "string" ||
+        channelName.trim() === ""
+      ) {
+        return false;
+      }
+    } else {
+      // Get handle form channel UCID
+      const response = await this.getChannelBrandingWithYoutubeI(channelId);
+      handle = response?.channelHandle || null;
+    }
+
+    if (!handle) {
+      this.logInfo(
+        `isWhitelistedChannel: could not retrieve handle for channelId: ${channelId}`,
+      );
+      if (
+        !channelName ||
+        typeof channelName !== "string" ||
+        channelName.trim() === ""
+      ) {
+        return false;
+      }
+    } else {
+      return lowerCaseWhitelist.includes(handle.trim().toLowerCase());
+    }
+
+    if (
+      !channelName ||
+      typeof channelName !== "string" ||
+      channelName.trim() === ""
+    ) {
+      this.logInfo(`isWhitelistedChannel: invalid channelName: ${channelName}`);
+      return false;
+    } else {
+      // Try to use channelName as handle if does not have spaces
+      if (
+        !channelName.trim().includes(" ") &&
+        lowerCaseWhitelist.includes(`@${channelName}`.trim().toLowerCase())
+      ) {
+        return true;
+      }
+      // Get handle from channel name
+      const lookupResult = await this.lookupChannelId(channelName);
+      handle = lookupResult?.channelHandle;
+    }
+
+    if (!handle) {
+      this.logInfo(
+        `isWhitelistedChannel: could not retrieve handle for channelName: ${channelName}`,
+      );
+      return false;
+    } else {
+      return lowerCaseWhitelist.includes(handle.trim().toLowerCase());
+    }
+  },
+
+  lookupChannelId: async function (query) {
+    if (!query) {
+      return null;
+    }
+
+    let decodedQuery;
+    try {
+      decodedQuery = decodeURIComponent(query);
+    } catch {
+      decodedQuery = query;
+    }
+
+    // build the request body ──
+    const body = {
+      context: {
+        client: {
+          clientName: this.isMobile() ? "MWEB" : "WEB",
+          clientVersion: "2.20250527.00.00",
+        },
+      },
+      query: decodedQuery,
+      // "EgIQAg==" = filter=channels  (protobuf: {12: {1:2}})
+      params: "EgIQAg==",
+    };
+
+    const requestIdentifier = `youtubei/v1/search_${JSON.stringify(body)}`;
+
+    // Check cache
+    const storedResponse = this.getSessionCache(requestIdentifier);
+    if (storedResponse) {
+      return storedResponse;
+    }
+
+    const search = `https://${this.isMobile() ? "m" : "www"}.youtube.com/youtubei/v1/search?prettyPrint=false`;
+    const result = await this.cachedRequest(
+      search,
+      JSON.stringify(body),
+      await this.getYoutubeIHeadersWithCredentials(),
+      // As it might take too much space
+      true,
+    );
+
+    if (!result || !result.response || !result.response.ok) {
+      this.logInfo(
+        `Failed to fetch ${search}:`,
+        result?.response?.statusText || "Unknown error",
+      );
+      return;
+    }
+
+    const json = result.data;
+
+    let channelUcid;
+    let channelHandle;
+
+    for (const sectionContent of json.contents?.twoColumnSearchResultsRenderer
+      ?.primaryContents.sectionListRenderer?.contents || []) {
+      for (const itemRenderedContent of sectionContent?.itemSectionRenderer
+        ?.contents || []) {
+        if (
+          this.isStringEqual(
+            itemRenderedContent?.channelRenderer?.title?.simpleText,
+            query,
+          ) ||
+          this.isStringEqual(
+            itemRenderedContent?.channelRenderer?.subscriberCountText
+              ?.simpleText,
+            query,
+          )
+        ) {
+          channelUcid = itemRenderedContent?.channelRenderer?.channelId;
+          channelHandle =
+            itemRenderedContent?.channelRenderer?.subscriberCountText
+              ?.simpleText;
+          break;
+        }
+      }
+    }
+
+    for (const sectionContent of json.contents?.sectionListRenderer?.contents ||
+      []) {
+      for (const itemRenderedContent of sectionContent?.itemSectionRenderer
+        ?.contents || []) {
+        let /** @type {boolean} */ itemMatchChannelName = false;
+        for (const runs of itemRenderedContent?.compactChannelRenderer
+          ?.displayName?.runs || []) {
+          if (this.isStringEqual(runs.text, query)) {
+            itemMatchChannelName = true;
+            break;
+          }
+        }
+
+        let /** @type {boolean} */ itemMatchChannelHandle = false;
+        let /** @type {number} */ itemMatchChannelHandleIndex = -1;
+        for (const runs of itemRenderedContent?.compactChannelRenderer
+          ?.subscriberCountText?.runs || []) {
+          if (this.isStringEqual(runs.text, query)) {
+            itemMatchChannelHandle = true;
+            itemMatchChannelHandleIndex =
+              itemRenderedContent?.compactChannelRenderer?.subscriberCountText?.runs.indexOf(
+                runs,
+              );
+            break;
+          }
+        }
+
+        if (itemMatchChannelName || itemMatchChannelHandle) {
+          channelUcid = itemRenderedContent?.compactChannelRenderer?.channelId;
+          channelHandle =
+            itemRenderedContent?.compactChannelRenderer?.subscriberCountText
+              ?.runs?.[itemMatchChannelHandleIndex]?.text;
+          break;
+        }
+      }
+    }
+
+    const response = {
+      channelUcid: channelUcid,
+      channelHandle: channelHandle,
+    };
+
+    if (!response || !response.channelUcid) {
+      return;
+    }
+
+    // Store in cache
+    this.setSessionCache(requestIdentifier, response);
+
+    return response;
+  },
+
+  getChannelUCIDFromHref: async function (href) {
+    if (!href) {
+      return null;
+    }
+    // Direct UCID reference
+    const channelMatch = href.match(/\/channel\/([^/?&#]+)/);
+    if (channelMatch && channelMatch[1]) {
+      return channelMatch[1];
+    }
+
+    // Handle paths such as /@handle or /c/Custom or /user/Username
+    const handleMatch = href.match(/\/(?:@|c\/|user\/)([^/?&#]+)/);
+    if (handleMatch && handleMatch[1]) {
+      let handle = handleMatch[1];
+      // restore missing @ for handle form
+      if (!handle.startsWith("@")) {
+        handle = href.includes("/@") ? `@${handle}` : handle;
+      }
+      const lookupResult = await this.lookupChannelId(handle);
+      return lookupResult?.channelUcid;
+    }
+    return null;
+  },
+
+  getChannelUCID: async function () {
+    if (window.location.pathname.startsWith("/channel/")) {
+      var match = window.location.pathname.match(/\/channel\/([^/?]+)/);
+      return match ? `${match[1]}` : null;
+    }
+
+    let handle = null;
+    if (window.location.pathname.startsWith("/c/")) {
+      const match = window.location.pathname.match(/\/c\/([^/?]+)/);
+      handle = match ? `${match[1]}` : null;
+    } else if (window.location.pathname.startsWith("/@")) {
+      const match = window.location.pathname.match(/\/(@[^/?]+)/);
+      handle = match ? `${match[1]}` : null;
+    } else if (window.location.pathname.startsWith("/user/")) {
+      const match = window.location.pathname.match(/\/user\/([^/?]+)/);
+      handle = match ? `${match[1]}` : null;
+    }
+    const lookupResult = await this.lookupChannelId(handle);
+    return lookupResult?.channelUcid;
+  },
+
+  getChannelBrandingWithYoutubeI: async function (ucid = null) {
+    if (!ucid) {
+      ucid = await this.getChannelUCID();
+    }
+    if (!ucid) {
+      this.logInfo(`could not find channel UCID`);
+      return;
+    }
+
+    // 1. get continuation to get country in english
+    // const locale = await getChannelLocale(ucid, "en-US");
+
+    // const [hl, gl] = locale.split(/[-_]/); // "en-US" → ["en", "US"]
+
+    // build the request body
+    const body = {
+      context: {
+        client: {
+          clientName: this.isMobile() ? "MWEB" : "WEB",
+          clientVersion: "2.20250527.00.00",
+          hl: "lo", // Using "Lao" as default that is an unsupported (but valid) language of youtube
+          // That always get the original language as a result
+        },
+      },
+      browseId: ucid,
+    };
+
+    const requestIdentifier = `youtubei/v1/browse_${JSON.stringify(body)}`;
+
+    // Check cache
+    const storedResponse = this.getSessionCache(requestIdentifier);
+    if (storedResponse) {
+      return storedResponse;
+    }
+
+    const browse = `https://${this.isMobile() ? "m" : "www"}.youtube.com/youtubei/v1/browse?prettyPrint=false`;
+    const response = await this.cachedRequest(
+      browse,
+      JSON.stringify(body),
+      await this.getYoutubeIHeadersWithCredentials(),
+      // As it might take too much space
+      true,
+    );
+
+    if (!response?.data) {
+      this.logWarning(`Failed to fetch ${browse} or parse response`);
+      return;
+    }
+
+    const hdr = response.data.header?.pageHeaderRenderer;
+    const metadata = response.data.metadata?.channelMetadataRenderer;
+    const hdrMetadataRows =
+      hdr?.content?.pageHeaderViewModel?.metadata?.contentMetadataViewModel
+        ?.metadataRows;
+
+    let channelHandle;
+    for (const metadataRow of hdrMetadataRows || []) {
+      for (const metadataPart of metadataRow?.metadataParts || []) {
+        if (metadataPart?.text?.content?.startsWith("@")) {
+          channelHandle = metadataPart?.text?.content;
+          break;
+        }
+      }
+    }
+
+    const result = {
+      title: metadata?.title, // channel name
+      truncatedDescription:
+        hdr?.content?.pageHeaderViewModel?.description
+          ?.descriptionPreviewViewModel?.description?.content,
+      description: metadata?.description, // full description
+      channelHandle: channelHandle,
+    };
+
+    if (!metadata || !hdr) {
+      return;
+    }
+
+    // Store in cache
+    this.setSessionCache(requestIdentifier, result);
+
+    // Store also the successful detected locale that worked
+    // this.setSessionCache(ucid, locale);
+
+    return result;
+  },
+
+  getPlayerResponseSafely: function (playerEl) {
+    let response = null;
+
+    // Attempt standard desktop API first
+    try {
+      if (
+        playerEl &&
+        playerEl["getPlayerResponse"] &&
+        typeof playerEl["getPlayerResponse"] === "function"
+      ) {
+        response = playerEl["getPlayerResponse"]();
+      }
+    } catch (err) {
+      window.YoutubeAntiTranslate?.logDebug?.("getPlayerResponse failed", err);
+    }
+
+    // Fallback to embedded player API
+    if (!response) {
+      try {
+        if (
+          playerEl &&
+          playerEl["getEmbeddedPlayerResponse"] &&
+          typeof playerEl["getEmbeddedPlayerResponse"] === "function"
+        ) {
+          response = playerEl["getEmbeddedPlayerResponse"]();
+        }
+      } catch (err) {
+        window.YoutubeAntiTranslate?.logDebug?.(
+          "getEmbeddedPlayerResponse failed",
+          err,
+        );
+      }
+    }
+
+    // Legacy/alternate location used by some mobile builds
+    if (
+      !response &&
+      window["ytplayer"] &&
+      window["ytplayer"].config &&
+      window["ytplayer"].config.args &&
+      window["ytplayer"].config.args.player_response
+    ) {
+      try {
+        response = JSON.parse(window["ytplayer"].config.args.player_response);
+      } catch (err) {
+        window.YoutubeAntiTranslate.logWarning(
+          "Failed to parse ytplayer.config.args.player_response",
+          err,
+        );
+      }
+    }
+
+    return response || null;
+  },
+
+  increaseVideoAttemptAttribute: function (element, attributeName, videoId) {
+    const getCount = element.getAttribute(attributeName);
+    const getCountNumber = parseInt(
+      getCount
+        ? getCount.match(new RegExp(`^${videoId}__([0-9]+)$`))?.[1] || "0"
+        : "0",
+    );
+    element.setAttribute(
+      attributeName,
+      `${videoId}__${getCountNumber >= window.YoutubeAntiTranslate.MAX_ATTEMPTS ? window.YoutubeAntiTranslate.MAX_ATTEMPTS : getCountNumber + 1}`,
+    );
   },
 };
