@@ -14,33 +14,40 @@ async function fetchOriginalTitle(videoId) {
 
   const oembedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}`;
   try {
-    let response = await fetch(oembedUrl);
-    if (!response.ok) {
-      if (response?.status === 401) {
+    let response = await window.YoutubeAntiTranslate.cachedRequest(oembedUrl);
+    if (
+      !response ||
+      !response.response ||
+      !response.response.ok ||
+      !response.data?.thumbnail_url
+    ) {
+      if (response?.response?.status === 401) {
         // 401 likely means the video is restricted try again with youtubeI
         response =
           await window.YoutubeAntiTranslate.getVideoTitleFromYoutubeI(videoId);
-        if (!response.ok) {
+        if (!response?.response?.ok || !response.data?.title) {
           window.YoutubeAntiTranslate.logWarning(
-            `YoutubeI title request failed (${response.status}) for video ${videoId}`,
+            `YoutubeI title request failed for video ${videoId}`,
           );
-          window.YoutubeAntiTranslate.setSessionCache(cacheKey, null);
-          return { originalTitle: null };
-        } else {
-          window.YoutubeAntiTranslate.setSessionCache(cacheKey, response.title);
-          return { originalTitle: response.title };
+          return;
         }
       }
-      window.YoutubeAntiTranslate.logWarning(
-        `oEmbed request failed (${response.status}) for video ${videoId}`,
+    }
+
+    if (
+      await window.YoutubeAntiTranslate.isWhitelistedChannel(
+        "whiteListUntranslateTitle",
+        null,
+        response.data.author_url,
+      )
+    ) {
+      window.YoutubeAntiTranslate.logInfo(
+        "Channel is whitelisted, skipping notification titles untranslation",
       );
-      window.YoutubeAntiTranslate.setSessionCache(cacheKey, null);
       return { originalTitle: null };
     }
-    const data = await response.json();
-    const title = data.title || null;
-    window.YoutubeAntiTranslate.setSessionCache(cacheKey, title);
-    return { originalTitle: title };
+
+    return { originalTitle: response.data.title };
   } catch (err) {
     window.YoutubeAntiTranslate.logWarning(
       `oEmbed fetch error for video ${videoId}:`,
@@ -61,7 +68,7 @@ function setupNotificationTitlesObserver() {
 
   // Wait for the notification popup to appear in the DOM
   const dropdown = window.YoutubeAntiTranslate.getFirstVisible(
-    document.querySelector(
+    document.querySelectorAll(
       'ytd-popup-container tp-yt-iron-dropdown[vertical-align="top"]',
     ),
   );
@@ -78,13 +85,17 @@ function setupNotificationTitlesObserver() {
     return;
   }
 
-  notificationMutationObserver = new MutationObserver(() => {
-    refreshNotificationTitles();
-  });
+  notificationMutationObserver = new MutationObserver(
+    window.YoutubeAntiTranslate.debounce(() => {
+      refreshNotificationTitles();
+    }),
+  );
 
   notificationMutationObserver.observe(contentWrapper, {
     childList: true,
     subtree: true,
+    attributes: true,
+    attributeFilter: ["style", "class"],
   });
 }
 
@@ -201,23 +212,35 @@ async function refreshNotificationTitles() {
 }
 // --- Auto setup similar to background.js ---
 
-// Observe DOM changes and (re)initialize notification observer when the pop-up appears/disappears
-const notificationDropdownObserver = new MutationObserver(() => {
-  const dropdownExists = document.querySelector(
-    'ytd-popup-container tp-yt-iron-dropdown[vertical-align="top"]',
-  );
-  if (dropdownExists) {
-    setupNotificationTitlesObserver();
+// Observe DOM changes and (re)initialize notification observer when the pop-up appears/disappears, waiting for window.YoutubeAntiTranslate to be available
+(function waitForYoutubeAntiTranslate() {
+  if (
+    window.YoutubeAntiTranslate &&
+    typeof window.YoutubeAntiTranslate.debounce === "function"
+  ) {
+    const notificationDropdownObserver = new MutationObserver(
+      window.YoutubeAntiTranslate.debounce(() => {
+        const dropdownExists = document.querySelector(
+          'ytd-popup-container tp-yt-iron-dropdown[vertical-align="top"]',
+        );
+        if (dropdownExists) {
+          setupNotificationTitlesObserver();
+        } else {
+          // In case the pop-up has been closed/remove, disconnect our inner observer
+          cleanupNotificationTitlesObserver();
+        }
+      }),
+    );
+    // Start observing the whole document body for relevant changes
+    if (document.body) {
+      notificationDropdownObserver.observe(document.body, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ["style", "class"],
+      });
+    }
   } else {
-    // In case the pop-up has been closed/remove, disconnect our inner observer
-    cleanupNotificationTitlesObserver();
+    setTimeout(waitForYoutubeAntiTranslate, 8);
   }
-});
-
-// Start observing the whole document body for relevant changes
-if (document.body) {
-  notificationDropdownObserver.observe(document.body, {
-    childList: true,
-    subtree: true,
-  });
-}
+})();

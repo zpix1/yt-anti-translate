@@ -21,3 +21,4 @@ tests/testUBlockOrigin/
 tests/testUBlockOriginLite/
 /app/.amo-upload-uuid
 app/app.zip
+tests/helpers/.locks

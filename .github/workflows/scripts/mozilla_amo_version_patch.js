@@ -35,7 +35,7 @@ const draftReleaseBody = await getDraftReleaseBody(version);
 let [versionReleaseNotes, notesForApprovers] = draftReleaseBody.split(
   "\r\n---\r\n",
 ) || ["", ""];
-if (notesForApprovers === "") {
+if (!notesForApprovers || notesForApprovers === "") {
   [versionReleaseNotes, notesForApprovers] = draftReleaseBody.split(
     "\n---\n",
   ) || ["", ""];
@@ -66,7 +66,9 @@ const data = {
 
 (async () => {
   try {
-    console.log(`[INFO] Sending PATCH request to AMO API...`);
+    console.log(
+      `[INFO] Sending PATCH request to AMO API... PATCH https://addons.mozilla.org/api/v5/addons/addon/${slug}/versions/${version}/`,
+    );
 
     const res = await fetch(
       `https://addons.mozilla.org/api/v5/addons/addon/${slug}/versions/${version}/`,

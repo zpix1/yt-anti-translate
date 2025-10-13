@@ -1,269 +1,485 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>YT Anti Translate Options</title>
-    <style>
-      html, body {
-        margin: 0;
-        padding: 0;
-        overflow-y: auto;
-        overflow-x: hidden;
-        height: auto;
-        font-family: Arial, sans-serif;
-        border-radius: 10px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-      }
 
-      .scroll-wrapper {
-        max-height: 600px;
-        overflow-y: scroll;
-        overflow-x: hidden;
-        scrollbar-gutter: stable;
-      }
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>YT Anti Translate Options</title>
+  <style>
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      height: auto;
+      font-family: Arial, sans-serif;
+      border-radius: 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
 
-      .container {
-        padding: 20px 15px 20px 20px;
-        width: 230px;
-        height: fit-content;
-        text-align: center;
-      }
+    .scroll-wrapper {
+      max-height: 600px;
+      overflow-y: scroll;
+      overflow-x: hidden;
+      scrollbar-gutter: stable;
+    }
 
-      .header {
-        font-size: 20px;
-        font-weight: bold;
-        margin-bottom: 15px;
-      }
+    .container {
+      padding: 20px 15px 20px 20px;
+      width: auto;
+      max-width: 700px;
+      min-width: 300px;
+      height: fit-content;
+      text-align: center;
+    }
 
-      .status {
-        margin: 5px auto;
-        width: 100px;
-        height: 100px;
-        line-height: 100px;
-        border-radius: 50%;
-        font-size: 22px;
-        color: #fff;
-      }
+    .limited-width-container {
+      padding: 0px 0px 0px 0px;
+      width: auto;
+      max-width: 300px;
+      margin: 0 auto;
+    }
 
-      .status.enabled {
-        background-color: #4caf50;
-      }
+    .header {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 15px;
+    }
 
-      .status.disabled {
-        background-color: #f44336;
-      }
+    .status {
+      margin: 5px auto;
+      width: 100px;
+      height: 100px;
+      line-height: 100px;
+      border-radius: 50%;
+      font-size: 22px;
+      color: #fff;
+    }
 
-      button {
-        background-color: #008cba;
-        color: #fff;
-        border: none;
-        border-radius: 5px;
-        font-size: 15px;
-        padding: 10px 20px;
-        cursor: pointer;
-        margin-bottom: 15px;
-      }
+    .partial-success {
+      color: rgb(199, 143, 0);
+    }
 
-      button:hover {
-        background-color: #007bb5;
-      }
+    .error {
+      color: rgb(160, 0, 0);
+    }
 
-      .options {
-        text-align: left;
-        margin-bottom: 15px;
-      }
+    .status.enabled {
+      background-color: #4caf50;
+    }
 
-      .option {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 5px 0;
-        font-size: 15px;
-      }
+    .status.disabled {
+      background-color: #f44336;
+    }
 
-      .footer {
-        font-size: 13px;
-        font-style: italic;
-      }
+    button,
+    [role="button"] {
+      background-color: #008cba;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      font-size: 15px;
+      padding: 10px 20px;
+      cursor: pointer;
+      margin-bottom: 15px;
+    }
 
+    button:hover,
+    [role="button"]:hover {
+      background-color: #007bb5;
+      text-decoration: none;
+    }
+
+    .options {
+      text-align: left;
+      margin-bottom: 15px;
+    }
+
+    .option {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 5px 0;
+      font-size: 15px;
+    }
+
+    .footer {
+      font-size: 13px;
+      font-style: italic;
+    }
+
+    a {
+      color: #008cba;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    small {
+      font-size: 11px;
+      color: #666;
+    }
+
+    #api-key-container label {
+      font-size: 14px;
+      margin-bottom: 2px;
+    }
+
+    #api-key-container input {
+      width: 100%;
+      padding: 5px;
+      box-sizing: border-box;
+    }
+
+    .bordered-group {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 5px;
+      margin-top: 0px;
+      padding: 5px;
+      border: 1px solid black;
+      border-radius: 5px;
+    }
+
+    .advanced-options {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .advanced-options-summary {
+      font-size: 14px;
+      color: #008cba;
+      cursor: pointer;
+      user-select: none;
+      text-decoration: none;
+    }
+
+    .advanced-options-summary:hover {
+      text-decoration: underline;
+    }
+
+    .simple-button {
+      background-color: #f0f0f0 !important;
+      color: #333 !important;
+      border: 1px solid #ccc !important;
+      font-size: 13px !important;
+      padding: 4px 8px !important;
+      margin: 0;
+      text-decoration: none;
+    }
+
+    .advanced-options .simple-button {
+      display: flex;
+      flex-wrap: wrap;
+      align-content: center;
+      width: 100%;
+      padding: 5px;
+      box-sizing: border-box;
+    }
+
+    .advanced-options .simple-button>span {
+      margin: auto;
+    }
+
+    .simple-button:hover {
+      background-color: #e0e0e0 !important;
+    }
+
+    #api-key-container {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 5px;
+      margin-top: 8px;
+      margin-bottom: 0px;
+    }
+
+    @media (prefers-color-scheme: dark) {
       a {
-        color: #008cba;
-        text-decoration: none;
+        color: #66d9ef;
       }
 
-      a:hover {
-        text-decoration: underline;
+      body {
+        background-color: #121212;
+        color: #f0f0f0;
       }
-      
+
       small {
-        font-size: 11px;
-        color: #666;
+        color: #cacaca;
       }
 
-      #api-key-container label {
-        font-size: 14px;
-        margin-bottom: 2px;
+      .partial-success {
+        color: rgb(255, 206, 83);
       }
 
-      #api-key-container input,
-      #api-key-container button {
-        width: 100%;
-        padding: 5px;
-        box-sizing: border-box;
-      }
-
-      .bordered-group {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 5px;
-        margin-top: 0px;
-        padding: 5px;
-        border: 1px solid black;
-        border-radius: 5px;
-      }
-
-      .advanced-options {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
+      .error {
+        color: rgb(255, 87, 87);
       }
 
       .advanced-options-summary {
-        font-size: 14px;
-        color: #008cba;
-        cursor: pointer;
-        user-select: none;
-        text-decoration: none;
-      }
-
-      .advanced-options-summary:hover {
-        text-decoration: underline;
+        color: #66d9ef;
       }
 
       .simple-button {
-        background-color: #f0f0f0 !important;
-        color: #333 !important;
-        border: 1px solid #ccc !important;
-        font-size: 13px !important;
-        padding: 4px 8px !important;
-        margin: 0;
+        background-color: #2a2a2a !important;
+        color: #f0f0f0 !important;
+        border: 1px solid #555 !important;
       }
 
       .simple-button:hover {
-        background-color: #e0e0e0 !important;
+        background-color: #3a3a3a !important;
       }
 
-      #api-key-container {
-        display: flex;
-        flex-direction: column;
-        align-items: stretch;
-        gap: 5px;
-        margin-top: 8px;
-        margin-bottom: 0px;
+      .footer a {
+        color: #66d9ef;
+      }
+    }
+
+    @keyframes fadeInOut {
+      0% {
+        opacity: 0;
       }
 
-      @media (prefers-color-scheme: dark) {
-        body {
-          background-color: #121212;
-          color: #f0f0f0;
-        }
-        
-        .advanced-options-summary {
-          color: #66d9ef;
-        }
-        
-        .simple-button {
-          background-color: #2a2a2a !important;
-          color: #f0f0f0 !important;
-          border: 1px solid #555 !important;
-        }
-
-        .simple-button:hover {
-          background-color: #3a3a3a !important;
-        }
-        
-        .footer a {
-          color: #66d9ef;
-        }
+      20% {
+        opacity: 1;
       }
 
-      @keyframes fadeInOut {
-        0% { opacity: 0; }
-        20% { opacity: 1; }
-        80% { opacity: 1; }
-        100% { opacity: 0; }
-      }
-      #save-api-key-text.saving {
-        animation: fadeInOut 1.5s ease;
+      80% {
+        opacity: 1;
       }
 
-      /* === Slim Scrollbar for Chrome, Edge, Safari === */
-      ::-webkit-scrollbar {
-        width: 6px;
-        height: 6px;
+      100% {
+        opacity: 0;
+      }
+    }
+
+    .advanced-options .simple-button.saving {
+      animation: fadeInOut 1.5s ease;
+    }
+
+    /* === Slim Scrollbar for Chrome, Edge, Safari === */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background-color: rgba(0, 140, 186, 0.6);
+      border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    /* === Slim Scrollbar for Firefox === */
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(0, 140, 186, 0.6) transparent;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      * {
+        scrollbar-color: rgba(102, 217, 239, 0.6) transparent;
       }
 
       ::-webkit-scrollbar-thumb {
-        background-color: rgba(0, 140, 186, 0.6);
-        border-radius: 3px;
+        background-color: rgba(102, 217, 239, 0.6);
       }
+    }
 
-      ::-webkit-scrollbar-track {
-        background: transparent;
-      }
 
-      /* === Slim Scrollbar for Firefox === */
-      * {
-        scrollbar-width: thin;
-        scrollbar-color: rgba(0, 140, 186, 0.6) transparent;
-      }
 
-      /* Automatically disable the AI-dub checkbox when the main
+    /* Automatically disable the AI-dub checkbox when the main
          audio-track checkbox is unchecked. Uses the :has() relational
          pseudo-class available in Chromium-based browsers (and coming
          soon to Firefox). */
-      .options:has(#audio-checkbox:not(:checked)) input#audio-only-ai-checkbox {
-        pointer-events: none; /* block interaction */
+    .options:has(#audio-checkbox:not(:checked)) input#audio-only-ai-checkbox {
+      pointer-events: none;
+      /* block interaction */
+    }
+
+    /* Dim the entire row for visual feedback */
+    .options:has(#audio-checkbox:not(:checked)) .option:nth-child(3) {
+      opacity: 0.5;
+    }
+
+    #whitelist-container {
+      /* margin-top: 15px;
+      margin-bottom: 15px; */
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    input,
+    textarea {
+      color: rgb(26, 26, 26);
+    }
+
+    textarea {
+      max-width: 700px;
+      min-width: 100%;
+    }
+
+    #whitelist-container>label {
+      font-size: 13px;
+      margin-top: 15px;
+    }
+
+    #whitelist-container>textarea {
+      /* margin-top: 5px; */
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    #whitelist-container .button-status-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+    }
+
+    .button-status-wrapper button {
+      margin: 0px auto auto 0px;
+      min-width: 102px;
+    }
+
+    #whitelist-container .whitelist-status {
+      font-size: 12px;
+      margin: 0;
+      margin-left: 8px;
+    }
+
+    #expand-popup-link {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      width: 20px;
+      height: 20px;
+      z-index: 1000;
+    }
+
+    #expand-popup-link img {
+      width: 100%;
+      height: 100%;
+      transform: scaleX(-1);
+      /* mirror horizontally */
+      cursor: pointer;
+      opacity: 0.8;
+      transition: opacity 0.2s ease;
+      filter: invert(41%) sepia(0%) saturate(0%) hue-rotate(181deg) brightness(93%) contrast(88%);
+      /* #666 in light mode */
+    }
+
+    #manage-whitelists img {
+      width: 13px;
+      height: 13px;
+      margin-left: 4px;
+      vertical-align: middle;
+      filter: invert(41%) sepia(0%) saturate(0%) hue-rotate(181deg) brightness(93%) contrast(88%);
+      /* #666 in light mode */
+    }
+
+    .simple-button.cancel {
+      background-color: #f0b8b3 !important;
+    }
+
+    .simple-button.cancel:hover {
+      background-color: #f19b94 !important;
+    }
+
+    .confirmation-modal {
+      background: var(--modal-bg, #fff);
+      color: inherit;
+      padding: 16px;
+      border-radius: 8px;
+      border-color: #66d9ef;
+      border-width: 2px;
+      border-style: solid;
+      max-width: 520px;
+      width: 90%;
+      max-width: 500px;
+      min-width: 245px;
+      width: 90%;
+      margin-right: 45px;
+      margin-left: 30px;
+    }
+
+    #confirm-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.5);
+      align-items: center;
+      justify-content: center;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .confirmation-modal {
+        --modal-bg: #1a1a1a;
+        border-color: #007bb5;
       }
 
-      /* Dim the entire row for visual feedback */
-      .options:has(#audio-checkbox:not(:checked)) .option:nth-child(2) {
-        opacity: 0.5;
+      .simple-button.cancel {
+        background-color: #791b15 !important;
       }
-    </style>
-  </head>
 
-  <body id="yt-anti-translate">
-    <div class="scroll-wrapper">
-      <div class="container">
-        <div class="header">YT Anti Translate 1.19.11</div>
-        <div id="permission-warning" style="display: none; margin-top: 15px;">
+      .simple-button.cancel:hover {
+        background-color: #921e15 !important;
+      }
+    }
+  </style>
+</head>
+
+<body id="yt-anti-translate">
+  <div class="scroll-wrapper">
+    <div class="container">
+      <div class="header">YT Anti Translate 1.20.0</div>
+      <div id="permission-warning" style="display: none; margin-top: 15px;">
+        <div class="limited-width-container">
           <div class="small" style="color: red;">
             <p><strong>Permission to access YouTube is not granted.</strong></p>
-            <p>This extension needs access to <code>*.youtube.com/*</code> to function properly.</p>
+            <p>This extension needs access to <code>*.youtube.com/*</code> and <code>*.youtube-nocookie.com/*</code> to
+              function properly.</p>
           </div>
           <button id="request-permission-button">Grant Permission</button>
         </div>
-        <div>
-          Status:
-          <div class="status enabled" id="status">Enabled</div>
-        </div>
-        <button id="disable-button">Disable</button>
-        <div class="options">
+      </div>
+      <div>
+        Status:
+        <div class="status enabled" id="status">Enabled</div>
+      </div>
+      <button id="disable-button">Disable</button>
+      <div class="options">
+        <div class="limited-width-container">
+          <div class="option">
+            <span>Untranslate titles</span>
+            <input id="title-checkbox" type="checkbox" checked />
+          </div>
           <div class="option">
             <span>Untranslate audio track</span>
             <input id="audio-checkbox" type="checkbox" checked />
           </div>
-          <div class="option" style="padding-left: 10px; font-size: 14px;">
+          <div class="option" style="padding-left: 20px; font-size: 14px;">
             <span>Only for AI-dubbed audio</span>
             <input id="audio-only-ai-checkbox" type="checkbox" />
           </div>
           <div class="option">
             <span>Untranslate description</span>
             <input id="description-checkbox" type="checkbox" checked />
+          </div>
+          <div class="option">
+            <span>Untranslate video chapters</span>
+            <input id="chapters-checkbox" type="checkbox" checked />
           </div>
           <div class="option">
             <span>Untranslate channel branding</span>
@@ -274,24 +490,159 @@
             <input id="notification-checkbox" type="checkbox" checked />
           </div>
           <div class="option">
+            <span>Untranslate videos/shorts thumbnails</span>
+            <input id="thumbnail-checkbox" type="checkbox" checked />
+          </div>
+          <div class="option">
             <span>Reload page automatically</span>
             <input id="reload-checkbox" type="checkbox" checked />
           </div>
-          <details id="anti-translate-enhance-section" class="option advanced-options">
-            <summary class="advanced-options-summary">Advanced options</summary>
-            <div id="api-key-container">
-              <span style="font-size: 13px;">
-                Some features work better with a <br><a target="_blank" href="https://github.com/zpix1/yt-anti-translate/blob/main/YOUTUBE_DATA_API_KEY.md">YouTube Data API Key</a> <i>(never leaves your browser)</i></a>
-              </span>
-              <input id="api-key-input" type="password" placeholder="Enter API key" />
-              <button id="save-api-key-button" class="simple-button"><span id="save-api-key-text">Save API Key</span></button>
-            </div>
-          </details>
         </div>
-        <div class="footer" id="footer-links"></div>
-        <script src="/src/global.js"></script>
-        <script src="/src/options.js"></script>
+        <details id="anti-translate-enhance-section" class="option advanced-options">
+          <summary class="advanced-options-summary">Advanced options</summary>
+          <div id="api-key-container">
+            <span style="font-size: 13px;">
+              Some features work better with a <br><a target="_blank"
+                href="https://github.com/zpix1/yt-anti-translate/blob/main/YOUTUBE_DATA_API_KEY.md">YouTube Data API
+                Key</a> <i>(never leaves your browser)</i></a>
+            </span>
+            <input id="api-key-input" type="password" placeholder="Enter API key" />
+            <button id="save-api-key-button" class="simple-button"><span id="save-api-key-text">Save API
+                Key</span></button>
+          </div>
+          <div id="manage-whitelists" style="margin-top: 20px;">
+            <a role="button" href="/pages/popup.html#whitelists" target="_blank" class="simple-button"><span>Manage
+                Whitelists <img src="/pages/expand-content-svgrepo-com.svg" alt="Expand" /></span></a>
+          </div>
+          <div id="whitelists" hidden>
+            <div id="whitelist-container">
+              <label for="whitelist-title-input">
+                Allow specific channels to be ignored from "Untranslate titles" and "Untranslate notification
+                titles"<br>
+              </label>
+              <textarea id="whitelist-title-input" rows="6"
+                placeholder="@channel1&#xA;@channel2&#xA;(one handle per line, begins with @, no spaces or special characters [except underscores (_), hyphens (-), periods (.), Latin middle dots (·) allowed inside the handle])"></textarea>
+              <div class="button-status-wrapper">
+                <button id="save-whitelist-title-button" class="simple-button">
+                  <span id="save-whitelist-title-text">Save Whitelist</span>
+                </button>
+                <span style="min-width: fit-content;" hidden>
+                  <button id="save-to-all-whitelist-title-button" class="simple-button">
+                    <span>Save to All Whitelists</span>
+                  </button>
+                </span>
+                <div id="whitelist-title-status" class="whitelist-status" hidden></div>
+              </div>
+            </div>
+            <div id="whitelist-container">
+              <label for="whitelist-audio-input">
+                Allow specific channels to be ignored from "Untranslate audio"<br>
+              </label>
+              <textarea id="whitelist-audio-input" rows="6"
+                placeholder="@channel1&#xA;@channel2&#xA;(one handle per line, begins with @, no spaces or special characters [except underscores (_), hyphens (-), periods (.), Latin middle dots (·) allowed inside the handle])"></textarea>
+              <div class="button-status-wrapper">
+                <button id="save-whitelist-audio-button" class="simple-button">
+                  <span id="save-whitelist-audio-text">Save Whitelist</span>
+                </button>
+                <span style="min-width: fit-content;" hidden>
+                  <button id="save-to-all-whitelist-audio-button" class="simple-button">
+                    <span>Save to All Whitelists</span>
+                  </button>
+                </span>
+                <div id="whitelist-audio-status" class="whitelist-status" hidden>
+                </div>
+              </div>
+            </div>
+            <div id="whitelist-container">
+              <label for="whitelist-description-input">
+                Allow specific channels to be ignored from "Untranslate description"<br>
+              </label>
+              <textarea id="whitelist-description-input" rows="6"
+                placeholder="@channel1&#xA;@channel2&#xA;(one handle per line, begins with @, no spaces or special characters [except underscores (_), hyphens (-), periods (.), Latin middle dots (·) allowed inside the handle])"></textarea>
+              <div class="button-status-wrapper">
+                <button id="save-whitelist-description-button" class="simple-button">
+                  <span id="save-whitelist-description-text">Save Whitelist</span>
+                </button>
+                <span style="min-width: fit-content;" hidden>
+                  <button id="save-to-all-whitelist-description-button" class="simple-button">
+                    <span>Save to All Whitelists</span>
+                  </button>
+                </span>
+                <div id="whitelist-description-status" class="whitelist-status" hidden></div>
+              </div>
+            </div>
+            <div id="whitelist-container">
+              <label for="whitelist-chapters-input">
+                Allow specific channels to be ignored from "Untranslate video chapters"<br>
+              </label>
+              <textarea id="whitelist-chapters-input" rows="6"
+                placeholder="@channel1&#xA;@channel2&#xA;(one handle per line, begins with @, no spaces or special characters [except underscores (_), hyphens (-), periods (.), Latin middle dots (·) allowed inside the handle])"></textarea>
+              <div class="button-status-wrapper">
+                <button id="save-whitelist-chapters-button" class="simple-button">
+                  <span id="save-whitelist-chapters-text">Save Whitelist</span>
+                </button>
+                <span style="min-width: fit-content;" hidden>
+                  <button id="save-to-all-whitelist-chapters-button" class="simple-button">
+                    <span>Save to All Whitelists</span>
+                  </button>
+                </span>
+                <div id="whitelist-chapters-status" class="whitelist-status" hidden></div>
+              </div>
+            </div>
+            <div id="whitelist-container">
+              <label for="whitelist-channel-branding-input">
+                Allow specific channels to be ignored from "Untranslate channel branding"<br>
+              </label>
+              <textarea id="whitelist-channel-branding-input" rows="6"
+                placeholder="@channel1&#xA;@channel2&#xA;(one handle per line, begins with @, no spaces or special characters [except underscores (_), hyphens (-), periods (.), Latin middle dots (·) allowed inside the handle])"></textarea>
+              <div class="button-status-wrapper">
+                <button id="save-whitelist-channel-branding-button" class="simple-button">
+                  <span id="save-whitelist-channel-branding-text">Save Whitelist</span>
+                </button>
+                <span style="min-width: fit-content;" hidden>
+                  <button id="save-to-all-whitelist-channel-branding-button" class="simple-button">
+                    <span>Save to All Whitelists</span>
+                  </button>
+                </span>
+                <div id="whitelist-channel-branding-status" class="whitelist-status" hidden></div>
+              </div>
+            </div>
+            <div id="whitelist-container">
+              <label for="whitelist-thumbnail-input">
+                Allow specific channels to be ignored from "Untranslate videos/shorts thumbnails"<br>
+              </label>
+              <textarea id="whitelist-thumbnail-input" rows="6"
+                placeholder="@channel1&#xA;@channel2&#xA;(one handle per line, begins with @, no spaces or special characters [except underscores (_), hyphens (-), periods (.), Latin middle dots (·) allowed inside the handle])"></textarea>
+              <div class="button-status-wrapper">
+                <button id="save-whitelist-thumbnail-button" class="simple-button">
+                  <span id="save-whitelist-thumbnail-text">Save Whitelist</span>
+                </button>
+                <span style="min-width: fit-content;" hidden>
+                  <button id="save-to-all-whitelist-thumbnail-button" class="simple-button">
+                    <span>Save to All Whitelists</span>
+                  </button>
+                </span>
+                <div id="whitelist-thumbnail-status" class="whitelist-status" hidden></div>
+              </div>
+            </div>
+          </div>
+        </details>
       </div>
+      <div class="footer" id="footer-links"></div>
+      <!-- Confirmation Modal -->
+      <div id="confirm-modal">
+        <div class="confirmation-modal">
+          <div id="confirm-modal-message" style="margin-bottom: 12px; font-size: 14px;"></div>
+          <div style="display:flex; gap: 8px; justify-content: flex-end;">
+            <button id="confirm-modal-cancel" class="simple-button cancel">Cancel</button>
+            <button id="confirm-modal-yes" class="simple-button"><span>Yes</span></button>
+          </div>
+        </div>
+      </div>
+      <script src="/src/global.js"></script>
+      <script src="/src/options.js"></script>
     </div>
-  </body>
+  </div>
+</body>
+
 </html>

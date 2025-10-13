@@ -212,17 +212,17 @@ function getUntranslated360pFallback(playerResponse) {
     }
 
     // Check if ytInitialPlayerResponse already exists
-    if (window.ytInitialPlayerResponse) {
-      originalPlayerResponse = window.ytInitialPlayerResponse;
+    if (window["ytInitialPlayerResponse"]) {
+      originalPlayerResponse = window["ytInitialPlayerResponse"];
       globalJsCopy.logDebug(
         "Found existing ytInitialPlayerResponse, storing original",
       );
     }
     if (
-      window.ytInitialPlayerResponse !== undefined &&
-      !window.ytInitialPlayerResponse
+      window["ytInitialPlayerResponse"] !== undefined &&
+      !window["ytInitialPlayerResponse"]
     ) {
-      window.ytInitialPlayerResponse = undefined;
+      window["ytInitialPlayerResponse"] = undefined;
     }
 
     try {
@@ -319,8 +319,8 @@ function getUntranslated360pFallback(playerResponse) {
           return origModifiedResponse;
         }
 
-        if (window.ytInitialPlayerResponse !== undefined) {
-          window.ytInitialPlayerResponse = responseJson;
+        if (window["ytInitialPlayerResponse"] !== undefined) {
+          window["ytInitialPlayerResponse"] = responseJson;
         }
         // Create a new response with modified JSON
         const modifiedResponse = new Response(JSON.stringify(responseJson), {
@@ -348,15 +348,15 @@ function getUntranslated360pFallback(playerResponse) {
       const method = (arguments[0] || "GET").toString().toUpperCase();
       const url = arguments[1] || "";
       const isAsync = arguments[2] !== false;
-      this.__ytat = this.__ytat || {};
-      this.__ytat.method = method;
-      this.__ytat.url = url;
-      this.__ytat.async = isAsync;
+      this["__ytat"] = this["__ytat"] || {};
+      this["__ytat"].method = method;
+      this["__ytat"].url = url;
+      this["__ytat"].async = isAsync;
       return OriginalOpen.apply(this, arguments);
     };
 
     XMLHttpRequest.prototype.send = function (body) {
-      const context = this.__ytat || {};
+      const context = this["__ytat"] || {};
       const url = context.url || "";
       globalJsCopy.logDebug("XMLHttpRequest headers", {
         headers: this.getAllResponseHeaders(),
@@ -378,8 +378,8 @@ function getUntranslated360pFallback(playerResponse) {
 
             console.log("responseJson", responseJson);
 
-            if (window.ytInitialPlayerResponse !== undefined) {
-              window.ytInitialPlayerResponse = responseJson;
+            if (window["ytInitialPlayerResponse"] !== undefined) {
+              window["ytInitialPlayerResponse"] = responseJson;
             }
 
             const headersMap = {};
@@ -429,10 +429,10 @@ function getUntranslated360pFallback(playerResponse) {
 
             try {
               if (typeof this.onreadystatechange === "function") {
-                this.onreadystatechange();
+                this.onreadystatechange(null);
               }
               if (typeof this.onload === "function") {
-                this.onload();
+                this.onload(null);
               }
               if (typeof this.dispatchEvent === "function") {
                 this.dispatchEvent(new Event("readystatechange"));
@@ -495,11 +495,11 @@ function getUntranslated360pFallback(playerResponse) {
 
     /* 4-c. if ytNetworkFetch was already present before our script ran,
             wrap it immediately (covers the 'parsed-but-not-executed' case) */
-    if (window.ytNetworkFetch) {
+    if (window["ytNetworkFetch"]) {
       globalJsCopy.logDebug(
         "ytNetworkFetch pre-existing → wrapping immediately",
       );
-      window.fetch = createRewriter(window.ytNetworkFetch);
+      window.fetch = createRewriter(window["ytNetworkFetch"]);
     }
   })();
 })();

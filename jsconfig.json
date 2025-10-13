@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "checkJs": true,
+    "allowJs": true,
+    "lib": [
+      "ES2022",
+      "DOM",
+      "ScriptHost"
+    ],
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "target": "es2022",
+    "baseUrl": ".",
+    "types": [
+      "chrome",
+      "firefox-webext-browser"
+    ],
+    "noEmit": true
+  },
+  "include": [
+    "app/**/*.js",
+    "global.d.ts",
+    "tests-unit/**/*.js",
+    ".github/workflows/scripts/**/*.js"
+  ]
+}
