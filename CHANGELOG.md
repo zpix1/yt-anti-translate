@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.20.1] - 2025-10-xx
+
+### Fixed
+
+- [#144](https://github.com/zpix1/yt-anti-translate/issues/144) YouTube links in descriptions are translated
+
 ## [1.20.0] - 2025-10-13
 
 ### New Feature

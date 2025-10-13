@@ -742,7 +742,10 @@ async function untranslateOtherVideos(intersectElements = null) {
           (video.matches(`a.ytp-ce-covering-overlay${hrefFilter}`)
             ? video
             : null) ||
-          (video.matches(`a.ytp-suggestion-link${hrefFilter}`) ? video : null);
+          (video.matches(`a.ytp-suggestion-link${hrefFilter}`)
+            ? video
+            : null) ||
+          video.querySelector(`a.yt-simple-endpoint${hrefFilter}`);
 
         if (!linkElement) {
           // Try another common pattern before giving up
@@ -838,7 +841,10 @@ async function untranslateOtherVideos(intersectElements = null) {
           ) ||
           video.querySelector("span.ytp-videowall-still-info-title") ||
           video.querySelector("div.ytp-ce-video-title") ||
-          video.querySelector("div.ytp-suggestion-title");
+          video.querySelector("div.ytp-suggestion-title") ||
+          video.querySelector(
+            "#title.ytd-structured-description-video-lockup-renderer",
+          );
         if (!titleElement) {
           titleElement =
             video.querySelector("yt-formatted-string#video-title") ||
