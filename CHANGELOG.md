@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - [#144](https://github.com/zpix1/yt-anti-translate/issues/144) YouTube links in descriptions are translated
+- [#145](https://github.com/zpix1/yt-anti-translate/issues/145) "Manage whitelists" cannot be opened on mobile browser
 
 ## [1.20.0] - 2025-10-13
 
