@@ -30,7 +30,7 @@
     .container {
       padding: 20px 15px 20px 20px;
       width: auto;
-      max-width: 600px;
+      max-width: 700px;
       min-width: 300px;
       height: fit-content;
       text-align: center;
@@ -323,6 +323,11 @@
       color: rgb(26, 26, 26);
     }
 
+    textarea {
+      max-width: 700px;
+      min-width: 100%;
+    }
+
     #whitelist-container>label {
       font-size: 13px;
       margin-top: 15px;
@@ -379,6 +384,58 @@
       vertical-align: middle;
       filter: invert(41%) sepia(0%) saturate(0%) hue-rotate(181deg) brightness(93%) contrast(88%);
       /* #666 in light mode */
+    }
+
+    .simple-button.cancel {
+      background-color: #f0b8b3 !important;
+    }
+
+    .simple-button.cancel:hover {
+      background-color: #f19b94 !important;
+    }
+
+    .confirmation-modal {
+      background: var(--modal-bg, #fff);
+      color: inherit;
+      padding: 16px;
+      border-radius: 8px;
+      border-color: #66d9ef;
+      border-width: 2px;
+      border-style: solid;
+      max-width: 520px;
+      width: 90%;
+      max-width: 500px;
+      min-width: 245px;
+      width: 90%;
+      margin-right: 45px;
+      margin-left: 30px;
+    }
+
+    #confirm-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.5);
+      align-items: center;
+      justify-content: center;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .confirmation-modal {
+        --modal-bg: #1a1a1a;
+        border-color: #007bb5;
+      }
+
+      .simple-button.cancel {
+        background-color: #791b15 !important;
+      }
+
+      .simple-button.cancel:hover {
+        background-color: #921e15 !important;
+      }
     }
   </style>
 </head>
@@ -469,6 +526,11 @@
                 <button id="save-whitelist-title-button" class="simple-button">
                   <span id="save-whitelist-title-text">Save Whitelist</span>
                 </button>
+                <span style="min-width: fit-content;" hidden>
+                  <button id="save-to-all-whitelist-title-button" class="simple-button">
+                    <span>Save to All Whitelists</span>
+                  </button>
+                </span>
                 <div id="whitelist-title-status" class="whitelist-status" hidden></div>
               </div>
             </div>
@@ -482,6 +544,11 @@
                 <button id="save-whitelist-audio-button" class="simple-button">
                   <span id="save-whitelist-audio-text">Save Whitelist</span>
                 </button>
+                <span style="min-width: fit-content;" hidden>
+                  <button id="save-to-all-whitelist-audio-button" class="simple-button">
+                    <span>Save to All Whitelists</span>
+                  </button>
+                </span>
                 <div id="whitelist-audio-status" class="whitelist-status" hidden>
                 </div>
               </div>
@@ -496,6 +563,11 @@
                 <button id="save-whitelist-description-button" class="simple-button">
                   <span id="save-whitelist-description-text">Save Whitelist</span>
                 </button>
+                <span style="min-width: fit-content;" hidden>
+                  <button id="save-to-all-whitelist-description-button" class="simple-button">
+                    <span>Save to All Whitelists</span>
+                  </button>
+                </span>
                 <div id="whitelist-description-status" class="whitelist-status" hidden></div>
               </div>
             </div>
@@ -509,6 +581,11 @@
                 <button id="save-whitelist-chapters-button" class="simple-button">
                   <span id="save-whitelist-chapters-text">Save Whitelist</span>
                 </button>
+                <span style="min-width: fit-content;" hidden>
+                  <button id="save-to-all-whitelist-chapters-button" class="simple-button">
+                    <span>Save to All Whitelists</span>
+                  </button>
+                </span>
                 <div id="whitelist-chapters-status" class="whitelist-status" hidden></div>
               </div>
             </div>
@@ -522,6 +599,11 @@
                 <button id="save-whitelist-channel-branding-button" class="simple-button">
                   <span id="save-whitelist-channel-branding-text">Save Whitelist</span>
                 </button>
+                <span style="min-width: fit-content;" hidden>
+                  <button id="save-to-all-whitelist-channel-branding-button" class="simple-button">
+                    <span>Save to All Whitelists</span>
+                  </button>
+                </span>
                 <div id="whitelist-channel-branding-status" class="whitelist-status" hidden></div>
               </div>
             </div>
@@ -535,6 +617,11 @@
                 <button id="save-whitelist-thumbnail-button" class="simple-button">
                   <span id="save-whitelist-thumbnail-text">Save Whitelist</span>
                 </button>
+                <span style="min-width: fit-content;" hidden>
+                  <button id="save-to-all-whitelist-thumbnail-button" class="simple-button">
+                    <span>Save to All Whitelists</span>
+                  </button>
+                </span>
                 <div id="whitelist-thumbnail-status" class="whitelist-status" hidden></div>
               </div>
             </div>
@@ -542,6 +629,16 @@
         </details>
       </div>
       <div class="footer" id="footer-links"></div>
+      <!-- Confirmation Modal -->
+      <div id="confirm-modal">
+        <div class="confirmation-modal">
+          <div id="confirm-modal-message" style="margin-bottom: 12px; font-size: 14px;"></div>
+          <div style="display:flex; gap: 8px; justify-content: flex-end;">
+            <button id="confirm-modal-cancel" class="simple-button cancel">Cancel</button>
+            <button id="confirm-modal-yes" class="simple-button"><span>Yes</span></button>
+          </div>
+        </div>
+      </div>
       <script src="/src/global.js"></script>
       <script src="/src/options.js"></script>
     </div>

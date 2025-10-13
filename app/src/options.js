@@ -1,3 +1,49 @@
+// Whitelist save buttons
+const whitelistIds = [
+  {
+    saveButtonId: "save-whitelist-title-button",
+    textareaId: "whitelist-title-input",
+    statusId: "whitelist-title-status",
+    storageKey: "whiteListUntranslateTitle",
+    saveToAllButtonId: "save-to-all-whitelist-title-button",
+  },
+  {
+    saveButtonId: "save-whitelist-audio-button",
+    textareaId: "whitelist-audio-input",
+    statusId: "whitelist-audio-status",
+    storageKey: "whiteListUntranslateAudio",
+    saveToAllButtonId: "save-to-all-whitelist-audio-button",
+  },
+  {
+    saveButtonId: "save-whitelist-description-button",
+    textareaId: "whitelist-description-input",
+    statusId: "whitelist-description-status",
+    storageKey: "whiteListUntranslateDescription",
+    saveToAllButtonId: "save-to-all-whitelist-description-button",
+  },
+  {
+    saveButtonId: "save-whitelist-chapters-button",
+    textareaId: "whitelist-chapters-input",
+    statusId: "whitelist-chapters-status",
+    storageKey: "whiteListUntranslateChapters",
+    saveToAllButtonId: "save-to-all-whitelist-chapters-button",
+  },
+  {
+    saveButtonId: "save-whitelist-channel-branding-button",
+    textareaId: "whitelist-channel-branding-input",
+    statusId: "whitelist-channel-branding-status",
+    storageKey: "whiteListUntranslateChannelBranding",
+    saveToAllButtonId: "save-to-all-whitelist-channel-branding-button",
+  },
+  {
+    saveButtonId: "save-whitelist-thumbnail-button",
+    textareaId: "whitelist-thumbnail-input",
+    statusId: "whitelist-thumbnail-status",
+    storageKey: "whiteListUntranslateThumbnail",
+    saveToAllButtonId: "save-to-all-whitelist-thumbnail-button",
+  },
+];
+
 async function hasPermanentHostPermission(origin) {
   return new Promise((resolve, reject) => {
     window.YoutubeAntiTranslate.getBrowserOrChrome().permissions.getAll(
@@ -303,6 +349,7 @@ function validateAndSaveWhitelist(textareaId, statusTextId, storageKey) {
       // Verify that the textarea has:
       // - one handle per line
       // - begins with @
+      // - at least one character after @
       // - have no spaces
       // - does not contain urls special characters
       // note: underscores (_), hyphens (-), periods (.), Latin middle dots (·) allowed
@@ -313,7 +360,7 @@ function validateAndSaveWhitelist(textareaId, statusTextId, storageKey) {
       );
 
       const lines = textarea.value.split("\n");
-      const validLines = [];
+      let validLines = [];
       const invalidLines = [];
 
       for (const line of lines) {
@@ -326,7 +373,8 @@ function validateAndSaveWhitelist(textareaId, statusTextId, storageKey) {
           !trimmed.includes(" ") &&
           !/[^\w\s_\-.·@]/.test(trimmed) &&
           !/[_.\-·]$/.test(trimmed) &&
-          !/^@[_.\-·]/.test(trimmed)
+          !/^@[_.\-·]/.test(trimmed) &&
+          !/^@+$/.test(trimmed)
         ) {
           validLines.push(trimmed);
         } else {
@@ -339,8 +387,10 @@ function validateAndSaveWhitelist(textareaId, statusTextId, storageKey) {
         if (status) {
           status.textContent = `❌ Invalid entries: ${invalidLines.join(", ")}`;
           status.className = "whitelist-status error";
+          hideSaveToAllButtons();
         }
         if (validLines.length === 0) {
+          status.removeAttribute("hidden");
           return;
         }
       }
@@ -353,6 +403,11 @@ function validateAndSaveWhitelist(textareaId, statusTextId, storageKey) {
       buttonText.textContent = "Saving...";
       button.disabled = true;
 
+      //dedupe valid lines (case insensitive)
+      validLines = Array.from(
+        new Set(validLines.map((line) => line.toLowerCase())),
+      );
+
       chrome.storage.sync.set(
         {
           [storageKey]: validLines,
@@ -363,6 +418,7 @@ function validateAndSaveWhitelist(textareaId, statusTextId, storageKey) {
               buttonText.textContent = `${validLines.length} Valid entries saved`;
               status.textContent += `\n✅ ${validLines.length} Valid entries saved: ${validLines.join(", ")}`;
               status.className = "whitelist-status partial-success";
+              hideSaveToAllButtons();
               status.removeAttribute("hidden");
               setTimeout(() => {
                 buttonText.textContent = originalText;
@@ -379,6 +435,9 @@ function validateAndSaveWhitelist(textareaId, statusTextId, storageKey) {
               return;
             }
             buttonText.textContent = `${validLines.length} Whitelist entries saved!`;
+            textarea.value = validLines.join("\n");
+            // Reveal the "Save to All Whitelists" button when there are ONLY valid lines or saved as empty
+            revealSaveToAllButton(textareaId, validLines);
             setTimeout(() => {
               buttonText.textContent = originalText;
               button.disabled = false;
@@ -392,6 +451,95 @@ function validateAndSaveWhitelist(textareaId, statusTextId, storageKey) {
       );
     },
   );
+}
+
+// Map to store last valid values for each whitelist input id
+const lastValidWhitelistValues = new Map();
+
+function hideSaveToAllButtons() {
+  for (const btnId of whitelistIds.map((w) => w.saveToAllButtonId)) {
+    const btn = document.getElementById(btnId);
+    const parentSpan = btn?.parentElement;
+    if (btn && btn.tagName === "BUTTON" && parentSpan) {
+      parentSpan.hidden = true;
+      btn.onclick = null;
+    }
+  }
+}
+
+function revealSaveToAllButton(textareaId, validLines) {
+  lastValidWhitelistValues.set(textareaId, validLines);
+
+  const btnId = whitelistIds.find(
+    (w) => w.textareaId === textareaId,
+  )?.saveToAllButtonId;
+  if (!btnId) {
+    return;
+  }
+  /** @type {HTMLElement|null} */
+  const saveToAllBtn = document.getElementById(btnId);
+  const parentSpan = saveToAllBtn?.parentElement;
+  if (saveToAllBtn && saveToAllBtn.tagName === "BUTTON" && parentSpan) {
+    /** @type {HTMLButtonElement} */
+    parentSpan.hidden = false;
+    saveToAllBtn.onclick = () => openConfirmModal(textareaId);
+  }
+}
+
+function openConfirmModal(textareaId) {
+  const values = lastValidWhitelistValues.get(textareaId) || [];
+  const modal = document.getElementById("confirm-modal");
+  const msg = document.getElementById("confirm-modal-message");
+  const btnCancel = /** @type {HTMLButtonElement} */ (
+    document.getElementById("confirm-modal-cancel")
+  );
+  const btnYes = /** @type {HTMLButtonElement} */ (
+    document.getElementById("confirm-modal-yes")
+  );
+  if (!modal || !msg || !btnCancel || !btnYes) {
+    return;
+  }
+  if (values.length === 0) {
+    msg.textContent = `This will delete the values inside all the other whitelists. Are you sure you want to proceed?`;
+  } else {
+    msg.textContent = `This will overwrite the values inside all the other whitelists with "${values.join(", ")}". Are you sure you want to proceed?`;
+  }
+  modal.style.display = "flex";
+  const close = () => {
+    modal.style.display = "none";
+    btnCancel.onclick = null;
+    btnYes.onclick = null;
+  };
+  btnCancel.onclick = close;
+  btnYes.onclick = () => {
+    saveValuesToAllOtherWhitelists(textareaId, values);
+    close();
+  };
+}
+
+function saveValuesToAllOtherWhitelists(sourceTextareaId, values) {
+  const allIds = whitelistIds.map((w) => w.textareaId);
+  const targetIds = allIds.filter((id) => id !== sourceTextareaId);
+
+  const toSet = {};
+  for (const id of targetIds) {
+    const key = whitelistIds.find((w) => w.textareaId === id)?.storageKey;
+    toSet[key] = values;
+    // update textarea UI immediately
+    const textarea = /** @type {HTMLTextAreaElement} */ (
+      document.getElementById(id)
+    );
+    if (textarea) {
+      textarea.value = values.join("\n");
+    }
+  }
+
+  chrome.storage.sync.set(toSet, () => {
+    window.YoutubeAntiTranslate?.logInfo?.(
+      "Whitelists overwritten across all categories",
+    );
+    hideSaveToAllButtons();
+  });
 }
 
 function apiKeyUpdate() {
@@ -505,60 +653,35 @@ function addListeners() {
   document
     .getElementById("save-api-key-button")
     .addEventListener("click", apiKeyUpdate);
-  document
-    .getElementById("save-whitelist-title-button")
-    .addEventListener("click", () => {
-      validateAndSaveWhitelist(
-        "whitelist-title-input",
-        "whitelist-title-status",
-        "whiteListUntranslateTitle",
-      );
-    });
-  document
-    .getElementById("save-whitelist-audio-button")
-    .addEventListener("click", () => {
-      validateAndSaveWhitelist(
-        "whitelist-audio-input",
-        "whitelist-audio-status",
-        "whiteListUntranslateAudio",
-      );
-    });
-  document
-    .getElementById("save-whitelist-description-button")
-    .addEventListener("click", () => {
-      validateAndSaveWhitelist(
-        "whitelist-description-input",
-        "whitelist-description-status",
-        "whiteListUntranslateDescription",
-      );
-    });
-  document
-    .getElementById("save-whitelist-chapters-button")
-    .addEventListener("click", () => {
-      validateAndSaveWhitelist(
-        "whitelist-chapters-input",
-        "whitelist-chapters-status",
-        "whiteListUntranslateChapters",
-      );
-    });
-  document
-    .getElementById("save-whitelist-channel-branding-button")
-    .addEventListener("click", () => {
-      validateAndSaveWhitelist(
-        "whitelist-channel-branding-input",
-        "whitelist-channel-branding-status",
-        "whiteListUntranslateChannelBranding",
-      );
-    });
-  document
-    .getElementById("save-whitelist-thumbnail-button")
-    .addEventListener("click", () => {
-      validateAndSaveWhitelist(
-        "whitelist-thumbnail-input",
-        "whitelist-thumbnail-status",
-        "whiteListUntranslateThumbnail",
-      );
-    });
+
+  for (const whitelist of whitelistIds) {
+    const button = document.getElementById(whitelist.saveButtonId);
+    if (button) {
+      button.addEventListener("click", () => {
+        validateAndSaveWhitelist(
+          whitelist.textareaId,
+          whitelist.statusId,
+          whitelist.storageKey,
+        );
+      });
+    }
+
+    const saveToAllBtnSpan = document.getElementById(
+      whitelist.saveToAllButtonId,
+    )?.parentElement;
+    if (saveToAllBtnSpan) {
+      // Handlers attached when revealed; keep hidden by default
+      saveToAllBtnSpan.hidden = true;
+    }
+
+    // Add input event listener to hide "Save to All" button on changes
+    const textarea = document.getElementById(whitelist.textareaId);
+    if (textarea) {
+      textarea.addEventListener("input", () => {
+        hideSaveToAllButtons();
+      });
+    }
+  }
 }
 
 document.addEventListener("DOMContentLoaded", optionTabChanges);
