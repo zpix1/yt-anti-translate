@@ -591,10 +591,16 @@ function isPopup() {
   }
 }
 
+function isMobile() {
+  // Simple mobile detection (covers iOS, Android, and most mobile browsers)
+  return /\b(Mobi|Android|iPhone|iPad|iPod|Opera Mini|IEMobile|Mobile)\b/i.test(
+    navigator.userAgent,
+  );
+}
+
 function optionTabChanges() {
-  // if windows type is not popup
-  // then remove 'max-height' restriction form '.scroll-wrapper'
-  if (!isPopup()) {
+  // If window type is not popup OR it is in any mobile browser
+  if (!isPopup() || isMobile()) {
     const scrollWrapper = /** @type {HTMLElement} */ (
       document.querySelector(".scroll-wrapper")
     );

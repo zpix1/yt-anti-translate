@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.20.1] - 2025-10-14
+
+### Fixed
+
+- Fix [#144](https://github.com/zpix1/yt-anti-translate/issues/144) YouTube links in descriptions are translated
+- Fix [#145](https://github.com/zpix1/yt-anti-translate/issues/145) "Manage whitelists" cannot be opened on mobile browser
+
 ## [1.20.0] - 2025-10-13
 
 ### New Feature
@@ -21,7 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- [#137](https://github.com/zpix1/yt-anti-translate/issues/137) Videos description in searches sometimes shows older videos description
+- Fix [#137](https://github.com/zpix1/yt-anti-translate/issues/137) Videos description in searches sometimes shows older videos description
 - Add missing selector to handle branding of feutured channels and sidebar channels
 - Fix video description not translating of fundraising videos if viewport is below 1000x500
 - Added missing selector to handle description of dismissable featured channel video
