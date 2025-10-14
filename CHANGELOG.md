@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### New Feature
+
+- [#149](https://github.com/zpix1/yt-anti-translate/issues/149) Untranslate auto-play (autonav) video inside the player
+
+### Fixed
+
+- Fix [#148](https://github.com/zpix1/yt-anti-translate/issues/148) The mobile video thumbnail in a playlist are set to the first
+
 ## [1.20.1] - 2025-10-14
 
 ### Fixed

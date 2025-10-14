@@ -745,7 +745,15 @@ async function untranslateOtherVideos(intersectElements = null) {
           (video.matches(`a.ytp-suggestion-link${hrefFilter}`)
             ? video
             : null) ||
-          video.querySelector(`a.yt-simple-endpoint${hrefFilter}`);
+          video.querySelector(`a.yt-simple-endpoint${hrefFilter}`) ||
+          (video.matches(`a.ytp-autonav-endscreen-link-container${hrefFilter}`)
+            ? video
+            : null) ||
+          (video.matches(
+            `a.autonav-endscreen-cued-video-container${hrefFilter}`,
+          )
+            ? video
+            : null);
 
         if (!linkElement) {
           // Try another common pattern before giving up
@@ -844,6 +852,10 @@ async function untranslateOtherVideos(intersectElements = null) {
           video.querySelector("div.ytp-suggestion-title") ||
           video.querySelector(
             "#title.ytd-structured-description-video-lockup-renderer",
+          ) ||
+          video.querySelector("div.ytp-autonav-endscreen-upnext-title") ||
+          video.querySelector(
+            "div.autonav-endscreen-video-title > .yt-core-attributed-string",
           );
         if (!titleElement) {
           titleElement =
@@ -870,7 +882,8 @@ async function untranslateOtherVideos(intersectElements = null) {
 
         // Get thumbnail container elements
         const thumbnailElements = video.querySelectorAll(
-          'img[src*="i.ytimg.com"]:not(.ytd-moving-thumbnail-renderer):not([src*="ytimg.com/an_webp/"])',
+          `img[src*="i.ytimg.com"]:not(.ytd-moving-thumbnail-renderer):not([src*="ytimg.com/an_webp/"]),
+          div[style*="i.ytimg.com"][style*="background-image"]`,
         );
         if (!thumbnailElements || thumbnailElements.length === 0) {
           // Mark if thumbnail elements are missing to avoid repeated failed attempts
@@ -1064,24 +1077,42 @@ async function untranslateOtherVideos(intersectElements = null) {
                   continue;
                 }
 
-                if (!thumbnailElement || !thumbnailElement.src) {
+                let imageSrc;
+
+                if (thumbnailElement.matches("[style*='background-image']")) {
+                  const currentStyle =
+                    thumbnailElement["style"]?.["backgroundImage"] || "";
+                  // extract image src from style.backgroundImage(url("IMAGE_URL"))
+                  imageSrc = currentStyle.match(
+                    /url\(["']?([^"']+)["']?\)/,
+                  )?.[1];
+                } else {
+                  imageSrc = thumbnailElement.src;
+                }
+
+                if (!thumbnailElement || !imageSrc) {
                   continue;
                 }
 
                 if (
-                  thumbnailElement.src.includes("https://i.ytimg.com/vi/") || // path of not-localized thumbnails
-                  thumbnailElement.src.includes("?youtube-anti-translate")
+                  imageSrc.includes("https://i.ytimg.com/vi/") || // path of not-localized thumbnails
+                  imageSrc.includes("?youtube-anti-translate")
                 ) {
                   continue;
                 }
                 // Only update if the thumbnail is different
-                if (!thumbnailElement.src.includes(originalThumbnail)) {
+                if (!imageSrc.includes(originalThumbnail)) {
                   const { width, height } =
                     await window.YoutubeAntiTranslate.getImageSize(
                       thumbnailElement.src,
                     );
-                  thumbnailElement.src =
-                    originalThumbnail + `?youtube-anti-translate=${Date.now()}`;
+                  if (thumbnailElement.matches("[style*='background-image']")) {
+                    thumbnailElement.style.backgroundImage = `url("${originalThumbnail}?youtube-anti-translate=${Date.now()}")`;
+                  } else {
+                    thumbnailElement.src =
+                      originalThumbnail +
+                      `?youtube-anti-translate=${Date.now()}`;
+                  }
                   // Add crop ratio to image
                   if (width && height) {
                     const cropRatio = width / height;
