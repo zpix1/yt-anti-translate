@@ -970,7 +970,8 @@ async function untranslateOtherVideos(intersectElements = null) {
           const originalTitle = response.data.title;
           // Use innerText for comparison/logging as per original logic for these elements
           const currentTitle =
-            titleElement.innerText?.trim() || titleElement.textContent?.trim();
+            titleElement?.innerText?.trim() ||
+            titleElement?.textContent?.trim();
 
           /* -------- Handle video title untranslation -------- */
           if (
@@ -1503,7 +1504,7 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
           if (settings.untranslateTitle || settings.untranslateThumbnail) {
             /* -------- Handle video title untranslation -------- */
             const realTitle = response.data.title;
-            const currentTitle = titleElement.textContent?.trim(); // Use textContent for typical title spans
+            const currentTitle = titleElement?.textContent?.trim(); // Use textContent for typical title spans
             if (
               !isPlaylist &&
               settings.untranslateTitle &&

@@ -161,9 +161,10 @@ a.ytp-videowall-still,
 a.ytp-ce-covering-overlay,
 a.ytp-suggestion-link,
 div.fullscreen-recommendation,
-ytm-item-section-renderer,
 ytd-structured-description-video-lockup-renderer,
-ytm-playlist-card-renderer` /*this last one is a playlist element but is used for thumbnail*/,
+
+ytm-compact-playlist-renderer,
+ytm-playlist-card-renderer` /*the last two selectors are playlist elements but are used for thumbnail*/,
   ALL_ARRAYS_SHORTS_SELECTOR: `div.style-scope.ytd-rich-item-renderer,
 ytm-shorts-lockup-view-model`,
 
