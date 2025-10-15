@@ -167,7 +167,7 @@ async function untranslateCurrentVideo() {
 // See "docs/Figure 2.png"
 async function untranslateCurrentVideoHeadLink() {
   const fakeNodeID = "yt-anti-translate-fake-node-video-head-link";
-  const originalNodeSelector = `${window.YoutubeAntiTranslate.getPlayerSelector()} a.ytp-title-link:not(#${fakeNodeID})`;
+  const originalNodeSelector = `${window.YoutubeAntiTranslate.getPlayerSelector()} a.ytp-title-link:not(#${fakeNodeID}), ${window.YoutubeAntiTranslate.getPlayerSelector()} h2.ytPlayerOverlayVideoDetailsRendererTitle:not(#${fakeNodeID})`;
   const originalNodePartialSelector = `a.ytp-title-link:not(#${fakeNodeID})`;
 
   await createOrUpdateUntranslatedFakeNode(
@@ -753,6 +753,9 @@ async function untranslateOtherVideos(intersectElements = null) {
             `a.autonav-endscreen-cued-video-container${hrefFilter}`,
           )
             ? video
+            : null) ||
+          (video.matches(`a.ytp-modern-videowall-still${hrefFilter}`)
+            ? video
             : null);
 
         if (!linkElement) {
@@ -856,7 +859,8 @@ async function untranslateOtherVideos(intersectElements = null) {
           video.querySelector("div.ytp-autonav-endscreen-upnext-title") ||
           video.querySelector(
             "div.autonav-endscreen-video-title > .yt-core-attributed-string",
-          );
+          ) ||
+          video.querySelector("span.ytp-modern-videowall-still-info-title");
         if (!titleElement) {
           titleElement =
             video.querySelector("yt-formatted-string#video-title") ||

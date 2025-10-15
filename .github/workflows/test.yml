@@ -6,7 +6,7 @@ on:
     types: [opened, labeled, unlabeled]
     branches: [main]
   schedule:
-    - cron: "0 0 * * 0,2,4" # Run at midnight UTC every Sunday and Tuesday and Thursday
+    - cron: "0 0 * * *" # Run at midnight UTC every day
 
 concurrency:
   group: pr-${{ github.event.pull_request.number }}

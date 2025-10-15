@@ -164,6 +164,7 @@ div.fullscreen-recommendation,
 ytd-structured-description-video-lockup-renderer,
 a.ytp-autonav-endscreen-link-container,
 a.autonav-endscreen-cued-video-container,
+a.ytp-modern-videowall-still,
 
 ytm-compact-playlist-renderer,
 ytm-playlist-card-renderer` /*the last two selectors are playlist elements but are used for thumbnail*/,

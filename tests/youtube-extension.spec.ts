@@ -91,7 +91,7 @@ test.describe("YouTube Anti-Translate extension", () => {
 
     // Get the head link video title
     const headLinkVideoTitleLocator = await page.locator(
-      "ytd-player .html5-video-player a.ytp-title-link#yt-anti-translate-fake-node-video-head-link",
+      "ytd-player .html5-video-player #yt-anti-translate-fake-node-video-head-link",
     );
     await headLinkVideoTitleLocator.waitFor();
     const headLinkVideoTitle = await headLinkVideoTitleLocator.textContent();
@@ -106,24 +106,25 @@ test.describe("YouTube Anti-Translate extension", () => {
     );
 
     // Get the full screen footer video title
-    const fullScreenVideoTitleFooterLocator = await page
-      .locator(".ytp-title-text .ytp-title-fullerscreen-link")
-      .nth(1);
-    await fullScreenVideoTitleFooterLocator.waitFor();
-    const fullScreenVideoTitleFooter =
-      await fullScreenVideoTitleFooterLocator.textContent();
-    console.log(
-      "Full Screen Head Link Video title:",
-      fullScreenVideoTitleFooter?.trim(),
-    );
+    // Youtube removed this element of 15/10/2025, so this check is disabled for now
+    // const fullScreenVideoTitleFooterLocator = await page
+    //   .locator(".ytp-title-text .ytp-title-fullerscreen-link")
+    //   .nth(1);
+    // await fullScreenVideoTitleFooterLocator.waitFor();
+    // const fullScreenVideoTitleFooter =
+    //   await fullScreenVideoTitleFooterLocator.textContent();
+    // console.log(
+    //   "Full Screen Head Link Video title:",
+    //   fullScreenVideoTitleFooter?.trim(),
+    // );
 
-    // Check that the title is in English and not in Russian
-    expect(fullScreenVideoTitleFooter).toContain(
-      "Ages 1 - 100 Decide Who Wins $250,000",
-    );
-    expect(fullScreenVideoTitleFooter).not.toContain(
-      "Люди от 1 до 100 Лет Решают, кто Выиграет $250,000",
-    );
+    // // Check that the title is in English and not in Russian
+    // expect(fullScreenVideoTitleFooter).toContain(
+    //   "Ages 1 - 100 Decide Who Wins $250,000",
+    // );
+    // expect(fullScreenVideoTitleFooter).not.toContain(
+    //   "Люди от 1 до 100 Лет Решают, кто Выиграет $250,000",
+    // );
 
     // Take a screenshot for visual verification
     await page.screenshot({
