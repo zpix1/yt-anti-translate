@@ -1514,7 +1514,7 @@ ytm-shorts-lockup-view-model`,
           // That always get the original language as a result
         },
       },
-      query: `${decodedQuery} + ${decodedQuery}`, // Trick to prioritize exact matches and make them unique for deletion
+      query: `${decodedQuery} ${decodedQuery}`, // Trick to prioritize exact matches and make them unique for deletion
     };
 
     const requestIdentifier = `youtubei/v1/results_${JSON.stringify(body)}`;
@@ -1558,7 +1558,7 @@ ytm-shorts-lockup-view-model`,
     // Delete the search suggestion to avoid polluting user search history
     // we intentionally do not await this as outcome is not needed for the function response
     if (!response.isFromCache) {
-      this.deleteSearchSuggestion(`${decodedQuery} + ${decodedQuery}`);
+      this.deleteSearchSuggestion(`${decodedQuery} ${decodedQuery}`);
     }
 
     return result;
@@ -1927,7 +1927,7 @@ ytm-shorts-lockup-view-model`,
           clientVersion: "2.20250527.00.00",
         },
       },
-      query: `${decodedQuery} + ${decodedQuery}`, // Trick to prioritize exact matches and make them unique for deletion
+      query: `${decodedQuery} ${decodedQuery}`, // Trick to prioritize exact matches and make them unique for deletion
       // "EgIQAg==" = filter=channels  (protobuf: {12: {1:2}})
       params: "EgIQAg==",
     };
@@ -2042,7 +2042,7 @@ ytm-shorts-lockup-view-model`,
     // we intentionally do not await this as outcome is not needed for the function response
     // When we got it from cache there is no need to delete again
     if (!result.isFromCache) {
-      this.deleteSearchSuggestion(`${decodedQuery} + ${decodedQuery}`);
+      this.deleteSearchSuggestion(`${decodedQuery} ${decodedQuery}`);
     }
 
     return response;
