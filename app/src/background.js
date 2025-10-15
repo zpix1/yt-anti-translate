@@ -1103,9 +1103,7 @@ async function untranslateOtherVideos(intersectElements = null) {
                 // Only update if the thumbnail is different
                 if (!imageSrc.includes(originalThumbnail)) {
                   const { width, height } =
-                    await window.YoutubeAntiTranslate.getImageSize(
-                      thumbnailElement.src,
-                    );
+                    await window.YoutubeAntiTranslate.getImageSize(imageSrc);
                   if (thumbnailElement.matches("[style*='background-image']")) {
                     thumbnailElement.style.backgroundImage = `url("${originalThumbnail}?youtube-anti-translate=${Date.now()}")`;
                   } else {
