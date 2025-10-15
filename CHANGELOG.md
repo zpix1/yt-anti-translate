@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fix [#148](https://github.com/zpix1/yt-anti-translate/issues/148) The mobile video thumbnail in a playlist are set to the first
 - Fix [#151](https://github.com/zpix1/yt-anti-translate/issues/151) searchbar error (polluted search history)
+- Fix [#120](https://github.com/zpix1/yt-anti-translate/issues/120) Chapters tooltip not untranslated in Brave Browser
 
 ## [1.20.1] - 2025-10-14
 
