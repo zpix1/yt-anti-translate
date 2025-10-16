@@ -1488,6 +1488,7 @@ ytm-shorts-lockup-view-model`,
   },
 
   getOriginalCollaboratorsItemsWithYoutubeI: async function (search_query) {
+    return null;
     if (!search_query || search_query.trim() === "") {
       return null;
     }
