@@ -2260,19 +2260,14 @@ ytm-shorts-lockup-view-model`,
     // 1. window.yt?.config_?.SBOX_SETTINGS?.PSUGGEST_TOKEN
     if (
       typeof window !== "undefined" &&
-      window["yt"] &&
-      window["yt"]["config_"] &&
-      window["yt"]["config_"]["SBOX_SETTINGS"] &&
-      window["yt"]["config_"]["SBOX_SETTINGS"]["PSUGGEST_TOKEN"]
+      window["yt"]?.["config_"]?.["SBOX_SETTINGS"]?.["PSUGGEST_TOKEN"]
     ) {
       tok = window["yt"]["config_"]["SBOX_SETTINGS"]["PSUGGEST_TOKEN"];
     }
     // 2. window?.ytcfg?.data_?.SBOX_SETTINGS?.PSUGGEST_TOKEN
     else if (
-      window["ytcfg"] &&
-      window["ytcfg"]["data_"] &&
-      window["ytcfg"]["data_"]["SBOX_SETTINGS"] &&
-      window["ytcfg"]["data_"]["SBOX_SETTINGS"]["PSUGGEST_TOKEN"]
+      typeof window !== "undefined" &&
+      window["ytcfg"]?.["data_"]?.["SBOX_SETTINGS"]?.["PSUGGEST_TOKEN"]
     ) {
       tok = window["ytcfg"]["data_"]["SBOX_SETTINGS"]["PSUGGEST_TOKEN"];
     }
