@@ -256,8 +256,16 @@ function updateTooltipChapter() {
     return;
   }
 
-  const timeElement = visibleTooltip.querySelector(".ytp-tooltip-text");
-  const titleElement = visibleTooltip.querySelector(".ytp-tooltip-title span");
+  const timeElement = window.YoutubeAntiTranslate.getFirstVisible(
+    visibleTooltip.querySelectorAll(
+      ".ytp-tooltip-text, .ytp-tooltip-progress-bar-pill-time-stamp",
+    ),
+  );
+  const titleElement = window.YoutubeAntiTranslate.getFirstVisible(
+    visibleTooltip.querySelectorAll(
+      ".ytp-tooltip-title span, .ytp-tooltip-progress-bar-pill-title",
+    ),
+  );
 
   if (timeElement && titleElement) {
     const timeString = timeElement.textContent?.trim();
@@ -271,28 +279,28 @@ function updateTooltipChapter() {
     }
   }
 
-  // Repeat with Brave selectors
-  const braveTimeElement = visibleTooltip.querySelector(
-    ".ytp-tooltip-progress-bar-pill-time-stamp",
-  );
-  const braveTitleElement = visibleTooltip.querySelector(
-    ".ytp-tooltip-progress-bar-pill-title",
-  );
+  // // Repeat with Brave selectors
+  // const braveTimeElement = visibleTooltip.querySelector(
+  //   ".ytp-tooltip-progress-bar-pill-time-stamp",
+  // );
+  // const braveTitleElement = visibleTooltip.querySelector(
+  //   ".ytp-tooltip-progress-bar-pill-title",
+  // );
+  //
+  // if (braveTimeElement && braveTitleElement) {
+  //   const braveTimeString = braveTimeElement.textContent?.trim();
+  //   if (braveTimeString) {
+  //     const braveTimeInSeconds = timeStringToSeconds(braveTimeString);
+  //     const braveTargetChapter = findChapterByTime(
+  //       braveTimeInSeconds,
+  //       cachedChapters,
+  //     );
 
-  if (braveTimeElement && braveTitleElement) {
-    const braveTimeString = braveTimeElement.textContent?.trim();
-    if (braveTimeString) {
-      const braveTimeInSeconds = timeStringToSeconds(braveTimeString);
-      const braveTargetChapter = findChapterByTime(
-        braveTimeInSeconds,
-        cachedChapters,
-      );
-
-      if (braveTargetChapter) {
-        braveTitleElement.textContent = braveTargetChapter.title;
-      }
-    }
-  }
+  //     if (braveTargetChapter) {
+  //       braveTitleElement.textContent = braveTargetChapter.title;
+  //     }
+  //   }
+  // }
 }
 
 /**
@@ -947,7 +955,7 @@ async function updateCollaboratorAuthors(avatarStack, originalAuthor) {
 
   const authors = [];
 
-  if (avatarStackImages) {
+  if (avatarStackImages && avatarStackImages.length > 1) {
     for (const avatarImage of avatarStackImages) {
       const imgSrc = avatarImage.src;
       if (!imgSrc || imgSrc.trim() === "") {

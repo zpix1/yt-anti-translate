@@ -1227,7 +1227,7 @@ async function untranslateOtherVideos(intersectElements = null) {
             const avatarStacks = video.querySelectorAll(
               "yt-avatar-stack-view-model yt-avatar-shape img",
             );
-            if (avatarStacks && avatarStacks.length > 0) {
+            if (avatarStacks && avatarStacks.length > 1) {
               for (const avatarImage of avatarStacks) {
                 const imgSrc = avatarImage.src;
                 if (!imgSrc || imgSrc.trim() === "") {
@@ -1249,7 +1249,14 @@ async function untranslateOtherVideos(intersectElements = null) {
                 authors.push(originalItem.name);
               }
             }
-            if (authors.length === 0) {
+            if (
+              authors.length === 0 &&
+              authorsElement.textContent.includes(
+                window.YoutubeAntiTranslate.getLocalizedAnd(
+                  document.documentElement.lang,
+                ),
+              )
+            ) {
               // Fallback using video id filtered list
               // Needed on mobile where avatar stacks are not used
               const originalCollaborators =
