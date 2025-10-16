@@ -2250,7 +2250,7 @@ ytm-shorts-lockup-view-model`,
   },
 
   getSuggestionsTOK: function () {
-    // Try to get PSUGGEST_TOKEN from YouTube's using internal matching their internal logic
+    // Try to get PSUGGEST_TOKEN from YouTube using their internal logic
     // `
     // PNy = _.zq.window;
     // _.SN = (PNy == null ? void 0 : (han = PNy.yt) == null ? void 0 : han.config_) || (PNy == null ? void 0 : (rW2 = PNy.ytcfg) == null ? void 0 : rW2.data_)
