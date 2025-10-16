@@ -1224,12 +1224,14 @@ async function untranslateOtherVideos(intersectElements = null) {
             mainAuthor
           ) {
             const authors = [];
-            const avatarStacks = video.querySelectorAll(
-              "yt-avatar-stack-view-model yt-avatar-shape img",
+            const avatarStacks = window.YoutubeAntiTranslate.getAllVisibleNodes(
+              video.querySelectorAll(
+                "yt-avatar-stack-view-model yt-avatar-shape img",
+              ),
             );
             if (avatarStacks && avatarStacks.length > 1) {
               for (const avatarImage of avatarStacks) {
-                const imgSrc = avatarImage.src;
+                const imgSrc = avatarImage["src"];
                 if (!imgSrc || imgSrc.trim() === "") {
                   continue;
                 }
@@ -1240,7 +1242,7 @@ async function untranslateOtherVideos(intersectElements = null) {
                   );
 
                 const originalItem = originalCollaborators?.find(
-                  (item) => item.avatarImage === avatarImage.src,
+                  (item) => item.avatarImage === avatarImage["src"],
                 );
                 if (!originalItem) {
                   continue;
@@ -1252,13 +1254,15 @@ async function untranslateOtherVideos(intersectElements = null) {
             if (
               authors.length === 0 &&
               authorsElement.textContent.includes(
-                window.YoutubeAntiTranslate.getLocalizedAnd(
-                  document.documentElement.lang,
-                ),
+                " " +
+                  window.YoutubeAntiTranslate.getLocalizedAnd(
+                    document.documentElement.lang,
+                  ) +
+                  " ",
               )
             ) {
               // Fallback using video id filtered list
-              // Needed on mobile where avatar stacks are not used
+              // Needed on mobile where avatar stacks are not used and on channel page
               const originalCollaborators =
                 await window.YoutubeAntiTranslate.getOriginalCollaboratorsItemsWithYoutubeI(
                   `${mainAuthor} ${originalTitle}`,

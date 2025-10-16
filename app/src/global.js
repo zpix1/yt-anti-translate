@@ -1274,7 +1274,7 @@ ytm-shorts-lockup-view-model`,
           if (cacheDotNotationProperty) {
             this.setSessionCache(
               cacheKey,
-              this.getPropertyByDotNotation(data, cacheDotNotationProperty) ||
+              this.getPropertiesByDotNotation(data, cacheDotNotationProperty) ||
                 null,
             );
           } else {
@@ -1343,6 +1343,29 @@ ytm-shorts-lockup-view-model`,
       }
     }
     return current;
+  },
+
+  getPropertiesByDotNotation: function (json, dotNotationProperties) {
+    //array of dotNotationProperty from comma separated string
+    const dotNotationPropertiesArray = dotNotationProperties
+      .split(",")
+      .map((p) => p.trim())
+      .filter((p) => p.length > 0);
+
+    if (dotNotationPropertiesArray.length === 0) {
+      return null;
+    }
+
+    const result = {};
+
+    for (const dotNotationProperty of dotNotationPropertiesArray) {
+      const value = this.getPropertyByDotNotation(json, dotNotationProperty);
+      if (value !== null) {
+        result[dotNotationProperty] = value;
+      }
+    }
+
+    return Object.keys(result).length > 0 ? result : null;
   },
 
   extractVideoIdFromUrl: function (url) {
@@ -1539,16 +1562,19 @@ ytm-shorts-lockup-view-model`,
                                   this is to avoid filling user search history with unwanted queries */
         ? await this.getYoutubeIHeadersWithCredentials()
         : { "Content-Type": "application/json" },
-      // doNotCache true as would take too much space
-      true,
+      false,
+      `contents.twoColumnSearchResultsRenderer.primaryContents.sectionListRenderer.contents,
+      contents.sectionListRenderer.contents`,
     );
 
-    if (!response?.data) {
+    if (!response?.data && !response?.cachedWithDotNotation) {
       this.logWarning(`Failed to fetch ${search} or parse response`);
       return;
     }
 
-    const result = this.extractCollaboratorsItemsFromSearch(response.data);
+    const result = this.extractCollaboratorsItemsFromSearch(
+      response.data || response.cachedWithDotNotation,
+    );
 
     if (!result) {
       return;
@@ -1571,7 +1597,11 @@ ytm-shorts-lockup-view-model`,
     const sections =
       json?.contents?.twoColumnSearchResultsRenderer?.primaryContents
         ?.sectionListRenderer?.contents ||
+      json?.[
+        "contents.twoColumnSearchResultsRenderer.primaryContents.sectionListRenderer.contents"
+      ] ||
       json?.contents?.sectionListRenderer?.contents ||
+      json?.["contents.sectionListRenderer.contents"] ||
       [];
 
     for (const section of sections) {
@@ -1629,7 +1659,6 @@ ytm-shorts-lockup-view-model`,
             }
           }
         }
-        //}
       }
     }
 
@@ -1949,8 +1978,9 @@ ytm-shorts-lockup-view-model`,
                                   this is to avoid filling user search history with unwanted queries */
         ? await this.getYoutubeIHeadersWithCredentials()
         : { "Content-Type": "application/json" },
-      // As it might take too much space
-      true,
+      false,
+      `contents.twoColumnSearchResultsRenderer.primaryContents.sectionListRenderer.contents,
+      contents.sectionListRenderer.contents`,
     );
 
     if (!result || !result.response || !result.response.ok) {
@@ -1967,7 +1997,11 @@ ytm-shorts-lockup-view-model`,
     let channelHandle;
 
     for (const sectionContent of json.contents?.twoColumnSearchResultsRenderer
-      ?.primaryContents.sectionListRenderer?.contents || []) {
+      ?.primaryContents?.sectionListRenderer?.contents ||
+      json[
+        "contents.twoColumnSearchResultsRenderer.primaryContents.sectionListRenderer.contents"
+      ] ||
+      []) {
       for (const itemRenderedContent of sectionContent?.itemSectionRenderer
         ?.contents || []) {
         if (
@@ -1991,6 +2025,7 @@ ytm-shorts-lockup-view-model`,
     }
 
     for (const sectionContent of json.contents?.sectionListRenderer?.contents ||
+      json["contents.sectionListRenderer.contents"] ||
       []) {
       for (const itemRenderedContent of sectionContent?.itemSectionRenderer
         ?.contents || []) {
