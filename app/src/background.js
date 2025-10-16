@@ -736,29 +736,32 @@ async function untranslateOtherVideos(intersectElements = null) {
           video.querySelector(
             `a.yt-lockup-metadata-view-model__title${hrefFilter}`,
           ) ||
-          (video.matches(`a.ytp-videowall-still${hrefFilter}`)
-            ? video
-            : null) ||
-          (video.matches(`a.ytp-ce-covering-overlay${hrefFilter}`)
-            ? video
-            : null) ||
-          (video.matches(`a.ytp-suggestion-link${hrefFilter}`)
-            ? video
-            : null) ||
-          video.querySelector(`a.yt-simple-endpoint${hrefFilter}`) ||
-          (video.matches(`a.ytp-autonav-endscreen-link-container${hrefFilter}`)
-            ? video
-            : null) ||
-          (video.matches(
-            `a.autonav-endscreen-cued-video-container${hrefFilter}`,
-          )
-            ? video
-            : null) ||
-          (video.matches(`a.ytp-modern-videowall-still${hrefFilter}`)
-            ? video
-            : null);
+          video.querySelector(`a.yt-simple-endpoint${hrefFilter}`);
 
         if (!linkElement) {
+          // Try Matches logic
+          function isMatches(video) {
+            let result = false;
+            if (
+              video.matches(`a.ytp-videowall-still${hrefFilter}`) ||
+              video.matches(`a.ytp-ce-covering-overlay${hrefFilter}`) ||
+              video.matches(`a.ytp-suggestion-link${hrefFilter}`) ||
+              video.matches(
+                `a.ytp-autonav-endscreen-link-container${hrefFilter}`,
+              ) ||
+              video.matches(
+                `a.autonav-endscreen-cued-video-container${hrefFilter}`,
+              ) ||
+              video.matches(`a.ytp-modern-videowall-still${hrefFilter}`)
+            ) {
+              result = true;
+            }
+            return result;
+          }
+          if (isMatches(video)) {
+            linkElement = video;
+          }
+
           // Try another common pattern before giving up
           if (!linkElement) {
             linkElement =
@@ -779,6 +782,7 @@ async function untranslateOtherVideos(intersectElements = null) {
               }
             }
           }
+
           if (!linkElement) {
             return; // Skip if essential element isn't found
           }
