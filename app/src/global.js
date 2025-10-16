@@ -2297,7 +2297,7 @@ ytm-shorts-lockup-view-model`,
     url.searchParams.set("tok", tok);
 
     // Send the request
-    // We do not have cache arround this request as it has no response
+    // We do not have cache around this request as it has no response
     fetch(url.toString(), {
       method: "GET",
       credentials: "include",
