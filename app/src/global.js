@@ -161,9 +161,13 @@ a.ytp-videowall-still,
 a.ytp-ce-covering-overlay,
 a.ytp-suggestion-link,
 div.fullscreen-recommendation,
-ytm-item-section-renderer,
 ytd-structured-description-video-lockup-renderer,
-ytm-playlist-card-renderer` /*this last one is a playlist element but is used for thumbnail*/,
+a.ytp-autonav-endscreen-link-container,
+a.autonav-endscreen-cued-video-container,
+a.ytp-modern-videowall-still,
+
+ytm-compact-playlist-renderer,
+ytm-playlist-card-renderer` /*the last two selectors are playlist elements but are used for thumbnail*/,
   ALL_ARRAYS_SHORTS_SELECTOR: `div.style-scope.ytd-rich-item-renderer,
 ytm-shorts-lockup-view-model`,
 
@@ -1488,9 +1492,15 @@ ytm-shorts-lockup-view-model`,
   },
 
   getOriginalCollaboratorsItemsWithYoutubeI: async function (search_query) {
-    return null;
     if (!search_query || search_query.trim() === "") {
       return null;
+    }
+
+    let decodedQuery;
+    try {
+      decodedQuery = decodeURIComponent(search_query);
+    } catch {
+      decodedQuery = search_query;
     }
 
     // build the request body
@@ -1503,7 +1513,7 @@ ytm-shorts-lockup-view-model`,
           // That always get the original language as a result
         },
       },
-      query: search_query,
+      query: `${decodedQuery} ${decodedQuery}`, // Trick to prioritize exact matches and make them unique for deletion
     };
 
     const requestIdentifier = `youtubei/v1/results_${JSON.stringify(body)}`;
@@ -1523,8 +1533,11 @@ ytm-shorts-lockup-view-model`,
     const response = await this.cachedRequest(
       search,
       JSON.stringify(body),
-      await this.getYoutubeIHeadersWithCredentials(),
-      // doNotCache true as would take too much space
+      this.getSuggestionsTOK() /* If we have a valid TOK to delete the suggestion afterwards we can login; else search anonymously
+                                  this is to avoid filling user search history with unwanted queries */
+        ? await this.getYoutubeIHeadersWithCredentials()
+        : { "Content-Type": "application/json" },
+      // do not cache full response, we only cache the final result below
       true,
     );
 
@@ -1540,6 +1553,9 @@ ytm-shorts-lockup-view-model`,
     }
 
     await this.setSessionCache(requestIdentifier, result);
+
+    // Delete the search suggestion to avoid polluting user search history
+    await this.deleteSearchSuggestion(`${decodedQuery} ${decodedQuery}`);
 
     return result;
   },
@@ -1608,7 +1624,6 @@ ytm-shorts-lockup-view-model`,
             }
           }
         }
-        //}
       }
     }
 
@@ -1907,7 +1922,7 @@ ytm-shorts-lockup-view-model`,
           clientVersion: "2.20250527.00.00",
         },
       },
-      query: decodedQuery,
+      query: `${decodedQuery} ${decodedQuery}`, // Trick to prioritize exact matches and make them unique for deletion
       // "EgIQAg==" = filter=channels  (protobuf: {12: {1:2}})
       params: "EgIQAg==",
     };
@@ -1924,8 +1939,11 @@ ytm-shorts-lockup-view-model`,
     const result = await this.cachedRequest(
       search,
       JSON.stringify(body),
-      await this.getYoutubeIHeadersWithCredentials(),
-      // As it might take too much space
+      this.getSuggestionsTOK() /* If we have a valid TOK to delete the suggestion afterwards we can login; else search anonymously
+                                  this is to avoid filling user search history with unwanted queries */
+        ? await this.getYoutubeIHeadersWithCredentials()
+        : { "Content-Type": "application/json" },
+      // do not cache full response, we only cache the final result below
       true,
     );
 
@@ -1943,7 +1961,7 @@ ytm-shorts-lockup-view-model`,
     let channelHandle;
 
     for (const sectionContent of json.contents?.twoColumnSearchResultsRenderer
-      ?.primaryContents.sectionListRenderer?.contents || []) {
+      ?.primaryContents?.sectionListRenderer?.contents || []) {
       for (const itemRenderedContent of sectionContent?.itemSectionRenderer
         ?.contents || []) {
         if (
@@ -1967,6 +1985,7 @@ ytm-shorts-lockup-view-model`,
     }
 
     for (const sectionContent of json.contents?.sectionListRenderer?.contents ||
+      json["contents.sectionListRenderer.contents"] ||
       []) {
       for (const itemRenderedContent of sectionContent?.itemSectionRenderer
         ?.contents || []) {
@@ -2014,6 +2033,9 @@ ytm-shorts-lockup-view-model`,
 
     // Store in cache
     this.setSessionCache(requestIdentifier, response);
+
+    // Delete the search suggestion to avoid polluting user search history
+    await this.deleteSearchSuggestion(`${decodedQuery} ${decodedQuery}`);
 
     return response;
   },
@@ -2216,5 +2238,58 @@ ytm-shorts-lockup-view-model`,
       attributeName,
       `${videoId}__${getCountNumber >= window.YoutubeAntiTranslate.MAX_ATTEMPTS ? window.YoutubeAntiTranslate.MAX_ATTEMPTS : getCountNumber + 1}`,
     );
+  },
+
+  getSuggestionsTOK: function () {
+    // Try to get PSUGGEST_TOKEN from YouTube using their internal logic
+    // `
+    // PNy = _.zq.window;
+    // _.SN = (PNy == null ? void 0 : (han = PNy.yt) == null ? void 0 : han.config_) || (PNy == null ? void 0 : (rW2 = PNy.ytcfg) == null ? void 0 : rW2.data_)
+    // `
+
+    let tok = null;
+    // 1. window.yt?.config_?.SBOX_SETTINGS?.PSUGGEST_TOKEN
+    if (
+      typeof window !== "undefined" &&
+      window["yt"]?.["config_"]?.["SBOX_SETTINGS"]?.["PSUGGEST_TOKEN"]
+    ) {
+      tok = window["yt"]["config_"]["SBOX_SETTINGS"]["PSUGGEST_TOKEN"];
+    }
+    // 2. window?.ytcfg?.data_?.SBOX_SETTINGS?.PSUGGEST_TOKEN
+    else if (
+      typeof window !== "undefined" &&
+      window["ytcfg"]?.["data_"]?.["SBOX_SETTINGS"]?.["PSUGGEST_TOKEN"]
+    ) {
+      tok = window["ytcfg"]["data_"]["SBOX_SETTINGS"]["PSUGGEST_TOKEN"];
+    }
+    return tok;
+  },
+
+  deleteSearchSuggestion: async function (search_query) {
+    if (!search_query || search_query.trim() === "") {
+      return;
+    }
+    const url = new URL(
+      "https://suggestqueries-clients6.youtube.com/complete/deleteitems",
+    );
+    url.searchParams.set("client", "youtube");
+    url.searchParams.set("delq", search_query);
+
+    const tok = this.getSuggestionsTOK();
+
+    if (!tok) {
+      return;
+    }
+    url.searchParams.set("tok", tok);
+
+    // Send the request
+    // We do not have cache around this request as it has no response
+    fetch(url.toString(), {
+      method: "GET",
+      credentials: "include",
+      mode: "no-cors",
+    }).catch((error) => {
+      this.logWarning("deleteSearchSuggestion: fetch error:", error);
+    });
   },
 };
