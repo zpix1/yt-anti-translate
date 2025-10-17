@@ -21,496 +21,374 @@
  * For licensing inquiries, contact: dczpix@gmail.com
  */
 
-const videoResponseCache = new Map();
-
-const globalJsCopy = {
-  LOG_PREFIX: "[YoutubeAntiTranslate]",
-  LOG_LEVELS: {
-    NONE: 0,
-    ERROR: 1,
-    WARN: 2,
-    INFO: 3,
-    DEBUG: 4,
-  },
-  currentLogLevel: 2, // Default to WARN
-
-  /**
-   * Sets the current log level.
-   * @param {string} levelName - The name of the log level (e.g., "INFO", "DEBUG").
-   */
-  setLogLevel: function (levelName) {
-    const newLevel = this.LOG_LEVELS[levelName.toUpperCase()];
-    if (typeof newLevel === "number") {
-      this.currentLogLevel = newLevel;
-      this.logDebug(
-        `Log level set to ${levelName.toUpperCase()} (${newLevel})`,
-      );
-    } else {
-      this.logWarning(`Invalid log level: ${levelName}`);
-    }
-  },
-
-  logWarning: function (...args) {
-    if (this.currentLogLevel >= this.LOG_LEVELS.WARN) {
-      console.log(`${this.LOG_PREFIX} [WARN ]`, ...args);
-    }
-  },
-
-  logInfo: function (...args) {
-    if (this.currentLogLevel >= this.LOG_LEVELS.INFO) {
-      console.log(`${this.LOG_PREFIX} [INFO ]`, ...args);
-    }
-  },
-
-  /** Use only for app errors */
-  logError: function (...args) {
-    if (this.currentLogLevel >= this.LOG_LEVELS.ERROR) {
-      console.error(`${this.LOG_PREFIX} [ERROR]`, ...args);
-    }
-  },
-
-  logDebug: function (...args) {
-    if (this.currentLogLevel >= this.LOG_LEVELS.DEBUG) {
-      console.debug(`${this.LOG_PREFIX} [DEBUG]`, ...args);
-    }
-  },
-
-  /**
-   * Gets the current video ID from the URL
-   * @returns {string} - The YouTube video ID
-   */
-  getCurrentVideoId: function () {
-    this.logDebug(`getCurrentVideoId called`);
-    const urlParams = new URLSearchParams(window.location.search);
-    const videoId = urlParams.get("v") || "";
-    this.logDebug(`getCurrentVideoId: found video ID: ${videoId}`);
-    return videoId;
-  },
-
-  getSAPISID: function () {
-    const matchSAPISID = document.cookie.match(/SAPISID=([^\s;]+)/);
-    const matchPAPISID = document.cookie.match(/PAPISID=([^\s;]+)/);
-    const match = matchSAPISID || matchPAPISID;
-    return match ? match[1] : null;
-  },
-
-  // SHA1 function (uses SubtleCrypto)
-  sha1Hash: async function (msg) {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(msg);
-    const hashBuffer = await crypto.subtle.digest("SHA-1", data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-  },
-
-  getSAPISIDHASH: async function (origin = "https://m.youtube.com") {
-    const sapisid = this.getSAPISID();
-    if (!sapisid) {
-      this.logWarning("SAPISID cookie not found.");
-      return null;
-    }
-
-    const timestamp = Math.floor(Date.now() / 1000);
-    const message = `${timestamp} ${sapisid} ${origin}`;
-
-    const hash = await this.sha1Hash(message);
-    return `SAPISIDHASH ${timestamp}_${hash} SAPISID1HASH ${timestamp}_${hash} SAPISID3HASH ${timestamp}_${hash}`;
-  },
-
-  getYoutubeIHeadersWithCredentials: async function () {
-    const sapisidhash = await this.getSAPISIDHASH();
-    if (!sapisidhash) {
-      this.logWarning(
-        "getYoutubeIHeadersWithCredentials: SAPISID not found, user not logged in, returning default headers",
-      );
-      return {
-        "Content-Type": "application/json",
-      };
-    }
-    return {
-      "Content-Type": "application/json",
-      Authorization: sapisidhash,
-      "X-Youtube-Client-Name": "1",
-      "X-Youtube-Client-Version": "2.20250730.01.00",
-    };
-  },
-};
-
-async function getUntranslatedVideoResponseAsync(videoId) {
-  const cacheKey = `video_response_mobile_async_${videoId}`;
-  if (videoResponseCache.has(cacheKey)) {
-    return videoResponseCache.get(cacheKey); // Return cached description if available
-  }
-
-  const body = {
-    context: {
-      client: {
-        clientName: "MWEB",
-        clientVersion: "2.20250730.01.00",
-        originalUrl: document.location.href,
-        hl: "lo", // Using "Lao" as default that is an unsupported (but valid) language of youtube
-        // That always get the original language as a result
-        gl: null,
-        visitorData: null,
-      },
-    },
-    playbackContext: null,
-    serviceIntegrityDimensions: null,
-    videoId,
-  };
-
-  const headers = await globalJsCopy.getYoutubeIHeadersWithCredentials();
-
-  const response = await fetch(
-    "https://m.youtube.com/youtubei/v1/player?prettyPrint=false&yt-anti-translate=true",
-    {
-      method: "POST",
-      headers: headers,
-      body: JSON.stringify(body),
-      credentials: headers?.Authorization ? "include" : "same-origin",
-    },
-  );
-
-  const clonedResponse = response.clone();
-  const json = await clonedResponse.json();
-
-  // Ads do not properly work with this response so we are clearing the content of the response
-  clearAdsProperties(json);
-
-  // Add a self identification property
-  json.ytAntiTranslate = true;
-
-  if (json) {
-    videoResponseCache.set(cacheKey, { bodyJson: json, response: response }); // Cache the player response for future use
-  }
-
-  return { bodyJson: json, response: response };
-}
+const ORIGINAL_TRANSLATIONS = [
+  "original", // English (en)
+  "оригинал", // Russian (ru_RU)
+  "オリジナル", // Japanese (ja_JP)
+  "原始", // Chinese Simplified (zh_CN)
+  "원본", // Korean (ko_KR)
+  "origineel", // Dutch (nl_NL)
+  "original", // Spanish (es_ES) / Portuguese (pt_BR)
+  "originale", // Italian (it_IT) / French (fr_FR)
+  "original", // German (de_DE)
+  "oryginał", // Polish (pl_PL)
+  "původní", // Czech (cs_CZ)
+  "αρχικό", // Greek (el_GR)
+  "orijinal", // Turkish (tr_TR)
+  "原創", // Traditional Chinese (zh_TW)
+  "gốc", // Vietnamese (vi_VN)
+  "asli", // Indonesian (id_ID)
+  "מקורי", // Hebrew (he_IL)
+  "أصلي", // Arabic (ar_EG)
+  "मूल", // Hindi (hi_IN)
+  "मूळ", // Marathi (mr_IN)
+  "ਪ੍ਰਮਾਣਿਕ", // Punjabi (pa_IN)
+  "అసలు", // Telugu (te_IN)
+  "மூலம்", // Tamil (ta_IN)
+  "মূল", // Bengali (bn_BD)
+  "അസലി", // Malayalam (ml_IN)
+  "ต้นฉบับ", // Thai (th_TH)
+];
 
 /**
- * Fallback function for untranslated audio video responses having only 360p option.
- * The fallback option will empty the streamingdata.adaptiveFormats array
- * forcing youtube to use the 360p format as fallback
- * @param {*} playerResponse
+ * Exact copy of the function from global.js
  */
-function getUntranslated360pFallback(playerResponse) {
-  if (playerResponse?.streamingData?.adaptiveFormats) {
-    playerResponse.streamingData.adaptiveFormats = [{}];
+async function getSettings() {
+  // First try to read from the DOM
+  const element = document.querySelector(
+    'script[type="module"][data-ytantitranslatesettings]',
+  );
+  if (element?.["dataset"]?.ytantitranslatesettings) {
+    try {
+      return JSON.parse(element["dataset"].ytantitranslatesettings);
+    } catch {
+      // fallback to chrome storage if JSON is invalid
+    }
   }
-  return playerResponse;
+
+  // Fallback: read from Chrome storage
+  if (chrome?.storage?.sync?.get) {
+    return await chrome.storage.sync.get({
+      disabled: false,
+      untranslateTitle: true,
+      whiteListUntranslateTitle: [],
+      untranslateAudio: true,
+      untranslateAudioOnlyAI: false,
+      whiteListUntranslateAudio: [],
+      untranslateDescription: true,
+      whiteListUntranslateDescription: [],
+      untranslateChapters: true,
+      whiteListUntranslateChapters: [],
+      untranslateChannelBranding: true,
+      whiteListUntranslateChannelBranding: [],
+      untranslateNotification: true,
+      untranslateThumbnail: true,
+      whiteListUntranslateThumbnail: [],
+    });
+  }
+
+  // Absolute fallback: return empty object
+  return {};
 }
 
-(() => {
-  // Store the original ytInitialPlayerResponse
-  let originalPlayerResponse = null;
-  let isIntercepted = false;
+// Helper: parse track id and extract useful information
+function getTrackInfo(track) {
+  const defaultInfo = {
+    isOriginal: false,
+    language: null,
+    isDubbed: false,
+    isAI: false,
+  };
 
-  // Intercept window['ytInitialPlayerResponse']
-  function setupPlayerResponseInterception() {
-    if (isIntercepted) {
+  if (!track || !track.id || typeof track.id !== "string") {
+    return defaultInfo;
+  }
+
+  const parts = track.id.split(";");
+  if (parts.length < 2) {
+    return defaultInfo;
+  }
+
+  try {
+    const decoded = atob(parts[1]);
+
+    const isOriginal = decoded.includes("original");
+    const isAI = decoded.includes("dubbed-auto");
+    const isDubbed = decoded.includes("dubbed") || isAI;
+
+    const langMatch = decoded.match(/lang..([-a-zA-Z]+)/);
+    const language = langMatch ? langMatch[1].toLowerCase() : null;
+
+    return { isOriginal, language, isDubbed, isAI };
+  } catch {
+    // If decoding fails, return defaults
+    return defaultInfo;
+  }
+}
+
+// Helper: detect original track using either name translations or base64 id decoding
+function isOriginalTrack(track, languageFieldName) {
+  if (!track) {
+    return false;
+  }
+
+  // Check by readable name first (uses UI language)
+  if (
+    languageFieldName &&
+    track[languageFieldName] &&
+    track[languageFieldName].name
+  ) {
+    const trackName = track[languageFieldName].name.toLowerCase();
+    for (const originalWord of ORIGINAL_TRANSLATIONS) {
+      if (trackName.includes(originalWord.toLowerCase())) {
+        return true;
+      }
+    }
+  }
+
+  // Fallback: check by decoding the id
+  return getTrackInfo(track).isOriginal;
+}
+
+function getLanguageFieldName(tracks) {
+  let languageFieldName = null;
+  for (const track of tracks) {
+    if (!track || typeof track !== "object") {
+      continue;
+    }
+
+    for (const [fieldName, field] of Object.entries(track)) {
+      if (field && typeof field === "object" && field.name) {
+        languageFieldName = fieldName;
+        break;
+      }
+    }
+    if (languageFieldName) {
+      break;
+    }
+  }
+  return languageFieldName;
+}
+
+async function untranslateAudioTrack(tracks) {
+  const languageFieldName = getLanguageFieldName(tracks);
+  if (!languageFieldName) {
+    return;
+  }
+
+  // Find the current default track
+  let currentDefaultTrack = null;
+  for (const track of tracks) {
+    if (track[languageFieldName].isDefault) {
+      currentDefaultTrack = track;
+      break;
+    }
+  }
+
+  // If the current default track is already original, do nothing
+  if (
+    currentDefaultTrack &&
+    isOriginalTrack(currentDefaultTrack, languageFieldName)
+  ) {
+    return;
+  }
+
+  if (
+    (await getSettings())?.untranslateAudioOnlyAI &&
+    !getTrackInfo(currentDefaultTrack).isAI
+  ) {
+    // Current track is not AI-dubbed; leave it as is.
+    return;
+  }
+
+  // Change the default track to the original one
+  for (const currentTrack of tracks) {
+    if (isOriginalTrack(currentTrack, languageFieldName)) {
+      currentTrack[languageFieldName].isDefault = true;
+    } else {
+      currentTrack[languageFieldName].isDefault = false;
+    }
+  }
+  return tracks;
+}
+
+// Intercept Sc.prototype.getAvailableAudioTracks using reflection
+(function interceptScGetAvailableAudioTracks() {
+  // Find the Sc constructor in the global scope
+  for (const key in window) {
+    try {
+      const candidate = window[key];
+      if (
+        candidate &&
+        typeof candidate === "function" &&
+        candidate["prototype"] &&
+        typeof candidate["prototype"].getAvailableAudioTracks === "function"
+      ) {
+        const original = candidate["prototype"].getAvailableAudioTracks;
+        if (!original.__isWrapped) {
+          candidate["prototype"].getAvailableAudioTracks = function () {
+            console.log(
+              "[Reflection Intercept] getAvailableAudioTracks called on",
+              this,
+            );
+            console.trace();
+            const tracks = original.apply(this, arguments);
+            // Optionally call your untranslation logic here
+            // untranslateAudioTrack(tracks);
+            return tracks;
+          };
+          candidate["prototype"]["getAvailableAudioTracks"]["__isWrapped"] =
+            true;
+        }
+        break; // Stop after first match
+      }
+    } catch (e) {}
+  }
+})();
+(function interceptGetAvailableAudioTracks() {
+  var player = document.querySelector("#movie_player");
+  if (!player) {
+    console.warn("Player not found");
+    setTimeout(interceptGetAvailableAudioTracks, 1);
+    return;
+  }
+
+  // Intercept getAvailableAudioTracks() calls from the player object directly
+  var getAvailableAudioTracks = player["getAvailableAudioTracks"];
+  if (
+    player["getAvailableAudioTracks"] &&
+    typeof getAvailableAudioTracks === "function" &&
+    !getAvailableAudioTracks.__isWrapped
+  ) {
+    getAvailableAudioTracks.__isWrapped = true;
+    player["getAvailableAudioTracks"] = function () {
+      console.log("[getAvailableAudioTracks called]");
+      console.trace();
+      const tracks = getAvailableAudioTracks.apply(player, arguments);
+
+      untranslateAudioTrack(tracks);
+
+      return tracks;
+    };
+  } else {
+    if (getAvailableAudioTracks && getAvailableAudioTracks.__isWrapped) {
+      console.warn("getAvailableAudioTracks is already wrapped");
+    } else {
+      console.warn("getAvailableAudioTracks is not a function");
+      setTimeout(interceptGetAvailableAudioTracks, 1);
       return;
     }
+  }
 
-    // Check if ytInitialPlayerResponse already exists
-    if (window["ytInitialPlayerResponse"]) {
-      originalPlayerResponse = window["ytInitialPlayerResponse"];
-      globalJsCopy.logDebug(
-        "Found existing ytInitialPlayerResponse, storing original",
-      );
-    }
-    if (
-      window["ytInitialPlayerResponse"] !== undefined &&
-      !window["ytInitialPlayerResponse"]
-    ) {
-      window["ytInitialPlayerResponse"] = undefined;
-    }
-
+  // Also intercept Sc.prototype.getAvailableAudioTracks using reflection
+  for (const key in player) {
     try {
-      // Set up property descriptor to intercept access
-      Object.defineProperty(window, "ytInitialPlayerResponse", {
-        configurable: true,
-        enumerable: true,
-        get() {
-          if (
-            originalPlayerResponse &&
-            originalPlayerResponse.ytAntiTranslate
-          ) {
-            return originalPlayerResponse;
-          }
-
-          globalJsCopy.logWarning(
-            "ytInitialPlayerResponse getter called - overriding formats",
-          );
-          if (originalPlayerResponse && originalPlayerResponse?.streamingData) {
-            originalPlayerResponse.streamingData.formats = null;
-            originalPlayerResponse.streamingData.serverAbrStreamingUrl = null;
-            originalPlayerResponse.streamingData.adaptiveFormats = null;
-          }
-          return originalPlayerResponse;
-        },
-        set(value) {
-          globalJsCopy.logDebug(
-            "ytInitialPlayerResponse being set - storing original",
-          );
-          originalPlayerResponse = value;
-        },
-      });
-    } catch (e) {
-      globalJsCopy.logWarning(
-        "ytInitialPlayerResponse interception was skipped. Reason:",
-        e.message,
-      );
-    }
-
-    isIntercepted = true;
-    globalJsCopy.logDebug(
-      "ytInitialPlayerResponse interception setup complete",
-    );
-  }
-
-  function createRewriter(origFetch) {
-    return async function (...args) {
-      const [input, init] = args;
-      const url = typeof input === "string" ? input : input.url;
-
-      // Only process requests to the specific YouTube mobile player API
+      const candidate = player[key];
       if (
-        !url ||
-        !url.includes("m.youtube.com/youtubei/v1/player") ||
-        url.includes("yt-anti-translate=true")
+        candidate &&
+        typeof candidate === "function" &&
+        candidate.prototype &&
+        typeof candidate.prototype.getAvailableAudioTracks === "function"
       ) {
-        try {
-          return origFetch(input, init);
-        } catch {
-          /* empty catch */
-          // If we are executing YouTube requests as they are, we do not care if they fail
-        }
-      }
-
-      try {
-        const videoId = globalJsCopy.getCurrentVideoId();
-        const origResponse = await getUntranslatedVideoResponseAsync(videoId);
-
-        const responseJson = origResponse.bodyJson;
-
-        globalJsCopy.logDebug(
-          "Untranslated player response fetched",
-          responseJson,
-        );
-
-        if (
-          !responseJson ||
-          !responseJson.streamingData ||
-          !responseJson.streamingData.adaptiveFormats
-        ) {
-          const origResponse = await origFetch(input, init);
-          const origResponseJson = origResponse ? origResponse.json() : null;
-          const modifiedOrigResponse =
-            getUntranslated360pFallback(origResponseJson);
-
-          const origModifiedResponse = new Response(
-            JSON.stringify(modifiedOrigResponse),
-            {
-              status: origResponse.response.status,
-              statusText: origResponse.response.statusText,
-              headers: origResponse.response.headers,
-            },
-          );
-          return origModifiedResponse;
-        }
-
-        if (window["ytInitialPlayerResponse"] !== undefined) {
-          window["ytInitialPlayerResponse"] = responseJson;
-        }
-        // Create a new response with modified JSON
-        const modifiedResponse = new Response(JSON.stringify(responseJson), {
-          status: origResponse.response.status,
-          statusText: origResponse.response.statusText,
-          headers: origResponse.response.headers,
-        });
-        return modifiedResponse;
-      } catch {
-        try {
-          return origFetch(input, init);
-        } catch {
-          /* empty catch */
-          // If we are executing YouTube requests as they are, we do not care if they fail
-        }
-      }
-    };
-  }
-
-  function installXMLHttpRequestInterceptor() {
-    const OriginalOpen = XMLHttpRequest.prototype.open;
-    const OriginalSend = XMLHttpRequest.prototype.send;
-
-    XMLHttpRequest.prototype.open = function () {
-      const method = (arguments[0] || "GET").toString().toUpperCase();
-      const url = arguments[1] || "";
-      const isAsync = arguments[2] !== false;
-      this["__ytat"] = this["__ytat"] || {};
-      this["__ytat"].method = method;
-      this["__ytat"].url = url;
-      this["__ytat"].async = isAsync;
-      return OriginalOpen.apply(this, arguments);
-    };
-
-    XMLHttpRequest.prototype.send = function (body) {
-      const context = this["__ytat"] || {};
-      const url = context.url || "";
-      globalJsCopy.logDebug("XMLHttpRequest headers", {
-        headers: this.getAllResponseHeaders(),
-        method: context.method,
-        url: context.url,
-        async: context.async,
-      });
-      globalJsCopy.logDebug("XMLHttpRequest being sent", url);
-      if (
-        url.includes("/youtubei/v1/player") &&
-        !url.includes("yt-anti-translate=true")
-      ) {
-        (async () => {
-          try {
-            const videoId = globalJsCopy.getCurrentVideoId();
-            const origResponse =
-              await getUntranslatedVideoResponseAsync(videoId);
-            const responseJson = origResponse.bodyJson;
-
-            console.log("responseJson", responseJson);
-
-            if (window["ytInitialPlayerResponse"] !== undefined) {
-              window["ytInitialPlayerResponse"] = responseJson;
-            }
-
-            const headersMap = {};
-            origResponse.response?.headers?.forEach((value, key) => {
-              headersMap[key.toLowerCase()] = value;
-            });
-
-            const jsonText = JSON.stringify(responseJson);
-            const finalResponse =
-              this.responseType === "json" ? responseJson : jsonText;
-
-            try {
-              Object.defineProperty(this, "readyState", {
-                configurable: true,
-                value: 4,
-              });
-              Object.defineProperty(this, "status", {
-                configurable: true,
-                value: origResponse.response.status,
-              });
-              Object.defineProperty(this, "statusText", {
-                configurable: true,
-                value: origResponse.response.statusText,
-              });
-              Object.defineProperty(this, "response", {
-                configurable: true,
-                value: finalResponse,
-              });
-              Object.defineProperty(this, "responseText", {
-                configurable: true,
-                value: jsonText,
-              });
-              this.getResponseHeader = function (name) {
-                return headersMap[(name || "").toLowerCase()] || null;
-              };
-              this.getAllResponseHeaders = function () {
-                return Object.entries(headersMap)
-                  .map(([k, v]) => `${k}: ${v}`)
-                  .join("\r\n");
-              };
-            } catch (defineErr) {
-              globalJsCopy.logDebug(
-                "Could not define XMLHttpRequest response properties",
-                defineErr,
-              );
-            }
-
-            try {
-              if (typeof this.onreadystatechange === "function") {
-                this.onreadystatechange(null);
-              }
-              if (typeof this.onload === "function") {
-                this.onload(null);
-              }
-              if (typeof this.dispatchEvent === "function") {
-                this.dispatchEvent(new Event("readystatechange"));
-                this.dispatchEvent(new Event("load"));
-                this.dispatchEvent(new Event("loadend"));
-              }
-            } catch (eventErr) {
-              globalJsCopy.logDebug("Dispatching XHR events failed", eventErr);
-            }
-          } catch (error) {
-            globalJsCopy.logError(
-              `XMLHttpRequest interception failed: ${error?.message || error}`,
+        const original = candidate.prototype.getAvailableAudioTracks;
+        if (!original.__isWrapped) {
+          candidate.prototype.getAvailableAudioTracks = function () {
+            console.log(
+              "[Reflection Intercept] getAvailableAudioTracks called on",
+              this,
             );
-            return OriginalSend.call(this, body);
-          }
-        })();
-        return; // prevent the original network request
+            console.trace();
+            const tracks = original.apply(this, arguments);
+
+            untranslateAudioTrack(tracks);
+
+            return tracks;
+          };
+          candidate["prototype"]["getAvailableAudioTracks"]["__isWrapped"] =
+            true;
+        }
+        break; // Stop after first match
       }
-
-      return OriginalSend.call(this, body);
-    };
+    } catch {
+      // Retry interception later if any error occurs
+      setTimeout(interceptGetAvailableAudioTracks, 1);
+      return;
+    }
   }
-
-  /* -----------------------------  4  INSTALL  ----------------------------- */
-  (function install() {
-    // Set up ytInitialPlayerResponse interception first
-    try {
-      setupPlayerResponseInterception();
-    } catch (error) {
-      globalJsCopy.logError(
-        `Error setting up player response interception: ${error.message}`,
-      );
-    }
-
-    /* 4-a. wrap whatever fetch exists right now (likely the native one) */
-    globalJsCopy.logDebug("installing wrapper around current window.fetch");
-    window.fetch = createRewriter(window.fetch.bind(window));
-
-    // 4-a.1. also intercept XMLHttpRequest flows
-    try {
-      globalJsCopy.logDebug("installing interceptor for XMLHttpRequest");
-      installXMLHttpRequestInterceptor();
-    } catch (error) {
-      globalJsCopy.logError(
-        `Error installing XMLHttpRequest interceptor: ${error?.message || error}`,
-      );
-    }
-
-    /* 4-b. if YouTube later replaces fetch with ytNetworkFetch, re-wrap it */
-    Object.defineProperty(window, "ytNetworkFetch", {
-      configurable: true,
-      set(fn) {
-        globalJsCopy.logDebug("ytNetworkFetch assigned → wrapping it too");
-        window.fetch = createRewriter(fn);
-      },
-      get() {
-        return window.fetch;
-      },
-    });
-
-    /* 4-c. if ytNetworkFetch was already present before our script ran,
-            wrap it immediately (covers the 'parsed-but-not-executed' case) */
-    if (window["ytNetworkFetch"]) {
-      globalJsCopy.logDebug(
-        "ytNetworkFetch pre-existing → wrapping immediately",
-      );
-      window.fetch = createRewriter(window["ytNetworkFetch"]);
-    }
-  })();
 })();
-function clearAdsProperties(json) {
-  if (json?.playerAds && json?.playerAds?.length > 0) {
-    json.playerAds = [];
+
+(function interceptScAudioTracks() {
+  for (const key in window) {
+    try {
+      const candidate = window[key];
+      if (
+        candidate &&
+        typeof candidate === "function" &&
+        candidate.prototype &&
+        Object.prototype.hasOwnProperty.call(candidate.prototype, "audioTracks")
+      ) {
+        // Save original property descriptor if exists
+        const desc = Object.getOwnPropertyDescriptor(
+          candidate.prototype,
+          "audioTracks",
+        );
+        let _audioTracks = desc && desc.value ? desc.value : undefined;
+
+        Object.defineProperty(candidate.prototype, "audioTracks", {
+          configurable: true,
+          enumerable: true,
+          get: function () {
+            console.log("[Intercept] audioTracks GET on", this);
+            // Optionally, modify or filter _audioTracks here
+            return _audioTracks;
+          },
+          set: function (val) {
+            console.log("[Intercept] audioTracks SET on", this, val);
+            // Optionally, modify val before storing
+            _audioTracks = val;
+          },
+        });
+        break;
+      }
+    } catch (e) {}
   }
-  if (json?.adSlots && json?.adSlots.length > 0) {
-    json.adSlots = [];
-  }
-  if (json?.adBreakHeartbeatParams) {
-    json.adBreakHeartbeatParams = null;
-  }
-}
+})();
+
+/**
+ * Find player and as soon as found, intercept getAvailableAudioTracks() calls
+ */
+// (function interceptGetAvailableAudioTracks() {
+//   var player = document.querySelector("#movie_player");
+//   if (!player) {
+//     console.warn("Player not found");
+//     setTimeout(interceptGetAvailableAudioTracks, 1);
+//     return;
+//   }
+
+//   // Intercept getAvailableAudioTracks() calls
+//   var getAvailableAudioTracks = player["getAvailableAudioTracks"];
+//   if (
+//     player["getAvailableAudioTracks"] &&
+//     typeof getAvailableAudioTracks === "function" &&
+//     !getAvailableAudioTracks.__isWrapped
+//   ) {
+//     getAvailableAudioTracks.__isWrapped = true;
+//     player["getAvailableAudioTracks"] = function () {
+//       console.log("[getAvailableAudioTracks called]");
+//       console.trace();
+//       const tracks = getAvailableAudioTracks.apply(player, arguments);
+
+//       untranslateAudioTrack(tracks);
+
+//       return tracks;
+//     };
+//   } else {
+//     if (getAvailableAudioTracks && getAvailableAudioTracks.__isWrapped) {
+//       console.warn("getAvailableAudioTracks is already wrapped");
+//     } else {
+//       console.warn("getAvailableAudioTracks is not a function");
+//       setTimeout(interceptGetAvailableAudioTracks, 1);
+//       return;
+//     }
+//   }
+// })();

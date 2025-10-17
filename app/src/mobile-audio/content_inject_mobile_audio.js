@@ -3,6 +3,7 @@ chrome.storage.sync.get(
   {
     disabled: false,
     untranslateAudio: true,
+    untranslateAudioOnlyAI: false,
     whiteListUntranslateAudio: [],
   },
   async function (items) {
