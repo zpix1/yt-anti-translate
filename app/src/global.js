@@ -1201,7 +1201,6 @@ ytm-shorts-lockup-view-model`,
     if (storedResponse) {
       if (cacheDotNotationProperty) {
         return {
-          isFromCache: true,
           response: new Response(
             JSON.stringify({
               data: null,
@@ -1217,7 +1216,6 @@ ytm-shorts-lockup-view-model`,
         };
       } else {
         return {
-          isFromCache: true,
           response: new Response(
             JSON.stringify({
               data: storedResponse,

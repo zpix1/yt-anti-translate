@@ -449,7 +449,6 @@ declare global {
         doNotCache?: boolean,
         cacheDotNotationProperty?: string,
       ) => Promise<{
-        isFromCache?: boolean;
         response?: Response;
         data?: any;
         cachedWithDotNotation?: any;
