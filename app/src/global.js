@@ -1,3 +1,419 @@
+// --- Proxy #movie_player to log all property sets and stack traces when audio track changes ---
+(function proxyPlayerPropertySetsForAudioTrackChanges() {
+  function tryProxy() {
+    const player = document.querySelector("#movie_player");
+    if (!player || player.__isPropertyProxy) return false;
+    let lastAudioTrack = undefined;
+    // Helper to get current audio track safely
+    function getCurrentAudioTrack() {
+      try {
+        return typeof player.getAudioTrack === "function"
+          ? player.getAudioTrack()
+          : undefined;
+      } catch {
+        return undefined;
+      }
+    }
+    const handler = {
+      set(target, prop, value, receiver) {
+        // Avoid logging for known noisy/harmless properties
+        const noisyProps = [
+          "__isPropertyProxy",
+          "__allFnsLogged",
+          "__isAggressivelyPatched",
+        ];
+        if (!noisyProps.includes(prop)) {
+          let prevTrack = getCurrentAudioTrack();
+          const result = Reflect.set(target, prop, value, receiver);
+          let newTrack = getCurrentAudioTrack();
+          if (newTrack !== prevTrack) {
+            lastAudioTrack = newTrack;
+            console.warn(
+              `[yt-anti-translate] Property set '${String(prop)}' changed audio track`,
+              {
+                value,
+                prevTrack,
+                newTrack,
+                stack: new Error().stack,
+              },
+            );
+          }
+          return result;
+        }
+        return Reflect.set(target, prop, value, receiver);
+      },
+    };
+    const proxy = new Proxy(player, handler);
+    window._yt_anti_translate_player_property_proxy = proxy;
+    player.__isPropertyProxy = true;
+    // Optionally, re-assign to window for easier debugging
+    // window.player = proxy;
+    return true;
+  }
+  if (!tryProxy()) {
+    const interval = setInterval(() => {
+      if (tryProxy()) clearInterval(interval);
+    }, 1000);
+  }
+})();
+// --- Aggressively log all #movie_player function calls and stack traces only when getAudioTrack() changes ---
+(function monitorAllPlayerFunctionCallsOnAudioTrackChange() {
+  function tryPatch() {
+    const player = document.querySelector("#movie_player");
+    if (!player || player.__allFnsLogged) return false;
+    let lastAudioTrack = undefined;
+    // Helper to get current audio track safely
+    function getCurrentAudioTrack() {
+      try {
+        return typeof player.getAudioTrack === "function"
+          ? player.getAudioTrack()
+          : undefined;
+      } catch {
+        return undefined;
+      }
+    }
+    // Patch all functions (excluding already patched and non-functions)
+    Object.getOwnPropertyNames(player).forEach((key) => {
+      // Avoid patching getAudioTrack and setAudioTrack to prevent recursion
+      if (
+        typeof player[key] === "function" &&
+        !player[key].__isAggressivelyPatched &&
+        key !== "getAudioTrack" &&
+        key !== "setAudioTrack"
+      ) {
+        const orig = player[key].bind(player);
+        player[key] = function (...args) {
+          let prevTrack;
+          try {
+            prevTrack = getCurrentAudioTrack();
+          } catch {
+            prevTrack = undefined;
+          }
+          let result;
+          try {
+            result = orig(...args);
+          } catch (e) {
+            result = e && e.toString();
+          }
+          let newTrack;
+          try {
+            newTrack = getCurrentAudioTrack();
+          } catch {
+            newTrack = undefined;
+          }
+          // Only log if audio track changed
+          if (newTrack !== prevTrack) {
+            lastAudioTrack = newTrack;
+            console.warn(
+              `[yt-anti-translate] Function '${key}' changed audio track`,
+              {
+                args,
+                prevTrack,
+                newTrack,
+                stack: new Error().stack,
+              },
+            );
+          }
+          return result;
+        };
+        player[key].__isAggressivelyPatched = true;
+      }
+    });
+    player.__allFnsLogged = true;
+    return true;
+  }
+  if (!tryPatch()) {
+    const interval = setInterval(() => {
+      if (tryPatch()) clearInterval(interval);
+    }, 1000);
+  }
+})();
+// --- Patch getAudioTrackState, setDrcUserPreference, and log all *Audio* function calls on #movie_player ---
+(function patchAndLogAudioRelatedFunctions() {
+  function tryPatch() {
+    const player = document.querySelector("#movie_player");
+    if (!player) return false;
+    // Patch getAudioTrackState
+    if (
+      typeof player.getAudioTrackState === "function" &&
+      !player.getAudioTrackState.__isPatched
+    ) {
+      const orig = player.getAudioTrackState.bind(player);
+      player.getAudioTrackState = function (...args) {
+        console.warn("[yt-anti-translate] getAudioTrackState called", args);
+        // Optionally, return the original or a fixed value
+        return orig(...args);
+      };
+      player.getAudioTrackState.__isPatched = true;
+    }
+    // Patch setDrcUserPreference
+    if (
+      typeof player.setDrcUserPreference === "function" &&
+      !player.setDrcUserPreference.__isPatched
+    ) {
+      player.setDrcUserPreference = function (...args) {
+        console.warn("[yt-anti-translate] Blocked setDrcUserPreference", args);
+        return undefined;
+      };
+      player.setDrcUserPreference.__isPatched = true;
+    }
+    // Log all *Audio* function calls ONLY when their return value changes
+    const lastAudioResults = {};
+    Object.getOwnPropertyNames(player).forEach((key) => {
+      if (
+        typeof player[key] === "function" &&
+        /audio/i.test(key) &&
+        !player[key].__isPatched
+      ) {
+        const orig = player[key].bind(player);
+        player[key] = function (...args) {
+          let result;
+          try {
+            result = orig(...args);
+          } catch (e) {
+            result = e && e.toString();
+          }
+          const prev = lastAudioResults[key];
+          // Use JSON.stringify for shallow comparison, fallback to reference
+          let changed = false;
+          try {
+            changed = JSON.stringify(result) !== JSON.stringify(prev);
+          } catch {
+            changed = result !== prev;
+          }
+          if (changed) {
+            lastAudioResults[key] = result;
+            console.warn(`[yt-anti-translate] ${key} changed`, result);
+          }
+          return result;
+        };
+        player[key].__isPatched = true;
+      }
+    });
+    return true;
+  }
+  if (!tryPatch()) {
+    const interval = setInterval(() => {
+      if (tryPatch()) clearInterval(interval);
+    }, 1000);
+  }
+})();
+// --- Patch setUserAudioQualitySetting and getUserAudioQualitySetting to prevent audio track reversion ---
+(function patchAudioTrackReversionCulprits() {
+  function tryPatch() {
+    const player = document.querySelector("#movie_player");
+    if (!player) return false;
+    // Patch setUserAudioQualitySetting
+    if (
+      typeof player.setUserAudioQualitySetting === "function" &&
+      !player.setUserAudioQualitySetting.__isPatched
+    ) {
+      const origSet = player.setUserAudioQualitySetting.bind(player);
+      player.setUserAudioQualitySetting = function (...args) {
+        console.warn(
+          "[yt-anti-translate] Blocked setUserAudioQualitySetting",
+          args,
+        );
+        // No-op: do not call original
+        return undefined;
+      };
+      player.setUserAudioQualitySetting.__isPatched = true;
+    }
+    // Patch getUserAudioQualitySetting
+    if (
+      typeof player.getUserAudioQualitySetting === "function" &&
+      !player.getUserAudioQualitySetting.__isPatched
+    ) {
+      const origGet = player.getUserAudioQualitySetting.bind(player);
+      player.getUserAudioQualitySetting = function (...args) {
+        const currentTrack =
+          typeof player.getAudioTrack === "function"
+            ? player.getAudioTrack()
+            : undefined;
+        console.warn(
+          "[yt-anti-translate] getUserAudioQualitySetting patched, returning current track",
+          currentTrack,
+        );
+        return currentTrack;
+      };
+      player.getUserAudioQualitySetting.__isPatched = true;
+    }
+    return true;
+  }
+  if (!tryPatch()) {
+    const interval = setInterval(() => {
+      if (tryPatch()) clearInterval(interval);
+    }, 1000);
+  }
+})();
+// --- Patch YouTube's us() function to always return true (prevents audio track reversion) ---
+
+// --- Enumerate and log all functions and properties on #movie_player and its prototype ---
+(function logPlayerFunctionsAndProperties() {
+  function logAllProps(obj, label) {
+    if (!obj) return;
+    const props = new Set();
+    let curr = obj;
+    while (curr && curr !== Object.prototype) {
+      Object.getOwnPropertyNames(curr).forEach((p) => props.add(p));
+      curr = Object.getPrototypeOf(curr);
+    }
+    console.group(`[yt-anti-translate] ${label}`);
+    Array.from(props)
+      .sort()
+      .forEach((p) => {
+        try {
+          const val = obj[p];
+          if (typeof val === "function") {
+            console.log(`Function: ${p}`);
+          } else {
+            console.log(`Property: ${p} =`, val);
+          }
+        } catch (e) {
+          console.log(`Property: ${p} (unreadable)`);
+        }
+      });
+    console.groupEnd();
+  }
+  function tryLog() {
+    const player = document.querySelector("#movie_player");
+    if (!player) return false;
+    logAllProps(player, "#movie_player instance");
+    logAllProps(Object.getPrototypeOf(player), "#movie_player prototype");
+    return true;
+  }
+  if (!tryLog()) {
+    const interval = setInterval(() => {
+      if (tryLog()) clearInterval(interval);
+    }, 1000);
+  }
+})();
+// --- AGGRESSIVE BLOCK: Prevent any function call with 'onFilterAudioFeatures' as first argument ---
+(() => {
+  const origCall = Function.prototype.call;
+  const origApply = Function.prototype.apply;
+  Function.prototype.call = function (...args) {
+    if (args[1] === "onFilterAudioFeatures") {
+      console.warn("[BLOCKED call] onFilterAudioFeatures", this, args);
+      return [];
+    }
+    // Use Reflect.apply to avoid recursion
+    return Reflect.apply(origCall, this, args);
+  };
+  Function.prototype.apply = function (thisArg, argsArray) {
+    if (argsArray && argsArray[0] === "onFilterAudioFeatures") {
+      console.warn("[BLOCKED apply] onFilterAudioFeatures", this, argsArray);
+      return [];
+    }
+    // Use Reflect.apply to avoid recursion
+    return Reflect.apply(origApply, this, [thisArg, argsArray]);
+  };
+})();
+// Monitor changes to getAudioTrack() and calls to setAudioTrack() on #movie_player
+function monitorAudioTrackChanges() {
+  var player = document.querySelector("#movie_player");
+  if (!player) {
+    console.warn("Player not found");
+    return;
+  }
+  // Use plain JS to access possible custom properties
+  var setAudioTrack = player["setAudioTrack"];
+  if (typeof setAudioTrack === "function" && !setAudioTrack.__isWrapped) {
+    var originalSetAudioTrack = setAudioTrack.bind(player);
+    player["setAudioTrack"] = function () {
+      console.log("[setAudioTrack called] Arguments:", arguments);
+      console.trace();
+      return originalSetAudioTrack.apply(player, arguments);
+    };
+    player["setAudioTrack"].__isWrapped = true;
+  }
+
+  var lastTrack = null;
+  var proxy = null;
+
+  function logChange(type, prop, value) {
+    console.log(
+      "[AudioTrack " + type + "] Property: " + prop + ", Value:",
+      value,
+    );
+    console.trace();
+  }
+
+  function createProxy(track) {
+    return new Proxy(track, {
+      set: function (target, prop, value) {
+        logChange("set", prop, value);
+        target[prop] = value;
+        return true;
+      },
+      deleteProperty: function (target, prop) {
+        logChange("delete", prop, undefined);
+        delete target[prop];
+        return true;
+      },
+    });
+  }
+
+  setInterval(function () {
+    if (typeof player["getAudioTrack"] !== "function") {
+      return;
+    }
+    var currentTrack = player["getAudioTrack"]();
+    if (currentTrack !== lastTrack) {
+      logChange("change", "audioTrack", currentTrack);
+      lastTrack = currentTrack;
+      if (currentTrack && typeof currentTrack === "object") {
+        proxy = createProxy(currentTrack);
+        // Optionally, you can use the proxy for further tracking
+      }
+    }
+  }, 500);
+}
+// --- Intercept event dispatchers to block onFilterAudioFeatures ---
+(function blockOnFilterAudioFeaturesEventDispatchers() {
+  function patchEventMethod(obj, methodName) {
+    if (!obj) return;
+    var orig = obj[methodName];
+    if (typeof orig !== "function" || orig.__isPatched) return;
+    obj[methodName] = function patchedEventMethod() {
+      // Block if event name is 'onFilterAudioFeatures' (string or event object)
+      var arg0 = arguments[0];
+      if (
+        arg0 === "onFilterAudioFeatures" ||
+        (arg0 &&
+          typeof arg0 === "object" &&
+          (arg0.type === "onFilterAudioFeatures" ||
+            arg0.eventName === "onFilterAudioFeatures"))
+      ) {
+        // Block the event
+        return;
+      }
+      return orig.apply(this, arguments);
+    };
+    obj[methodName].__isPatched = true;
+  }
+
+  function patchAllEventDispatchers(obj) {
+    if (!obj) return;
+    var methods = ["dispatchEvent", "fireEvent", "postMessage"];
+    for (var i = 0; i < methods.length; ++i) {
+      patchEventMethod(obj, methods[i]);
+    }
+  }
+
+  var player = document.querySelector("#movie_player");
+  if (player) {
+    patchAllEventDispatchers(player);
+    for (var key in player) {
+      if (!Object.prototype.hasOwnProperty.call(player, key)) continue;
+      var val = player[key];
+      if (val && typeof val === "object") {
+        patchAllEventDispatchers(val);
+      }
+    }
+  }
+})();
+// ...existing code...
 /* eslint-disable @typescript-eslint/no-this-alias */
 
 const pendingRequests = new Map();
@@ -289,10 +705,7 @@ ytm-shorts-lockup-view-model`,
   },
 
   getPlayerSelector: function () {
-    if (window.location.hostname === "m.youtube.com") {
-      return "#player-container-id";
-    }
-    if (window.location.pathname.startsWith("/embed")) {
+    if (window.location.pathname.startsWith("/embed") || this.isMobile()) {
       return "#movie_player";
     }
     const selector = window.location.pathname.startsWith("/shorts")
@@ -1238,6 +1651,7 @@ ytm-shorts-lockup-view-model`,
           method: postData ? "POST" : "GET",
           headers: headersData,
           body: postData ? postData : undefined,
+          credentials: headersData?.Authorization ? "include" : "same-origin",
         });
         if (!response.ok) {
           if (response.status === 404) {
@@ -1435,8 +1849,19 @@ ytm-shorts-lockup-view-model`,
   },
 
   getSAPISID: function () {
-    const match = document.cookie.match(/SAPISID=([^\s;]+)/);
+    const matchSAPISID = document.cookie.match(/SAPISID=([^\s;]+)/);
+    const matchPAPISID = document.cookie.match(/PAPISID=([^\s;]+)/);
+    const match = matchSAPISID || matchPAPISID;
     return match ? match[1] : null;
+  },
+
+  // SHA1 function (uses SubtleCrypto)
+  sha1Hash: async function (msg) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(msg);
+    const hashBuffer = await crypto.subtle.digest("SHA-1", data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
   },
 
   getSAPISIDHASH: async function (
@@ -1453,17 +1878,8 @@ ytm-shorts-lockup-view-model`,
     const timestamp = Math.floor(Date.now() / 1000);
     const message = `${timestamp} ${sapisid} ${origin}`;
 
-    // SHA1 function (uses SubtleCrypto)
-    async function sha1Hash(msg) {
-      const encoder = new TextEncoder();
-      const data = encoder.encode(msg);
-      const hashBuffer = await crypto.subtle.digest("SHA-1", data);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-    }
-
-    const hash = await sha1Hash(message);
-    return `SAPISIDHASH ${timestamp}_${hash}`;
+    const hash = await this.sha1Hash(message);
+    return `SAPISIDHASH ${timestamp}_${hash} SAPISID1HASH ${timestamp}_${hash} SAPISID3HASH ${timestamp}_${hash}`;
   },
 
   getYoutubeIHeadersWithCredentials: async function () {
@@ -1479,9 +1895,6 @@ ytm-shorts-lockup-view-model`,
     return {
       "Content-Type": "application/json",
       Authorization: sapisidhash,
-      Origin: this.isMobile()
-        ? "https://m.youtube.com"
-        : "https://www.youtube.com",
       "X-Youtube-Client-Name": "1",
       "X-Youtube-Client-Version": "2.20250731.09.00",
     };

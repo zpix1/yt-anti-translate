@@ -21,42 +21,189 @@
  * For licensing inquiries, contact: dczpix@gmail.com
  */
 
-(() => {
-  // Your custom data to replace streamingData.adaptiveFormats
-  const customAdaptiveFormats = [{}];
+const videoResponseCache = new Map();
 
-  // Simple logging function
-  function log(message) {
-    console.log(`[YoutubeAntiTranslate] ${message}`);
+const globalJsCopy = {
+  LOG_PREFIX: "[YoutubeAntiTranslate]",
+  LOG_LEVELS: {
+    NONE: 0,
+    ERROR: 1,
+    WARN: 2,
+    INFO: 3,
+    DEBUG: 4,
+  },
+  currentLogLevel: 2, // Default to WARN
+
+  /**
+   * Sets the current log level.
+   * @param {string} levelName - The name of the log level (e.g., "INFO", "DEBUG").
+   */
+  setLogLevel: function (levelName) {
+    const newLevel = this.LOG_LEVELS[levelName.toUpperCase()];
+    if (typeof newLevel === "number") {
+      this.currentLogLevel = newLevel;
+      this.logDebug(
+        `Log level set to ${levelName.toUpperCase()} (${newLevel})`,
+      );
+    } else {
+      this.logWarning(`Invalid log level: ${levelName}`);
+    }
+  },
+
+  logWarning: function (...args) {
+    if (this.currentLogLevel >= this.LOG_LEVELS.WARN) {
+      console.log(`${this.LOG_PREFIX} [WARN ]`, ...args);
+    }
+  },
+
+  logInfo: function (...args) {
+    if (this.currentLogLevel >= this.LOG_LEVELS.INFO) {
+      console.log(`${this.LOG_PREFIX} [INFO ]`, ...args);
+    }
+  },
+
+  /** Use only for app errors */
+  logError: function (...args) {
+    if (this.currentLogLevel >= this.LOG_LEVELS.ERROR) {
+      console.error(`${this.LOG_PREFIX} [ERROR]`, ...args);
+    }
+  },
+
+  logDebug: function (...args) {
+    if (this.currentLogLevel >= this.LOG_LEVELS.DEBUG) {
+      console.debug(`${this.LOG_PREFIX} [DEBUG]`, ...args);
+    }
+  },
+
+  /**
+   * Gets the current video ID from the URL
+   * @returns {string} - The YouTube video ID
+   */
+  getCurrentVideoId: function () {
+    this.logDebug(`getCurrentVideoId called`);
+    const urlParams = new URLSearchParams(window.location.search);
+    const videoId = urlParams.get("v") || "";
+    this.logDebug(`getCurrentVideoId: found video ID: ${videoId}`);
+    return videoId;
+  },
+
+  getSAPISID: function () {
+    const matchSAPISID = document.cookie.match(/SAPISID=([^\s;]+)/);
+    const matchPAPISID = document.cookie.match(/PAPISID=([^\s;]+)/);
+    const match = matchSAPISID || matchPAPISID;
+    return match ? match[1] : null;
+  },
+
+  // SHA1 function (uses SubtleCrypto)
+  sha1Hash: async function (msg) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(msg);
+    const hashBuffer = await crypto.subtle.digest("SHA-1", data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+  },
+
+  getSAPISIDHASH: async function (origin = "https://m.youtube.com") {
+    const sapisid = this.getSAPISID();
+    if (!sapisid) {
+      this.logWarning("SAPISID cookie not found.");
+      return null;
+    }
+
+    const timestamp = Math.floor(Date.now() / 1000);
+    const message = `${timestamp} ${sapisid} ${origin}`;
+
+    const hash = await this.sha1Hash(message);
+    return `SAPISIDHASH ${timestamp}_${hash} SAPISID1HASH ${timestamp}_${hash} SAPISID3HASH ${timestamp}_${hash}`;
+  },
+
+  getYoutubeIHeadersWithCredentials: async function () {
+    const sapisidhash = await this.getSAPISIDHASH();
+    if (!sapisidhash) {
+      this.logWarning(
+        "getYoutubeIHeadersWithCredentials: SAPISID not found, user not logged in, returning default headers",
+      );
+      return {
+        "Content-Type": "application/json",
+      };
+    }
+    return {
+      "Content-Type": "application/json",
+      Authorization: sapisidhash,
+      "X-Youtube-Client-Name": "1",
+      "X-Youtube-Client-Version": "2.20250730.01.00",
+    };
+  },
+};
+
+async function getUntranslatedVideoResponseAsync(videoId) {
+  const cacheKey = `video_response_mobile_async_${videoId}`;
+  if (videoResponseCache.has(cacheKey)) {
+    return videoResponseCache.get(cacheKey); // Return cached description if available
   }
 
+  const body = {
+    context: {
+      client: {
+        clientName: "MWEB",
+        clientVersion: "2.20250730.01.00",
+        originalUrl: document.location.href,
+        hl: "lo", // Using "Lao" as default that is an unsupported (but valid) language of youtube
+        // That always get the original language as a result
+        gl: null,
+        visitorData: null,
+      },
+    },
+    playbackContext: null,
+    serviceIntegrityDimensions: null,
+    videoId,
+  };
+
+  const headers = await globalJsCopy.getYoutubeIHeadersWithCredentials();
+
+  const response = await fetch(
+    "https://m.youtube.com/youtubei/v1/player?prettyPrint=false&yt-anti-translate=true",
+    {
+      method: "POST",
+      headers: headers,
+      body: JSON.stringify(body),
+      credentials: headers?.Authorization ? "include" : "same-origin",
+    },
+  );
+
+  const clonedResponse = response.clone();
+  const json = await clonedResponse.json();
+
+  // Ads do not properly work with this response so we are clearing the content of the response
+  clearAdsProperties(json);
+
+  // Add a self identification property
+  json.ytAntiTranslate = true;
+
+  if (json) {
+    videoResponseCache.set(cacheKey, { bodyJson: json, response: response }); // Cache the player response for future use
+  }
+
+  return { bodyJson: json, response: response };
+}
+
+/**
+ * Fallback function for untranslated audio video responses having only 360p option.
+ * The fallback option will empty the streamingdata.adaptiveFormats array
+ * forcing youtube to use the 360p format as fallback
+ * @param {*} playerResponse
+ */
+function getUntranslated360pFallback(playerResponse) {
+  if (playerResponse?.streamingData?.adaptiveFormats) {
+    playerResponse.streamingData.adaptiveFormats = [{}];
+  }
+  return playerResponse;
+}
+
+(() => {
   // Store the original ytInitialPlayerResponse
   let originalPlayerResponse = null;
   let isIntercepted = false;
-
-  function getModifiedPlayerResponse(original) {
-    if (!original) {
-      return original;
-    }
-
-    try {
-      // Create a deep copy to avoid modifying the original
-      const modified = JSON.parse(JSON.stringify(original));
-
-      // Replace streamingData.adaptiveFormats with custom data
-      if (modified.streamingData && modified.streamingData.adaptiveFormats) {
-        log(
-          "Modifying streamingData.adaptiveFormats in ytInitialPlayerResponse",
-        );
-        modified.streamingData.adaptiveFormats = customAdaptiveFormats;
-      }
-
-      return modified;
-    } catch (error) {
-      log(`Error modifying player response: ${error.message}`);
-      return original;
-    }
-  }
 
   // Intercept window['ytInitialPlayerResponse']
   function setupPlayerResponseInterception() {
@@ -67,73 +214,245 @@
     // Check if ytInitialPlayerResponse already exists
     if (window["ytInitialPlayerResponse"]) {
       originalPlayerResponse = window["ytInitialPlayerResponse"];
-      log("Found existing ytInitialPlayerResponse, storing original");
+      globalJsCopy.logDebug(
+        "Found existing ytInitialPlayerResponse, storing original",
+      );
+    }
+    if (
+      window["ytInitialPlayerResponse"] !== undefined &&
+      !window["ytInitialPlayerResponse"]
+    ) {
+      window["ytInitialPlayerResponse"] = undefined;
     }
 
-    // Set up property descriptor to intercept access
-    Object.defineProperty(window, "ytInitialPlayerResponse", {
-      configurable: true,
-      enumerable: true,
-      get() {
-        log("ytInitialPlayerResponse accessed - returning modified version");
-        return getModifiedPlayerResponse(originalPlayerResponse);
-      },
-      set(value) {
-        log("ytInitialPlayerResponse being set - storing original");
-        originalPlayerResponse = value;
-      },
-    });
+    try {
+      // Set up property descriptor to intercept access
+      Object.defineProperty(window, "ytInitialPlayerResponse", {
+        configurable: true,
+        enumerable: true,
+        get() {
+          if (
+            originalPlayerResponse &&
+            originalPlayerResponse.ytAntiTranslate
+          ) {
+            return originalPlayerResponse;
+          }
+
+          globalJsCopy.logWarning(
+            "ytInitialPlayerResponse getter called - overriding formats",
+          );
+          if (originalPlayerResponse && originalPlayerResponse?.streamingData) {
+            originalPlayerResponse.streamingData.formats = null;
+            originalPlayerResponse.streamingData.serverAbrStreamingUrl = null;
+            originalPlayerResponse.streamingData.adaptiveFormats = null;
+          }
+          return originalPlayerResponse;
+        },
+        set(value) {
+          globalJsCopy.logDebug(
+            "ytInitialPlayerResponse being set - storing original",
+          );
+          originalPlayerResponse = value;
+        },
+      });
+    } catch (e) {
+      globalJsCopy.logWarning(
+        "ytInitialPlayerResponse interception was skipped. Reason:",
+        e.message,
+      );
+    }
 
     isIntercepted = true;
-    log("ytInitialPlayerResponse interception setup complete");
+    globalJsCopy.logDebug(
+      "ytInitialPlayerResponse interception setup complete",
+    );
   }
 
   function createRewriter(origFetch) {
-    return async function (input, init = {}) {
+    return async function (...args) {
+      const [input, init] = args;
       const url = typeof input === "string" ? input : input.url;
 
       // Only process requests to the specific YouTube mobile player API
-      if (!url || !url.includes("m.youtube.com/youtubei/v1/player")) {
-        return origFetch(input, init);
-      }
-
-      log(`Processing YouTube mobile player API request: ${url}`);
-      const response = await origFetch(input, init);
-
-      // Only process JSON responses that might contain streamingData
-      const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        return response;
+      if (
+        !url ||
+        !url.includes("m.youtube.com/youtubei/v1/player") ||
+        url.includes("yt-anti-translate=true")
+      ) {
+        try {
+          return origFetch(input, init);
+        } catch {
+          /* empty catch */
+          // If we are executing YouTube requests as they are, we do not care if they fail
+        }
       }
 
       try {
-        // Clone the response to read the body
-        const responseClone = response.clone();
-        const jsonData = await responseClone.json();
+        const videoId = globalJsCopy.getCurrentVideoId();
+        const origResponse = await getUntranslatedVideoResponseAsync(videoId);
 
-        // Check if this response contains streamingData.adaptiveFormats
-        if (jsonData.streamingData && jsonData.streamingData.adaptiveFormats) {
-          log(
-            `Found streamingData.adaptiveFormats, replacing with custom data`,
+        const responseJson = origResponse.bodyJson;
+
+        globalJsCopy.logDebug(
+          "Untranslated player response fetched",
+          responseJson,
+        );
+
+        if (
+          !responseJson ||
+          !responseJson.streamingData ||
+          !responseJson.streamingData.adaptiveFormats
+        ) {
+          const origResponse = await origFetch(input, init);
+          const origResponseJson = origResponse ? origResponse.json() : null;
+          const modifiedOrigResponse =
+            getUntranslated360pFallback(origResponseJson);
+
+          const origModifiedResponse = new Response(
+            JSON.stringify(modifiedOrigResponse),
+            {
+              status: origResponse.response.status,
+              statusText: origResponse.response.statusText,
+              headers: origResponse.response.headers,
+            },
           );
-
-          // Replace with your custom data
-          jsonData.streamingData.adaptiveFormats = customAdaptiveFormats;
-
-          // Create a new response with modified JSON
-          const modifiedResponse = new Response(JSON.stringify(jsonData), {
-            status: response.status,
-            statusText: response.statusText,
-            headers: response.headers,
-          });
-
-          return modifiedResponse;
+          return origModifiedResponse;
         }
-      } catch (error) {
-        log(`Error processing JSON response: ${error.message}`);
+
+        if (window["ytInitialPlayerResponse"] !== undefined) {
+          window["ytInitialPlayerResponse"] = responseJson;
+        }
+        // Create a new response with modified JSON
+        const modifiedResponse = new Response(JSON.stringify(responseJson), {
+          status: origResponse.response.status,
+          statusText: origResponse.response.statusText,
+          headers: origResponse.response.headers,
+        });
+        return modifiedResponse;
+      } catch {
+        try {
+          return origFetch(input, init);
+        } catch {
+          /* empty catch */
+          // If we are executing YouTube requests as they are, we do not care if they fail
+        }
+      }
+    };
+  }
+
+  function installXMLHttpRequestInterceptor() {
+    const OriginalOpen = XMLHttpRequest.prototype.open;
+    const OriginalSend = XMLHttpRequest.prototype.send;
+
+    XMLHttpRequest.prototype.open = function () {
+      const method = (arguments[0] || "GET").toString().toUpperCase();
+      const url = arguments[1] || "";
+      const isAsync = arguments[2] !== false;
+      this["__ytat"] = this["__ytat"] || {};
+      this["__ytat"].method = method;
+      this["__ytat"].url = url;
+      this["__ytat"].async = isAsync;
+      return OriginalOpen.apply(this, arguments);
+    };
+
+    XMLHttpRequest.prototype.send = function (body) {
+      const context = this["__ytat"] || {};
+      const url = context.url || "";
+      globalJsCopy.logDebug("XMLHttpRequest headers", {
+        headers: this.getAllResponseHeaders(),
+        method: context.method,
+        url: context.url,
+        async: context.async,
+      });
+      globalJsCopy.logDebug("XMLHttpRequest being sent", url);
+      if (
+        url.includes("/youtubei/v1/player") &&
+        !url.includes("yt-anti-translate=true")
+      ) {
+        (async () => {
+          try {
+            const videoId = globalJsCopy.getCurrentVideoId();
+            const origResponse =
+              await getUntranslatedVideoResponseAsync(videoId);
+            const responseJson = origResponse.bodyJson;
+
+            console.log("responseJson", responseJson);
+
+            if (window["ytInitialPlayerResponse"] !== undefined) {
+              window["ytInitialPlayerResponse"] = responseJson;
+            }
+
+            const headersMap = {};
+            origResponse.response?.headers?.forEach((value, key) => {
+              headersMap[key.toLowerCase()] = value;
+            });
+
+            const jsonText = JSON.stringify(responseJson);
+            const finalResponse =
+              this.responseType === "json" ? responseJson : jsonText;
+
+            try {
+              Object.defineProperty(this, "readyState", {
+                configurable: true,
+                value: 4,
+              });
+              Object.defineProperty(this, "status", {
+                configurable: true,
+                value: origResponse.response.status,
+              });
+              Object.defineProperty(this, "statusText", {
+                configurable: true,
+                value: origResponse.response.statusText,
+              });
+              Object.defineProperty(this, "response", {
+                configurable: true,
+                value: finalResponse,
+              });
+              Object.defineProperty(this, "responseText", {
+                configurable: true,
+                value: jsonText,
+              });
+              this.getResponseHeader = function (name) {
+                return headersMap[(name || "").toLowerCase()] || null;
+              };
+              this.getAllResponseHeaders = function () {
+                return Object.entries(headersMap)
+                  .map(([k, v]) => `${k}: ${v}`)
+                  .join("\r\n");
+              };
+            } catch (defineErr) {
+              globalJsCopy.logDebug(
+                "Could not define XMLHttpRequest response properties",
+                defineErr,
+              );
+            }
+
+            try {
+              if (typeof this.onreadystatechange === "function") {
+                this.onreadystatechange(null);
+              }
+              if (typeof this.onload === "function") {
+                this.onload(null);
+              }
+              if (typeof this.dispatchEvent === "function") {
+                this.dispatchEvent(new Event("readystatechange"));
+                this.dispatchEvent(new Event("load"));
+                this.dispatchEvent(new Event("loadend"));
+              }
+            } catch (eventErr) {
+              globalJsCopy.logDebug("Dispatching XHR events failed", eventErr);
+            }
+          } catch (error) {
+            globalJsCopy.logError(
+              `XMLHttpRequest interception failed: ${error?.message || error}`,
+            );
+            return OriginalSend.call(this, body);
+          }
+        })();
+        return; // prevent the original network request
       }
 
-      return response;
+      return OriginalSend.call(this, body);
     };
   }
 
@@ -143,18 +462,30 @@
     try {
       setupPlayerResponseInterception();
     } catch (error) {
-      log(`Error setting up player response interception: ${error.message}`);
+      globalJsCopy.logError(
+        `Error setting up player response interception: ${error.message}`,
+      );
     }
 
     /* 4-a. wrap whatever fetch exists right now (likely the native one) */
-    log("installing wrapper around current window.fetch");
+    globalJsCopy.logDebug("installing wrapper around current window.fetch");
     window.fetch = createRewriter(window.fetch.bind(window));
+
+    // 4-a.1. also intercept XMLHttpRequest flows
+    try {
+      globalJsCopy.logDebug("installing interceptor for XMLHttpRequest");
+      installXMLHttpRequestInterceptor();
+    } catch (error) {
+      globalJsCopy.logError(
+        `Error installing XMLHttpRequest interceptor: ${error?.message || error}`,
+      );
+    }
 
     /* 4-b. if YouTube later replaces fetch with ytNetworkFetch, re-wrap it */
     Object.defineProperty(window, "ytNetworkFetch", {
       configurable: true,
       set(fn) {
-        log("ytNetworkFetch assigned → wrapping it too");
+        globalJsCopy.logDebug("ytNetworkFetch assigned → wrapping it too");
         window.fetch = createRewriter(fn);
       },
       get() {
@@ -165,8 +496,21 @@
     /* 4-c. if ytNetworkFetch was already present before our script ran,
             wrap it immediately (covers the 'parsed-but-not-executed' case) */
     if (window["ytNetworkFetch"]) {
-      log("ytNetworkFetch pre-existing → wrapping immediately");
+      globalJsCopy.logDebug(
+        "ytNetworkFetch pre-existing → wrapping immediately",
+      );
       window.fetch = createRewriter(window["ytNetworkFetch"]);
     }
   })();
 })();
+function clearAdsProperties(json) {
+  if (json?.playerAds && json?.playerAds?.length > 0) {
+    json.playerAds = [];
+  }
+  if (json?.adSlots && json?.adSlots.length > 0) {
+    json.adSlots = [];
+  }
+  if (json?.adBreakHeartbeatParams) {
+    json.adBreakHeartbeatParams = null;
+  }
+}
