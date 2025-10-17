@@ -1274,7 +1274,7 @@ ytm-shorts-lockup-view-model`,
           if (cacheDotNotationProperty) {
             this.setSessionCache(
               cacheKey,
-              this.getPropertiesByDotNotation(data, cacheDotNotationProperty) ||
+              this.getPropertyByDotNotation(data, cacheDotNotationProperty) ||
                 null,
             );
           } else {
@@ -1343,29 +1343,6 @@ ytm-shorts-lockup-view-model`,
       }
     }
     return current;
-  },
-
-  getPropertiesByDotNotation: function (json, dotNotationProperties) {
-    //array of dotNotationProperty from comma separated string
-    const dotNotationPropertiesArray = dotNotationProperties
-      .split(",")
-      .map((p) => p.trim())
-      .filter((p) => p.length > 0);
-
-    if (dotNotationPropertiesArray.length === 0) {
-      return null;
-    }
-
-    const result = {};
-
-    for (const dotNotationProperty of dotNotationPropertiesArray) {
-      const value = this.getPropertyByDotNotation(json, dotNotationProperty);
-      if (value !== null) {
-        result[dotNotationProperty] = value;
-      }
-    }
-
-    return Object.keys(result).length > 0 ? result : null;
   },
 
   extractVideoIdFromUrl: function (url) {
@@ -1562,19 +1539,16 @@ ytm-shorts-lockup-view-model`,
                                   this is to avoid filling user search history with unwanted queries */
         ? await this.getYoutubeIHeadersWithCredentials()
         : { "Content-Type": "application/json" },
-      false,
-      `contents.twoColumnSearchResultsRenderer.primaryContents.sectionListRenderer.contents,
-      contents.sectionListRenderer.contents`,
+      // do not cache full response, we only cache the final result below
+      true,
     );
 
-    if (!response?.data && !response?.cachedWithDotNotation) {
+    if (!response?.data) {
       this.logWarning(`Failed to fetch ${search} or parse response`);
       return;
     }
 
-    const result = this.extractCollaboratorsItemsFromSearch(
-      response.data || response.cachedWithDotNotation,
-    );
+    const result = this.extractCollaboratorsItemsFromSearch(response.data);
 
     if (!result) {
       return;
@@ -1583,10 +1557,7 @@ ytm-shorts-lockup-view-model`,
     await this.setSessionCache(requestIdentifier, result);
 
     // Delete the search suggestion to avoid polluting user search history
-    // we intentionally do not await this as outcome is not needed for the function response
-    if (!response.isFromCache) {
-      this.deleteSearchSuggestion(`${decodedQuery} ${decodedQuery}`);
-    }
+    await this.deleteSearchSuggestion(`${decodedQuery} ${decodedQuery}`);
 
     return result;
   },
@@ -1597,11 +1568,7 @@ ytm-shorts-lockup-view-model`,
     const sections =
       json?.contents?.twoColumnSearchResultsRenderer?.primaryContents
         ?.sectionListRenderer?.contents ||
-      json?.[
-        "contents.twoColumnSearchResultsRenderer.primaryContents.sectionListRenderer.contents"
-      ] ||
       json?.contents?.sectionListRenderer?.contents ||
-      json?.["contents.sectionListRenderer.contents"] ||
       [];
 
     for (const section of sections) {
@@ -1978,9 +1945,8 @@ ytm-shorts-lockup-view-model`,
                                   this is to avoid filling user search history with unwanted queries */
         ? await this.getYoutubeIHeadersWithCredentials()
         : { "Content-Type": "application/json" },
-      false,
-      `contents.twoColumnSearchResultsRenderer.primaryContents.sectionListRenderer.contents,
-      contents.sectionListRenderer.contents`,
+      // do not cache full response, we only cache the final result below
+      true,
     );
 
     if (!result || !result.response || !result.response.ok) {
@@ -1997,11 +1963,7 @@ ytm-shorts-lockup-view-model`,
     let channelHandle;
 
     for (const sectionContent of json.contents?.twoColumnSearchResultsRenderer
-      ?.primaryContents?.sectionListRenderer?.contents ||
-      json[
-        "contents.twoColumnSearchResultsRenderer.primaryContents.sectionListRenderer.contents"
-      ] ||
-      []) {
+      ?.primaryContents?.sectionListRenderer?.contents || []) {
       for (const itemRenderedContent of sectionContent?.itemSectionRenderer
         ?.contents || []) {
         if (
@@ -2075,11 +2037,7 @@ ytm-shorts-lockup-view-model`,
     this.setSessionCache(requestIdentifier, response);
 
     // Delete the search suggestion to avoid polluting user search history
-    // we intentionally do not await this as outcome is not needed for the function response
-    // When we got it from cache there is no need to delete again
-    if (!result.isFromCache) {
-      this.deleteSearchSuggestion(`${decodedQuery} ${decodedQuery}`);
-    }
+    await this.deleteSearchSuggestion(`${decodedQuery} ${decodedQuery}`);
 
     return response;
   },

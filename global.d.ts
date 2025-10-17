@@ -479,21 +479,6 @@ declare global {
       ) => any | null;
 
       /**
-       * Gets a set of properties from a JSON object using dot notation.
-       * @param json - The JSON object to search.
-       * @param dotNotationProperties - A comma separated list of the dot notation properties with hierarchy to retrieve.
-       *                       (e.g. "title" to get only the title of the response data or "videoDetails.title" to get the title of the object videoDetails).
-       *                       NOTE: Must be a valid property of the response data json starting from the root level. Use "." for nested properties.
-       *                       If the property is not found, it will return null.
-       *                       WARNING: This function does not support array indexing in dot notation (e.g. "items[0].id" is not supported).
-       * @returns The value of the property or null if not found
-       * */
-      getPropertiesByDotNotation: (
-        json: object,
-        dotNotationProperties: string,
-      ) => object | null;
-
-      /**
        * Extracts the YouTube video ID from a given URL.
        * Supports /watch?v=, /shorts/, and full URLs.
        * @param url - The YouTube URL to extract the video ID from
