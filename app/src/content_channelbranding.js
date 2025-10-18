@@ -730,6 +730,7 @@ async function restoreCollaboratorsDialog() {
       await window.YoutubeAntiTranslate.isWhitelistedChannel(
         "whiteListUntranslateChannelBranding",
         null,
+        null,
         ucid,
       )
     ) {
