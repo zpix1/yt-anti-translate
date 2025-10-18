@@ -570,6 +570,20 @@ async function restoreOriginalBrandingChannelRenderers() {
       return;
     }
 
+    if (
+      await window.YoutubeAntiTranslate.isWhitelistedChannel(
+        "whiteListUntranslateChannelBranding",
+        null,
+        null,
+        ucid,
+      )
+    ) {
+      window.YoutubeAntiTranslate.logInfo(
+        "Channel is whitelisted, skipping channel branding untranslation",
+      );
+      return;
+    }
+
     const originalBrandingData =
       await window.YoutubeAntiTranslate.getChannelBrandingWithYoutubeI(ucid);
     if (!originalBrandingData) {
@@ -715,7 +729,6 @@ async function restoreCollaboratorsDialog() {
     if (
       await window.YoutubeAntiTranslate.isWhitelistedChannel(
         "whiteListUntranslateChannelBranding",
-        null,
         null,
         ucid,
       )

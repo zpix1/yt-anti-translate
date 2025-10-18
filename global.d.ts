@@ -601,8 +601,8 @@ declare global {
           | "whiteListUntranslateChannelBranding"
           | "whiteListUntranslateThumbnail",
         handle?: string,
-        channelId?: string,
         channelUrl?: string,
+        channelId?: string,
         channelName?: string,
       ) => Promise<boolean>;
 
