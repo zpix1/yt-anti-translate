@@ -1494,12 +1494,9 @@ ytm-shorts-lockup-view-model`,
     return `SAPISIDHASH ${timestamp}_${hash}`;
   },
 
-  getYoutubeIHeadersWithCredentials: async function () {
+  getYoutubeIHeadersWithCredentials: async function (anonymously = false) {
     const sapisidhash = await this.getSAPISIDHASH();
-    if (!sapisidhash) {
-      this.logWarning(
-        "getYoutubeIHeadersWithCredentials: SAPISID not found, user not logged in, returning default headers",
-      );
+    if (!sapisidhash || anonymously) {
       return {
         "Content-Type": "application/json",
       };
@@ -1557,10 +1554,9 @@ ytm-shorts-lockup-view-model`,
     const response = await this.cachedRequest(
       search,
       JSON.stringify(body),
-      this.getSuggestionsTOK() /* If we have a valid TOK to delete the suggestion afterwards we can login; else search anonymously
-                                  this is to avoid filling user search history with unwanted queries */
-        ? await this.getYoutubeIHeadersWithCredentials()
-        : { "Content-Type": "application/json" },
+      // If we have a valid TOK to delete the suggestion afterwards we can login; else search anonymously
+      // this is to avoid filling user search history with unwanted queries */
+      await this.getYoutubeIHeadersWithCredentials(!!this.getSuggestionsTOK()),
       // do not cache full response, we only cache the final result below
       true,
     );
@@ -1963,10 +1959,9 @@ ytm-shorts-lockup-view-model`,
     const result = await this.cachedRequest(
       search,
       JSON.stringify(body),
-      this.getSuggestionsTOK() /* If we have a valid TOK to delete the suggestion afterwards we can login; else search anonymously
-                                  this is to avoid filling user search history with unwanted queries */
-        ? await this.getYoutubeIHeadersWithCredentials()
-        : { "Content-Type": "application/json" },
+      // If we have a valid TOK to delete the suggestion afterwards we can login; else search anonymously
+      // this is to avoid filling user search history with unwanted queries */
+      await this.getYoutubeIHeadersWithCredentials(!!this.getSuggestionsTOK()),
       // do not cache full response, we only cache the final result below
       true,
     );
