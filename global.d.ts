@@ -522,7 +522,7 @@ declare global {
        * Retrieves the headers required for authenticated requests to YouTube's internal APIs.
        * @returns Headers object including Content-Type, Authorization (with SAPISIDHASH), Origin, X-Youtube-Client-Name, and X-Youtube-Client-Version.
        */
-      getYoutubeIHeadersWithCredentials: () => Promise<{
+      getYoutubeIHeadersWithCredentials: (anon: boolean = false) => Promise<{
         "Content-Type": string;
         Authorization?: string;
         Origin?: "https://m.youtube.com" | "https://www.youtube.com";

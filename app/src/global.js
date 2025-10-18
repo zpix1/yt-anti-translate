@@ -1466,12 +1466,9 @@ ytm-shorts-lockup-view-model`,
     return `SAPISIDHASH ${timestamp}_${hash}`;
   },
 
-  getYoutubeIHeadersWithCredentials: async function () {
+  getYoutubeIHeadersWithCredentials: async function (anonymously = false) {
     const sapisidhash = await this.getSAPISIDHASH();
-    if (!sapisidhash) {
-      this.logWarning(
-        "getYoutubeIHeadersWithCredentials: SAPISID not found, user not logged in, returning default headers",
-      );
+    if (!sapisidhash || anonymously) {
       return {
         "Content-Type": "application/json",
       };
@@ -1523,7 +1520,7 @@ ytm-shorts-lockup-view-model`,
     const response = await this.cachedRequest(
       search,
       JSON.stringify(body),
-      await this.getYoutubeIHeadersWithCredentials(),
+      await this.getYoutubeIHeadersWithCredentials(true),
       // doNotCache true as would take too much space
       true,
     );
@@ -1924,7 +1921,7 @@ ytm-shorts-lockup-view-model`,
     const result = await this.cachedRequest(
       search,
       JSON.stringify(body),
-      await this.getYoutubeIHeadersWithCredentials(),
+      await this.getYoutubeIHeadersWithCredentials(true),
       // As it might take too much space
       true,
     );
