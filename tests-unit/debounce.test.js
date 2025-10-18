@@ -276,4 +276,57 @@ describe("YoutubeAntiTranslate.debounce", () => {
     // Should have called requestAnimationFrame
     expect(rafSpy).toHaveBeenCalled();
   });
+
+  it("debounced async function that takes time are not concurrently executed even when queued call is ready", async () => {
+    const rafSpy = vi.spyOn(global, "requestAnimationFrame");
+
+    // create an async function that waits (simulated work)
+    const fn = vi.fn(async () => {
+      // simulate async work by awaiting a promise that resolves after a timeout
+      await new Promise((res) => setTimeout(res, 100));
+      return "done";
+    });
+
+    const debounced = debounce(fn, 30);
+
+    // First call should run immediately (start executing async function)
+    const p1 = debounced();
+
+    // Fast-forward timers to allow any immediate scheduling to run
+    await vi.runOnlyPendingTimersAsync();
+    expect(fn).toHaveBeenCalledTimes(1);
+
+    // Immediately call again within wait window; it should be queued (not start immediately)
+    const p2 = debounced();
+    expect(fn).toHaveBeenCalledTimes(1);
+
+    // Advance past the wait window - still should not have executed the queued call
+    // as the first call is still in progress
+    vi.advanceTimersByTime(30);
+    await vi.runOnlyPendingTimersAsync();
+    expect(fn).toHaveBeenCalledTimes(1);
+
+    // Finish the async work of the first call by advancing timers for its internal setTimeout
+    vi.advanceTimersByTime(70); // total 100ms for async work
+    await vi.runOnlyPendingTimersAsync();
+    await Promise.resolve(); // allow microtasks to flush
+
+    // Now advance past the debounce wait so the queued call executes
+    vi.advanceTimersByTime(1); // total > 100ms + 1ms since first call
+    await vi.runOnlyPendingTimersAsync();
+
+    // queued call should have executed once async slot is scheduled
+    expect(fn).toHaveBeenCalledTimes(2);
+
+    await vi.runAllTimersAsync();
+
+    expect(fn).toHaveBeenCalledTimes(2); // No additional calls
+
+    // Ensure RAF was used to schedule the queued call (when document not hidden)
+    expect(rafSpy).toHaveBeenCalled();
+
+    // Await the returned promises to avoid unhandled rejections and to ensure completions
+    await p1;
+    await p2;
+  });
 });
