@@ -1,7 +1,5 @@
 /* eslint-disable @typescript-eslint/no-this-alias */
 
-import { a } from "vitest/dist/chunks/suite.d.FvehnV49.js";
-
 const pendingRequests = new Map();
 
 class SessionLRUCache {
@@ -263,6 +261,7 @@ ytm-shorts-lockup-view-model`,
 
       let entry = signatures.get(signature);
       if (!entry) {
+        // First call for this signature → execute immediately
         entry = { lastExecTime: now, queued: null };
         signatures.set(signature, entry);
 
