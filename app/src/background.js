@@ -1231,7 +1231,13 @@ async function untranslateOtherVideos(intersectElements = null) {
             );
             if (avatarStacks && avatarStacks.length > 1) {
               for (const avatarImage of avatarStacks) {
-                const imgSrc = avatarImage["src"];
+                if (avatarImage instanceof HTMLImageElement === false) {
+                  continue;
+                }
+                const avatarImageCasted = /** @type {HTMLImageElement} */ (
+                  avatarImage
+                );
+                const imgSrc = avatarImageCasted.src;
                 if (!imgSrc || imgSrc.trim() === "") {
                   continue;
                 }
@@ -1242,7 +1248,7 @@ async function untranslateOtherVideos(intersectElements = null) {
                   );
 
                 const originalItem = originalCollaborators?.find(
-                  (item) => item.avatarImage === avatarImage["src"],
+                  (item) => item.avatarImage === avatarImageCasted.src,
                 );
                 if (!originalItem) {
                   continue;
