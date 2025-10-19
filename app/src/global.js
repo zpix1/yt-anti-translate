@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-this-alias */
 
+import { a } from "vitest/dist/chunks/suite.d.FvehnV49.js";
+
 const pendingRequests = new Map();
 
 class SessionLRUCache {
@@ -201,6 +203,7 @@ ytm-shorts-lockup-view-model`,
     includeArgsInSignature = false,
     getSignature = undefined,
   ) {
+    // Assign a stable ID to this func if not already present
     if (!func["__debounceId"]) {
       Object.defineProperty(func, "__debounceId", {
         value: Symbol(),
@@ -209,7 +212,7 @@ ytm-shorts-lockup-view-model`,
       });
     }
 
-    const signatures = new Map(); // signature → { lastExecTime, activePromise, queued: {ctx,args}|null }
+    const signatures = new Map(); // signature → { lastExecTime, queued: {ctx,args}|null }
 
     function schedule(callback) {
       if (document.hidden || typeof requestAnimationFrame === "undefined") {
@@ -225,36 +228,6 @@ ytm-shorts-lockup-view-model`,
       return requestAnimationFrame(callback);
     }
 
-    function executeCall(entry, context, args, time) {
-      let result;
-      try {
-        result = func.apply(context, args);
-      } catch (err) {
-        entry.activePromise = null;
-        entry.lastExecTime = time;
-        throw err;
-      }
-
-      // If the function returns a promise, delay updating lastExecTime until it resolves
-      if (result && typeof result.then === "function") {
-        const maybePromise = Promise.resolve(result);
-        entry.activePromise = maybePromise;
-        maybePromise.finally(() => {
-          entry.lastExecTime =
-            typeof performance !== "undefined" &&
-            typeof performance.now === "function"
-              ? performance.now()
-              : Date.now();
-          entry.activePromise = null;
-        });
-      } else {
-        entry.lastExecTime = time;
-        entry.activePromise = null;
-      }
-
-      return result;
-    }
-
     function tickQueue(signature, time) {
       const entry = signatures.get(signature);
       if (!entry || !entry.queued) {
@@ -262,14 +235,13 @@ ytm-shorts-lockup-view-model`,
       }
 
       const elapsed = time - entry.lastExecTime;
-      const stillRunning = !!entry.activePromise;
-
-      if (!stillRunning && elapsed >= waitMinMs) {
-        const { context, args } = entry.queued;
+      if (elapsed >= waitMinMs) {
+        // Execute queued call
+        func.apply(entry.queued.context, entry.queued.args);
+        entry.lastExecTime = time;
         entry.queued = null;
-        schedule((t) => executeCall(entry, context, args, t));
       } else {
-        // Still within wait window or function is executing → reschedule
+        // Still within wait window → reschedule
         schedule((t) => tickQueue(signature, t));
       }
     }
@@ -291,16 +263,21 @@ ytm-shorts-lockup-view-model`,
 
       let entry = signatures.get(signature);
       if (!entry) {
-        entry = { lastExecTime: now, queued: null, activePromise: null };
+        entry = { lastExecTime: now, queued: null };
         signatures.set(signature, entry);
 
-        schedule((time) => executeCall(entry, context, args, time));
+        schedule((time) => {
+          func.apply(context, args);
+          entry.lastExecTime = time;
+        });
       } else {
+        // Already exists
         if (!entry.queued) {
+          // Queue exactly one call per signature
           entry.queued = { context, args };
-          schedule((t) => tickQueue(signature, t));
+          schedule((time) => tickQueue(signature, time));
         } else {
-          // Already queued → overwrite args/context, keep latest
+          // Already queued → overwrite args/context, keep only latest
           entry.queued.context = context;
           entry.queued.args = args;
         }
@@ -1556,15 +1533,10 @@ ytm-shorts-lockup-view-model`,
       JSON.stringify(body),
       // If we have a valid TOK to delete the suggestion afterwards we can login; else search anonymously
       // this is to avoid filling user search history with unwanted queries */
-      await this.getYoutubeIHeadersWithCredentials(!!this.getSuggestionsTOK()),
+      await this.getYoutubeIHeadersWithCredentials(true),
       // do not cache full response, we only cache the final result below
       true,
     );
-
-    if (response.response.ok) {
-      // Delete the search suggestion to avoid polluting user search history
-      await this.deleteSearchSuggestion(`${decodedQuery} ${decodedQuery}`);
-    }
 
     if (!response?.data) {
       this.logWarning(`Failed to fetch ${search} or parse response`);
@@ -1976,15 +1948,10 @@ ytm-shorts-lockup-view-model`,
       JSON.stringify(body),
       // If we have a valid TOK to delete the suggestion afterwards we can login; else search anonymously
       // this is to avoid filling user search history with unwanted queries */
-      await this.getYoutubeIHeadersWithCredentials(!!this.getSuggestionsTOK()),
+      await this.getYoutubeIHeadersWithCredentials(true),
       // do not cache full response, we only cache the final result below
       true,
     );
-
-    if (result.response.ok) {
-      // Delete the search suggestion to avoid polluting user search history
-      await this.deleteSearchSuggestion(`${decodedQuery} ${decodedQuery}`);
-    }
 
     if (!result || !result.response || !result.response.ok) {
       this.logInfo(
