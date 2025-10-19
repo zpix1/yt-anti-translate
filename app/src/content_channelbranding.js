@@ -533,14 +533,14 @@ function updateChannelRendererAuthor(container, originalBrandingData) {
 }
 
 /**
- * Restores original channel branding for channel renderers visible in search results and featured channels.
+ * Restores original channel branding for channel renderers visible (even if outside the viewport) in search results, featured channels and subscriptions sidebar.
  */
 async function restoreOriginalBrandingChannelRenderers() {
   const channelRenderers = window.YoutubeAntiTranslate.getAllVisibleNodes(
     document.querySelectorAll(
       "ytd-channel-renderer, ytd-grid-channel-renderer, ytm-compact-channel-renderer, ytd-guide-entry-renderer",
     ),
-    true,
+    false,
     20,
   );
 
@@ -565,22 +565,22 @@ async function restoreOriginalBrandingChannelRenderers() {
       return;
     }
     const href = linkElement.getAttribute("href");
-    const ucid = await window.YoutubeAntiTranslate.getChannelUCIDFromHref(href);
-    if (!ucid) {
-      return;
-    }
 
     if (
       await window.YoutubeAntiTranslate.isWhitelistedChannel(
         "whiteListUntranslateChannelBranding",
         null,
-        null,
-        ucid,
+        href,
       )
     ) {
       window.YoutubeAntiTranslate.logInfo(
         "Channel is whitelisted, skipping channel branding untranslation",
       );
+      return;
+    }
+
+    const ucid = await window.YoutubeAntiTranslate.getChannelUCIDFromHref(href);
+    if (!ucid) {
       return;
     }
 
@@ -721,22 +721,21 @@ async function restoreCollaboratorsDialog() {
 
     const href = linkEl.getAttribute("href");
 
-    const ucid = await window.YoutubeAntiTranslate.getChannelUCIDFromHref(href);
-    if (!ucid) {
-      return;
-    }
-
     if (
       await window.YoutubeAntiTranslate.isWhitelistedChannel(
         "whiteListUntranslateChannelBranding",
         null,
-        null,
-        ucid,
+        href,
       )
     ) {
       window.YoutubeAntiTranslate.logInfo(
         "Channel is whitelisted, skipping channel branding untranslation",
       );
+      return;
+    }
+
+    const ucid = await window.YoutubeAntiTranslate.getChannelUCIDFromHref(href);
+    if (!ucid) {
       return;
     }
 

@@ -123,6 +123,9 @@ describe("YoutubeAntiTranslate.isWhitelistedChannel", () => {
     window.YoutubeAntiTranslate.getSettings = async () => ({
       whiteListUntranslateTitle: ["@foo"],
     });
+    window.YoutubeAntiTranslate.lookupChannelId = vi
+      .fn()
+      .mockResolvedValue({ channelHandle: "@foo" });
     const result = await isWhitelistedChannel(
       "whiteListUntranslateTitle",
       null,
@@ -131,6 +134,25 @@ describe("YoutubeAntiTranslate.isWhitelistedChannel", () => {
       "foo",
     );
     expect(result).toBe(true);
+    expect(window.YoutubeAntiTranslate.lookupChannelId).not.toHaveBeenCalled();
+  });
+
+  it("returns true if channelName as handle is in whitelist (no spaces and starts with @)", async () => {
+    window.YoutubeAntiTranslate.getSettings = async () => ({
+      whiteListUntranslateTitle: ["@foo"],
+    });
+    window.YoutubeAntiTranslate.lookupChannelId = vi
+      .fn()
+      .mockResolvedValue({ channelHandle: "@foo" });
+    const result = await isWhitelistedChannel(
+      "whiteListUntranslateTitle",
+      null,
+      null,
+      null,
+      "@foo",
+    );
+    expect(result).toBe(true);
+    expect(window.YoutubeAntiTranslate.lookupChannelId).not.toHaveBeenCalled();
   });
 
   it("returns true if handle from lookupChannelId(channelName) is in whitelist", async () => {

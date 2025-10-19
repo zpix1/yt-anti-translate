@@ -1561,6 +1561,11 @@ ytm-shorts-lockup-view-model`,
       true,
     );
 
+    if (response.response.ok) {
+      // Delete the search suggestion to avoid polluting user search history
+      await this.deleteSearchSuggestion(`${decodedQuery} ${decodedQuery}`);
+    }
+
     if (!response?.data) {
       this.logWarning(`Failed to fetch ${search} or parse response`);
       return;
@@ -1573,9 +1578,6 @@ ytm-shorts-lockup-view-model`,
     }
 
     await this.setSessionCache(requestIdentifier, result);
-
-    // Delete the search suggestion to avoid polluting user search history
-    await this.deleteSearchSuggestion(`${decodedQuery} ${decodedQuery}`);
 
     return result;
   },
@@ -1796,10 +1798,10 @@ ytm-shorts-lockup-view-model`,
     const lowerCaseWhitelist = whitelist.map((item) => item.toLowerCase());
 
     if (
+      (!handle || typeof handle !== "string" || handle.trim() === "") &&
       (!channelId ||
         typeof channelId !== "string" ||
         channelId.trim() === "") &&
-      (!handle || typeof handle !== "string" || handle.trim() === "") &&
       (!channelUrl ||
         typeof channelUrl !== "string" ||
         channelUrl.trim() === "") &&
@@ -1810,6 +1812,7 @@ ytm-shorts-lockup-view-model`,
       return false;
     }
 
+    // Parse channelUrl if provided
     let /** @type {URL} */ channelURL = null;
     if (channelUrl && typeof channelUrl === "string") {
       const url = channelUrl.startsWith("http")
@@ -1822,17 +1825,21 @@ ytm-shorts-lockup-view-model`,
       }
     }
 
+    // Attempt to extract missing info from channelURL if available
     if (channelURL) {
       // Extract id or handle from URL
       if (!channelId && channelURL.pathname.startsWith("/channel/")) {
+        // Only extract if not already provided
         var match = channelURL.pathname.match(/\/channel\/([^/?]+)/);
         channelId = match ? match[1] : null;
       } else if (!handle && channelURL.pathname.startsWith("/@")) {
+        // Only extract if not already provided
         const match = channelURL.pathname.match(/\/(@[^/?]+)/);
         handle = match ? match[1] : null;
       }
     }
 
+    // 1 --- Check handle first if provided and valid ---
     if (
       !handle ||
       typeof handle !== "string" ||
@@ -1850,12 +1857,14 @@ ytm-shorts-lockup-view-model`,
           typeof channelName !== "string" ||
           channelName.trim() === "")
       ) {
+        // No other data for further lookups was provided
         return false;
       }
     } else {
       return lowerCaseWhitelist.includes(handle.trim().toLowerCase());
     }
 
+    // 2 --- Check channelId next if provided and valid ---
     if (
       !channelId ||
       typeof channelId !== "string" ||
@@ -1869,6 +1878,7 @@ ytm-shorts-lockup-view-model`,
         typeof channelName !== "string" ||
         channelName.trim() === ""
       ) {
+        // No other data for the last lookup was provided
         return false;
       }
     } else {
@@ -1892,6 +1902,7 @@ ytm-shorts-lockup-view-model`,
       return lowerCaseWhitelist.includes(handle.trim().toLowerCase());
     }
 
+    // 3 --- Finally check channelName if provided and valid ---
     if (
       !channelName ||
       typeof channelName !== "string" ||
@@ -1901,9 +1912,12 @@ ytm-shorts-lockup-view-model`,
       return false;
     } else {
       // Try to use channelName as handle if does not have spaces
+      // Add @ if missing or use as is if already starts with @
       if (
         !channelName.trim().includes(" ") &&
-        lowerCaseWhitelist.includes(`@${channelName}`.trim().toLowerCase())
+        (lowerCaseWhitelist.includes(`@${channelName}`.trim().toLowerCase()) ||
+          (channelName.startsWith("@") &&
+            lowerCaseWhitelist.includes(channelName.trim().toLowerCase())))
       ) {
         return true;
       }
@@ -1916,6 +1930,7 @@ ytm-shorts-lockup-view-model`,
       this.logInfo(
         `isWhitelistedChannel: could not retrieve handle for channelName: ${channelName}`,
       );
+      // No further way to do lookups
       return false;
     } else {
       return lowerCaseWhitelist.includes(handle.trim().toLowerCase());
@@ -1965,6 +1980,11 @@ ytm-shorts-lockup-view-model`,
       // do not cache full response, we only cache the final result below
       true,
     );
+
+    if (result.response.ok) {
+      // Delete the search suggestion to avoid polluting user search history
+      await this.deleteSearchSuggestion(`${decodedQuery} ${decodedQuery}`);
+    }
 
     if (!result || !result.response || !result.response.ok) {
       this.logInfo(
@@ -2052,9 +2072,6 @@ ytm-shorts-lockup-view-model`,
 
     // Store in cache
     this.setSessionCache(requestIdentifier, response);
-
-    // Delete the search suggestion to avoid polluting user search history
-    await this.deleteSearchSuggestion(`${decodedQuery} ${decodedQuery}`);
 
     return response;
   },
@@ -2292,7 +2309,7 @@ ytm-shorts-lockup-view-model`,
       "https://suggestqueries-clients6.youtube.com/complete/deleteitems",
     );
     url.searchParams.set("client", "youtube");
-    url.searchParams.set("delq", search_query);
+    url.searchParams.set("delq", encodeURIComponent(search_query));
 
     const tok = this.getSuggestionsTOK();
 
