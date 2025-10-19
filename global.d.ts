@@ -672,19 +672,6 @@ declare global {
         attributeName: string,
         videoId: string,
       ) => void;
-
-      /**
-       * Get the current PSUGGEST_TOKEN from YouTube's internal config
-       * @returns The PSUGGEST_TOKEN or null if not found
-       */
-      getSuggestionsTOK: () => string | null;
-
-      /**
-       * Use `https://suggestqueries-clients6.youtube.com/complete/deleteitems?client=youtube&delq={search_query}&tok={FROM COOKIES alike : oQTfQgmPVu6hxACsgRNGNA}
-       * @param search_query The search query to delete from suggestions
-       * @returns Resolves when the deletion request is complete
-       */
-      deleteSearchSuggestion: (search_query?: string) => Promise<void>;
     };
   }
 }
