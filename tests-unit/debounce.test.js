@@ -428,7 +428,7 @@ describe("YoutubeAntiTranslate.debounce", () => {
     await p3;
   });
 
-  it("debounced synchronous function that takes still respects debounce wait", () => {
+  it("debounced synchronous function that takes time still respects debounce wait", () => {
     const rafSpy = vi.spyOn(global, "requestAnimationFrame");
 
     const fn = vi.fn(() => {
