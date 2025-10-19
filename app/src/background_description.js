@@ -278,29 +278,6 @@ function updateTooltipChapter() {
       }
     }
   }
-
-  // // Repeat with Brave selectors
-  // const braveTimeElement = visibleTooltip.querySelector(
-  //   ".ytp-tooltip-progress-bar-pill-time-stamp",
-  // );
-  // const braveTitleElement = visibleTooltip.querySelector(
-  //   ".ytp-tooltip-progress-bar-pill-title",
-  // );
-  //
-  // if (braveTimeElement && braveTitleElement) {
-  //   const braveTimeString = braveTimeElement.textContent?.trim();
-  //   if (braveTimeString) {
-  //     const braveTimeInSeconds = timeStringToSeconds(braveTimeString);
-  //     const braveTargetChapter = findChapterByTime(
-  //       braveTimeInSeconds,
-  //       cachedChapters,
-  //     );
-
-  //     if (braveTargetChapter) {
-  //       braveTitleElement.textContent = braveTargetChapter.title;
-  //     }
-  //   }
-  // }
 }
 
 /**
