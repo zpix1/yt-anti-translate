@@ -200,6 +200,7 @@ ytm-shorts-lockup-view-model`,
     waitMinMs = 90,
     includeArgsInSignature = false,
     getSignature = undefined,
+    maxLongRunningMs = waitMinMs * 10,
   ) {
     if (!func["__debounceId"]) {
       Object.defineProperty(func, "__debounceId", {
@@ -239,12 +240,8 @@ ytm-shorts-lockup-view-model`,
       if (result && typeof result.then === "function") {
         const maybePromise = Promise.resolve(result);
         entry.activePromise = maybePromise;
+        entry.lastPromiseTime = time;
         maybePromise.finally(() => {
-          entry.lastExecTime =
-            typeof performance !== "undefined" &&
-            typeof performance.now === "function"
-              ? performance.now()
-              : Date.now();
           entry.activePromise = null;
         });
       } else {
@@ -263,6 +260,19 @@ ytm-shorts-lockup-view-model`,
 
       const elapsed = time - entry.lastExecTime;
       const stillRunning = !!entry.activePromise;
+
+      // clear activePromise if it takes longer than maxLongRunningMs
+      if (entry.activePromise && elapsed > maxLongRunningMs) {
+        // Safely attempt to terminate the promise
+        try {
+          if (typeof entry.activePromise.cancel === "function") {
+            entry.activePromise.cancel();
+          }
+        } catch (error) {
+          this.logInfo("Error cancelling promise:", error);
+        }
+        entry.activePromise = null;
+      }
 
       if (!stillRunning && elapsed >= waitMinMs) {
         const { context, args } = entry.queued;

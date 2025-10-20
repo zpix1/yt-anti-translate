@@ -22,7 +22,13 @@ function restoreRAFStub() {
 
 describe("YoutubeAntiTranslate.debounce", () => {
   beforeEach(() => {
-    vi.useFakeTimers();
+    vi.useFakeTimers({
+      toFake: ["Date", "nextTick", "performance", "setTimeout"],
+      shouldAdvanceTime: false,
+      advanceTimeDelta: 0,
+      now: 0,
+      shouldClearNativeTimers: false,
+    });
     installRAFStub();
     // Ensure default visibility unless the test overrides it
     Object.defineProperty(document, "hidden", {
@@ -250,15 +256,15 @@ describe("YoutubeAntiTranslate.debounce", () => {
     const debounced2 = debounce(fn2, 30);
     const rafSpy = vi.spyOn(global, "requestAnimationFrame");
 
-    debounced1(); // First call with "A" signature - should run immediately
-    debounced2(); // First call with "A" signature - should run immediately
+    debounced1(); // First call with fn1 signature - should run immediately
+    debounced2(); // First call with fn2 signature - should run immediately
 
     vi.runOnlyPendingTimers();
     expect(fn1).toHaveBeenCalledTimes(1); // First call runs immediately
     expect(fn2).toHaveBeenCalledTimes(1); // First call runs immediately
 
-    debounced1(); // Second call with "A" signature within wait window - should be queued
-    debounced2(); // Second call with "A" signature within wait window - should be queued
+    debounced1(); // Second call with fn1 signature within wait window - should be queued
+    debounced2(); // Second call with fn2 signature within wait window - should be queued
 
     vi.runOnlyPendingTimers();
     expect(fn1).toHaveBeenCalledTimes(1); // No new calls yet
@@ -281,10 +287,23 @@ describe("YoutubeAntiTranslate.debounce", () => {
     const rafSpy = vi.spyOn(global, "requestAnimationFrame");
 
     // create an async function that waits (simulated work)
-    const fn = vi.fn(async () => {
+    let allowNextResolve = false;
+    // create an async function that waits (simulated work)
+    const fn = vi.fn(() => {
       // simulate async work by awaiting a promise that resolves after a timeout
-      await new Promise((res) => setTimeout(res, 100));
-      return "done";
+
+      // Promise to re-enter the async function until allowNextResolve is true
+      return new Promise((res) => {
+        const checkResolve = () => {
+          if (allowNextResolve) {
+            res("done");
+          } else {
+            // re-check after a short delay
+            setTimeout(checkResolve, 0);
+          }
+        };
+        checkResolve();
+      });
     });
 
     const debounced = debounce(fn, 30);
@@ -308,12 +327,12 @@ describe("YoutubeAntiTranslate.debounce", () => {
     expect(fn).toHaveBeenCalledTimes(1);
 
     // Finish the async work of the first call by advancing timers for its internal setTimeout
-    vi.advanceTimersByTime(70); // total 100ms for async work
-    vi.runOnlyPendingTimers();
+    vi.advanceTimersByTime(100); // Advance by an arbitrary amount of time
+    allowNextResolve = true; // Allow the first call to resolve
     await vi.runOnlyPendingTimersAsync(); // allow Promise microtasks to flush
+    expect(fn).toHaveBeenCalledTimes(1); // queued call should not have started yet
 
-    // Now advance past the debounce wait so the queued call executes
-    vi.advanceTimersByTime(1); // total > 100ms + 1ms since first call
+    vi.advanceTimersByTime(1);
     vi.runOnlyPendingTimers();
 
     // queued call should have executed once async slot is scheduled
@@ -335,11 +354,23 @@ describe("YoutubeAntiTranslate.debounce", () => {
   it("debounced async functions that takes time are not concurrently executed and the queue is still limited to a maximum of one", async () => {
     const rafSpy = vi.spyOn(global, "requestAnimationFrame");
 
+    let allowNextResolve = false;
     // create an async function that waits (simulated work)
-    const fn = vi.fn(async () => {
+    const fn = vi.fn(() => {
       // simulate async work by awaiting a promise that resolves after a timeout
-      await new Promise((res) => setTimeout(res, 100));
-      return "done";
+
+      // Promise to re-enter the async function until allowNextResolve is true
+      return new Promise((res) => {
+        const checkResolve = () => {
+          if (allowNextResolve) {
+            res("done");
+          } else {
+            // re-check after a short delay
+            setTimeout(checkResolve, 0);
+          }
+        };
+        checkResolve();
+      });
     });
 
     const debounced = debounce(fn, 30);
@@ -348,38 +379,36 @@ describe("YoutubeAntiTranslate.debounce", () => {
     const p1 = debounced();
 
     // Fast-forward timers to allow any immediate scheduling to run
-    vi.runOnlyPendingTimers();
+    await vi.runOnlyPendingTimersAsync();
     expect(fn).toHaveBeenCalledTimes(1);
 
     // Immediately call again within wait window; it should be queued (not start immediately)
     const p2 = debounced();
-    vi.runOnlyPendingTimers();
+    await vi.runOnlyPendingTimersAsync();
     expect(fn).toHaveBeenCalledTimes(1);
 
     // Advance past the wait window - still should not have executed the queued call
     // as the first call is still in progress
     vi.advanceTimersByTime(30);
-    vi.runOnlyPendingTimers();
+    await vi.runOnlyPendingTimersAsync();
     expect(fn).toHaveBeenCalledTimes(1);
 
     // Attempt to call agin while first call is still in progress and one is already queued
     const p3 = debounced();
-    vi.runOnlyPendingTimers();
+    await vi.runOnlyPendingTimersAsync();
     expect(fn).toHaveBeenCalledTimes(1); // still only first call
 
-    // Finish the async work of the first call by advancing timers for its internal setTimeout
-    vi.advanceTimersByTime(70); // total 100ms for async work
-    vi.runOnlyPendingTimers();
+    vi.advanceTimersByTime(90); // Advance by an arbitrary amount of time
+    allowNextResolve = true; // Finish the async work of the first call
     await vi.runOnlyPendingTimersAsync(); // allow Promise microtasks to flush
+    expect(fn).toHaveBeenCalledTimes(1); // queued call should have started now
 
-    // Now advance past the debounce wait so the queued call executes
-    vi.advanceTimersByTime(1); // total > 100ms + 1ms since first call
-    vi.runOnlyPendingTimers();
+    vi.advanceTimersByTime(1);
+    await vi.runOnlyPendingTimersAsync();
 
     // queued call should have executed once async slot is scheduled
     expect(fn).toHaveBeenCalledTimes(2);
 
-    vi.runAllTimers();
     await vi.runAllTimersAsync();
 
     expect(fn).toHaveBeenCalledTimes(2); // No additional calls
@@ -414,7 +443,6 @@ describe("YoutubeAntiTranslate.debounce", () => {
     // All calls should have been debounced
     expect(fn).toHaveBeenCalledTimes(1);
 
-    vi.runAllTimers();
     await vi.runAllTimersAsync();
 
     expect(fn).toHaveBeenCalledTimes(2); // 1 additional call from the queue
@@ -455,5 +483,143 @@ describe("YoutubeAntiTranslate.debounce", () => {
 
     // Ensure RAF was used to schedule the queued call (when document not hidden)
     expect(rafSpy).toHaveBeenCalled();
+  });
+  it("a separate instance debounced is unaffected by another instance's async function that takes time", async () => {
+    const rafSpy = vi.spyOn(global, "requestAnimationFrame");
+
+    const fnShort = vi.fn();
+    // create an async function that waits (simulated work)
+    let allowNextResolve = false;
+    // create an async function that waits (simulated work)
+    const fnLong = vi.fn(() => {
+      // simulate async work by awaiting a promise that resolves after a timeout
+
+      // Promise to re-enter the async function until allowNextResolve is true
+      return new Promise((res) => {
+        const checkResolve = () => {
+          if (allowNextResolve) {
+            res("done");
+          } else {
+            // re-check after a short delay
+            setTimeout(checkResolve, 0);
+          }
+        };
+        checkResolve();
+      });
+    });
+
+    const debouncedLong = debounce(fnLong, 30);
+    const debouncedShort = debounce(fnShort, 30);
+
+    // First call should run immediately (start executing async function)
+    const p1Long = debouncedLong();
+    const p1Short = debouncedShort();
+
+    vi.advanceTimersByTime(1);
+
+    // Fast-forward timers to allow any immediate scheduling to run
+    await vi.runOnlyPendingTimersAsync();
+    expect(fnLong).toHaveBeenCalledTimes(1);
+    expect(fnShort).toHaveBeenCalledTimes(1);
+
+    // Immediately call again within wait window; it should be queued (not start immediately)
+    const p2Long = debouncedLong();
+    const p2Short = debouncedShort();
+    await vi.runOnlyPendingTimersAsync();
+    expect(fnLong).toHaveBeenCalledTimes(1);
+    expect(fnShort).toHaveBeenCalledTimes(1);
+
+    // Advance past the wait window - still should not have executed the queued call
+    // as the first call is still in progress
+    vi.advanceTimersByTime(30);
+    await vi.runOnlyPendingTimersAsync();
+    expect(fnLong).toHaveBeenCalledTimes(1);
+    expect(fnShort).toHaveBeenCalledTimes(2); // short function should have executed its queued call
+
+    vi.advanceTimersByTime(100); // Advance by an arbitrary amount of time
+    allowNextResolve = true;
+    await vi.runOnlyPendingTimersAsync();
+
+    await vi.runAllTimersAsync();
+
+    expect(fnLong).toHaveBeenCalledTimes(2);
+
+    // Ensure RAF was used to schedule the queued call (when document not hidden)
+    expect(rafSpy).toHaveBeenCalled();
+
+    // Await the returned promises to avoid unhandled rejections and to ensure completions
+    await p1Long;
+    await p2Long;
+    await p1Short;
+    await p2Short;
+  });
+
+  it("debounced async function that takes more than 10 time waits to execute clear the activePromise flag", async () => {
+    const rafSpy = vi.spyOn(global, "requestAnimationFrame");
+
+    // create an async function that waits (simulated work)
+    let allowNextResolve = false;
+    // create an async function that waits (simulated work)
+    const fn = vi.fn(() => {
+      // simulate async work by awaiting a promise that resolves after a timeout
+
+      // Promise to re-enter the async function until allowNextResolve is true
+      return new Promise((res) => {
+        const checkResolve = () => {
+          if (allowNextResolve) {
+            res("done");
+          } else {
+            // re-check after a short delay
+            setTimeout(checkResolve, 0);
+          }
+        };
+        checkResolve();
+      });
+    });
+
+    const debounced = debounce(fn, 30);
+
+    // First call should run immediately (start executing async function)
+    const p1 = debounced();
+
+    // Fast-forward timers to allow any immediate scheduling to run
+    vi.runOnlyPendingTimers();
+    expect(fn).toHaveBeenCalledTimes(1);
+
+    // Immediately call again within wait window; it should be queued (not start immediately)
+    const p2 = debounced();
+    vi.runOnlyPendingTimers();
+    expect(fn).toHaveBeenCalledTimes(1);
+
+    // Advance past the wait window - still should not have executed the queued call
+    // as the first call is still in progress
+    vi.advanceTimersByTime(30);
+    vi.runOnlyPendingTimers();
+    expect(fn).toHaveBeenCalledTimes(1);
+
+    // Advance time by 5 times the wait window - half of the maxLongRunningMs (150ms)
+    vi.advanceTimersByTime(150);
+    await vi.runOnlyPendingTimersAsync(); // allow Promise microtasks to flush
+
+    expect(fn).toHaveBeenCalledTimes(1); // queued call should not have started yet
+
+    // Advance past 10 times the wait window to trigger clearing of activePromise flag
+    vi.advanceTimersByTime(150);
+    await vi.runOnlyPendingTimersAsync(); // allow Promise microtasks to flush
+
+    expect(fn).toHaveBeenCalledTimes(2); // queued call should now execute
+
+    allowNextResolve = true; // Allow the first call to resolve
+    await vi.runOnlyPendingTimersAsync();
+    await vi.runAllTimersAsync();
+
+    expect(fn).toHaveBeenCalledTimes(2); // No additional calls
+
+    // Ensure RAF was used to schedule the queued call (when document not hidden)
+    expect(rafSpy).toHaveBeenCalled();
+
+    // Await the returned promises to avoid unhandled rejections and to ensure completions
+    await p1;
+    await p2;
   });
 });
