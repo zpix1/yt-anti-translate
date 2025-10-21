@@ -167,7 +167,7 @@ async function untranslateCurrentVideo() {
 // See "docs/Figure 2.png"
 async function untranslateCurrentVideoHeadLink() {
   const fakeNodeID = "yt-anti-translate-fake-node-video-head-link";
-  const originalNodeSelector = `${window.YoutubeAntiTranslate.getPlayerSelector()} a.ytp-title-link:not(#${fakeNodeID})`;
+  const originalNodeSelector = `${window.YoutubeAntiTranslate.getPlayerSelector()} a.ytp-title-link:not(#${fakeNodeID}), ${window.YoutubeAntiTranslate.getPlayerSelector()} h2.ytPlayerOverlayVideoDetailsRendererTitle:not(#${fakeNodeID})`;
   const originalNodePartialSelector = `a.ytp-title-link:not(#${fakeNodeID})`;
 
   await createOrUpdateUntranslatedFakeNode(
@@ -736,18 +736,32 @@ async function untranslateOtherVideos(intersectElements = null) {
           video.querySelector(
             `a.yt-lockup-metadata-view-model__title${hrefFilter}`,
           ) ||
-          (video.matches(`a.ytp-videowall-still${hrefFilter}`)
-            ? video
-            : null) ||
-          (video.matches(`a.ytp-ce-covering-overlay${hrefFilter}`)
-            ? video
-            : null) ||
-          (video.matches(`a.ytp-suggestion-link${hrefFilter}`)
-            ? video
-            : null) ||
           video.querySelector(`a.yt-simple-endpoint${hrefFilter}`);
 
         if (!linkElement) {
+          // Try Matches logic
+          function isMatches(video) {
+            let result = false;
+            if (
+              video.matches(`a.ytp-videowall-still${hrefFilter}`) ||
+              video.matches(`a.ytp-ce-covering-overlay${hrefFilter}`) ||
+              video.matches(`a.ytp-suggestion-link${hrefFilter}`) ||
+              video.matches(
+                `a.ytp-autonav-endscreen-link-container${hrefFilter}`,
+              ) ||
+              video.matches(
+                `a.autonav-endscreen-cued-video-container${hrefFilter}`,
+              ) ||
+              video.matches(`a.ytp-modern-videowall-still${hrefFilter}`)
+            ) {
+              result = true;
+            }
+            return result;
+          }
+          if (isMatches(video)) {
+            linkElement = video;
+          }
+
           // Try another common pattern before giving up
           if (!linkElement) {
             linkElement =
@@ -768,6 +782,7 @@ async function untranslateOtherVideos(intersectElements = null) {
               }
             }
           }
+
           if (!linkElement) {
             return; // Skip if essential element isn't found
           }
@@ -844,7 +859,12 @@ async function untranslateOtherVideos(intersectElements = null) {
           video.querySelector("div.ytp-suggestion-title") ||
           video.querySelector(
             "#title.ytd-structured-description-video-lockup-renderer",
-          );
+          ) ||
+          video.querySelector("div.ytp-autonav-endscreen-upnext-title") ||
+          video.querySelector(
+            "div.autonav-endscreen-video-title > .yt-core-attributed-string",
+          ) ||
+          video.querySelector("span.ytp-modern-videowall-still-info-title");
         if (!titleElement) {
           titleElement =
             video.querySelector("yt-formatted-string#video-title") ||
@@ -870,7 +890,8 @@ async function untranslateOtherVideos(intersectElements = null) {
 
         // Get thumbnail container elements
         const thumbnailElements = video.querySelectorAll(
-          'img[src*="i.ytimg.com"]:not(.ytd-moving-thumbnail-renderer):not([src*="ytimg.com/an_webp/"])',
+          `img[src*="i.ytimg.com"]:not(.ytd-moving-thumbnail-renderer):not([src*="ytimg.com/an_webp/"]),
+          div[style*="i.ytimg.com"][style*="background-image"]`,
         );
         if (!thumbnailElements || thumbnailElements.length === 0) {
           // Mark if thumbnail elements are missing to avoid repeated failed attempts
@@ -970,7 +991,8 @@ async function untranslateOtherVideos(intersectElements = null) {
           const originalTitle = response.data.title;
           // Use innerText for comparison/logging as per original logic for these elements
           const currentTitle =
-            titleElement.innerText?.trim() || titleElement.textContent?.trim();
+            titleElement?.innerText?.trim() ||
+            titleElement?.textContent?.trim();
 
           /* -------- Handle video title untranslation -------- */
           if (
@@ -1063,24 +1085,40 @@ async function untranslateOtherVideos(intersectElements = null) {
                   continue;
                 }
 
-                if (!thumbnailElement || !thumbnailElement.src) {
+                let imageSrc;
+
+                if (thumbnailElement.matches("[style*='background-image']")) {
+                  const currentStyle =
+                    thumbnailElement["style"]?.["backgroundImage"] || "";
+                  // extract image src from style.backgroundImage(url("IMAGE_URL"))
+                  imageSrc = currentStyle.match(
+                    /url\(["']?([^"']+)["']?\)/,
+                  )?.[1];
+                } else {
+                  imageSrc = thumbnailElement.src;
+                }
+
+                if (!thumbnailElement || !imageSrc) {
                   continue;
                 }
 
                 if (
-                  thumbnailElement.src.includes("https://i.ytimg.com/vi/") || // path of not-localized thumbnails
-                  thumbnailElement.src.includes("?youtube-anti-translate")
+                  imageSrc.includes("https://i.ytimg.com/vi/") || // path of not-localized thumbnails
+                  imageSrc.includes("?youtube-anti-translate")
                 ) {
                   continue;
                 }
                 // Only update if the thumbnail is different
-                if (!thumbnailElement.src.includes(originalThumbnail)) {
+                if (!imageSrc.includes(originalThumbnail)) {
                   const { width, height } =
-                    await window.YoutubeAntiTranslate.getImageSize(
-                      thumbnailElement.src,
-                    );
-                  thumbnailElement.src =
-                    originalThumbnail + `?youtube-anti-translate=${Date.now()}`;
+                    await window.YoutubeAntiTranslate.getImageSize(imageSrc);
+                  if (thumbnailElement.matches("[style*='background-image']")) {
+                    thumbnailElement.style.backgroundImage = `url("${originalThumbnail}?youtube-anti-translate=${Date.now()}")`;
+                  } else {
+                    thumbnailElement.src =
+                      originalThumbnail +
+                      `?youtube-anti-translate=${Date.now()}`;
+                  }
                   // Add crop ratio to image
                   if (width && height) {
                     const cropRatio = width / height;
@@ -1186,12 +1224,20 @@ async function untranslateOtherVideos(intersectElements = null) {
             mainAuthor
           ) {
             const authors = [];
-            const avatarStacks = video.querySelectorAll(
-              "yt-avatar-stack-view-model yt-avatar-shape img",
+            const avatarStacks = window.YoutubeAntiTranslate.getAllVisibleNodes(
+              video.querySelectorAll(
+                "yt-avatar-stack-view-model yt-avatar-shape img",
+              ),
             );
-            if (avatarStacks && avatarStacks.length > 0) {
+            if (avatarStacks && avatarStacks.length > 1) {
               for (const avatarImage of avatarStacks) {
-                const imgSrc = avatarImage.src;
+                if (avatarImage instanceof HTMLImageElement === false) {
+                  continue;
+                }
+                const avatarImageCasted = /** @type {HTMLImageElement} */ (
+                  avatarImage
+                );
+                const imgSrc = avatarImageCasted.src;
                 if (!imgSrc || imgSrc.trim() === "") {
                   continue;
                 }
@@ -1202,7 +1248,7 @@ async function untranslateOtherVideos(intersectElements = null) {
                   );
 
                 const originalItem = originalCollaborators?.find(
-                  (item) => item.avatarImage === avatarImage.src,
+                  (item) => item.avatarImage === avatarImageCasted.src,
                 );
                 if (!originalItem) {
                   continue;
@@ -1211,9 +1257,18 @@ async function untranslateOtherVideos(intersectElements = null) {
                 authors.push(originalItem.name);
               }
             }
-            if (authors.length === 0) {
+            if (
+              authors.length === 0 &&
+              authorsElement.textContent.includes(
+                " " +
+                  window.YoutubeAntiTranslate.getLocalizedAnd(
+                    document.documentElement.lang,
+                  ) +
+                  " ",
+              )
+            ) {
               // Fallback using video id filtered list
-              // Needed on mobile where avatar stacks are not used
+              // Needed on mobile where avatar stacks are not used and on channel page
               const originalCollaborators =
                 await window.YoutubeAntiTranslate.getOriginalCollaboratorsItemsWithYoutubeI(
                   `${mainAuthor} ${originalTitle}`,
@@ -1503,7 +1558,7 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
           if (settings.untranslateTitle || settings.untranslateThumbnail) {
             /* -------- Handle video title untranslation -------- */
             const realTitle = response.data.title;
-            const currentTitle = titleElement.textContent?.trim(); // Use textContent for typical title spans
+            const currentTitle = titleElement?.textContent?.trim(); // Use textContent for typical title spans
             if (
               !isPlaylist &&
               settings.untranslateTitle &&

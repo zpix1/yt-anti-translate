@@ -256,23 +256,27 @@ function updateTooltipChapter() {
     return;
   }
 
-  const timeElement = visibleTooltip.querySelector(".ytp-tooltip-text");
-  const titleElement = visibleTooltip.querySelector(".ytp-tooltip-title span");
+  const timeElement = window.YoutubeAntiTranslate.getFirstVisible(
+    visibleTooltip.querySelectorAll(
+      ".ytp-tooltip-text, .ytp-tooltip-progress-bar-pill-time-stamp",
+    ),
+  );
+  const titleElement = window.YoutubeAntiTranslate.getFirstVisible(
+    visibleTooltip.querySelectorAll(
+      ".ytp-tooltip-title span, .ytp-tooltip-progress-bar-pill-title",
+    ),
+  );
 
-  if (!timeElement || !titleElement) {
-    return;
-  }
+  if (timeElement && titleElement) {
+    const timeString = timeElement.textContent?.trim();
+    if (timeString) {
+      const timeInSeconds = timeStringToSeconds(timeString);
+      const targetChapter = findChapterByTime(timeInSeconds, cachedChapters);
 
-  const timeString = timeElement.textContent?.trim();
-  if (!timeString) {
-    return;
-  }
-
-  const timeInSeconds = timeStringToSeconds(timeString);
-  const targetChapter = findChapterByTime(timeInSeconds, cachedChapters);
-
-  if (targetChapter) {
-    titleElement.textContent = targetChapter.title;
+      if (targetChapter) {
+        titleElement.textContent = targetChapter.title;
+      }
+    }
   }
 }
 
@@ -928,7 +932,7 @@ async function updateCollaboratorAuthors(avatarStack, originalAuthor) {
 
   const authors = [];
 
-  if (avatarStackImages) {
+  if (avatarStackImages && avatarStackImages.length > 1) {
     for (const avatarImage of avatarStackImages) {
       const imgSrc = avatarImage.src;
       if (!imgSrc || imgSrc.trim() === "") {

@@ -161,9 +161,13 @@ a.ytp-videowall-still,
 a.ytp-ce-covering-overlay,
 a.ytp-suggestion-link,
 div.fullscreen-recommendation,
-ytm-item-section-renderer,
 ytd-structured-description-video-lockup-renderer,
-ytm-playlist-card-renderer` /*this last one is a playlist element but is used for thumbnail*/,
+a.ytp-autonav-endscreen-link-container,
+a.autonav-endscreen-cued-video-container,
+a.ytp-modern-videowall-still,
+
+ytm-compact-playlist-renderer,
+ytm-playlist-card-renderer` /*the last two selectors are playlist elements but are used for thumbnail*/,
   ALL_ARRAYS_SHORTS_SELECTOR: `div.style-scope.ytd-rich-item-renderer,
 ytm-shorts-lockup-view-model`,
 
@@ -1485,9 +1489,15 @@ ytm-shorts-lockup-view-model`,
   },
 
   getOriginalCollaboratorsItemsWithYoutubeI: async function (search_query) {
-    return null;
     if (!search_query || search_query.trim() === "") {
       return null;
+    }
+
+    let decodedQuery;
+    try {
+      decodedQuery = decodeURIComponent(search_query);
+    } catch {
+      decodedQuery = search_query;
     }
 
     // build the request body
@@ -1500,7 +1510,7 @@ ytm-shorts-lockup-view-model`,
           // That always get the original language as a result
         },
       },
-      query: search_query,
+      query: `${decodedQuery} ${decodedQuery}`, // Trick to prioritize exact matches and make them unique for deletion
     };
 
     const requestIdentifier = `youtubei/v1/results_${JSON.stringify(body)}`;
@@ -1520,8 +1530,10 @@ ytm-shorts-lockup-view-model`,
     const response = await this.cachedRequest(
       search,
       JSON.stringify(body),
+      // If we have a valid TOK to delete the suggestion afterwards we can login; else search anonymously
+      // this is to avoid filling user search history with unwanted queries */
       await this.getYoutubeIHeadersWithCredentials(true),
-      // doNotCache true as would take too much space
+      // do not cache full response, we only cache the final result below
       true,
     );
 
@@ -1605,7 +1617,6 @@ ytm-shorts-lockup-view-model`,
             }
           }
         }
-        //}
       }
     }
 
@@ -1758,10 +1769,10 @@ ytm-shorts-lockup-view-model`,
     const lowerCaseWhitelist = whitelist.map((item) => item.toLowerCase());
 
     if (
+      (!handle || typeof handle !== "string" || handle.trim() === "") &&
       (!channelId ||
         typeof channelId !== "string" ||
         channelId.trim() === "") &&
-      (!handle || typeof handle !== "string" || handle.trim() === "") &&
       (!channelUrl ||
         typeof channelUrl !== "string" ||
         channelUrl.trim() === "") &&
@@ -1772,6 +1783,7 @@ ytm-shorts-lockup-view-model`,
       return false;
     }
 
+    // Parse channelUrl if provided
     let /** @type {URL} */ channelURL = null;
     if (channelUrl && typeof channelUrl === "string") {
       const url = channelUrl.startsWith("http")
@@ -1784,17 +1796,21 @@ ytm-shorts-lockup-view-model`,
       }
     }
 
+    // Attempt to extract missing info from channelURL if available
     if (channelURL) {
       // Extract id or handle from URL
       if (!channelId && channelURL.pathname.startsWith("/channel/")) {
+        // Only extract if not already provided
         var match = channelURL.pathname.match(/\/channel\/([^/?]+)/);
         channelId = match ? match[1] : null;
       } else if (!handle && channelURL.pathname.startsWith("/@")) {
+        // Only extract if not already provided
         const match = channelURL.pathname.match(/\/(@[^/?]+)/);
         handle = match ? match[1] : null;
       }
     }
 
+    // 1 --- Check handle first if provided and valid ---
     if (
       !handle ||
       typeof handle !== "string" ||
@@ -1812,12 +1828,14 @@ ytm-shorts-lockup-view-model`,
           typeof channelName !== "string" ||
           channelName.trim() === "")
       ) {
+        // No other data for further lookups was provided
         return false;
       }
     } else {
       return lowerCaseWhitelist.includes(handle.trim().toLowerCase());
     }
 
+    // 2 --- Check channelId next if provided and valid ---
     if (
       !channelId ||
       typeof channelId !== "string" ||
@@ -1831,6 +1849,7 @@ ytm-shorts-lockup-view-model`,
         typeof channelName !== "string" ||
         channelName.trim() === ""
       ) {
+        // No other data for the last lookup was provided
         return false;
       }
     } else {
@@ -1854,6 +1873,7 @@ ytm-shorts-lockup-view-model`,
       return lowerCaseWhitelist.includes(handle.trim().toLowerCase());
     }
 
+    // 3 --- Finally check channelName if provided and valid ---
     if (
       !channelName ||
       typeof channelName !== "string" ||
@@ -1863,9 +1883,12 @@ ytm-shorts-lockup-view-model`,
       return false;
     } else {
       // Try to use channelName as handle if does not have spaces
+      // Add @ if missing or use as is if already starts with @
       if (
         !channelName.trim().includes(" ") &&
-        lowerCaseWhitelist.includes(`@${channelName}`.trim().toLowerCase())
+        (lowerCaseWhitelist.includes(`@${channelName}`.trim().toLowerCase()) ||
+          (channelName.startsWith("@") &&
+            lowerCaseWhitelist.includes(channelName.trim().toLowerCase())))
       ) {
         return true;
       }
@@ -1878,6 +1901,7 @@ ytm-shorts-lockup-view-model`,
       this.logInfo(
         `isWhitelistedChannel: could not retrieve handle for channelName: ${channelName}`,
       );
+      // No further way to do lookups
       return false;
     } else {
       return lowerCaseWhitelist.includes(handle.trim().toLowerCase());
@@ -1904,7 +1928,7 @@ ytm-shorts-lockup-view-model`,
           clientVersion: "2.20250527.00.00",
         },
       },
-      query: decodedQuery,
+      query: `${decodedQuery} ${decodedQuery}`, // Trick to prioritize exact matches and make them unique for deletion
       // "EgIQAg==" = filter=channels  (protobuf: {12: {1:2}})
       params: "EgIQAg==",
     };
@@ -1921,8 +1945,10 @@ ytm-shorts-lockup-view-model`,
     const result = await this.cachedRequest(
       search,
       JSON.stringify(body),
+      // If we have a valid TOK to delete the suggestion afterwards we can login; else search anonymously
+      // this is to avoid filling user search history with unwanted queries */
       await this.getYoutubeIHeadersWithCredentials(true),
-      // As it might take too much space
+      // do not cache full response, we only cache the final result below
       true,
     );
 
@@ -1940,7 +1966,7 @@ ytm-shorts-lockup-view-model`,
     let channelHandle;
 
     for (const sectionContent of json.contents?.twoColumnSearchResultsRenderer
-      ?.primaryContents.sectionListRenderer?.contents || []) {
+      ?.primaryContents?.sectionListRenderer?.contents || []) {
       for (const itemRenderedContent of sectionContent?.itemSectionRenderer
         ?.contents || []) {
         if (
@@ -1964,6 +1990,7 @@ ytm-shorts-lockup-view-model`,
     }
 
     for (const sectionContent of json.contents?.sectionListRenderer?.contents ||
+      json["contents.sectionListRenderer.contents"] ||
       []) {
       for (const itemRenderedContent of sectionContent?.itemSectionRenderer
         ?.contents || []) {
