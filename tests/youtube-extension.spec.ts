@@ -857,7 +857,8 @@ test.describe("YouTube Anti-Translate extension", () => {
     await context.close();
 
     /**
-     * If Track name is "Default" that is always an advert
+     * If Track name is "Default" that is always an advert.
+     * Retries up to 3 times to skip adverts and get a valid track.
      * @param currentTrack - the audio track that could be of an advert
      * @param currentVideoId - the video id that could be of an advert
      * @returns a new short audio track and video id
@@ -866,9 +867,11 @@ test.describe("YouTube Anti-Translate extension", () => {
       currentTrack: any,
       currentVideoId: string | undefined,
     ): Promise<[any, string | undefined]> {
-      if (
+      let retries = 3;
+      while (
+        retries-- > 0 &&
         currentTrack[getTrackLanguageFieldObjectName(currentTrack)!]?.name ===
-        "Default"
+          "Default"
       ) {
         const buttonDown2 = page
           .locator("#navigation-button-down button")
@@ -888,7 +891,7 @@ test.describe("YouTube Anti-Translate extension", () => {
         }
         await page.waitForTimeout(process.env.CI ? 3000 : 2000);
 
-        return await page.evaluate(async () => {
+        [currentTrack, currentVideoId] = await page.evaluate(async () => {
           type PlayerResponse = {
             videoDetails?: { videoId?: string };
           };
@@ -903,9 +906,8 @@ test.describe("YouTube Anti-Translate extension", () => {
             (await video?.getPlayerResponse?.())?.videoDetails?.videoId,
           ];
         });
-      } else {
-        return [currentTrack, currentVideoId];
       }
+      return [currentTrack, currentVideoId];
     }
   });
 
