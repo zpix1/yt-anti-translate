@@ -1,6 +1,6 @@
 YouTube title translation is helpful for beginners, but once you know the language well enough to understand original titles, it quickly becomes frustrating. Even worse, there's no proper way to disable this — unless you change your YouTube country, which messes up your recommendations and trends.
 
-This extension fixes the problem. Over 50,000 users trust it to restore YouTube the way it was meant to be.
+This extension fixes the problem. Over 100,000 users trust it to restore YouTube the way it was meant to be.
 
 Features:
 
@@ -43,7 +43,7 @@ ____
 
 Автоматический перевод заголовков на YouTube может быть полезен для новичков, но если вы уже понимаете язык, такие переводы начинают раздражать. Особенно неприятно, что отключить их нельзя — только сменой страны в настройках, что ломает рекомендации и тренды.
 
-Это расширение решает проблему. Более 50 000 пользователей доверяют ему возвращение настоящего YouTube.
+Это расширение решает проблему. Более 100 000 пользователей доверяют ему возвращение настоящего YouTube.
 
 Возможности:
 
