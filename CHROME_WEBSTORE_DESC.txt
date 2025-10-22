@@ -17,6 +17,22 @@ Features:
 🎯 Advanced settings — whitelist specific channels to keep translations if needed
 🧼 Lightweight and safe — clean code, no tracking, open source
 
+📱 How to use on Android:
+
+Chrome for Android doesn't support extensions, but you have two options:
+
+1️⃣ Firefox for Android (Recommended):
+   • Install Firefox
+   • Visit FireFox page of this extension: https://addons.mozilla.org/firefox/addon/youtube-anti-translate-mv3/
+   • Install this extension
+   • Open YouTube and enjoy!
+
+2️⃣ Kiwi Browser:
+   • Install Kiwi Browser
+   • Open Kiwi and go to this page (Chrome Web Store)
+   • Install this extension
+   • Open YouTube and enjoy!
+
 💖 This is a completely free, open‑source project maintained by volunteers. If the extension has helped you, please consider supporting the original creator at https://www.patreon.com/zpix1 or the maintainers at https://github.com/zpix1/yt-anti-translate.
 
 Firefox version: https://addons.mozilla.org/ru/firefox/addon/youtube-anti-translate-mv3/
@@ -43,6 +59,22 @@ ____
 ⚙️ Работает автоматически — без настроек и ключей API
 🎯 Расширенные настройки — можно добавить каналы в белый список для сохранения переводов
 🧼 Легкое и безопасное — чистый код, без слежки, с открытым исходным кодом
+
+📱 Как использовать на Android:
+
+Chrome для Android не поддерживает расширения, но есть два варианта:
+
+1️⃣ Firefox для Android (Рекомендуется):
+   • Установите Firefox
+   • Посетите страницу расширения в Firefox: https://addons.mozilla.org/ru/firefox/addon/youtube-anti-translate-mv3/
+   • Установите это расширение
+   • Откройте YouTube и наслаждайтесь!
+
+2️⃣ Kiwi Browser:
+   • Установите Kiwi Browser
+   • Откройте Kiwi и перейдите на эту страницу (Chrome Web Store)
+   • Установите это расширение
+   • Откройте YouTube и наслаждайтесь!
 
 💖 Это полностью бесплатный open‑source‑проект, поддерживаемый энтузиастами. Если расширение оказалось вам полезным, пожалуйста, поддержите оригинального автора на странице донатов https://www.patreon.com/zpix1 или мейнтейнеров на GitHub https://github.com/zpix1/yt-anti-translate.
 
