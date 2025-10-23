@@ -324,7 +324,12 @@ export async function findLoginButton(
 
       const youTabLocator = page
         .locator(":visible")
-        .getByRole("tab", { name: possibleLabels });
+        .locator(
+          "#items > [role='tab'] > a#endpoint, [role='navigation'] #items a#endpoint, [role='tablist'] [role='tab']",
+          {
+            hasText: possibleLabels,
+          },
+        );
       const youTab =
         maxLocatorsRetry > 0
           ? (
@@ -903,7 +908,12 @@ export async function isLocaleCorrect(
       throw "isEarlyLoginLocaleCorrect: Unsupported locale";
   }
 
-  const homeTab = page.getByRole("tab", { name: homeLabel }).first();
+  const homeTab = page
+    .locator(
+      "#items > [role='tab'] > a#endpoint, [role='navigation'] #items a#endpoint, [role='tablist'] [role='tab']",
+      { hasText: homeLabel },
+    )
+    .first();
 
   try {
     await homeTab.waitFor();

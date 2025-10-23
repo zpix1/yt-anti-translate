@@ -248,7 +248,7 @@ export async function setupUBlockAndAuth(
     if (loginNeeded) {
       await waitForSelectorOrRetryWithPageReload(
         page,
-        "#items > [role='tab'] > a#endpoint, [role='tablist'] [role='tab']",
+        "#items > [role='tab'] > a#endpoint, [role='navigation'] #items a#endpoint, [role='tablist'] [role='tab']",
       );
     }
   }
