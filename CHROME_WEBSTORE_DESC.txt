@@ -35,7 +35,7 @@ Chrome for Android doesn't support extensions, but you have two options:
 
 💖 This is a completely free, open‑source project maintained by volunteers. If the extension has helped you, please consider supporting the original creator at https://www.patreon.com/zpix1 or the maintainers at https://github.com/zpix1/yt-anti-translate.
 
-Firefox version: https://addons.mozilla.org/ru/firefox/addon/youtube-anti-translate-mv3/
+Firefox version: https://addons.mozilla.org/en/firefox/addon/youtube-anti-translate-mv3/
 GitHub page: https://github.com/zpix1/yt-anti-translate
 
 No more awkward or misleading title translations — get YouTube back the way it was meant to be.
@@ -82,3 +82,47 @@ Chrome для Android не поддерживает расширения, но �
 Страница на GitHub: https://github.com/zpix1/yt-anti-translate
 
 Больше никаких кривых или вводящих в заблуждение переводов — верните себе настоящий YouTube.
+____
+
+La traduzione automatica dei titoli su YouTube può essere utile per i principianti, ma se conosci già la lingua, queste traduzioni diventano presto fastidiose. Per aggiungere la beffa al danno, non esiste un metodo ufficiale per disattivarle — se non cambiando il paese nelle impostazioni, ma ció rovina le tue raccomandazioni e le tendenze.
+
+Questa estensione risolve il problema. Oltre 100.000 utenti si affidano a lei per riportare YouTube com’era in origine.
+
+Funzionalità:
+
+✨ Ripristina i titoli e descrizioni originali dei video invece di quelli tradotti automaticamente
+📝 Ripristina le descrizioni e i capitoli originali dei video 
+🖼️ Ripristina le immagini originali dei video 
+🎨 Ripristina il branding, le descrizioni e i nomi originali dei canali  
+🔇 Disattiva la traduzione automatica dell’audio (doppiaggio)
+📑 Ripristina i capitoli originali dei video
+📱 Supporta YouTube Shorts — ripristina sia l’audio che i titoli
+📱 Funziona anche sulla versione mobile (m.youtube.com) — ripristina titoli e descrizioni originalie e audio originali (beta) 
+🔔 Corregge le traduzioni nelle notifiche
+🌐 Funziona ovunque — home page, video incorporati in altre pagine, youtube-nocookie.com e altro  
+⚙️ Funziona automaticamente — senza configurazioni né chiavi API
+🎯 Impostazioni avanzate — puoi aggiungere canali a una whitelist per mantenere le traduzioni se vuoi  
+🧼 Leggera e sicura — codice pulito, nessun tracciamento, open source
+
+📱 Come usarla su Android:
+
+Chrome per Android non supporta le estensioni, ma hai due opzioni:
+
+1️⃣ **Firefox per Android (consigliato):**  
+   • Installa Firefox  
+   • Visita la pagina dell’estensione su Firefox: https://addons.mozilla.org/it/firefox/addon/youtube-anti-translate-mv3/  
+   • Installa l’estensione  
+   • Apri YouTube e divertiti!  
+
+2️⃣ **Kiwi Browser:**  
+   • Installa Kiwi Browser  
+   • Apri Kiwi e vai su questa pagina (Chrome Web Store)  
+   • Installa l’estensione  
+   • Apri YouTube e divertiti! 
+
+💖 Questo è un progetto completamente gratuito e open‑source, mantenuto da volontari. Se l’estensione ti è stata utile, considera di supportare il creatore originale su https://www.patreon.com/zpix1 o i manutentori su https://github.com/sponsors/namakeingo
+
+Firefox version: https://addons.mozilla.org/it/firefox/addon/youtube-anti-translate-mv3/
+Pagina GitHub: https://github.com/zpix1/yt-anti-translate
+
+Niente più traduzioni imbarazzanti o fuorvianti dei titoli — riporta YouTube a com’era stato pensato.
