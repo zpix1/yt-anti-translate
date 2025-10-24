@@ -108,13 +108,13 @@ Funzionalità:
 
 Chrome per Android non supporta le estensioni, ma hai due opzioni:
 
-1️⃣ **Firefox per Android (consigliato):**  
+1️⃣ Firefox per Android (consigliato):  
    • Installa Firefox  
    • Visita la pagina dell’estensione su Firefox: https://addons.mozilla.org/it/firefox/addon/youtube-anti-translate-mv3/  
    • Installa l’estensione  
    • Apri YouTube e divertiti!  
 
-2️⃣ **Kiwi Browser:**  
+2️⃣ Kiwi Browser:  
    • Installa Kiwi Browser  
    • Apri Kiwi e vai su questa pagina (Chrome Web Store)  
    • Installa l’estensione  
