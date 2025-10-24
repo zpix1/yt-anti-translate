@@ -97,7 +97,7 @@ Funzionalità:
 🔇 Disattiva la traduzione automatica dell’audio (doppiaggio)
 📑 Ripristina i capitoli originali dei video
 📱 Supporta YouTube Shorts — ripristina sia l’audio che i titoli
-📱 Funziona anche sulla versione mobile (m.youtube.com) — ripristina titoli e descrizioni originalie e audio originali (beta) 
+📱 Funziona anche sulla versione mobile (m.youtube.com) — ripristina titoli e descrizioni originali e audio originali (beta) 
 🔔 Corregge le traduzioni nelle notifiche
 🌐 Funziona ovunque — home page, video incorporati in altre pagine, youtube-nocookie.com e altro  
 ⚙️ Funziona automaticamente — senza configurazioni né chiavi API
