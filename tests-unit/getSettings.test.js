@@ -12,6 +12,7 @@ describe("YoutubeAntiTranslate.getSettings (actual async impl)", () => {
   beforeEach(() => {
     origQuerySelector = document.querySelector;
     origChrome = window.chrome;
+    window.YoutubeAntiTranslate.settingsElement = undefined;
   });
 
   afterEach(() => {
@@ -109,5 +110,16 @@ describe("YoutubeAntiTranslate.getSettings (actual async impl)", () => {
     window.chrome = /** @type {any} */ ({ storage: { sync: {} } });
     const settings = await getSettings();
     expect(settings).toEqual({});
+  });
+
+  it("caches element to avoid multiple querySelector calls", async () => {
+    document.querySelector = vi.fn().mockReturnValue({
+      dataset: { ytantitranslatesettings: JSON.stringify({}) },
+    });
+
+    await getSettings();
+    await getSettings();
+
+    expect(document.querySelector).toBeCalledTimes(1);
   });
 });
