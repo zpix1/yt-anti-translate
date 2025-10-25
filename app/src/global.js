@@ -130,6 +130,9 @@ window.YoutubeAntiTranslate = {
   },
   currentLogLevel: 2, // Default to WARN
 
+  /** @type {Element | undefined} */
+  settingsElement: undefined,
+
   setLogLevel: function (levelName) {
     const newLevel = this.LOG_LEVELS[levelName.toUpperCase()];
     if (typeof newLevel === "number") {
@@ -1152,13 +1155,15 @@ ytm-shorts-lockup-view-model`,
   },
 
   getSettings: async function () {
-    // First try to read from the DOM
-    const element = document.querySelector(
-      'script[type="module"][data-ytantitranslatesettings]',
-    );
-    if (element?.["dataset"]?.ytantitranslatesettings) {
+    if (!this.settingsElement) {
+      this.settingsElement = document.querySelector(
+        'script[type="module"][data-ytantitranslatesettings]',
+      );
+    }
+
+    if (this.settingsElement?.dataset?.ytantitranslatesettings) {
       try {
-        return JSON.parse(element["dataset"].ytantitranslatesettings);
+        return JSON.parse(this.settingsElement.dataset.ytantitranslatesettings);
       } catch {
         // fallback to chrome storage if JSON is invalid
       }

@@ -24,6 +24,7 @@ declare global {
       LOG_PREFIX: string;
       LOG_LEVELS: { [key: string]: number };
       currentLogLevel: number;
+      settingsElement?: HTMLElement | undefined;
       /**
        * Sets the current log level.
        * @param levelName - The name of the log level (e.g., "INFO", "DEBUG").
