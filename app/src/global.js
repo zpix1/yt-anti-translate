@@ -1564,17 +1564,11 @@ ytm-shorts-lockup-view-model`,
     const response = await this.cachedRequest(
       search,
       JSON.stringify(body),
-      // If we have a valid TOK to delete the suggestion afterwards we can login; else search anonymously
-      // this is to avoid filling user search history with unwanted queries */
-      await this.getYoutubeIHeadersWithCredentials(!!this.getSuggestionsTOK()),
+      // Anonymous request to avoid filling user search history with unwanted queries
+      await this.getYoutubeIHeadersWithCredentials(true /* anonymously */),
       // do not cache full response, we only cache the final result below
       true,
     );
-
-    if (response.response.ok) {
-      // Delete the search suggestion to avoid polluting user search history
-      await this.deleteSearchSuggestion(`${decodedQuery} ${decodedQuery}`);
-    }
 
     if (!response?.data) {
       this.logWarning(`Failed to fetch ${search} or parse response`);
@@ -1984,17 +1978,11 @@ ytm-shorts-lockup-view-model`,
     const result = await this.cachedRequest(
       search,
       JSON.stringify(body),
-      // If we have a valid TOK to delete the suggestion afterwards we can login; else search anonymously
-      // this is to avoid filling user search history with unwanted queries */
-      await this.getYoutubeIHeadersWithCredentials(!!this.getSuggestionsTOK()),
+      // Anonymous request to avoid filling user search history with unwanted queries
+      await this.getYoutubeIHeadersWithCredentials(true /* anonymously */),
       // do not cache full response, we only cache the final result below
       true,
     );
-
-    if (result.response.ok) {
-      // Delete the search suggestion to avoid polluting user search history
-      await this.deleteSearchSuggestion(`${decodedQuery} ${decodedQuery}`);
-    }
 
     if (!result || !result.response || !result.response.ok) {
       this.logInfo(
@@ -2284,58 +2272,5 @@ ytm-shorts-lockup-view-model`,
       attributeName,
       `${videoId}__${getCountNumber >= window.YoutubeAntiTranslate.MAX_ATTEMPTS ? window.YoutubeAntiTranslate.MAX_ATTEMPTS : getCountNumber + 1}`,
     );
-  },
-
-  getSuggestionsTOK: function () {
-    // Try to get PSUGGEST_TOKEN from YouTube using their internal logic
-    // `
-    // PNy = _.zq.window;
-    // _.SN = (PNy == null ? void 0 : (han = PNy.yt) == null ? void 0 : han.config_) || (PNy == null ? void 0 : (rW2 = PNy.ytcfg) == null ? void 0 : rW2.data_)
-    // `
-
-    let tok = null;
-    // 1. window.yt?.config_?.SBOX_SETTINGS?.PSUGGEST_TOKEN
-    if (
-      typeof window !== "undefined" &&
-      window["yt"]?.["config_"]?.["SBOX_SETTINGS"]?.["PSUGGEST_TOKEN"]
-    ) {
-      tok = window["yt"]["config_"]["SBOX_SETTINGS"]["PSUGGEST_TOKEN"];
-    }
-    // 2. window?.ytcfg?.data_?.SBOX_SETTINGS?.PSUGGEST_TOKEN
-    else if (
-      typeof window !== "undefined" &&
-      window["ytcfg"]?.["data_"]?.["SBOX_SETTINGS"]?.["PSUGGEST_TOKEN"]
-    ) {
-      tok = window["ytcfg"]["data_"]["SBOX_SETTINGS"]["PSUGGEST_TOKEN"];
-    }
-    return tok;
-  },
-
-  deleteSearchSuggestion: async function (search_query) {
-    if (!search_query || search_query.trim() === "") {
-      return;
-    }
-    const url = new URL(
-      "https://suggestqueries-clients6.youtube.com/complete/deleteitems",
-    );
-    url.searchParams.set("client", "youtube");
-    url.searchParams.set("delq", encodeURIComponent(search_query));
-
-    const tok = this.getSuggestionsTOK();
-
-    if (!tok) {
-      return;
-    }
-    url.searchParams.set("tok", tok);
-
-    // Send the request
-    // We do not have cache around this request as it has no response
-    fetch(url.toString(), {
-      method: "GET",
-      credentials: "include",
-      mode: "no-cors",
-    }).catch((error) => {
-      this.logWarning("deleteSearchSuggestion: fetch error:", error);
-    });
   },
 };

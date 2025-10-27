@@ -290,7 +290,7 @@ describe("YoutubeAntiTranslate.debounce", () => {
     let allowNextResolve = false;
     // create an async function that waits (simulated work)
     const fn = vi.fn(() => {
-      // simulate async work by awaiting a promise that resolves after a timeout
+      // simulate async work by awaiting a promise that resolves only after allowNextResolve is true
 
       // Promise to re-enter the async function until allowNextResolve is true
       return new Promise((res) => {
@@ -357,7 +357,7 @@ describe("YoutubeAntiTranslate.debounce", () => {
     let allowNextResolve = false;
     // create an async function that waits (simulated work)
     const fn = vi.fn(() => {
-      // simulate async work by awaiting a promise that resolves after a timeout
+      // simulate async work by awaiting a promise that resolves only after allowNextResolve is true
 
       // Promise to re-enter the async function until allowNextResolve is true
       return new Promise((res) => {
@@ -426,6 +426,7 @@ describe("YoutubeAntiTranslate.debounce", () => {
     const rafSpy = vi.spyOn(global, "requestAnimationFrame");
 
     const fn = vi.fn(async () => {
+      // simulate a zero-time async function
       await Promise.resolve();
     });
 
@@ -461,7 +462,9 @@ describe("YoutubeAntiTranslate.debounce", () => {
 
     const fn = vi.fn(() => {
       // simulate synchronous work
-      for (let i = 0; i < 1e6; i++) {}
+      for (let i = 0; i < 1e6; i++) {
+        // busy wait
+      }
     });
 
     const debounced = debounce(fn, 30);
@@ -484,6 +487,7 @@ describe("YoutubeAntiTranslate.debounce", () => {
     // Ensure RAF was used to schedule the queued call (when document not hidden)
     expect(rafSpy).toHaveBeenCalled();
   });
+
   it("a separate instance debounced is unaffected by another instance's async function that takes time", async () => {
     const rafSpy = vi.spyOn(global, "requestAnimationFrame");
 
