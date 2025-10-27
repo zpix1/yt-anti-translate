@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Improve performance by preventing identical debounce functions to run multiple times simultaneusly
+
 ## [1.20.3] - 2025-10-21
 
 ### New Feature

@@ -67,12 +67,18 @@ declare global {
        *                                 calls with different args. Default: false.
        * @param getSignature - Optional function to derive signature from (ctx, args).
        *                       Default: func ref + JSON.stringify(args).
+       * @param maxLongRunningMs - Optional maximum time (ms) a function is allowed to run before considering forcibly "done".
+       *                           Default: 10 times the waitMinMs.
+       *                           The logic will try to call `cancel()` of the Promise if implemented, otherwise it will just leave it hanging.
+       *                           This is to avoid blocking the queue indefinitely due to a stuck Promise.
+       * @return A debounced version of the input function. Debounce is per instance and per signature.
        */
       debounce: (
         func: Function,
         waitMinMs?: number,
         includeArgsInSignature?: boolean,
         getSignature?: (ctx: any, args: any[]) => string,
+        maxLongRunningMs?: number,
       ) => (...args: any[]) => Function | void;
 
       /**
