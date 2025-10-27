@@ -200,8 +200,8 @@ ytm-shorts-lockup-view-model`,
     waitMinMs = 90,
     includeArgsInSignature = false,
     getSignature = undefined,
+    maxLongRunningMs = waitMinMs * 10,
   ) {
-    // Assign a stable ID to this func if not already present
     if (!func["__debounceId"]) {
       Object.defineProperty(func, "__debounceId", {
         value: Symbol(),
@@ -210,7 +210,7 @@ ytm-shorts-lockup-view-model`,
       });
     }
 
-    const signatures = new Map(); // signature → { lastExecTime, queued: {ctx,args}|null }
+    const signatures = new Map(); // signature → { lastExecTime, activePromise, queued: {ctx,args}|null }
 
     function schedule(callback) {
       if (document.hidden || typeof requestAnimationFrame === "undefined") {
@@ -226,6 +226,32 @@ ytm-shorts-lockup-view-model`,
       return requestAnimationFrame(callback);
     }
 
+    function executeCall(entry, context, args, time) {
+      let result;
+      try {
+        result = func.apply(context, args);
+      } catch (err) {
+        entry.activePromise = null;
+        entry.lastExecTime = time;
+        throw err;
+      }
+
+      // If the function returns a promise, delay updating lastExecTime until it resolves
+      if (result && typeof result.then === "function") {
+        const maybePromise = Promise.resolve(result);
+        entry.activePromise = maybePromise;
+        entry.lastPromiseTime = time;
+        maybePromise.finally(() => {
+          entry.activePromise = null;
+        });
+      } else {
+        entry.lastExecTime = time;
+        entry.activePromise = null;
+      }
+
+      return result;
+    }
+
     function tickQueue(signature, time) {
       const entry = signatures.get(signature);
       if (!entry || !entry.queued) {
@@ -233,13 +259,27 @@ ytm-shorts-lockup-view-model`,
       }
 
       const elapsed = time - entry.lastExecTime;
-      if (elapsed >= waitMinMs) {
-        // Execute queued call
-        func.apply(entry.queued.context, entry.queued.args);
-        entry.lastExecTime = time;
+      const stillRunning = !!entry.activePromise;
+
+      // clear activePromise if it takes longer than maxLongRunningMs
+      if (entry.activePromise && elapsed > maxLongRunningMs) {
+        // Safely attempt to terminate the promise
+        try {
+          if (typeof entry.activePromise.cancel === "function") {
+            entry.activePromise.cancel();
+          }
+        } catch (error) {
+          this.logInfo("Error cancelling promise:", error);
+        }
+        entry.activePromise = null;
+      }
+
+      if (!stillRunning && elapsed >= waitMinMs) {
+        const { context, args } = entry.queued;
         entry.queued = null;
+        schedule((t) => executeCall(entry, context, args, t));
       } else {
-        // Still within wait window → reschedule
+        // Still within wait window or function is executing → reschedule
         schedule((t) => tickQueue(signature, t));
       }
     }
@@ -261,22 +301,16 @@ ytm-shorts-lockup-view-model`,
 
       let entry = signatures.get(signature);
       if (!entry) {
-        // First call for this signature → execute immediately
-        entry = { lastExecTime: now, queued: null };
+        entry = { lastExecTime: now, queued: null, activePromise: null };
         signatures.set(signature, entry);
 
-        schedule((time) => {
-          func.apply(context, args);
-          entry.lastExecTime = time;
-        });
+        schedule((time) => executeCall(entry, context, args, time));
       } else {
-        // Already exists
         if (!entry.queued) {
-          // Queue exactly one call per signature
           entry.queued = { context, args };
-          schedule((time) => tickQueue(signature, time));
+          schedule((t) => tickQueue(signature, t));
         } else {
-          // Already queued → overwrite args/context, keep only latest
+          // Already queued → overwrite args/context, keep latest
           entry.queued.context = context;
           entry.queued.args = args;
         }
@@ -1530,9 +1564,8 @@ ytm-shorts-lockup-view-model`,
     const response = await this.cachedRequest(
       search,
       JSON.stringify(body),
-      // If we have a valid TOK to delete the suggestion afterwards we can login; else search anonymously
-      // this is to avoid filling user search history with unwanted queries */
-      await this.getYoutubeIHeadersWithCredentials(true),
+      // Anonymous request to avoid filling user search history with unwanted queries
+      await this.getYoutubeIHeadersWithCredentials(true /* anonymously */),
       // do not cache full response, we only cache the final result below
       true,
     );
@@ -1945,9 +1978,8 @@ ytm-shorts-lockup-view-model`,
     const result = await this.cachedRequest(
       search,
       JSON.stringify(body),
-      // If we have a valid TOK to delete the suggestion afterwards we can login; else search anonymously
-      // this is to avoid filling user search history with unwanted queries */
-      await this.getYoutubeIHeadersWithCredentials(true),
+      // Anonymous request to avoid filling user search history with unwanted queries
+      await this.getYoutubeIHeadersWithCredentials(true /* anonymously */),
       // do not cache full response, we only cache the final result below
       true,
     );
