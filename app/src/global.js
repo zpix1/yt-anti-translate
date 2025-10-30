@@ -129,7 +129,7 @@ window.YoutubeAntiTranslate = {
     DEBUG: 4,
   },
   currentLogLevel: 2, // Default to WARN
-  QS_PROFILE_ENABLED: true,
+  QS_PROFILE_ENABLED: false,
   settingsElement: undefined,
 
   setLogLevel: function (levelName) {
@@ -993,18 +993,18 @@ ytm-shorts-lockup-view-model`,
         this.ALL_ARRAYS_VIDEOS_SELECTOR,
         t1 - t0,
       );
-    }
 
-    // Baseline comparison (count only) – also profiled via our wrapper
-    // eslint-disable-next-line no-restricted-syntax
-    const baseline = this.querySelectorAll(
-      this.ALL_ARRAYS_VIDEOS_SELECTOR,
-      context,
-    );
-    if (baseline.length !== optimized.length) {
-      this.logError(
-        `getArraysVideos count differs: optimized=${optimized.length}, baseline=${baseline.length}`,
+      // Baseline comparison (count only) – also profiled via our wrapper
+      // eslint-disable-next-line no-restricted-syntax
+      const baseline = this.querySelectorAll(
+        this.ALL_ARRAYS_VIDEOS_SELECTOR,
+        context,
       );
+      if (baseline.length !== optimized.length) {
+        this.logError(
+          `getArraysVideos count differs: optimized=${optimized.length}, baseline=${baseline.length}`,
+        );
+      }
     }
 
     return optimized;
