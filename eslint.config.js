@@ -94,7 +94,7 @@ export default tseslint.config([
     ],
     rules: {
       "no-restricted-syntax": [
-        "warning",
+        "warn",
         {
           selector:
             'CallExpression[callee.type="MemberExpression"][callee.property.name=/^querySelector(All)?$/]:not([callee.object.type="MemberExpression"][callee.object.object.type="Identifier"][callee.object.object.name="window"][callee.object.property.type="Identifier"][callee.object.property.name="YoutubeAntiTranslate"])',
