@@ -296,7 +296,7 @@ async function untranslateCurrentMiniPlayerVideo() {
   }
   if (
     !window.YoutubeAntiTranslate.getFirstVisible(
-      document.querySelectorAll(
+      window.YoutubeAntiTranslate.querySelectorAll(
         `ytd-miniplayer ${window.YoutubeAntiTranslate.getPlayerSelector()}`,
       ),
     )
@@ -317,7 +317,7 @@ async function untranslateCurrentMiniPlayerVideo() {
     originalNodePartialSelector,
     () => {
       const miniPlayer = window.YoutubeAntiTranslate.getFirstVisible(
-        document.querySelectorAll(
+        window.YoutubeAntiTranslate.querySelectorAll(
           `ytd-miniplayer ${window.YoutubeAntiTranslate.getPlayerSelector()}`,
         ),
       );
@@ -370,7 +370,7 @@ async function createOrUpdateUntranslatedFakeNode(
   if (
     !requirePlayer ||
     window.YoutubeAntiTranslate.getFirstVisible(
-      document.querySelectorAll(
+      window.YoutubeAntiTranslate.querySelectorAll(
         window.YoutubeAntiTranslate.getPlayerSelector(),
       ),
     )
@@ -378,18 +378,20 @@ async function createOrUpdateUntranslatedFakeNode(
     const settings = await window.YoutubeAntiTranslate.getSettings();
 
     let translatedElement = window.YoutubeAntiTranslate.getFirstVisible(
-      document.querySelectorAll(originalNodeSelector),
+      window.YoutubeAntiTranslate.querySelectorAll(originalNodeSelector),
     );
 
     if (!translatedElement || !translatedElement.textContent) {
       translatedElement = window.YoutubeAntiTranslate.getFirstVisible(
-        document.querySelectorAll(
+        window.YoutubeAntiTranslate.querySelectorAll(
           `${originalNodeSelector}:not(.cbCustomTitle)`,
         ),
       );
     }
 
-    const fakeNode = document.querySelector(`#${fakeNodeID}`);
+    const fakeNode = window.YoutubeAntiTranslate.querySelector(
+      `#${fakeNodeID}`,
+    );
 
     if (
       (!fakeNode || !fakeNode.textContent) &&
@@ -599,10 +601,12 @@ async function createOrUpdateUntranslatedFakeNodeAuthor(
   authorCreateElementTag,
 ) {
   const translatedElement = window.YoutubeAntiTranslate.getFirstVisible(
-    document.querySelectorAll(videoAuthorSelector),
+    window.YoutubeAntiTranslate.querySelectorAll(videoAuthorSelector),
   );
 
-  const fakeNode = document.querySelector(`#${authorFakeNodeID}`);
+  const fakeNode = window.YoutubeAntiTranslate.querySelector(
+    `#${authorFakeNodeID}`,
+  );
 
   if (
     (!fakeNode || !fakeNode.textContent) &&
@@ -1380,9 +1384,7 @@ async function untranslateOtherVideos(intersectElements = null) {
   // Selectors for all video containers
   await untranslateOtherVideosArray(
     window.YoutubeAntiTranslate.getAllVisibleNodes(
-      document.querySelectorAll(
-        window.YoutubeAntiTranslate.ALL_ARRAYS_VIDEOS_SELECTOR,
-      ),
+      window.YoutubeAntiTranslate.getArraysVideos(),
     ),
   );
 }
@@ -1751,7 +1753,7 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
   // Run for all shorts items
   await untranslateOtherShortsArray(
     window.YoutubeAntiTranslate.getAllVisibleNodes(
-      document.querySelectorAll(
+      window.YoutubeAntiTranslate.querySelectorAll(
         window.YoutubeAntiTranslate.ALL_ARRAYS_SHORTS_SELECTOR,
       ),
     ),
@@ -1760,13 +1762,15 @@ async function untranslateOtherShortsVideos(intersectElements = null) {
 
 async function untranslateCurrentPlayerBackgroundThumbnail() {
   const player = window.YoutubeAntiTranslate.getFirstVisible(
-    document.querySelectorAll(window.YoutubeAntiTranslate.getPlayerSelector()),
+    window.YoutubeAntiTranslate.querySelectorAll(
+      window.YoutubeAntiTranslate.getPlayerSelector(),
+    ),
   );
   if (!player) {
     return;
   }
   // <div class="ytp-cued-thumbnail-overlay-image" style="background-image: url(&quot;https://i.ytimg.com/vi/iLU0CE2c2HQ/maxresdefault.jpg&quot;);"></div>
-  const thumbnailBackground = document.querySelector(
+  const thumbnailBackground = window.YoutubeAntiTranslate.querySelector(
     ".ytp-cued-thumbnail-overlay-image[style*='i.ytimg.com'][style*='background-image'][style*='maxresdefault']",
   );
   if (thumbnailBackground) {
@@ -1882,7 +1886,7 @@ async function untranslateCurrentPlaylistHeaderThumbnail() {
   }
 
   const playlistHeadersImages = window.YoutubeAntiTranslate.getAllVisibleNodes(
-    document.querySelectorAll(
+    window.YoutubeAntiTranslate.querySelectorAll(
       "yt-page-header-renderer img[src*='i.ytimg.com']",
     ),
   );
@@ -1983,7 +1987,9 @@ async function untranslateCurrentPlaylistHeaderThumbnail() {
 
 async function untranslateCurrentVideoPreviewThumbnail() {
   const videoPreview = window.YoutubeAntiTranslate.getFirstVisible(
-    document.querySelectorAll("#video-preview-container a.ytd-video-preview"),
+    window.YoutubeAntiTranslate.querySelectorAll(
+      "#video-preview-container a.ytd-video-preview",
+    ),
   );
   if (!videoPreview) {
     return;
@@ -2253,9 +2259,7 @@ function updateObserverOtherVideosOnIntersect() {
   }
   allIntersectVideoElements =
     window.YoutubeAntiTranslate.getAllVisibleNodesOutsideViewport(
-      document.querySelectorAll(
-        window.YoutubeAntiTranslate.ALL_ARRAYS_VIDEOS_SELECTOR,
-      ),
+      window.YoutubeAntiTranslate.getArraysVideos(),
       true,
     );
   for (const el of allIntersectVideoElements ?? []) {
@@ -2299,7 +2303,7 @@ function updateObserverOtherShortsOnIntersect() {
   }
   allIntersectShortElements =
     window.YoutubeAntiTranslate.getAllVisibleNodesOutsideViewport(
-      document.querySelectorAll(
+      window.YoutubeAntiTranslate.querySelectorAll(
         window.YoutubeAntiTranslate.ALL_ARRAYS_SHORTS_SELECTOR,
       ),
       true,

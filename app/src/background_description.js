@@ -102,27 +102,37 @@ function cleanupChaptersObserver() {
   }
 
   // Remove all chapter attributes
-  document.querySelectorAll("[data-original-chapter]").forEach((el) => {
+  window.YoutubeAntiTranslate.querySelectorAll(
+    "[data-original-chapter]",
+  ).forEach((el) => {
     el.removeAttribute("data-original-chapter");
   });
 
   // Remove chapter button attributes
-  document.querySelectorAll("[data-original-chapter-button]").forEach((el) => {
+  window.YoutubeAntiTranslate.querySelectorAll(
+    "[data-original-chapter-button]",
+  ).forEach((el) => {
     el.removeAttribute("data-original-chapter-button");
   });
 
   // Remove horizontal chapter attributes
-  document.querySelectorAll("[data-original-chapter-title]").forEach((el) => {
+  window.YoutubeAntiTranslate.querySelectorAll(
+    "[data-original-chapter-title]",
+  ).forEach((el) => {
     el.removeAttribute("data-original-chapter-title");
   });
 
   // Remove chapter header attributes
-  document.querySelectorAll("[data-original-chapter-header]").forEach((el) => {
+  window.YoutubeAntiTranslate.querySelectorAll(
+    "[data-original-chapter-header]",
+  ).forEach((el) => {
     el.removeAttribute("data-original-chapter-header");
   });
 
   // Remove show all button attributes
-  document.querySelectorAll("[data-original-show-all]").forEach((el) => {
+  window.YoutubeAntiTranslate.querySelectorAll(
+    "[data-original-show-all]",
+  ).forEach((el) => {
     el.removeAttribute("data-original-show-all");
   });
 }
@@ -249,7 +259,7 @@ function updateTooltipChapter() {
   }
 
   // Only query for visible tooltips
-  const visibleTooltip = document.querySelector(
+  const visibleTooltip = window.YoutubeAntiTranslate.querySelector(
     '.ytp-tooltip.ytp-bottom.ytp-preview:not([style*="display: none"])',
   );
   if (!visibleTooltip) {
@@ -287,8 +297,8 @@ function updateTooltipChapter() {
  */
 function getCurrentVideoTime() {
   const video =
-    document.querySelector("#movie_player video") ||
-    document.querySelector("video");
+    window.YoutubeAntiTranslate.querySelector("#movie_player video") ||
+    window.YoutubeAntiTranslate.querySelector("video");
   if (video && "currentTime" in video) {
     const time = Math.floor(Number(video.currentTime));
     return time;
@@ -305,7 +315,7 @@ function getCurrentVideoTime() {
  * chapter title that matches the current playback position.
  */
 function updateChapterButton() {
-  const chapterButton = document.querySelector(
+  const chapterButton = window.YoutubeAntiTranslate.querySelector(
     ".ytp-chapter-title .ytp-chapter-title-content",
   );
   if (!chapterButton) {
@@ -357,7 +367,8 @@ function updateChapterButton() {
  * YouTube changes its content.
  */
 function setupChapterButtonObserver() {
-  const chapterButton = document.querySelector(".ytp-chapter-title");
+  const chapterButton =
+    window.YoutubeAntiTranslate.querySelector(".ytp-chapter-title");
   if (!chapterButton) {
     return;
   }
@@ -521,7 +532,9 @@ function setupChapters(originalDescription) {
  */
 async function fetchOriginalDescription() {
   const player = window.YoutubeAntiTranslate.getFirstVisible(
-    document.querySelectorAll(window.YoutubeAntiTranslate.getPlayerSelector()),
+    window.YoutubeAntiTranslate.querySelectorAll(
+      window.YoutubeAntiTranslate.getPlayerSelector(),
+    ),
     /*shouldBeInsideViewport=*/ false,
   );
 
@@ -553,7 +566,9 @@ async function fetchOriginalDescription() {
  */
 function fetchOriginalAuthor() {
   const player = window.YoutubeAntiTranslate.getFirstVisible(
-    document.querySelectorAll(window.YoutubeAntiTranslate.getPlayerSelector()),
+    window.YoutubeAntiTranslate.querySelectorAll(
+      window.YoutubeAntiTranslate.getPlayerSelector(),
+    ),
     /*shouldBeInsideViewport=*/ false,
   );
 
@@ -594,7 +609,7 @@ async function restoreOriginalDescriptionAndAuthor() {
   if (originalDescriptionData.shortDescription) {
     if (settings.untranslateDescription) {
       const descriptionContainer = window.YoutubeAntiTranslate.getFirstVisible(
-        document.querySelectorAll(DESCRIPTION_SELECTOR),
+        window.YoutubeAntiTranslate.querySelectorAll(DESCRIPTION_SELECTOR),
       );
 
       if (descriptionContainer) {
@@ -676,7 +691,7 @@ async function handleAuthor(originalAuthor, originalTitle = null) {
   } else {
     // We should skip this operation if the video player was embedded as it does not have the author above the description
     const player = window.YoutubeAntiTranslate.getFirstVisible(
-      document.querySelectorAll(
+      window.YoutubeAntiTranslate.querySelectorAll(
         window.YoutubeAntiTranslate.getPlayerSelector(),
       ),
     );
@@ -685,7 +700,7 @@ async function handleAuthor(originalAuthor, originalTitle = null) {
     }
 
     const authorContainers = window.YoutubeAntiTranslate.getAllVisibleNodes(
-      document.querySelectorAll(AUTHOR_SELECTOR),
+      window.YoutubeAntiTranslate.querySelectorAll(AUTHOR_SELECTOR),
     );
 
     if (authorContainers) {
@@ -701,7 +716,7 @@ async function handleAuthor(originalAuthor, originalTitle = null) {
 
   if (originalTitle) {
     const avatarStack = window.YoutubeAntiTranslate.getFirstVisible(
-      document.querySelectorAll("#owner #avatar-stack"),
+      window.YoutubeAntiTranslate.querySelectorAll("#owner #avatar-stack"),
     );
     if (avatarStack) {
       await updateCollaboratorAuthors(avatarStack, originalAuthor);
@@ -1085,7 +1100,9 @@ async function handleDescriptionMutation() {
   }
 
   const player = window.YoutubeAntiTranslate.getFirstVisible(
-    document.querySelectorAll(window.YoutubeAntiTranslate.getPlayerSelector()),
+    window.YoutubeAntiTranslate.querySelectorAll(
+      window.YoutubeAntiTranslate.getPlayerSelector(),
+    ),
     /*shouldBeInsideViewport=*/ false,
   );
 
@@ -1095,7 +1112,7 @@ async function handleDescriptionMutation() {
     settings.untranslateChannelBranding
   ) {
     const descriptionElement = window.YoutubeAntiTranslate.getFirstVisible(
-      document.querySelectorAll(DESCRIPTION_SELECTOR),
+      window.YoutubeAntiTranslate.querySelectorAll(DESCRIPTION_SELECTOR),
     );
     if (descriptionElement && player) {
       await restoreOriginalDescriptionAndAuthor();
@@ -1109,7 +1126,7 @@ async function handleDescriptionMutation() {
     settings.untranslateChannelBranding
   ) {
     const authorElement = window.YoutubeAntiTranslate.getFirstVisible(
-      document.querySelectorAll(AUTHOR_SELECTOR),
+      window.YoutubeAntiTranslate.querySelectorAll(AUTHOR_SELECTOR),
     );
 
     if (authorElement && player) {
@@ -1157,7 +1174,9 @@ document.addEventListener("click", (event) => {
 
   // Use YouTube's API to seek to the timestamp
   const player = window.YoutubeAntiTranslate.getFirstVisible(
-    document.querySelectorAll(window.YoutubeAntiTranslate.getPlayerSelector()),
+    window.YoutubeAntiTranslate.querySelectorAll(
+      window.YoutubeAntiTranslate.getPlayerSelector(),
+    ),
   );
   if (player && typeof player["seekTo"] === "function") {
     try {
@@ -1182,7 +1201,7 @@ document.addEventListener("click", (event) => {
  * Updates the horizontal chapter card list below the video with original chapter titles.
  */
 function updateHorizontalChapters() {
-  const horizontalChapters = document.querySelectorAll(
+  const horizontalChapters = window.YoutubeAntiTranslate.querySelectorAll(
     HORIZONTAL_CHAPTERS_SELECTOR,
   );
 
