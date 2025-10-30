@@ -75,6 +75,72 @@ let chapterButtonObserver = null;
 let horizontalChaptersObserver = null;
 
 /**
+ * Optimized retrieval of description containers.
+ * Mirrors DESCRIPTION_SELECTOR, but uses fast ID/class lookups and minimal scoped queries.
+ * Returns a de-duplicated array of candidate elements.
+ */
+function getDescriptionNodes(root = document) {
+  const context = root || document;
+  const resultSet = new Set();
+
+  // Fast ID lookups
+  const idCandidates = [
+    "description-inline-expander",
+    "description", // ytd-expander#description
+    "collapsed-string",
+    "expanded-string",
+  ];
+  for (const id of idCandidates) {
+    const el = context.getElementById(id);
+    if (el) resultSet.add(el);
+  }
+
+  // Fast class lookups
+  const classCandidates = [
+    "expandable-video-description-body-main",
+    "expandable-video-description-container",
+  ];
+  for (const cls of classCandidates) {
+    const list = context.getElementsByClassName(cls);
+    for (let i = 0; i < list.length; i++) resultSet.add(list[i]);
+  }
+
+  // Scoped lookup under anchored panel (desktop watch page panel)
+  const anchored = context.getElementById("anchored-panel");
+  if (anchored) {
+    const list = anchored.getElementsByTagName("ytd-text-inline-expander");
+    for (let i = 0; i < list.length; i++) resultSet.add(list[i]);
+  }
+
+  // Profile vs baseline count (optional, quick)
+  if (window.YoutubeAntiTranslate?.QS_PROFILE_ENABLED) {
+    const t0 = performance.now();
+    const optimizedCount = resultSet.size;
+    const t1 = performance.now();
+    window.YoutubeAntiTranslate.__recordQueryProfile(
+      "getDescriptionNodes",
+      context,
+      "optimized",
+      t1 - t0,
+    );
+
+    if (window.YoutubeAntiTranslate.QS_PROFILE_CHECK_CORRECTNESS) {
+      const baseline = window.YoutubeAntiTranslate.querySelectorAll(
+        DESCRIPTION_SELECTOR,
+        context,
+      );
+      if (baseline.length !== optimizedCount) {
+        window.YoutubeAntiTranslate.logDebug(
+          `getDescriptionNodes count differs: optimized=${optimizedCount}, baseline=${baseline.length}`,
+        );
+      }
+    }
+  }
+
+  return Array.from(resultSet);
+}
+
+/**
  * Disconnects and cleans up all observers, timers, styles and custom attributes
  * created by the chapters replacement system.
  * Call this before re-initialising the system or on page unload.
@@ -613,8 +679,9 @@ async function restoreOriginalDescriptionAndAuthor() {
 
   if (originalDescriptionData.shortDescription) {
     if (settings.untranslateDescription) {
-      const descriptionContainer = window.YoutubeAntiTranslate.getFirstVisible(
-        window.YoutubeAntiTranslate.querySelectorAll(DESCRIPTION_SELECTOR),
+      const descriptionCandidates = getDescriptionNodes();
+      const descriptionContainer = descriptionCandidates.find((el) =>
+        window.YoutubeAntiTranslate.isVisible(el, true, false, false),
       );
 
       if (descriptionContainer) {
@@ -1129,8 +1196,8 @@ async function handleDescriptionMutation() {
     settings.untranslateChapters ||
     settings.untranslateChannelBranding
   ) {
-    const descriptionElement = window.YoutubeAntiTranslate.getFirstVisible(
-      window.YoutubeAntiTranslate.querySelectorAll(DESCRIPTION_SELECTOR),
+    const descriptionElement = getDescriptionNodes().find((el) =>
+      window.YoutubeAntiTranslate.isVisible(el, true, false, false),
     );
     if (descriptionElement && player) {
       await restoreOriginalDescriptionAndAuthor();

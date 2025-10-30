@@ -28,6 +28,7 @@ declare global {
       currentLogLevel: number;
       settingsElement?: HTMLElement | undefined;
       QS_PROFILE_ENABLED: boolean;
+      QS_PROFILE_CHECK_CORRECTNESS: boolean;
       /**
        * Sets the current log level.
        * @param levelName - The name of the log level (e.g., "INFO", "DEBUG").
