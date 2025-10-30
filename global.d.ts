@@ -8,6 +8,8 @@
 export {};
 
 declare global {
+  declare const browser: any;
+  declare const chrome: any;
   //type browser = typeof import("firefox-webext-browser");
   //type chrome = typeof import("chrome");
 
@@ -25,6 +27,7 @@ declare global {
       LOG_LEVELS: { [key: string]: number };
       currentLogLevel: number;
       settingsElement?: HTMLElement | undefined;
+      QS_PROFILE_ENABLED: boolean;
       /**
        * Sets the current log level.
        * @param levelName - The name of the log level (e.g., "INFO", "DEBUG").
@@ -382,6 +385,57 @@ declare global {
         container: Element,
         newContent: Element | Node,
       ) => void;
+
+      /** Optimized retrieval of nodes that match ALL_ARRAYS_VIDEOS_SELECTOR */
+      getArraysVideos: (root?: Document | Element) => Element[];
+
+      /** Internal: Query Selector Profiling store */
+      __qsProfile: Map<
+        string,
+        {
+          key: string;
+          method: string; // 'qs' | 'qsa' | 'getArraysVideos' | custom
+          root: string;
+          selector: string;
+          calls: number;
+          totalMs: number;
+          maxMs: number;
+          minMs: number;
+        }
+      >;
+
+      /** Internal: Query Selector Profiling totals */
+      __qsTotals: { calls: number; totalMs: number };
+
+      /** Internal: build concise label for root context */
+      __formatRootLabel: (root: any) => string;
+
+      /** Internal: record a single query profiling sample */
+      __recordQueryProfile: (
+        method: string,
+        root: any,
+        selector: string,
+        durationMs: number,
+      ) => void;
+
+      /** Profiled wrappers for DOM queries */
+      querySelector: (
+        selector: string,
+        root?: Document | Element,
+      ) => Element | null;
+      querySelectorAll: (
+        selector: string,
+        root?: Document | Element,
+      ) => NodeListOf<Element>;
+
+      /** Print aggregated query selector profiling stats */
+      printProfile: (opts?: {
+        sortBy?: "totalMs" | "calls" | "avgMs" | "maxMs";
+        limit?: number;
+      }) => void;
+
+      /** Clear collected profiling data */
+      clearProfile: () => void;
 
       SUPPORTED_BCP47_CODES: Set<string>;
 

@@ -267,13 +267,15 @@ function updateTooltipChapter() {
   }
 
   const timeElement = window.YoutubeAntiTranslate.getFirstVisible(
-    visibleTooltip.querySelectorAll(
+    window.YoutubeAntiTranslate.querySelectorAll(
       ".ytp-tooltip-text, .ytp-tooltip-progress-bar-pill-time-stamp",
+      visibleTooltip,
     ),
   );
   const titleElement = window.YoutubeAntiTranslate.getFirstVisible(
-    visibleTooltip.querySelectorAll(
+    window.YoutubeAntiTranslate.querySelectorAll(
       ".ytp-tooltip-title span, .ytp-tooltip-progress-bar-pill-title",
+      visibleTooltip,
     ),
   );
 
@@ -327,7 +329,10 @@ function updateChapterButton() {
 
   if (targetChapter) {
     // Always update or create the span with current YouTube content
-    let span = chapterButton.querySelector(`span[ynt-chapter-span]`);
+    let span = window.YoutubeAntiTranslate.querySelector(
+      `span[ynt-chapter-span]`,
+      chapterButton,
+    );
     if (!span) {
       span = document.createElement("span");
       span.setAttribute("ynt-chapter-span", "current");
@@ -737,12 +742,16 @@ async function handleAuthor(originalAuthor, originalTitle = null) {
 function updateDescriptionContent(container, originalText) {
   // Find the text containers
   const mainTextContainer = window.YoutubeAntiTranslate.getFirstVisible(
-    container.querySelectorAll(
+    window.YoutubeAntiTranslate.querySelectorAll(
       `${ATTRIBUTED_STRING_SELECTOR}, ${ATTRIBUTED_STRING_CLASS_SELECTOR}, ${FORMATTED_STRING_SELECTOR}`,
+      container,
     ),
   );
   const snippetTextContainer = window.YoutubeAntiTranslate.getFirstVisible(
-    container.querySelectorAll(SNIPPET_TEXT_SELECTOR),
+    window.YoutubeAntiTranslate.querySelectorAll(
+      SNIPPET_TEXT_SELECTOR,
+      container,
+    ),
   );
 
   if (!mainTextContainer && !snippetTextContainer) {
@@ -842,20 +851,25 @@ function updateAuthorContent(container, originalText) {
   // Find the text containers
   const singularChannelNameTitleContainer =
     window.YoutubeAntiTranslate.getFirstVisible(
-      container.querySelectorAll(`#channel-name ${FORMATTED_STRING_SELECTOR}`),
+      window.YoutubeAntiTranslate.querySelectorAll(
+        `#channel-name ${FORMATTED_STRING_SELECTOR}`,
+        container,
+      ),
     );
   const singularChannelNameTextContainer =
     window.YoutubeAntiTranslate.getFirstVisible(
-      container.querySelectorAll(
-        `#channel-name ${FORMATTED_STRING_SELECTOR} a, #channel-name ${ATTRIBUTED_STRING_SELECTOR}, #channel-name ${ATTRIBUTED_STRING_CLASS_SELECTOR}, .slim-owner-channel-name > ${ATTRIBUTED_STRING_CLASS_SELECTOR}, 
+      window.YoutubeAntiTranslate.querySelectorAll(
+        `#channel-name ${FORMATTED_STRING_SELECTOR} a, #channel-name ${ATTRIBUTED_STRING_SELECTOR}, #channel-name ${ATTRIBUTED_STRING_CLASS_SELECTOR}, .slim-owner-channel-name > ${ATTRIBUTED_STRING_CLASS_SELECTOR},
         .reel-player-header-channel-title > ${ATTRIBUTED_STRING_CLASS_SELECTOR}`,
+        container,
       ),
     );
 
   const multipleChannelNameContainers =
     window.YoutubeAntiTranslate.getFirstVisible(
-      container.querySelectorAll(
+      window.YoutubeAntiTranslate.querySelectorAll(
         `#attributed-channel-name ${ATTRIBUTED_STRING_CLASS_SELECTOR} a.yt-core-attributed-string__link`,
+        container,
       ),
     );
 
@@ -943,7 +957,10 @@ function updateAuthorContent(container, originalText) {
 }
 
 async function updateCollaboratorAuthors(avatarStack, originalAuthor) {
-  const avatarStackImages = avatarStack.querySelectorAll("yt-avatar-shape img");
+  const avatarStackImages = window.YoutubeAntiTranslate.querySelectorAll(
+    "yt-avatar-shape img",
+    avatarStack,
+  );
 
   const authors = [];
 
@@ -996,11 +1013,10 @@ async function updateCollaboratorAuthors(avatarStack, originalAuthor) {
 
         const multipleChannelNameContainer =
           window.YoutubeAntiTranslate.getFirstVisible(
-            avatarStack
-              .closest("#owner")
-              .querySelectorAll(
-                `#attributed-channel-name ${ATTRIBUTED_STRING_CLASS_SELECTOR} a.yt-core-attributed-string__link`,
-              ),
+            window.YoutubeAntiTranslate.querySelectorAll(
+              `#attributed-channel-name ${ATTRIBUTED_STRING_CLASS_SELECTOR} a.yt-core-attributed-string__link`,
+              avatarStack.closest("#owner"),
+            ),
           );
 
         const localizedAnd = window.YoutubeAntiTranslate.getLocalizedAnd(
@@ -1014,8 +1030,10 @@ async function updateCollaboratorAuthors(avatarStack, originalAuthor) {
 
         // Check also the text node of the first span with no classes as some languages have that in the structure too
         // e.g.: <span class style>...</span>
-        const firstSpan =
-          multipleChannelNameContainer.querySelector("span[class='']");
+        const firstSpan = window.YoutubeAntiTranslate.querySelector(
+          "span[class='']",
+          multipleChannelNameContainer,
+        );
         let firstSpanTextNodes;
 
         if (firstSpan) {
@@ -1206,11 +1224,20 @@ function updateHorizontalChapters() {
   );
 
   horizontalChapters.forEach((container) => {
-    const chapterItems = container.querySelectorAll(CHAPTER_ITEM_SELECTOR);
+    const chapterItems = window.YoutubeAntiTranslate.querySelectorAll(
+      CHAPTER_ITEM_SELECTOR,
+      container,
+    );
 
     chapterItems.forEach((item) => {
-      const timeElement = item.querySelector(CHAPTER_TIME_SELECTOR);
-      const titleElements = item.querySelectorAll(CHAPTER_TITLE_SELECTOR);
+      const timeElement = window.YoutubeAntiTranslate.querySelector(
+        CHAPTER_TIME_SELECTOR,
+        item,
+      );
+      const titleElements = window.YoutubeAntiTranslate.querySelectorAll(
+        CHAPTER_TITLE_SELECTOR,
+        item,
+      );
 
       if (!timeElement || titleElements.length === 0) {
         return;

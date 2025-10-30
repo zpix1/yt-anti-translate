@@ -130,8 +130,6 @@ window.YoutubeAntiTranslate = {
   },
   currentLogLevel: 2, // Default to WARN
   QS_PROFILE_ENABLED: true,
-
-  /** @type {Element | undefined} */
   settingsElement: undefined,
 
   setLogLevel: function (levelName) {
@@ -978,6 +976,7 @@ ytm-shorts-lockup-view-model`,
     }
 
     if (classQualifiedSelector) {
+      // eslint-disable-next-line no-restricted-syntax
       const extra = context.querySelectorAll(classQualifiedSelector);
       for (let i = 0; i < extra.length; i++) {
         resultSet.add(extra[i]);
@@ -997,6 +996,7 @@ ytm-shorts-lockup-view-model`,
     }
 
     // Baseline comparison (count only) – also profiled via our wrapper
+    // eslint-disable-next-line no-restricted-syntax
     const baseline = this.querySelectorAll(
       this.ALL_ARRAYS_VIDEOS_SELECTOR,
       context,
@@ -1244,6 +1244,7 @@ ytm-shorts-lockup-view-model`,
 
   getSettings: async function () {
     if (!this.settingsElement) {
+      // @ts-expect-error - fix type
       this.settingsElement = window.YoutubeAntiTranslate.querySelector(
         'script[type="module"][data-ytantitranslatesettings]',
       );
@@ -2376,8 +2377,12 @@ ytm-shorts-lockup-view-model`,
 
     entry.calls += 1;
     entry.totalMs += durationMs;
-    if (durationMs > entry.maxMs) entry.maxMs = durationMs;
-    if (durationMs < entry.minMs) entry.minMs = durationMs;
+    if (durationMs > entry.maxMs) {
+      entry.maxMs = durationMs;
+    }
+    if (durationMs < entry.minMs) {
+      entry.minMs = durationMs;
+    }
     this.__qsProfile.set(key, entry);
 
     this.__qsTotals.calls += 1;
@@ -2388,9 +2393,11 @@ ytm-shorts-lockup-view-model`,
   querySelector: function (selector, root = document) {
     const context = root || document;
     if (!this.QS_PROFILE_ENABLED) {
+      // eslint-disable-next-line no-restricted-syntax
       return context.querySelector(selector);
     }
     const t0 = performance.now();
+    // eslint-disable-next-line no-restricted-syntax
     const result = context.querySelector(selector);
     const t1 = performance.now();
     this.__recordQueryProfile("qs", context, selector, t1 - t0);
@@ -2401,9 +2408,11 @@ ytm-shorts-lockup-view-model`,
   querySelectorAll: function (selector, root = document) {
     const context = root || document;
     if (!this.QS_PROFILE_ENABLED) {
+      // eslint-disable-next-line no-restricted-syntax
       return context.querySelectorAll(selector);
     }
     const t0 = performance.now();
+    // eslint-disable-next-line no-restricted-syntax
     const result = context.querySelectorAll(selector);
     const t1 = performance.now();
     this.__recordQueryProfile("qsa", context, selector, t1 - t0);
