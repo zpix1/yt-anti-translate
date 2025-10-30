@@ -92,7 +92,9 @@ function getDescriptionNodes(root = document) {
   ];
   for (const id of idCandidates) {
     const el = context.getElementById(id);
-    if (el) resultSet.add(el);
+    if (el) {
+      resultSet.add(el);
+    }
   }
 
   // Fast class lookups
@@ -102,14 +104,18 @@ function getDescriptionNodes(root = document) {
   ];
   for (const cls of classCandidates) {
     const list = context.getElementsByClassName(cls);
-    for (let i = 0; i < list.length; i++) resultSet.add(list[i]);
+    for (let i = 0; i < list.length; i++) {
+      resultSet.add(list[i]);
+    }
   }
 
   // Scoped lookup under anchored panel (desktop watch page panel)
   const anchored = context.getElementById("anchored-panel");
   if (anchored) {
     const list = anchored.getElementsByTagName("ytd-text-inline-expander");
-    for (let i = 0; i < list.length; i++) resultSet.add(list[i]);
+    for (let i = 0; i < list.length; i++) {
+      resultSet.add(list[i]);
+    }
   }
 
   // Profile vs baseline count (optional, quick)
