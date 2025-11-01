@@ -75,6 +75,78 @@ let chapterButtonObserver = null;
 let horizontalChaptersObserver = null;
 
 /**
+ * Optimized retrieval of description containers.
+ * Mirrors DESCRIPTION_SELECTOR, but uses fast ID/class lookups and minimal scoped queries.
+ * Returns a de-duplicated array of candidate elements.
+ */
+function getDescriptionNodes(root = document) {
+  const context = root || document;
+  const resultSet = new Set();
+
+  // Fast ID lookups
+  const idCandidates = [
+    "description-inline-expander",
+    "description", // ytd-expander#description
+    "collapsed-string",
+    "expanded-string",
+  ];
+  for (const id of idCandidates) {
+    const el = context.getElementById(id);
+    if (el) {
+      resultSet.add(el);
+    }
+  }
+
+  // Fast class lookups
+  const classCandidates = [
+    "expandable-video-description-body-main",
+    "expandable-video-description-container",
+  ];
+  for (const cls of classCandidates) {
+    const list = context.getElementsByClassName(cls);
+    for (let i = 0; i < list.length; i++) {
+      resultSet.add(list[i]);
+    }
+  }
+
+  // Scoped lookup under anchored panel (desktop watch page panel)
+  const anchored = context.getElementById("anchored-panel");
+  if (anchored) {
+    const list = anchored.getElementsByTagName("ytd-text-inline-expander");
+    for (let i = 0; i < list.length; i++) {
+      resultSet.add(list[i]);
+    }
+  }
+
+  // Profile vs baseline count (optional, quick)
+  if (window.YoutubeAntiTranslate?.QS_PROFILE_ENABLED) {
+    const t0 = performance.now();
+    const optimizedCount = resultSet.size;
+    const t1 = performance.now();
+    window.YoutubeAntiTranslate.__recordQueryProfile(
+      "getDescriptionNodes",
+      context,
+      "optimized",
+      t1 - t0,
+    );
+
+    if (window.YoutubeAntiTranslate.QS_PROFILE_CHECK_CORRECTNESS) {
+      const baseline = window.YoutubeAntiTranslate.querySelectorAll(
+        DESCRIPTION_SELECTOR,
+        context,
+      );
+      if (baseline.length !== optimizedCount) {
+        window.YoutubeAntiTranslate.logDebug(
+          `getDescriptionNodes count differs: optimized=${optimizedCount}, baseline=${baseline.length}`,
+        );
+      }
+    }
+  }
+
+  return Array.from(resultSet);
+}
+
+/**
  * Disconnects and cleans up all observers, timers, styles and custom attributes
  * created by the chapters replacement system.
  * Call this before re-initialising the system or on page unload.
@@ -102,27 +174,37 @@ function cleanupChaptersObserver() {
   }
 
   // Remove all chapter attributes
-  document.querySelectorAll("[data-original-chapter]").forEach((el) => {
+  window.YoutubeAntiTranslate.querySelectorAll(
+    "[data-original-chapter]",
+  ).forEach((el) => {
     el.removeAttribute("data-original-chapter");
   });
 
   // Remove chapter button attributes
-  document.querySelectorAll("[data-original-chapter-button]").forEach((el) => {
+  window.YoutubeAntiTranslate.querySelectorAll(
+    "[data-original-chapter-button]",
+  ).forEach((el) => {
     el.removeAttribute("data-original-chapter-button");
   });
 
   // Remove horizontal chapter attributes
-  document.querySelectorAll("[data-original-chapter-title]").forEach((el) => {
+  window.YoutubeAntiTranslate.querySelectorAll(
+    "[data-original-chapter-title]",
+  ).forEach((el) => {
     el.removeAttribute("data-original-chapter-title");
   });
 
   // Remove chapter header attributes
-  document.querySelectorAll("[data-original-chapter-header]").forEach((el) => {
+  window.YoutubeAntiTranslate.querySelectorAll(
+    "[data-original-chapter-header]",
+  ).forEach((el) => {
     el.removeAttribute("data-original-chapter-header");
   });
 
   // Remove show all button attributes
-  document.querySelectorAll("[data-original-show-all]").forEach((el) => {
+  window.YoutubeAntiTranslate.querySelectorAll(
+    "[data-original-show-all]",
+  ).forEach((el) => {
     el.removeAttribute("data-original-show-all");
   });
 }
@@ -249,7 +331,7 @@ function updateTooltipChapter() {
   }
 
   // Only query for visible tooltips
-  const visibleTooltip = document.querySelector(
+  const visibleTooltip = window.YoutubeAntiTranslate.querySelector(
     '.ytp-tooltip.ytp-bottom.ytp-preview:not([style*="display: none"])',
   );
   if (!visibleTooltip) {
@@ -257,13 +339,15 @@ function updateTooltipChapter() {
   }
 
   const timeElement = window.YoutubeAntiTranslate.getFirstVisible(
-    visibleTooltip.querySelectorAll(
+    window.YoutubeAntiTranslate.querySelectorAll(
       ".ytp-tooltip-text, .ytp-tooltip-progress-bar-pill-time-stamp",
+      visibleTooltip,
     ),
   );
   const titleElement = window.YoutubeAntiTranslate.getFirstVisible(
-    visibleTooltip.querySelectorAll(
+    window.YoutubeAntiTranslate.querySelectorAll(
       ".ytp-tooltip-title span, .ytp-tooltip-progress-bar-pill-title",
+      visibleTooltip,
     ),
   );
 
@@ -287,8 +371,8 @@ function updateTooltipChapter() {
  */
 function getCurrentVideoTime() {
   const video =
-    document.querySelector("#movie_player video") ||
-    document.querySelector("video");
+    window.YoutubeAntiTranslate.querySelector("#movie_player video") ||
+    window.YoutubeAntiTranslate.querySelector("video");
   if (video && "currentTime" in video) {
     const time = Math.floor(Number(video.currentTime));
     return time;
@@ -305,7 +389,7 @@ function getCurrentVideoTime() {
  * chapter title that matches the current playback position.
  */
 function updateChapterButton() {
-  const chapterButton = document.querySelector(
+  const chapterButton = window.YoutubeAntiTranslate.querySelector(
     ".ytp-chapter-title .ytp-chapter-title-content",
   );
   if (!chapterButton) {
@@ -317,7 +401,10 @@ function updateChapterButton() {
 
   if (targetChapter) {
     // Always update or create the span with current YouTube content
-    let span = chapterButton.querySelector(`span[ynt-chapter-span]`);
+    let span = window.YoutubeAntiTranslate.querySelector(
+      `span[ynt-chapter-span]`,
+      chapterButton,
+    );
     if (!span) {
       span = document.createElement("span");
       span.setAttribute("ynt-chapter-span", "current");
@@ -357,7 +444,8 @@ function updateChapterButton() {
  * YouTube changes its content.
  */
 function setupChapterButtonObserver() {
-  const chapterButton = document.querySelector(".ytp-chapter-title");
+  const chapterButton =
+    window.YoutubeAntiTranslate.querySelector(".ytp-chapter-title");
   if (!chapterButton) {
     return;
   }
@@ -521,7 +609,9 @@ function setupChapters(originalDescription) {
  */
 async function fetchOriginalDescription() {
   const player = window.YoutubeAntiTranslate.getFirstVisible(
-    document.querySelectorAll(window.YoutubeAntiTranslate.getPlayerSelector()),
+    window.YoutubeAntiTranslate.querySelectorAll(
+      window.YoutubeAntiTranslate.getPlayerSelector(),
+    ),
     /*shouldBeInsideViewport=*/ false,
   );
 
@@ -553,7 +643,9 @@ async function fetchOriginalDescription() {
  */
 function fetchOriginalAuthor() {
   const player = window.YoutubeAntiTranslate.getFirstVisible(
-    document.querySelectorAll(window.YoutubeAntiTranslate.getPlayerSelector()),
+    window.YoutubeAntiTranslate.querySelectorAll(
+      window.YoutubeAntiTranslate.getPlayerSelector(),
+    ),
     /*shouldBeInsideViewport=*/ false,
   );
 
@@ -593,8 +685,9 @@ async function restoreOriginalDescriptionAndAuthor() {
 
   if (originalDescriptionData.shortDescription) {
     if (settings.untranslateDescription) {
-      const descriptionContainer = window.YoutubeAntiTranslate.getFirstVisible(
-        document.querySelectorAll(DESCRIPTION_SELECTOR),
+      const descriptionCandidates = getDescriptionNodes();
+      const descriptionContainer = descriptionCandidates.find((el) =>
+        window.YoutubeAntiTranslate.isVisible(el, true, false, false),
       );
 
       if (descriptionContainer) {
@@ -676,7 +769,7 @@ async function handleAuthor(originalAuthor, originalTitle = null) {
   } else {
     // We should skip this operation if the video player was embedded as it does not have the author above the description
     const player = window.YoutubeAntiTranslate.getFirstVisible(
-      document.querySelectorAll(
+      window.YoutubeAntiTranslate.querySelectorAll(
         window.YoutubeAntiTranslate.getPlayerSelector(),
       ),
     );
@@ -685,7 +778,7 @@ async function handleAuthor(originalAuthor, originalTitle = null) {
     }
 
     const authorContainers = window.YoutubeAntiTranslate.getAllVisibleNodes(
-      document.querySelectorAll(AUTHOR_SELECTOR),
+      window.YoutubeAntiTranslate.querySelectorAll(AUTHOR_SELECTOR),
     );
 
     if (authorContainers) {
@@ -701,7 +794,7 @@ async function handleAuthor(originalAuthor, originalTitle = null) {
 
   if (originalTitle) {
     const avatarStack = window.YoutubeAntiTranslate.getFirstVisible(
-      document.querySelectorAll("#owner #avatar-stack"),
+      window.YoutubeAntiTranslate.querySelectorAll("#owner #avatar-stack"),
     );
     if (avatarStack) {
       await updateCollaboratorAuthors(avatarStack, originalAuthor);
@@ -722,12 +815,16 @@ async function handleAuthor(originalAuthor, originalTitle = null) {
 function updateDescriptionContent(container, originalText) {
   // Find the text containers
   const mainTextContainer = window.YoutubeAntiTranslate.getFirstVisible(
-    container.querySelectorAll(
+    window.YoutubeAntiTranslate.querySelectorAll(
       `${ATTRIBUTED_STRING_SELECTOR}, ${ATTRIBUTED_STRING_CLASS_SELECTOR}, ${FORMATTED_STRING_SELECTOR}`,
+      container,
     ),
   );
   const snippetTextContainer = window.YoutubeAntiTranslate.getFirstVisible(
-    container.querySelectorAll(SNIPPET_TEXT_SELECTOR),
+    window.YoutubeAntiTranslate.querySelectorAll(
+      SNIPPET_TEXT_SELECTOR,
+      container,
+    ),
   );
 
   if (!mainTextContainer && !snippetTextContainer) {
@@ -827,20 +924,25 @@ function updateAuthorContent(container, originalText) {
   // Find the text containers
   const singularChannelNameTitleContainer =
     window.YoutubeAntiTranslate.getFirstVisible(
-      container.querySelectorAll(`#channel-name ${FORMATTED_STRING_SELECTOR}`),
+      window.YoutubeAntiTranslate.querySelectorAll(
+        `#channel-name ${FORMATTED_STRING_SELECTOR}`,
+        container,
+      ),
     );
   const singularChannelNameTextContainer =
     window.YoutubeAntiTranslate.getFirstVisible(
-      container.querySelectorAll(
-        `#channel-name ${FORMATTED_STRING_SELECTOR} a, #channel-name ${ATTRIBUTED_STRING_SELECTOR}, #channel-name ${ATTRIBUTED_STRING_CLASS_SELECTOR}, .slim-owner-channel-name > ${ATTRIBUTED_STRING_CLASS_SELECTOR}, 
+      window.YoutubeAntiTranslate.querySelectorAll(
+        `#channel-name ${FORMATTED_STRING_SELECTOR} a, #channel-name ${ATTRIBUTED_STRING_SELECTOR}, #channel-name ${ATTRIBUTED_STRING_CLASS_SELECTOR}, .slim-owner-channel-name > ${ATTRIBUTED_STRING_CLASS_SELECTOR},
         .reel-player-header-channel-title > ${ATTRIBUTED_STRING_CLASS_SELECTOR}`,
+        container,
       ),
     );
 
   const multipleChannelNameContainers =
     window.YoutubeAntiTranslate.getFirstVisible(
-      container.querySelectorAll(
+      window.YoutubeAntiTranslate.querySelectorAll(
         `#attributed-channel-name ${ATTRIBUTED_STRING_CLASS_SELECTOR} a.yt-core-attributed-string__link`,
+        container,
       ),
     );
 
@@ -928,7 +1030,10 @@ function updateAuthorContent(container, originalText) {
 }
 
 async function updateCollaboratorAuthors(avatarStack, originalAuthor) {
-  const avatarStackImages = avatarStack.querySelectorAll("yt-avatar-shape img");
+  const avatarStackImages = window.YoutubeAntiTranslate.querySelectorAll(
+    "yt-avatar-shape img",
+    avatarStack,
+  );
 
   const authors = [];
 
@@ -981,11 +1086,10 @@ async function updateCollaboratorAuthors(avatarStack, originalAuthor) {
 
         const multipleChannelNameContainer =
           window.YoutubeAntiTranslate.getFirstVisible(
-            avatarStack
-              .closest("#owner")
-              .querySelectorAll(
-                `#attributed-channel-name ${ATTRIBUTED_STRING_CLASS_SELECTOR} a.yt-core-attributed-string__link`,
-              ),
+            window.YoutubeAntiTranslate.querySelectorAll(
+              `#attributed-channel-name ${ATTRIBUTED_STRING_CLASS_SELECTOR} a.yt-core-attributed-string__link`,
+              avatarStack.closest("#owner"),
+            ),
           );
 
         const localizedAnd = window.YoutubeAntiTranslate.getLocalizedAnd(
@@ -999,8 +1103,10 @@ async function updateCollaboratorAuthors(avatarStack, originalAuthor) {
 
         // Check also the text node of the first span with no classes as some languages have that in the structure too
         // e.g.: <span class style>...</span>
-        const firstSpan =
-          multipleChannelNameContainer.querySelector("span[class='']");
+        const firstSpan = window.YoutubeAntiTranslate.querySelector(
+          "span[class='']",
+          multipleChannelNameContainer,
+        );
         let firstSpanTextNodes;
 
         if (firstSpan) {
@@ -1073,7 +1179,7 @@ function replaceTextNodeContent(container, textNodeIndex, newText) {
   }
 }
 
-async function handleDescriptionMutation() {
+async function handleDescriptionMutation(mutations) {
   const settings = await window.YoutubeAntiTranslate.getSettings();
 
   if (
@@ -1085,17 +1191,26 @@ async function handleDescriptionMutation() {
   }
 
   const player = window.YoutubeAntiTranslate.getFirstVisible(
-    document.querySelectorAll(window.YoutubeAntiTranslate.getPlayerSelector()),
+    window.YoutubeAntiTranslate.querySelectorAll(
+      window.YoutubeAntiTranslate.getPlayerSelector(),
+    ),
     /*shouldBeInsideViewport=*/ false,
   );
+
+  const allMutationsAreInPlayer =
+    player && mutations && mutations.every((e) => player.contains(e.target));
+
+  if (allMutationsAreInPlayer) {
+    return;
+  }
 
   if (
     settings.untranslateDescription ||
     settings.untranslateChapters ||
     settings.untranslateChannelBranding
   ) {
-    const descriptionElement = window.YoutubeAntiTranslate.getFirstVisible(
-      document.querySelectorAll(DESCRIPTION_SELECTOR),
+    const descriptionElement = getDescriptionNodes().find((el) =>
+      window.YoutubeAntiTranslate.isVisible(el, true, false, false),
     );
     if (descriptionElement && player) {
       await restoreOriginalDescriptionAndAuthor();
@@ -1109,7 +1224,7 @@ async function handleDescriptionMutation() {
     settings.untranslateChannelBranding
   ) {
     const authorElement = window.YoutubeAntiTranslate.getFirstVisible(
-      document.querySelectorAll(AUTHOR_SELECTOR),
+      window.YoutubeAntiTranslate.querySelectorAll(AUTHOR_SELECTOR),
     );
 
     if (authorElement && player) {
@@ -1157,7 +1272,9 @@ document.addEventListener("click", (event) => {
 
   // Use YouTube's API to seek to the timestamp
   const player = window.YoutubeAntiTranslate.getFirstVisible(
-    document.querySelectorAll(window.YoutubeAntiTranslate.getPlayerSelector()),
+    window.YoutubeAntiTranslate.querySelectorAll(
+      window.YoutubeAntiTranslate.getPlayerSelector(),
+    ),
   );
   if (player && typeof player["seekTo"] === "function") {
     try {
@@ -1182,16 +1299,25 @@ document.addEventListener("click", (event) => {
  * Updates the horizontal chapter card list below the video with original chapter titles.
  */
 function updateHorizontalChapters() {
-  const horizontalChapters = document.querySelectorAll(
+  const horizontalChapters = window.YoutubeAntiTranslate.querySelectorAll(
     HORIZONTAL_CHAPTERS_SELECTOR,
   );
 
   horizontalChapters.forEach((container) => {
-    const chapterItems = container.querySelectorAll(CHAPTER_ITEM_SELECTOR);
+    const chapterItems = window.YoutubeAntiTranslate.querySelectorAll(
+      CHAPTER_ITEM_SELECTOR,
+      container,
+    );
 
     chapterItems.forEach((item) => {
-      const timeElement = item.querySelector(CHAPTER_TIME_SELECTOR);
-      const titleElements = item.querySelectorAll(CHAPTER_TITLE_SELECTOR);
+      const timeElement = window.YoutubeAntiTranslate.querySelector(
+        CHAPTER_TIME_SELECTOR,
+        item,
+      );
+      const titleElements = window.YoutubeAntiTranslate.querySelectorAll(
+        CHAPTER_TITLE_SELECTOR,
+        item,
+      );
 
       if (!timeElement || titleElements.length === 0) {
         return;

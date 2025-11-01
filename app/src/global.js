@@ -2,6 +2,11 @@
 
 const pendingRequests = new Map();
 
+// Cache for player element to avoid repeated querySelector calls
+let cachedPlayer = null;
+let cachedPlayerSelector = null;
+let cachedPathname = null;
+
 class SessionLRUCache {
   /**
    * @param {object} [opts]
@@ -129,6 +134,11 @@ window.YoutubeAntiTranslate = {
     DEBUG: 4,
   },
   currentLogLevel: 2, // Default to WARN
+  // DISABLE IN PRODUCTION
+  QS_PROFILE_ENABLED: false,
+  // DISABLE IN PRODUCTION
+  QS_PROFILE_CHECK_CORRECTNESS: false,
+  settingsElement: undefined,
 
   setLogLevel: function (levelName) {
     const newLevel = this.LOG_LEVELS[levelName.toUpperCase()];
@@ -303,6 +313,56 @@ ytm-shorts-lockup-view-model`,
       ? "#shorts-player"
       : "ytd-player .html5-video-player";
     return selector;
+  },
+
+  /**
+   * Gets the player element with caching to optimize repeated calls.
+   * Cache is invalidated when pathname changes (shorts vs regular vs embed).
+   * @returns {Element | null} The player element or null if not found
+   */
+  getCachedPlayer: function () {
+    const doProfile = this.QS_PROFILE_ENABLED;
+    const t0 = doProfile ? performance.now() : 0;
+
+    const currentPathname = window.location.pathname;
+
+    // Invalidate cache if pathname changed (shorts vs regular vs embed)
+    if (cachedPathname !== currentPathname) {
+      cachedPlayer = null;
+      cachedPlayerSelector = null;
+      cachedPathname = currentPathname;
+    }
+
+    // Return cached player if it still exists in the DOM
+    if (cachedPlayer && document.contains(cachedPlayer)) {
+      if (doProfile) {
+        const t1 = performance.now();
+        this.__recordQueryProfile(
+          "getCachedPlayer[hit]",
+          document,
+          cachedPlayerSelector || "(none)",
+          t1 - t0,
+        );
+      }
+      return cachedPlayer;
+    }
+
+    // Otherwise, query and cache
+    cachedPlayerSelector = this.getPlayerSelector();
+    // eslint-disable-next-line no-restricted-syntax
+    cachedPlayer = this.querySelector(cachedPlayerSelector);
+
+    if (doProfile) {
+      const t1 = performance.now();
+      this.__recordQueryProfile(
+        "getCachedPlayer[miss]",
+        document,
+        cachedPlayerSelector,
+        t1 - t0,
+      );
+    }
+
+    return cachedPlayer;
   },
 
   getBrowserOrChrome: function () {
@@ -697,9 +757,9 @@ ytm-shorts-lockup-view-model`,
     let isDarkTheme = false;
     if (this.isMobile()) {
       isDarkTheme =
-        document
-          .querySelector("head > #theme-meta")
-          ?.getAttribute("content") === "rgba(15, 15, 15, 0.7)";
+        window.YoutubeAntiTranslate.querySelector(
+          "head > #theme-meta",
+        )?.getAttribute("content") === "rgba(15, 15, 15, 0.7)";
     } else {
       isDarkTheme = document.documentElement.hasAttribute("dark");
     }
@@ -917,6 +977,97 @@ ytm-shorts-lockup-view-model`,
     // Add new content
     container.appendChild(newContent);
     this.logDebug(`replaceContainerContent: replaced container content`);
+  },
+
+  /**
+   * Optimized retrieval of nodes that match ALL_ARRAYS_VIDEOS_SELECTOR
+   * - Uses fast tag-name lookups for plain tag selectors
+   * - Falls back to one qSA for class-qualified selectors
+   * - Compares count with baseline qSA and logs debug if different
+   * - Profiles this call as 'getArraysVideos'
+   */
+  getArraysVideos: function (root = document) {
+    const context = root || document;
+    const doProfile = this.QS_PROFILE_ENABLED;
+    const t0 = doProfile ? performance.now() : 0;
+
+    // Tag-only selectors (kept in sync with ALL_ARRAYS_VIDEOS_SELECTOR)
+    const tagSelectors = [
+      "ytd-video-renderer",
+      "ytd-rich-item-renderer",
+      "ytd-compact-video-renderer",
+      "ytd-grid-video-renderer",
+      "ytd-playlist-video-renderer",
+      "ytd-playlist-panel-video-renderer",
+      "ytm-playlist-panel-video-renderer",
+      "yt-lockup-view-model",
+      "ytm-compact-video-renderer",
+      "ytm-rich-item-renderer",
+      "ytm-video-with-context-renderer",
+      "ytm-video-card-renderer",
+      "ytm-media-item",
+      "ytm-playlist-video-renderer",
+      "ytd-structured-description-video-lockup-renderer",
+      "ytm-compact-playlist-renderer",
+      "ytm-playlist-card-renderer",
+    ];
+
+    // Class-qualified selectors (cannot use getElementsByTagName)
+    const classQualifiedSelector = [
+      "a.ytp-videowall-still",
+      "a.ytp-ce-covering-overlay",
+      "a.ytp-suggestion-link",
+      "div.fullscreen-recommendation",
+      "a.ytp-autonav-endscreen-link-container",
+      "a.autonav-endscreen-cued-video-container",
+      "a.ytp-modern-videowall-still",
+    ].join(",");
+
+    // Collect results
+    const resultSet = new Set();
+
+    for (const tag of tagSelectors) {
+      const list = context.getElementsByTagName(tag);
+      for (let i = 0; i < list.length; i++) {
+        resultSet.add(list[i]);
+      }
+    }
+
+    if (classQualifiedSelector) {
+      // eslint-disable-next-line no-restricted-syntax
+      const extra = context.querySelectorAll(classQualifiedSelector);
+      for (let i = 0; i < extra.length; i++) {
+        resultSet.add(extra[i]);
+      }
+    }
+
+    const optimized = Array.from(resultSet);
+
+    if (doProfile) {
+      const t1 = performance.now();
+      this.__recordQueryProfile(
+        "getArraysVideos",
+        context,
+        this.ALL_ARRAYS_VIDEOS_SELECTOR,
+        t1 - t0,
+      );
+
+      // Baseline comparison (count only) – also profiled via our wrapper
+      if (this.QS_PROFILE_CHECK_CORRECTNESS) {
+        // eslint-disable-next-line no-restricted-syntax
+        const baseline = this.querySelectorAll(
+          this.ALL_ARRAYS_VIDEOS_SELECTOR,
+          context,
+        );
+        if (baseline.length !== optimized.length) {
+          this.logError(
+            `getArraysVideos count differs: optimized=${optimized.length}, baseline=${baseline.length}`,
+          );
+        }
+      }
+    }
+
+    return optimized;
   },
 
   SUPPORTED_BCP47_CODES: new Set([
@@ -1152,13 +1303,16 @@ ytm-shorts-lockup-view-model`,
   },
 
   getSettings: async function () {
-    // First try to read from the DOM
-    const element = document.querySelector(
-      'script[type="module"][data-ytantitranslatesettings]',
-    );
-    if (element?.["dataset"]?.ytantitranslatesettings) {
+    if (!this.settingsElement) {
+      // @ts-expect-error - fix type
+      this.settingsElement = window.YoutubeAntiTranslate.querySelector(
+        'script[type="module"][data-ytantitranslatesettings]',
+      );
+    }
+
+    if (this.settingsElement?.dataset?.ytantitranslatesettings) {
       try {
-        return JSON.parse(element["dataset"].ytantitranslatesettings);
+        return JSON.parse(this.settingsElement.dataset.ytantitranslatesettings);
       } catch {
         // fallback to chrome storage if JSON is invalid
       }
@@ -2240,5 +2394,139 @@ ytm-shorts-lockup-view-model`,
       attributeName,
       `${videoId}__${getCountNumber >= window.YoutubeAntiTranslate.MAX_ATTEMPTS ? window.YoutubeAntiTranslate.MAX_ATTEMPTS : getCountNumber + 1}`,
     );
+  },
+
+  /** ---------- Query Selector Profiling ---------- */
+  __qsProfile: new Map(),
+  __qsTotals: { calls: 0, totalMs: 0 },
+
+  /** Build a concise label for the root context */
+  __formatRootLabel: function (root) {
+    if (!root || root === document) {
+      return "document";
+    }
+    if (root.nodeType === Node.ELEMENT_NODE) {
+      const el = /** @type {Element} */ (root);
+      const id = el.id ? `#${el.id}` : "";
+      const cls =
+        el.className && typeof el.className === "string"
+          ? `.${el.className.split(/\s+/).slice(0, 2).join(".")}`
+          : "";
+      return `${el.tagName.toLowerCase()}${id}${cls}`;
+    }
+    return String(root.nodeName || "node").toLowerCase();
+  },
+
+  /** Record a single query profiling sample */
+  __recordQueryProfile: function (method, root, selector, durationMs) {
+    if (!this.QS_PROFILE_ENABLED) {
+      return;
+    }
+    const rootLabel = this.__formatRootLabel(root);
+    const key = `${method}|${rootLabel}|${selector}`;
+    const entry = this.__qsProfile.get(key) || {
+      key,
+      method,
+      root: rootLabel,
+      selector,
+      calls: 0,
+      totalMs: 0,
+      maxMs: 0,
+      minMs: Number.POSITIVE_INFINITY,
+    };
+
+    entry.calls += 1;
+    entry.totalMs += durationMs;
+    if (durationMs > entry.maxMs) {
+      entry.maxMs = durationMs;
+    }
+    if (durationMs < entry.minMs) {
+      entry.minMs = durationMs;
+    }
+    this.__qsProfile.set(key, entry);
+
+    this.__qsTotals.calls += 1;
+    this.__qsTotals.totalMs += durationMs;
+  },
+
+  /** Profiled querySelector on an optional root (defaults to document) */
+  querySelector: function (selector, root = document) {
+    const context = root || document;
+    if (!this.QS_PROFILE_ENABLED) {
+      // eslint-disable-next-line no-restricted-syntax
+      return context.querySelector(selector);
+    }
+    const t0 = performance.now();
+    // eslint-disable-next-line no-restricted-syntax
+    const result = context.querySelector(selector);
+    const t1 = performance.now();
+    this.__recordQueryProfile("qs", context, selector, t1 - t0);
+    return result;
+  },
+
+  /** Profiled querySelectorAll on an optional root (defaults to document) */
+  querySelectorAll: function (selector, root = document) {
+    const context = root || document;
+    if (!this.QS_PROFILE_ENABLED) {
+      // eslint-disable-next-line no-restricted-syntax
+      return context.querySelectorAll(selector);
+    }
+    const t0 = performance.now();
+    // eslint-disable-next-line no-restricted-syntax
+    const result = context.querySelectorAll(selector);
+    const t1 = performance.now();
+    this.__recordQueryProfile("qsa", context, selector, t1 - t0);
+    return result;
+  },
+
+  /** Print aggregated profiling stats */
+  printProfile: function ({ sortBy = "totalMs", limit = 50 } = {}) {
+    if (!this.QS_PROFILE_ENABLED) {
+      console.log(
+        "To enable query selector profiling, set QS_PROFILE_ENABLED to true",
+      );
+      return;
+    }
+    const rows = Array.from(this.__qsProfile.values()).map((e) => ({
+      method: e.method,
+      root: e.root,
+      selector: e.selector,
+      calls: e.calls,
+      totalMs: Number(e.totalMs.toFixed(2)),
+      avgMs: Number((e.totalMs / e.calls).toFixed(2)),
+      // maxMs: Number(e.maxMs.toFixed(2)),
+      // minMs: Number(
+      //   e.minMs === Number.POSITIVE_INFINITY ? 0 : e.minMs.toFixed(2),
+      // ),
+      pctTotal:
+        this.__qsTotals.totalMs > 0
+          ? Number(((e.totalMs / this.__qsTotals.totalMs) * 100).toFixed(1))
+          : 0,
+    }));
+
+    const validSorts = new Set(["totalMs", "calls", "avgMs", "maxMs"]);
+    const sortKey = validSorts.has(sortBy) ? sortBy : "totalMs";
+    rows.sort((a, b) => (b[sortKey] || 0) - (a[sortKey] || 0));
+
+    const header = `${this.LOG_PREFIX} QuerySelector profile — calls=${this.__qsTotals.calls}, totalMs=${this.__qsTotals.totalMs.toFixed(2)}`;
+    console.log(header);
+    if (typeof console.table === "function") {
+      console.table(rows.slice(0, limit));
+    } else {
+      rows
+        .slice(0, limit)
+        .forEach((r) =>
+          console.log(
+            `${r.method} ${r.root} ${r.selector} → calls=${r.calls} totalMs=${r.totalMs} avgMs=${r.avgMs} maxMs=${r.maxMs} minMs=${r.minMs} (${r.pctTotal}%)`,
+          ),
+        );
+    }
+  },
+
+  /** Clear collected profiling data */
+  clearProfile: function () {
+    this.__qsProfile.clear();
+    this.__qsTotals.calls = 0;
+    this.__qsTotals.totalMs = 0;
   },
 };

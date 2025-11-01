@@ -68,7 +68,7 @@ function setupNotificationTitlesObserver() {
 
   // Wait for the notification popup to appear in the DOM
   const dropdown = window.YoutubeAntiTranslate.getFirstVisible(
-    document.querySelectorAll(
+    window.YoutubeAntiTranslate.querySelectorAll(
       'ytd-popup-container tp-yt-iron-dropdown[vertical-align="top"]',
     ),
   );
@@ -159,9 +159,10 @@ function replaceVideoTitleInNotification(message, originalTitle) {
 async function refreshNotificationTitles() {
   // Select all notification title elements
   /** @type {NodeListOf<HTMLElement>} */
-  const notificationTitleElements = document.querySelectorAll(
-    ".ytd-notification-renderer .message",
-  );
+  const notificationTitleElements =
+    window.YoutubeAntiTranslate.querySelectorAll(
+      ".ytd-notification-renderer .message",
+    );
   for (const titleElement of notificationTitleElements) {
     const anchor = titleElement.closest("a");
     if (!anchor) {
@@ -220,7 +221,7 @@ async function refreshNotificationTitles() {
   ) {
     const notificationDropdownObserver = new MutationObserver(
       window.YoutubeAntiTranslate.debounce(() => {
-        const dropdownExists = document.querySelector(
+        const dropdownExists = window.YoutubeAntiTranslate.querySelector(
           'ytd-popup-container tp-yt-iron-dropdown[vertical-align="top"]',
         );
         if (dropdownExists) {
