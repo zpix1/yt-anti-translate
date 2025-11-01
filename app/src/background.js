@@ -2105,7 +2105,17 @@ async function untranslateCurrentVideoPreviewThumbnail() {
   }
 }
 
-async function untranslate() {
+async function untranslate(mutations) {
+  const player = window.YoutubeAntiTranslate.querySelector(
+    window.YoutubeAntiTranslate.getPlayerSelector(),
+  );
+  const allMutationsAreInPlayer = mutations.every((e) =>
+    player.contains(e.target),
+  );
+  if (allMutationsAreInPlayer) {
+    return;
+  }
+
   const settings = await window.YoutubeAntiTranslate.getSettings();
 
   const currentVideoPromise = settings.untranslateTitle

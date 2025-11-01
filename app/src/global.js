@@ -130,7 +130,7 @@ window.YoutubeAntiTranslate = {
   },
   currentLogLevel: 2, // Default to WARN
   // DISABLE IN PRODUCTION
-  QS_PROFILE_ENABLED: false,
+  QS_PROFILE_ENABLED: true,
   // DISABLE IN PRODUCTION
   QS_PROFILE_CHECK_CORRECTNESS: false,
   settingsElement: undefined,
@@ -202,7 +202,7 @@ ytm-shorts-lockup-view-model`,
 
   debounce: function (
     func,
-    waitMinMs = 90,
+    waitMinMs = 180,
     includeArgsInSignature = false,
     getSignature = undefined,
   ) {
@@ -2439,10 +2439,10 @@ ytm-shorts-lockup-view-model`,
       calls: e.calls,
       totalMs: Number(e.totalMs.toFixed(2)),
       avgMs: Number((e.totalMs / e.calls).toFixed(2)),
-      maxMs: Number(e.maxMs.toFixed(2)),
-      minMs: Number(
-        e.minMs === Number.POSITIVE_INFINITY ? 0 : e.minMs.toFixed(2),
-      ),
+      // maxMs: Number(e.maxMs.toFixed(2)),
+      // minMs: Number(
+      //   e.minMs === Number.POSITIVE_INFINITY ? 0 : e.minMs.toFixed(2),
+      // ),
       pctTotal:
         this.__qsTotals.totalMs > 0
           ? Number(((e.totalMs / this.__qsTotals.totalMs) * 100).toFixed(1))

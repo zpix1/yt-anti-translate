@@ -1179,7 +1179,7 @@ function replaceTextNodeContent(container, textNodeIndex, newText) {
   }
 }
 
-async function handleDescriptionMutation() {
+async function handleDescriptionMutation(mutations) {
   const settings = await window.YoutubeAntiTranslate.getSettings();
 
   if (
@@ -1196,6 +1196,14 @@ async function handleDescriptionMutation() {
     ),
     /*shouldBeInsideViewport=*/ false,
   );
+
+  const allMutationsAreInPlayer = mutations.every((e) =>
+    player.contains(e.target),
+  );
+
+  if (allMutationsAreInPlayer) {
+    return;
+  }
 
   if (
     settings.untranslateDescription ||

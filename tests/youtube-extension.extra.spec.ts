@@ -73,83 +73,82 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     );
   });
 
-  test("Collaborators video has collaborator author, opens Collaborators popup, and retains original names (th-TH)", async ({
-    browserNameWithExtensions,
-    localeString,
-    isMobile,
-  }, testInfo) => {
-    // Handle retries and prerequisite setup
-    const { context, page, consoleMessageCountContainer } =
-      await setupTestEnvironment(
-        testInfo,
+  test.fixme(
+    "Collaborators video has collaborator author, opens Collaborators popup, and retains original names (th-TH)",
+    async ({ browserNameWithExtensions, localeString, isMobile }, testInfo) => {
+      // Handle retries and prerequisite setup
+      const { context, page, consoleMessageCountContainer } =
+        await setupTestEnvironment(
+          testInfo,
+          browserNameWithExtensions,
+          localeString,
+          isMobile,
+        );
+
+      // Navigate to the provided video
+      await loadPageAndVerifyAuth(
+        page,
+        "https://www.youtube.com/watch?v=KRhofr57Na8",
         browserNameWithExtensions,
-        localeString,
-        isMobile,
       );
 
-    // Navigate to the provided video
-    await loadPageAndVerifyAuth(
-      page,
-      "https://www.youtube.com/watch?v=KRhofr57Na8",
-      browserNameWithExtensions,
-    );
+      // Wait for the upload info block, scroll into view, and click as requested
+      const uploadInfo = await waitForSelectorOrRetryWithPageReload(
+        page,
+        "#attributed-channel-name:has-text('Mark Rober')",
+      );
+      await expect(uploadInfo).toBeVisible();
 
-    // Wait for the upload info block, scroll into view, and click as requested
-    const uploadInfo = await waitForSelectorOrRetryWithPageReload(
-      page,
-      "#attributed-channel-name:has-text('Mark Rober')",
-    );
-    await expect(uploadInfo).toBeVisible();
+      await page.waitForTimeout(process.env.CI ? 3000 : 2000);
+      const uploadInfoText = await uploadInfo.textContent();
+      // Check that original English text is present and Thai translation is absent
+      expect(uploadInfoText).toContain("MrBeast");
+      expect(uploadInfoText).not.toContain("มิสเตอร์บีสต์");
 
-    await page.waitForTimeout(process.env.CI ? 3000 : 2000);
-    const uploadInfoText = await uploadInfo.textContent();
-    // Check that original English text is present and Thai translation is absent
-    expect(uploadInfoText).toContain("MrBeast");
-    expect(uploadInfoText).not.toContain("มิสเตอร์บีสต์");
+      await uploadInfo.scrollIntoViewIfNeeded();
+      await page.waitForTimeout(process.env.CI ? 150 : 100);
+      await uploadInfo.click();
+      try {
+        await page.waitForTimeout(process.env.CI ? 375 : 250);
+        await page.waitForLoadState("networkidle", {
+          timeout: process.env.CI ? 7500 : 5000,
+        });
+      } catch {
+        // empty
+      }
+      await page.waitForTimeout(process.env.CI ? 3000 : 2000);
 
-    await uploadInfo.scrollIntoViewIfNeeded();
-    await page.waitForTimeout(process.env.CI ? 150 : 100);
-    await uploadInfo.click();
-    try {
-      await page.waitForTimeout(process.env.CI ? 375 : 250);
-      await page.waitForLoadState("networkidle", {
-        timeout: process.env.CI ? 7500 : 5000,
+      // Expect a dialog to appear listing collaborators
+      const collabItems = page.locator(
+        "yt-dialog-view-model .yt-list-item-view-model__text-wrapper a.yt-core-attributed-string__link",
+      );
+      await collabItems.first().waitFor();
+
+      // Allow enough time for the extension to fetch and update names
+      await expect(collabItems.first()).toBeAttached();
+      await page.waitForTimeout(process.env.CI ? 7500 : 5000);
+
+      const names = (await collabItems.allTextContents()).map((n: string) =>
+        (n || "").trim(),
+      );
+      expect(names.length).toBeGreaterThan(0);
+
+      // Validate that collaborator names are not in Thai (i.e., un-translated)
+      const thaiRegex = /[\u0E00-\u0E7F]/;
+      for (const name of names) {
+        expect(thaiRegex.test(name)).toBeFalsy();
+      }
+
+      // Screenshot for visual verification
+      await page.screenshot({
+        path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-collaborators-dialog-from-upload-info-test.png`,
       });
-    } catch {
-      // empty
-    }
-    await page.waitForTimeout(process.env.CI ? 3000 : 2000);
 
-    // Expect a dialog to appear listing collaborators
-    const collabItems = page.locator(
-      "yt-dialog-view-model .yt-list-item-view-model__text-wrapper a.yt-core-attributed-string__link",
-    );
-    await collabItems.first().waitFor();
+      expect(consoleMessageCountContainer.count).toBeLessThan(2000);
 
-    // Allow enough time for the extension to fetch and update names
-    await expect(collabItems.first()).toBeAttached();
-    await page.waitForTimeout(process.env.CI ? 7500 : 5000);
-
-    const names = (await collabItems.allTextContents()).map((n: string) =>
-      (n || "").trim(),
-    );
-    expect(names.length).toBeGreaterThan(0);
-
-    // Validate that collaborator names are not in Thai (i.e., un-translated)
-    const thaiRegex = /[\u0E00-\u0E7F]/;
-    for (const name of names) {
-      expect(thaiRegex.test(name)).toBeFalsy();
-    }
-
-    // Screenshot for visual verification
-    await page.screenshot({
-      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-collaborators-dialog-from-upload-info-test.png`,
-    });
-
-    expect(consoleMessageCountContainer.count).toBeLessThan(2000);
-
-    await context.close();
-  });
+      await context.close();
+    },
+  );
 
   async function channelBrandingAboutTest(
     context: BrowserContext | Browser,

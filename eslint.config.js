@@ -67,6 +67,13 @@ export default tseslint.config([
       eqeqeq: "error",
       "no-empty": "warn",
 
+      "prettier/prettier": [
+        "error",
+        {
+          endOfLine: "auto",
+        },
+      ],
+
       // Add any other project-specific rules or overrides here.
       // For example:
       // "no-unused-vars": "warn",
