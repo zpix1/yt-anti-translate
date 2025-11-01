@@ -1197,9 +1197,8 @@ async function handleDescriptionMutation(mutations) {
     /*shouldBeInsideViewport=*/ false,
   );
 
-  const allMutationsAreInPlayer = mutations.every((e) =>
-    player.contains(e.target),
-  );
+  const allMutationsAreInPlayer =
+    player && mutations.every((e) => player.contains(e.target));
 
   if (allMutationsAreInPlayer) {
     return;
