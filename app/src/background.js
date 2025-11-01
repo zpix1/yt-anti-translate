@@ -1396,7 +1396,17 @@ async function untranslateOtherVideos(intersectElements = null, mutations) {
   );
 }
 
-async function untranslateOtherShortsVideos(intersectElements = null) {
+async function untranslateOtherShortsVideos(
+  intersectElements = null,
+  mutations,
+) {
+  const player = window.YoutubeAntiTranslate.getCachedPlayer();
+  const allMutationsAreInPlayer =
+    player && mutations.every((e) => player.contains(e.target));
+  if (allMutationsAreInPlayer) {
+    return;
+  }
+
   async function untranslateOtherShortsArray(shortsItems) {
     if (!shortsItems) {
       return;
