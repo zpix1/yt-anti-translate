@@ -97,6 +97,13 @@ declare global {
       getPlayerSelector: () => string;
 
       /**
+       * Gets the player element with caching to optimize repeated calls.
+       * Cache is invalidated when pathname changes (shorts vs regular vs embed).
+       * @returns The player element or null if not found
+       */
+      getCachedPlayer: () => Element | null;
+
+      /**
        * Safely returns the browser API object, preferring `browser` over `chrome`.
        * @returns The browser API object.
        */

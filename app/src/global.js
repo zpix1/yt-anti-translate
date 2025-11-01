@@ -2,6 +2,11 @@
 
 const pendingRequests = new Map();
 
+// Cache for player element to avoid repeated querySelector calls
+let cachedPlayer = null;
+let cachedPlayerSelector = null;
+let cachedPathname = null;
+
 class SessionLRUCache {
   /**
    * @param {object} [opts]
@@ -202,7 +207,7 @@ ytm-shorts-lockup-view-model`,
 
   debounce: function (
     func,
-    waitMinMs = 180,
+    waitMinMs = 90,
     includeArgsInSignature = false,
     getSignature = undefined,
   ) {
@@ -308,6 +313,56 @@ ytm-shorts-lockup-view-model`,
       ? "#shorts-player"
       : "ytd-player .html5-video-player";
     return selector;
+  },
+
+  /**
+   * Gets the player element with caching to optimize repeated calls.
+   * Cache is invalidated when pathname changes (shorts vs regular vs embed).
+   * @returns {Element | null} The player element or null if not found
+   */
+  getCachedPlayer: function () {
+    const doProfile = this.QS_PROFILE_ENABLED;
+    const t0 = doProfile ? performance.now() : 0;
+
+    const currentPathname = window.location.pathname;
+
+    // Invalidate cache if pathname changed (shorts vs regular vs embed)
+    if (cachedPathname !== currentPathname) {
+      cachedPlayer = null;
+      cachedPlayerSelector = null;
+      cachedPathname = currentPathname;
+    }
+
+    // Return cached player if it still exists in the DOM
+    if (cachedPlayer && document.contains(cachedPlayer)) {
+      if (doProfile) {
+        const t1 = performance.now();
+        this.__recordQueryProfile(
+          "getCachedPlayer[hit]",
+          document,
+          cachedPlayerSelector || "(none)",
+          t1 - t0,
+        );
+      }
+      return cachedPlayer;
+    }
+
+    // Otherwise, query and cache
+    cachedPlayerSelector = this.getPlayerSelector();
+    // eslint-disable-next-line no-restricted-syntax
+    cachedPlayer = this.querySelector(cachedPlayerSelector);
+
+    if (doProfile) {
+      const t1 = performance.now();
+      this.__recordQueryProfile(
+        "getCachedPlayer[miss]",
+        document,
+        cachedPlayerSelector,
+        t1 - t0,
+      );
+    }
+
+    return cachedPlayer;
   },
 
   getBrowserOrChrome: function () {
