@@ -695,7 +695,14 @@ async function createOrUpdateUntranslatedFakeNodeAuthor(
   }
 }
 
-async function untranslateOtherVideos(intersectElements = null) {
+async function untranslateOtherVideos(intersectElements = null, mutations) {
+  const player = window.YoutubeAntiTranslate.getCachedPlayer();
+  const allMutationsAreInPlayer =
+    player && mutations.every((e) => player.contains(e.target));
+  if (allMutationsAreInPlayer) {
+    return;
+  }
+
   async function untranslateOtherVideosArray(otherVideos) {
     if (!otherVideos) {
       return;
@@ -2106,13 +2113,6 @@ async function untranslateCurrentVideoPreviewThumbnail() {
 }
 
 async function untranslate(mutations) {
-  const player = window.YoutubeAntiTranslate.getCachedPlayer();
-  const allMutationsAreInPlayer =
-    player && mutations.every((e) => player.contains(e.target));
-  if (allMutationsAreInPlayer) {
-    return;
-  }
-
   const settings = await window.YoutubeAntiTranslate.getSettings();
 
   const currentVideoPromise = settings.untranslateTitle
@@ -2132,7 +2132,7 @@ async function untranslate(mutations) {
     settings.untranslateDescription ||
     settings.untranslateChannelBranding ||
     settings.untranslateThumbnail
-      ? untranslateOtherVideos()
+      ? untranslateOtherVideos(undefined, mutations)
       : Promise.resolve();
   const currentShortPromise = settings.untranslateTitle
     ? untranslateCurrentShortVideo()
@@ -2201,7 +2201,7 @@ async function untranslate(mutations) {
     settings.untranslateChannelBranding ||
     settings.untranslateThumbnail
   ) {
-    updateObserverOtherVideosOnIntersect();
+    updateObserverOtherVideosOnIntersect(mutations);
   }
   if (settings.untranslateTitle || settings.untranslateThumbnail) {
     updateObserverOtherShortsOnIntersect();
@@ -2260,7 +2260,14 @@ async function untranslateOtherVideosOnIntersect(entries) {
     setTimeout(waitForUpdateObserverOtherVideosOnIntersect, 8);
   }
 })();
-function updateObserverOtherVideosOnIntersect() {
+function updateObserverOtherVideosOnIntersect(mutations) {
+  const player = window.YoutubeAntiTranslate.getCachedPlayer();
+  const allMutationsAreInPlayer =
+    player && mutations && mutations.every((e) => player.contains(e.target));
+  if (allMutationsAreInPlayer) {
+    return;
+  }
+
   for (const el of allIntersectVideoElements ?? []) {
     intersectionObserverOtherVideos.unobserve(el);
   }
