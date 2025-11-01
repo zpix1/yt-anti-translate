@@ -698,7 +698,7 @@ async function createOrUpdateUntranslatedFakeNodeAuthor(
 async function untranslateOtherVideos(intersectElements = null, mutations) {
   const player = window.YoutubeAntiTranslate.getCachedPlayer();
   const allMutationsAreInPlayer =
-    player && mutations.every((e) => player.contains(e.target));
+    player && mutations && mutations.every((e) => player.contains(e.target));
   if (allMutationsAreInPlayer) {
     return;
   }
@@ -1402,7 +1402,7 @@ async function untranslateOtherShortsVideos(
 ) {
   const player = window.YoutubeAntiTranslate.getCachedPlayer();
   const allMutationsAreInPlayer =
-    player && mutations.every((e) => player.contains(e.target));
+    player && mutations && mutations.every((e) => player.contains(e.target));
   if (allMutationsAreInPlayer) {
     return;
   }
