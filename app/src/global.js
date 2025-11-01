@@ -137,7 +137,7 @@ window.YoutubeAntiTranslate = {
   // DISABLE IN PRODUCTION
   QS_PROFILE_ENABLED: false,
   // DISABLE IN PRODUCTION
-  QS_PROFILE_CHECK_CORRECTNESS: true,
+  QS_PROFILE_CHECK_CORRECTNESS: false,
   settingsElement: undefined,
 
   setLogLevel: function (levelName) {
