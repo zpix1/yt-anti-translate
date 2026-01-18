@@ -622,7 +622,12 @@ test.describe("YouTube Anti-Translate extension", () => {
     if (await translatedShort.isVisible()) {
       await page.mouse.wheel(0, 500);
       await page.waitForTimeout(process.env.CI ? 150 : 100);
-      await translatedShort.scrollIntoViewIfNeeded();
+      try {
+        // might be already translated
+        await translatedShort.scrollIntoViewIfNeeded();
+      } catch {
+        // empty
+      }
       try {
         await page.waitForTimeout(process.env.CI ? 375 : 250);
         await page.waitForLoadState("networkidle", {

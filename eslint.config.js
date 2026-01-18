@@ -67,6 +67,13 @@ export default tseslint.config([
       eqeqeq: "error",
       "no-empty": "warn",
 
+      "prettier/prettier": [
+        "error",
+        {
+          endOfLine: "auto",
+        },
+      ],
+
       // Add any other project-specific rules or overrides here.
       // For example:
       // "no-unused-vars": "warn",
@@ -74,5 +81,34 @@ export default tseslint.config([
     // Note: For full TypeScript linting capabilities (e.g., type-aware rules),
     // you would need to install @typescript-eslint/parser and @typescript-eslint/eslint-plugin,
     // and configure them here. This setup will apply basic ESLint rules and Prettier to .ts/.tsx files.
+  },
+
+  // 5. Restrict direct DOM querySelector/querySelectorAll only inside app/** (excluding tests)
+  {
+    files: [
+      "app/**/*.js",
+      "app/**/*.jsx",
+      "app/**/*.mjs",
+      "app/**/*.cjs",
+      "app/**/*.ts",
+      "app/**/*.tsx",
+    ],
+    ignores: [
+      "app/**/*.test.js",
+      "app/**/*.test.ts",
+      "app/**/*.spec.js",
+      "app/**/*.spec.ts",
+    ],
+    rules: {
+      "no-restricted-syntax": [
+        "warn",
+        {
+          selector:
+            'CallExpression[callee.type="MemberExpression"][callee.property.name=/^querySelector(All)?$/]:not([callee.object.type="MemberExpression"][callee.object.object.type="Identifier"][callee.object.object.name="window"][callee.object.property.type="Identifier"][callee.object.property.name="YoutubeAntiTranslate"])',
+          message:
+            "Use window.YoutubeAntiTranslate.querySelector/querySelectorAll instead of direct DOM query.",
+        },
+      ],
+    },
   },
 ]);

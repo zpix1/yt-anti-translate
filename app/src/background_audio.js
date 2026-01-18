@@ -128,7 +128,9 @@ function getOriginalTrack(tracks) {
 
 async function untranslateAudioTrack() {
   const player = window.YoutubeAntiTranslate.getFirstVisible(
-    document.querySelectorAll(window.YoutubeAntiTranslate.getPlayerSelector()),
+    window.YoutubeAntiTranslate.querySelectorAll(
+      window.YoutubeAntiTranslate.getPlayerSelector(),
+    ),
   );
 
   if (

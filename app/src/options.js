@@ -602,7 +602,7 @@ function optionTabChanges() {
   // If window type is not popup OR it is in any mobile browser
   if (!isPopup() || isMobile()) {
     const scrollWrapper = /** @type {HTMLElement} */ (
-      document.querySelector(".scroll-wrapper")
+      window.YoutubeAntiTranslate.querySelector(".scroll-wrapper")
     );
     if (scrollWrapper) {
       scrollWrapper.style.maxHeight = "none";
