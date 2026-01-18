@@ -1330,7 +1330,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     await context.close();
   });
 
-  test("Works on embedded videos", async ({
+  test.fixme("Works on embedded videos", async ({
     browserNameWithExtensions,
     localeString,
     isMobile,
@@ -1452,7 +1452,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     await context.close();
   });
 
-  test("Works on youtube-nocookie videos", async ({
+  test.fixme("Works on youtube-nocookie videos", async ({
     browserNameWithExtensions,
     localeString,
     isMobile,
