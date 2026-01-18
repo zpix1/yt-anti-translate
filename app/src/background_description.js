@@ -11,7 +11,7 @@ const FORMATTED_STRING_SELECTOR = "yt-formatted-string";
 const SNIPPET_TEXT_SELECTOR =
   "#attributed-snippet-text, #formatted-snippet-text, #plain-snippet-text";
 const HORIZONTAL_CHAPTERS_SELECTOR =
-  "ytd-horizontal-card-list-renderer, ytd-macro-markers-list-renderer, ytm-macro-markers-list-renderer";
+  "ytd-horizontal-card-list-renderer, ytd-macro-markers-list-renderer, ytm-macro-markers-list-renderer, ytm-horizontal-card-list-renderer";
 const CHAPTER_ITEM_SELECTOR =
   "ytd-macro-markers-list-item-renderer, ytm-macro-markers-list-item-renderer";
 const CHAPTER_TITLE_SELECTOR =
@@ -19,7 +19,7 @@ const CHAPTER_TITLE_SELECTOR =
 const CHAPTER_TIME_SELECTOR =
   "div#time, p.ytm-macro-markers-list-item-time, p.ytm-macro-markers-list-item-time span";
 const CHAPTER_HEADER_SELECTOR =
-  "ytd-rich-list-header-renderer yt-formatted-string#title, h2#engagement-panel-section-list-header";
+  "ytd-rich-list-header-renderer yt-formatted-string#title, h2#engagement-panel-section-list-header, .ytm-rich-list-header-title";
 const CHAPTER_STYLE = `
 .ytp-tooltip.ytp-bottom.ytp-preview .ytp-tooltip-title span[data-original-chapter]::after {
     content: attr(data-original-chapter);
