@@ -564,8 +564,8 @@ test.describe("YouTube Anti-Translate extension", () => {
     if (await translatedVideo.isVisible()) {
       await page.mouse.wheel(0, 500);
       await page.waitForTimeout(process.env.CI ? 150 : 100);
-      await translatedVideo.scrollIntoViewIfNeeded();
       try {
+        await translatedVideo.scrollIntoViewIfNeeded();
         await page.waitForTimeout(process.env.CI ? 375 : 250);
         await page.waitForLoadState("networkidle", {
           timeout: process.env.CI ? 7500 : 5000,
@@ -661,6 +661,16 @@ test.describe("YouTube Anti-Translate extension", () => {
     await expect(page.url()).toContain("/videos");
 
     // --- Re-check Videos Tab ---
+    try {
+      await translatedVideo.scrollIntoViewIfNeeded();
+    } catch {
+      // empty
+    }
+    try {
+      await originalVideo.scrollIntoViewIfNeeded();
+    } catch {
+      // empty
+    }
     console.log("Re-checking Videos tab for original title...");
     await expect(page.locator(videoSelector)).toBeVisible();
     await expect(page.locator(translatedVideoSelector)).not.toBeVisible();
