@@ -322,7 +322,14 @@ function findChapterByTime(timeInSeconds, chapters) {
 // Cache for parsed chapters to avoid re-parsing
 let cachedChapters = [];
 let lastDescription = "";
+let cachedChaptersVideoId = null;
 let chaptersInitInProgress = false;
+
+function getCurrentVideoId() {
+  return window.YoutubeAntiTranslate.extractVideoIdFromUrl(
+    document.location.href,
+  );
+}
 
 /**
  * Updates the chapter title displayed inside the player tooltip so that the
@@ -595,9 +602,13 @@ function setupChapterButtonObserver() {
  *
  * @param {string} originalDescription - Untranslated video description obtained from the player API.
  */
-function setupChapters(originalDescription) {
+function setupChapters(originalDescription, videoId = null) {
+  const currentVideoId = videoId || getCurrentVideoId();
   // Early return if description hasn't changed - avoid expensive cleanup/setup
-  if (originalDescription === lastDescription) {
+  if (
+    originalDescription === lastDescription &&
+    (!currentVideoId || currentVideoId === cachedChaptersVideoId)
+  ) {
     window.YoutubeAntiTranslate.logDebug(
       "Description unchanged, skipping chapters setup",
     );
@@ -611,6 +622,7 @@ function setupChapters(originalDescription) {
   if (originalDescription !== lastDescription) {
     cachedChapters = parseChaptersFromDescription(originalDescription);
     lastDescription = originalDescription;
+    cachedChaptersVideoId = currentVideoId;
   }
 
   // Sort chapters by start time
@@ -735,10 +747,22 @@ async function ensureChaptersInitialized() {
   }
 
   if (cachedChapters.length > 0) {
-    updateChapterButton();
-    updateHorizontalChapters();
-    updateStoryboardChapter();
-    return;
+    const currentVideoId = getCurrentVideoId();
+    if (
+      currentVideoId &&
+      cachedChaptersVideoId &&
+      currentVideoId === cachedChaptersVideoId
+    ) {
+      updateChapterButton();
+      updateHorizontalChapters();
+      updateStoryboardChapter();
+      return;
+    }
+
+    cachedChapters = [];
+    lastDescription = "";
+    cachedChaptersVideoId = null;
+    cleanupChaptersObserver();
   }
 
   if (chaptersInitInProgress) {
@@ -769,7 +793,10 @@ async function ensureChaptersInitialized() {
       return;
     }
 
-    setupChapters(originalDescriptionData.shortDescription);
+    setupChapters(
+      originalDescriptionData.shortDescription,
+      originalDescriptionData.videoId,
+    );
   } finally {
     chaptersInitInProgress = false;
   }
@@ -778,7 +805,7 @@ async function ensureChaptersInitialized() {
 /**
  * Uses the YouTube player API to obtain the original (untranslated) video description.
  *
- * @returns {Promise<{shortDescription: string|null, title: string|null, channelId: string|null}>} The original description or null if it cannot be retrieved.
+ * @returns {Promise<{shortDescription: string|null, title: string|null, channelId: string|null, videoId: string|null}>} The original description or null if it cannot be retrieved.
  */
 async function fetchOriginalDescription() {
   const player = window.YoutubeAntiTranslate.getFirstVisible(
@@ -806,6 +833,8 @@ async function fetchOriginalDescription() {
       null,
     title: playerResponse?.["videoDetails"]?.title || null,
     channelId: playerResponse?.["videoDetails"]?.channelId || null,
+    videoId:
+      playerResponse?.["videoDetails"]?.videoId || getCurrentVideoId() || null,
   };
 }
 
@@ -902,7 +931,10 @@ async function restoreOriginalDescriptionAndAuthor() {
           "Channel is whitelisted, skipping video chapters untranslation",
         );
       } else {
-        setupChapters(originalDescriptionData.shortDescription);
+        setupChapters(
+          originalDescriptionData.shortDescription,
+          originalDescriptionData.videoId,
+        );
       }
     }
   }
@@ -1695,7 +1727,7 @@ async function getTitle(url) {
 }
 
 /** Get Description from the VideoData
- * @return {Promise<{shortDescription:string|null, title: string|null, channelId: string|null}>} The original description or null if it cannot be retrieved.
+ * @return {Promise<{shortDescription:string|null, title: string|null, channelId: string|null, videoId: string|null}>} The original description or null if it cannot be retrieved.
  */
 async function getDescriptionMobile() {
   return {
@@ -1704,6 +1736,7 @@ async function getDescriptionMobile() {
       (await getTitle(document.location.href)),
     title: (await getTitle(document.location.href)) || null,
     channelId: extractVideoDataField("channelId") || null,
+    videoId: getCurrentVideoId() || null,
   };
 }
 

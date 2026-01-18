@@ -34,8 +34,6 @@
     if (!player || typeof player.setOption !== "function") {
       if (attempt < MAX_RETRIES) {
         setTimeout(() => setSubtitles(attempt + 1), RETRY_DELAY_MS);
-      } else {
-        window.YoutubeAntiTranslate.logError("Player not ready for subtitles.");
       }
       return;
     }
@@ -48,8 +46,6 @@
     if (!tracks) {
       if (attempt < MAX_RETRIES) {
         setTimeout(() => setSubtitles(attempt + 1), RETRY_DELAY_MS);
-      } else {
-        window.YoutubeAntiTranslate.logError("Caption tracks not available.");
       }
       return;
     }
