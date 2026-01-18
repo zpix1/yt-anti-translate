@@ -17,6 +17,8 @@ chrome.storage.sync.get(
     untranslateNotification: true,
     untranslateThumbnail: true,
     whiteListUntranslateThumbnail: [],
+    subtitlesLanguage: "original",
+    subtitlesEnabled: false,
   },
   async function (items) {
     if (!items.disabled) {

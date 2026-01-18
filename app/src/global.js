@@ -1336,6 +1336,8 @@ ytm-shorts-lockup-view-model`,
         untranslateNotification: true,
         untranslateThumbnail: true,
         whiteListUntranslateThumbnail: [],
+        subtitlesLanguage: "original",
+        subtitlesEnabled: false,
       });
     }
 

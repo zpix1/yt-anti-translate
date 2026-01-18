@@ -193,6 +193,8 @@ function saveOptions() {
       untranslateThumbnail: true,
       whiteListUntranslateThumbnail: [],
       youtubeDataApiKey: null,
+      subtitlesLanguage: "original",
+      subtitlesEnabled: false,
     },
     function (items) {
       const disabled = !items.disabled;
@@ -238,6 +240,8 @@ function loadOptions() {
       untranslateThumbnail: true,
       whiteListUntranslateThumbnail: [],
       youtubeDataApiKey: null,
+      subtitlesLanguage: "original",
+      subtitlesEnabled: false,
     },
     function (items) {
       document.getElementById("disable-button").innerText = items.disabled
@@ -281,6 +285,23 @@ function loadOptions() {
       /** @type {HTMLInputElement} */ (
         document.getElementById("thumbnail-checkbox")
       ).checked = items.untranslateThumbnail;
+      const subtitlesLanguageSelect = /** @type {HTMLSelectElement} */ (
+        document.getElementById("subtitles-language-select")
+      );
+      const subtitlesCheckbox = /** @type {HTMLInputElement} */ (
+        document.getElementById("subtitles-checkbox")
+      );
+
+      const storedSubtitlesLanguage = (items.subtitlesLanguage || "original")
+        .toString()
+        .trim();
+      const hasOption = subtitlesLanguageSelect.querySelector(
+        `option[value="${storedSubtitlesLanguage}"]`,
+      );
+      subtitlesLanguageSelect.value = hasOption
+        ? storedSubtitlesLanguage
+        : "original";
+      subtitlesCheckbox.checked = items.subtitlesEnabled === true;
       /** @type {HTMLTextAreaElement} */ (
         document.getElementById("whitelist-title-input")
       ).value = items.whiteListUntranslateTitle.join("\n");
@@ -333,6 +354,27 @@ function checkboxUpdate() {
       untranslateThumbnail: /** @type {HTMLInputElement} */ (
         document.getElementById("thumbnail-checkbox")
       ).checked,
+    },
+    () => {
+      reloadActiveYouTubeTab();
+    },
+  );
+}
+
+function subtitlesUpdate() {
+  const subtitlesLanguageSelect = /** @type {HTMLSelectElement} */ (
+    document.getElementById("subtitles-language-select")
+  );
+  const subtitlesCheckbox = /** @type {HTMLInputElement} */ (
+    document.getElementById("subtitles-checkbox")
+  );
+
+  const subtitlesLanguage = subtitlesLanguageSelect.value || "original";
+
+  chrome.storage.sync.set(
+    {
+      subtitlesLanguage,
+      subtitlesEnabled: subtitlesCheckbox.checked,
     },
     () => {
       reloadActiveYouTubeTab();
@@ -656,6 +698,12 @@ function addListeners() {
   document
     .getElementById("thumbnail-checkbox")
     .addEventListener("click", checkboxUpdate);
+  document
+    .getElementById("subtitles-checkbox")
+    .addEventListener("click", subtitlesUpdate);
+  document
+    .getElementById("subtitles-language-select")
+    .addEventListener("change", subtitlesUpdate);
   document
     .getElementById("save-api-key-button")
     .addEventListener("click", apiKeyUpdate);
