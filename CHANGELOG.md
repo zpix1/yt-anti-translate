@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### New Feature
 
-- Unntranslate chapters on mobile
+- Untranslate chapters on mobile
 - Subtitles untranslate feature
 
 ## Fixed
