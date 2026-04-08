@@ -58,12 +58,14 @@ chrome.storage.sync.get(
         document.body.appendChild(descriptionScript);
       }
 
-      const subtitlesScript = document.createElement("script");
-      subtitlesScript.type = "module";
-      subtitlesScript.src = chrome.runtime.getURL(
-        "src/background_subtitles.js",
-      );
-      document.body.appendChild(subtitlesScript);
+      if (items.subtitlesEnabled) {
+        const subtitlesScript = document.createElement("script");
+        subtitlesScript.type = "module";
+        subtitlesScript.src = chrome.runtime.getURL(
+          "src/background_subtitles.js",
+        );
+        document.body.appendChild(subtitlesScript);
+      }
     }
   },
 );
