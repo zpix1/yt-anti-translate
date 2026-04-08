@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Untranslate chapters on mobile
 - Subtitles untranslate feature
 
-## Fixed
+### Fixed
 
 - Fix [#171](https://github.com/zpix1/yt-anti-translate/issues/171)
 - Fix [#170](https://github.com/zpix1/yt-anti-translate/issues/170)
