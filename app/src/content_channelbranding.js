@@ -215,7 +215,7 @@ function updateBrandingHeaderDescriptionContent(
 ) {
   if (originalBrandingData["description"]) {
     // Find the description text container
-    const selector = `yt-description-preview-view-model .yt-truncated-text__truncated-text-content > ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}:nth-child(1), yt-description-preview-view-model .truncated-text-wiz__truncated-text-content > ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}:nth-child(1)`;
+    const selector = `yt-description-preview-view-model .yt-truncated-text__truncated-text-content > ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}:nth-child(1), yt-description-preview-view-model .truncated-text-wiz__truncated-text-content > ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}:nth-child(1), yt-description-preview-view-model truncated-text.ytTruncatedTextHost truncated-text-content.ytTruncatedTextTruncatedTextContent:not(.ytTruncatedTextHiddenTextContent) > ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}:nth-child(1)`;
 
     let descriptionTextContainer = container.querySelector(selector);
 
