@@ -747,6 +747,9 @@ async function untranslateOtherVideos(intersectElements = null, mutations) {
           video.querySelector(
             `a.yt-lockup-metadata-view-model__title${hrefFilter}`,
           ) ||
+          video.querySelector(
+            `a.ytLockupMetadataViewModelTitle${hrefFilter}`,
+          ) ||
           video.querySelector(`a.yt-simple-endpoint${hrefFilter}`);
 
         if (!linkElement) {
@@ -865,6 +868,12 @@ async function untranslateOtherVideos(intersectElements = null, mutations) {
           video.querySelector(
             ".yt-lockup-metadata-view-model__heading-reset .yt-core-attributed-string",
           ) ||
+          video.querySelector(
+            ".ytLockupMetadataViewModelHeadingReset .yt-core-attributed-string",
+          ) ||
+          video.querySelector(
+            "a.ytLockupMetadataViewModelTitle .yt-core-attributed-string",
+          ) ||
           video.querySelector("span.ytp-videowall-still-info-title") ||
           video.querySelector("div.ytp-ce-video-title") ||
           video.querySelector("div.ytp-suggestion-title") ||
@@ -881,6 +890,9 @@ async function untranslateOtherVideos(intersectElements = null, mutations) {
             video.querySelector("yt-formatted-string#video-title") ||
             video.querySelector(
               ".yt-lockup-metadata-view-model-wiz__title>.yt-core-attributed-string",
+            ) ||
+            video.querySelector(
+              ".ytLockupMetadataViewModelTitle>.yt-core-attributed-string",
             ) ||
             video.querySelector(
               ".compact-media-item-headline .yt-core-attributed-string",
