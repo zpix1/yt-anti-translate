@@ -465,7 +465,9 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
 
     // Locate the channel name element inside the renderer
     const authorLocator = await getFirstVisibleLocator(
-      page.locator("#channel-title yt-formatted-string"),
+      channelRenderer.locator(
+        "#info ytd-channel-name#channel-title #text, #channel-title yt-formatted-string#text, #channel-title yt-formatted-string",
+      ),
     );
     await expect(authorLocator).toBeVisible();
 

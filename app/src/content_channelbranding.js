@@ -490,7 +490,11 @@ function updateChannelRendererDescriptionContent(
     return;
   }
 
-  const descriptionTextContainer = container.querySelector(`#description`);
+  const descriptionTextContainer = container.querySelector(
+    `#info yt-formatted-string#description,
+    yt-formatted-string#description,
+    #description`,
+  );
   if (!descriptionTextContainer) {
     window.YoutubeAntiTranslate.logDebug(
       `No search result description container found`,
@@ -514,7 +518,9 @@ function updateChannelRendererAuthor(container, originalBrandingData) {
   }
 
   const authorTextContainer = container.querySelector(
-    `#channel-title yt-formatted-string,
+    `#info ytd-channel-name#channel-title #text,
+    #channel-title yt-formatted-string#text,
+    #channel-title yt-formatted-string,
     #channel-info #title,
     #endpoint yt-formatted-string.title,
     h4.compact-media-item-headline > .yt-core-attributed-string,
