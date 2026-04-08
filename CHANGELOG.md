@@ -5,7 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## Unreleased 
+
+## [1.20.4] - 2026-04-08
+
+### New Feature
+
+- Untranslate chapters on mobile
+- Subtitles untranslate feature
+
+### Fixed
+
+- Fix [#171](https://github.com/zpix1/yt-anti-translate/issues/171)
+- Fix [#170](https://github.com/zpix1/yt-anti-translate/issues/170)
 
 ## [1.20.3.1] - 2025-11-01
 

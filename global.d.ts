@@ -489,6 +489,8 @@ declare global {
         untranslateThumbnail?: boolean;
         whiteListUntranslateThumbnail?: string[];
         youtubeDataApiKey?: string | null;
+        subtitlesLanguage?: string;
+        subtitlesEnabled?: boolean;
       }>;
 
       /**

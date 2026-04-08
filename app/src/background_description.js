@@ -11,12 +11,15 @@ const FORMATTED_STRING_SELECTOR = "yt-formatted-string";
 const SNIPPET_TEXT_SELECTOR =
   "#attributed-snippet-text, #formatted-snippet-text, #plain-snippet-text";
 const HORIZONTAL_CHAPTERS_SELECTOR =
-  "ytd-horizontal-card-list-renderer, ytd-macro-markers-list-renderer";
-const CHAPTER_ITEM_SELECTOR = "ytd-macro-markers-list-item-renderer";
-const CHAPTER_TITLE_SELECTOR = "h4.macro-markers, h4.problem-walkthroughs";
-const CHAPTER_TIME_SELECTOR = "div#time";
+  "ytd-horizontal-card-list-renderer, ytd-macro-markers-list-renderer, ytm-macro-markers-list-renderer, ytm-horizontal-card-list-renderer";
+const CHAPTER_ITEM_SELECTOR =
+  "ytd-macro-markers-list-item-renderer, ytm-macro-markers-list-item-renderer";
+const CHAPTER_TITLE_SELECTOR =
+  "h4.macro-markers, h4.problem-walkthroughs, .ytm-macro-markers-list-item-title h4";
+const CHAPTER_TIME_SELECTOR =
+  "div#time, p.ytm-macro-markers-list-item-time, p.ytm-macro-markers-list-item-time span";
 const CHAPTER_HEADER_SELECTOR =
-  "ytd-rich-list-header-renderer yt-formatted-string#title";
+  "ytd-rich-list-header-renderer yt-formatted-string#title, h2#engagement-panel-section-list-header, .ytm-rich-list-header-title";
 const CHAPTER_STYLE = `
 .ytp-tooltip.ytp-bottom.ytp-preview .ytp-tooltip-title span[data-original-chapter]::after {
     content: attr(data-original-chapter);
@@ -41,13 +44,13 @@ const CHAPTER_STYLE = `
     color: inherit;
 }
 
-/* Hide translated chapter titles in horizontal cards */
+/* Hide translated chapter titles in horizontal cards (desktop) */
 ytd-macro-markers-list-item-renderer h4[data-original-chapter-title] {
     color: transparent !important;
     position: relative;
 }
 
-/* Show original chapter title using attribute */
+/* Show original chapter title using attribute (desktop) */
 ytd-macro-markers-list-item-renderer h4[data-original-chapter-title]::after {
     content: attr(data-original-chapter-title);
     position: absolute;
@@ -67,11 +70,12 @@ ytd-macro-markers-list-item-renderer h4[data-original-chapter-title]::after {
     word-wrap: break-word;
     hyphens: auto;
 }
+
 `;
 
 // Chapters functionality
 let chaptersObserver = null;
-let chapterButtonObserver = null;
+let chapterButtonObservers = [];
 let horizontalChaptersObserver = null;
 
 /**
@@ -157,9 +161,9 @@ function cleanupChaptersObserver() {
     chaptersObserver = null;
   }
 
-  if (chapterButtonObserver) {
-    chapterButtonObserver.disconnect();
-    chapterButtonObserver = null;
+  if (chapterButtonObservers.length > 0) {
+    chapterButtonObservers.forEach((observer) => observer.disconnect());
+    chapterButtonObservers = [];
   }
 
   if (horizontalChaptersObserver) {
@@ -318,6 +322,14 @@ function findChapterByTime(timeInSeconds, chapters) {
 // Cache for parsed chapters to avoid re-parsing
 let cachedChapters = [];
 let lastDescription = "";
+let cachedChaptersVideoId = null;
+let chaptersInitInProgress = false;
+
+function getCurrentVideoId() {
+  return window.YoutubeAntiTranslate.extractVideoIdFromUrl(
+    document.location.href,
+  );
+}
 
 /**
  * Updates the chapter title displayed inside the player tooltip so that the
@@ -365,6 +377,55 @@ function updateTooltipChapter() {
 }
 
 /**
+ * Updates the storyboard title (overlay upper) on mobile to show original chapter titles.
+ */
+function updateStoryboardChapter() {
+  if (cachedChapters.length === 0) {
+    return;
+  }
+
+  const storyboard = window.YoutubeAntiTranslate.querySelector(
+    ".ytPlayerStoryboardHost",
+  );
+  if (!storyboard) {
+    return;
+  }
+
+  const timeElement = window.YoutubeAntiTranslate.querySelector(
+    ".ytPlayerStoryboardTimestamp",
+    storyboard,
+  );
+  const titleElement =
+    window.YoutubeAntiTranslate.querySelector(
+      ".ytPlayerStoryboardTitle .yt-core-attributed-string",
+      storyboard,
+    ) ||
+    window.YoutubeAntiTranslate.querySelector(
+      ".ytPlayerStoryboardTitle",
+      storyboard,
+    );
+
+  if (!timeElement || !titleElement) {
+    return;
+  }
+
+  const timeString = timeElement.textContent?.trim();
+  if (!timeString) {
+    return;
+  }
+
+  const timeInSeconds = timeStringToSeconds(timeString);
+  const targetChapter = findChapterByTime(timeInSeconds, cachedChapters);
+  if (!targetChapter) {
+    return;
+  }
+
+  if (titleElement.textContent !== targetChapter.title) {
+    titleElement.textContent = targetChapter.title;
+  }
+}
+
+/**
  * Retrieves the current playback time of the active video element.
  *
  * @returns {number} Current playback time (seconds). Returns 0 if the video element cannot be found.
@@ -388,7 +449,7 @@ function getCurrentVideoTime() {
  * Replaces the chapter button text (next to the progress bar) with the original
  * chapter title that matches the current playback position.
  */
-function updateChapterButton() {
+function updateDesktopChapterButton(targetChapter, currentTime) {
   const chapterButton = window.YoutubeAntiTranslate.querySelector(
     ".ytp-chapter-title .ytp-chapter-title-content",
   );
@@ -396,47 +457,86 @@ function updateChapterButton() {
     return;
   }
 
+  // Always update or create the span with current YouTube content
+  let span = window.YoutubeAntiTranslate.querySelector(
+    `span[ynt-chapter-span]`,
+    chapterButton,
+  );
+  if (!span) {
+    span = document.createElement("span");
+    span.setAttribute("ynt-chapter-span", "current");
+    span.textContent = chapterButton.textContent;
+    chapterButton.textContent = "";
+    chapterButton.appendChild(span);
+  } else {
+    // Update existing span with current YouTube content
+    const currentYouTubeText = Array.from(chapterButton.childNodes)
+      .filter((node) => node.nodeType === Node.TEXT_NODE)
+      .map((node) => node.textContent)
+      .join("");
+
+    if (currentYouTubeText && currentYouTubeText.trim()) {
+      span.textContent = currentYouTubeText;
+      chapterButton.childNodes.forEach((node) => {
+        if (node.nodeType === Node.TEXT_NODE) {
+          node.textContent = "";
+        }
+      });
+    }
+  }
+
+  window.YoutubeAntiTranslate.logDebug(
+    `Chapter button updated: Time ${currentTime}s -> from "${span.textContent}" to "${targetChapter.title}"`,
+  );
+  chapterButton.setAttribute("title", targetChapter.title);
+  chapterButton.setAttribute(
+    "data-original-chapter-button",
+    targetChapter.title,
+  );
+}
+
+function updateMobileChapterButton(targetChapter, currentTime) {
+  const mobileChapterButton = window.YoutubeAntiTranslate.querySelector(
+    ".ytwPlayerTimeDisplayChapterButton",
+  );
+  if (!mobileChapterButton) {
+    return;
+  }
+
+  const textContainer =
+    window.YoutubeAntiTranslate.querySelector(
+      ".yt-core-attributed-string",
+      mobileChapterButton,
+    ) || mobileChapterButton;
+
+  if (textContainer.textContent !== targetChapter.title) {
+    textContainer.textContent = targetChapter.title;
+  }
+
+  mobileChapterButton.setAttribute("title", targetChapter.title);
+  mobileChapterButton.setAttribute(
+    "data-original-chapter-button",
+    targetChapter.title,
+  );
+
+  window.YoutubeAntiTranslate.logDebug(
+    `Mobile chapter button updated: Time ${currentTime}s -> "${targetChapter.title}"`,
+  );
+}
+
+function updateChapterButton() {
+  if (cachedChapters.length === 0) {
+    return;
+  }
+
   const currentTime = getCurrentVideoTime();
   const targetChapter = findChapterByTime(currentTime, cachedChapters);
-
-  if (targetChapter) {
-    // Always update or create the span with current YouTube content
-    let span = window.YoutubeAntiTranslate.querySelector(
-      `span[ynt-chapter-span]`,
-      chapterButton,
-    );
-    if (!span) {
-      span = document.createElement("span");
-      span.setAttribute("ynt-chapter-span", "current");
-      span.textContent = chapterButton.textContent;
-      chapterButton.textContent = "";
-      chapterButton.appendChild(span);
-    } else {
-      // Update existing span with current YouTube content
-      const currentYouTubeText = Array.from(chapterButton.childNodes)
-        .filter((node) => node.nodeType === Node.TEXT_NODE)
-        .map((node) => node.textContent)
-        .join("");
-
-      if (currentYouTubeText && currentYouTubeText.trim()) {
-        span.textContent = currentYouTubeText;
-        chapterButton.childNodes.forEach((node) => {
-          if (node.nodeType === Node.TEXT_NODE) {
-            node.textContent = "";
-          }
-        });
-      }
-    }
-
-    window.YoutubeAntiTranslate.logDebug(
-      `Chapter button updated: Time ${currentTime}s -> from "${span.textContent}" to "${targetChapter.title}"`,
-    );
-    chapterButton.setAttribute("title", targetChapter.title);
-    chapterButton.setAttribute(
-      "data-original-chapter-button",
-      targetChapter.title,
-    );
+  if (!targetChapter) {
+    return;
   }
+
+  updateDesktopChapterButton(targetChapter, currentTime);
+  updateMobileChapterButton(targetChapter, currentTime);
 }
 
 /**
@@ -444,39 +544,51 @@ function updateChapterButton() {
  * YouTube changes its content.
  */
 function setupChapterButtonObserver() {
-  const chapterButton =
-    window.YoutubeAntiTranslate.querySelector(".ytp-chapter-title");
-  if (!chapterButton) {
+  const chapterButtons = window.YoutubeAntiTranslate.querySelectorAll(
+    ".ytp-chapter-title, .ytwPlayerTimeDisplayChapterButton",
+  );
+  if (!chapterButtons || chapterButtons.length === 0) {
     return;
   }
 
-  chapterButtonObserver = new MutationObserver((mutations) => {
-    let shouldUpdate = false;
+  chapterButtonObservers = [];
 
-    mutations.forEach((mutation) => {
-      if (
-        (mutation.type === "childList" || mutation.type === "characterData") &&
-        mutation.target.nodeType === Node.ELEMENT_NODE
-      ) {
-        const target = /** @type {Element} */ (mutation.target);
+  chapterButtons.forEach((chapterButton) => {
+    const observer = new MutationObserver((mutations) => {
+      let shouldUpdate = false;
+
+      mutations.forEach((mutation) => {
         if (
-          target.classList?.contains("ytp-chapter-title-content") ||
-          target.closest(".ytp-chapter-title-content")
+          mutation.type === "childList" ||
+          mutation.type === "characterData"
         ) {
-          shouldUpdate = true;
+          const target =
+            mutation.target.nodeType === Node.ELEMENT_NODE
+              ? /** @type {Element} */ (mutation.target)
+              : mutation.target.parentElement;
+          if (
+            target?.classList?.contains("ytp-chapter-title-content") ||
+            target?.closest(".ytp-chapter-title-content") ||
+            target?.classList?.contains("ytwPlayerTimeDisplayChapterButton") ||
+            target?.closest(".ytwPlayerTimeDisplayChapterButton")
+          ) {
+            shouldUpdate = true;
+          }
         }
+      });
+
+      if (shouldUpdate) {
+        setTimeout(updateChapterButton, 50);
       }
     });
 
-    if (shouldUpdate) {
-      setTimeout(updateChapterButton, 50);
-    }
-  });
+    observer.observe(chapterButton, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+    });
 
-  chapterButtonObserver.observe(chapterButton, {
-    childList: true,
-    subtree: true,
-    characterData: true,
+    chapterButtonObservers.push(observer);
   });
 
   // Initial update
@@ -490,9 +602,13 @@ function setupChapterButtonObserver() {
  *
  * @param {string} originalDescription - Untranslated video description obtained from the player API.
  */
-function setupChapters(originalDescription) {
+function setupChapters(originalDescription, videoId = null) {
+  const currentVideoId = videoId || getCurrentVideoId();
   // Early return if description hasn't changed - avoid expensive cleanup/setup
-  if (originalDescription === lastDescription) {
+  if (
+    originalDescription === lastDescription &&
+    (!currentVideoId || currentVideoId === cachedChaptersVideoId)
+  ) {
     window.YoutubeAntiTranslate.logDebug(
       "Description unchanged, skipping chapters setup",
     );
@@ -506,6 +622,7 @@ function setupChapters(originalDescription) {
   if (originalDescription !== lastDescription) {
     cachedChapters = parseChaptersFromDescription(originalDescription);
     lastDescription = originalDescription;
+    cachedChaptersVideoId = currentVideoId;
   }
 
   // Sort chapters by start time
@@ -542,6 +659,14 @@ function setupChapters(originalDescription) {
             ) {
               shouldUpdate = true;
             }
+
+            if (
+              element.classList?.contains("ytPlayerStoryboardHost") ||
+              element.classList?.contains("ytPlayerStoryboardMetadata") ||
+              element.classList?.contains("ytPlayerStoryboardTitle")
+            ) {
+              shouldUpdate = true;
+            }
           }
         });
       }
@@ -565,7 +690,11 @@ function setupChapters(originalDescription) {
       // Only watch for changes in tooltip text content
       if (mutation.type === "characterData") {
         const parent = mutation.target.parentElement;
-        if (parent?.classList?.contains("ytp-tooltip-text")) {
+        if (
+          parent?.classList?.contains("ytp-tooltip-text") ||
+          parent?.classList?.contains("ytPlayerStoryboardTimestamp") ||
+          parent?.classList?.contains("ytPlayerStoryboardTitle")
+        ) {
           shouldUpdate = true;
         }
       }
@@ -575,7 +704,10 @@ function setupChapters(originalDescription) {
       // YouTube updates tooltip text on every mouse move along timeline [#132](https://github.com/zpix1/yt-anti-translate/issues/132)
       // debounce using requestAnimationFrame because setTimeout is too slow and no debounce at all is laggy
       // requestAnimationFrame only works with tab visible but that's acceptable for this use case as user won't be able to use the tooltip when tab is not visible
-      requestAnimationFrame(updateTooltipChapter);
+      requestAnimationFrame(() => {
+        updateTooltipChapter();
+        updateStoryboardChapter();
+      });
     }
   });
 
@@ -591,7 +723,10 @@ function setupChapters(originalDescription) {
   }
 
   // Initial update for any existing visible tooltips
-  setTimeout(updateTooltipChapter, 50);
+  setTimeout(() => {
+    updateTooltipChapter();
+    updateStoryboardChapter();
+  }, 50);
 
   setupChapterButtonObserver();
 
@@ -603,9 +738,74 @@ function setupChapters(originalDescription) {
 }
 
 /**
+ * Ensures chapters are initialized even when the description panel isn't opened.
+ */
+async function ensureChaptersInitialized() {
+  const settings = await window.YoutubeAntiTranslate.getSettings();
+  if (!settings.untranslateChapters) {
+    return;
+  }
+
+  if (cachedChapters.length > 0) {
+    const currentVideoId = getCurrentVideoId();
+    if (
+      currentVideoId &&
+      cachedChaptersVideoId &&
+      currentVideoId === cachedChaptersVideoId
+    ) {
+      updateChapterButton();
+      updateHorizontalChapters();
+      updateStoryboardChapter();
+      return;
+    }
+
+    cachedChapters = [];
+    lastDescription = "";
+    cachedChaptersVideoId = null;
+    cleanupChaptersObserver();
+  }
+
+  if (chaptersInitInProgress) {
+    return;
+  }
+
+  chaptersInitInProgress = true;
+  try {
+    const originalDescriptionData = await fetchOriginalDescription();
+    const originalAuthor = fetchOriginalAuthor();
+
+    if (!originalDescriptionData?.shortDescription) {
+      return;
+    }
+
+    if (
+      await window.YoutubeAntiTranslate.isWhitelistedChannel(
+        "whiteListUntranslateChapters",
+        null,
+        null,
+        null,
+        originalAuthor,
+      )
+    ) {
+      window.YoutubeAntiTranslate.logInfo(
+        "Channel is whitelisted, skipping video chapters untranslation",
+      );
+      return;
+    }
+
+    setupChapters(
+      originalDescriptionData.shortDescription,
+      originalDescriptionData.videoId,
+    );
+  } finally {
+    chaptersInitInProgress = false;
+  }
+}
+
+/**
  * Uses the YouTube player API to obtain the original (untranslated) video description.
  *
- * @returns {Promise<{shortDescription: string|null, title: string|null, channelId: string|null}>} The original description or null if it cannot be retrieved.
+ * @returns {Promise<{shortDescription: string|null, title: string|null, channelId: string|null, videoId: string|null}>} The original description or null if it cannot be retrieved.
  */
 async function fetchOriginalDescription() {
   const player = window.YoutubeAntiTranslate.getFirstVisible(
@@ -633,6 +833,8 @@ async function fetchOriginalDescription() {
       null,
     title: playerResponse?.["videoDetails"]?.title || null,
     channelId: playerResponse?.["videoDetails"]?.channelId || null,
+    videoId:
+      playerResponse?.["videoDetails"]?.videoId || getCurrentVideoId() || null,
   };
 }
 
@@ -729,7 +931,10 @@ async function restoreOriginalDescriptionAndAuthor() {
           "Channel is whitelisted, skipping video chapters untranslation",
         );
       } else {
-        setupChapters(originalDescriptionData.shortDescription);
+        setupChapters(
+          originalDescriptionData.shortDescription,
+          originalDescriptionData.videoId,
+        );
       }
     }
   }
@@ -1201,6 +1406,9 @@ async function handleDescriptionMutation(mutations) {
     player && mutations && mutations.every((e) => player.contains(e.target));
 
   if (allMutationsAreInPlayer) {
+    if (settings.untranslateChapters) {
+      await ensureChaptersInitialized();
+    }
     return;
   }
 
@@ -1215,6 +1423,10 @@ async function handleDescriptionMutation(mutations) {
     if (descriptionElement && player) {
       await restoreOriginalDescriptionAndAuthor();
     }
+  }
+
+  if (settings.untranslateChapters) {
+    await ensureChaptersInitialized();
   }
 
   // On mobile the author is visible even when the description is not
@@ -1310,6 +1522,9 @@ function updateHorizontalChapters() {
     );
 
     chapterItems.forEach((item) => {
+      const isMobileChapterItem =
+        item.tagName?.toLowerCase().startsWith("ytm-") ||
+        item.closest("ytm-macro-markers-list-renderer");
       const timeElement = window.YoutubeAntiTranslate.querySelector(
         CHAPTER_TIME_SELECTOR,
         item,
@@ -1333,6 +1548,19 @@ function updateHorizontalChapters() {
 
       if (targetChapter) {
         titleElements.forEach((titleElement) => {
+          if (isMobileChapterItem) {
+            const mobileTitleContainer =
+              window.YoutubeAntiTranslate.querySelector(
+                ".yt-core-attributed-string",
+                titleElement,
+              ) || titleElement;
+            if (mobileTitleContainer.textContent !== targetChapter.title) {
+              mobileTitleContainer.textContent = targetChapter.title;
+            }
+            titleElement.setAttribute("title", targetChapter.title);
+            return;
+          }
+
           const currentOriginalTitle = titleElement.getAttribute(
             "data-original-chapter-title",
           );
@@ -1499,7 +1727,7 @@ async function getTitle(url) {
 }
 
 /** Get Description from the VideoData
- * @return {Promise<{shortDescription:string|null, title: string|null, channelId: string|null}>} The original description or null if it cannot be retrieved.
+ * @return {Promise<{shortDescription:string|null, title: string|null, channelId: string|null, videoId: string|null}>} The original description or null if it cannot be retrieved.
  */
 async function getDescriptionMobile() {
   return {
@@ -1508,6 +1736,7 @@ async function getDescriptionMobile() {
       (await getTitle(document.location.href)),
     title: (await getTitle(document.location.href)) || null,
     channelId: extractVideoDataField("channelId") || null,
+    videoId: getCurrentVideoId() || null,
   };
 }
 

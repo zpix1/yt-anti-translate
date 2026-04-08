@@ -23,6 +23,7 @@ export default tseslint.config([
       "playwright/.crypt.auth",
       "*.enc",
       "node_modules/",
+      "playwright-report",
       "dist/",
       "build/",
       "coverage/",

@@ -1336,6 +1336,8 @@ ytm-shorts-lockup-view-model`,
         untranslateNotification: true,
         untranslateThumbnail: true,
         whiteListUntranslateThumbnail: [],
+        subtitlesLanguage: "original",
+        subtitlesEnabled: false,
       });
     }
 
@@ -1919,8 +1921,33 @@ ytm-shorts-lockup-view-model`,
       return false;
     }
 
-    // lower case version for case insensitive comparison
-    const lowerCaseWhitelist = whitelist.map((item) => item.toLowerCase());
+    // Normalize handles to avoid Unicode composed/decomposed mismatch (e.g. "é" vs "e\u0301")
+    const normalizeHandle = (value) => {
+      let decodedValue = value;
+      try {
+        decodedValue = decodeURIComponent(value);
+      } catch {
+        decodedValue = value;
+      }
+      return this.processString(decodedValue, {
+        normalizeSpaces: false,
+      });
+    };
+    const removeDiacritics = (value) =>
+      value.normalize("NFD").replace(/\p{M}/gu, "");
+    const normalizedWhitelist = whitelist.map((item) => normalizeHandle(item));
+    const normalizedWhitelistSet = new Set(normalizedWhitelist);
+    const normalizedWhitelistNoMarksSet = new Set(
+      normalizedWhitelist.map((item) => removeDiacritics(item)),
+    );
+    const isWhitelistedHandle = (value) => {
+      const normalized = normalizeHandle(value);
+      const exactMatch = normalizedWhitelistSet.has(normalized);
+      const fallbackMatch = normalizedWhitelistNoMarksSet.has(
+        removeDiacritics(normalized),
+      );
+      return exactMatch || fallbackMatch;
+    };
 
     if (
       (!handle || typeof handle !== "string" || handle.trim() === "") &&
@@ -1986,7 +2013,7 @@ ytm-shorts-lockup-view-model`,
         return false;
       }
     } else {
-      return lowerCaseWhitelist.includes(handle.trim().toLowerCase());
+      return isWhitelistedHandle(handle);
     }
 
     // 2 --- Check channelId next if provided and valid ---
@@ -2024,7 +2051,7 @@ ytm-shorts-lockup-view-model`,
         return false;
       }
     } else {
-      return lowerCaseWhitelist.includes(handle.trim().toLowerCase());
+      return isWhitelistedHandle(handle);
     }
 
     // 3 --- Finally check channelName if provided and valid ---
@@ -2040,9 +2067,8 @@ ytm-shorts-lockup-view-model`,
       // Add @ if missing or use as is if already starts with @
       if (
         !channelName.trim().includes(" ") &&
-        (lowerCaseWhitelist.includes(`@${channelName}`.trim().toLowerCase()) ||
-          (channelName.startsWith("@") &&
-            lowerCaseWhitelist.includes(channelName.trim().toLowerCase())))
+        (isWhitelistedHandle(`@${channelName}`) ||
+          (channelName.startsWith("@") && isWhitelistedHandle(channelName)))
       ) {
         return true;
       }
@@ -2058,7 +2084,7 @@ ytm-shorts-lockup-view-model`,
       // No further way to do lookups
       return false;
     } else {
-      return lowerCaseWhitelist.includes(handle.trim().toLowerCase());
+      return isWhitelistedHandle(handle);
     }
   },
 

@@ -44,6 +44,23 @@ const whitelistIds = [
   },
 ];
 
+const CHANNEL_HANDLE_PATTERN =
+  /^@[\p{L}\p{N}](?:[\p{L}\p{N}\p{M}_.\-·]*[\p{L}\p{N}\p{M}])?$/u;
+
+function normalizeWhitelistHandle(handle) {
+  let decodedHandle = handle;
+  try {
+    decodedHandle = decodeURIComponent(handle);
+  } catch {
+    decodedHandle = handle;
+  }
+  return decodedHandle
+    .normalize("NFKC")
+    .replace(/[\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g, "")
+    .trim()
+    .toLowerCase();
+}
+
 async function hasPermanentHostPermission(origin) {
   return new Promise((resolve, reject) => {
     window.YoutubeAntiTranslate.getBrowserOrChrome().permissions.getAll(
@@ -193,6 +210,8 @@ function saveOptions() {
       untranslateThumbnail: true,
       whiteListUntranslateThumbnail: [],
       youtubeDataApiKey: null,
+      subtitlesLanguage: "original",
+      subtitlesEnabled: false,
     },
     function (items) {
       const disabled = !items.disabled;
@@ -238,6 +257,8 @@ function loadOptions() {
       untranslateThumbnail: true,
       whiteListUntranslateThumbnail: [],
       youtubeDataApiKey: null,
+      subtitlesLanguage: "original",
+      subtitlesEnabled: false,
     },
     function (items) {
       document.getElementById("disable-button").innerText = items.disabled
@@ -281,6 +302,23 @@ function loadOptions() {
       /** @type {HTMLInputElement} */ (
         document.getElementById("thumbnail-checkbox")
       ).checked = items.untranslateThumbnail;
+      const subtitlesLanguageSelect = /** @type {HTMLSelectElement} */ (
+        document.getElementById("subtitles-language-select")
+      );
+      const subtitlesCheckbox = /** @type {HTMLInputElement} */ (
+        document.getElementById("subtitles-checkbox")
+      );
+
+      const storedSubtitlesLanguage = (items.subtitlesLanguage || "original")
+        .toString()
+        .trim();
+      const hasOption = subtitlesLanguageSelect.querySelector(
+        `option[value="${storedSubtitlesLanguage}"]`,
+      );
+      subtitlesLanguageSelect.value = hasOption
+        ? storedSubtitlesLanguage
+        : "original";
+      subtitlesCheckbox.checked = items.subtitlesEnabled === true;
       /** @type {HTMLTextAreaElement} */ (
         document.getElementById("whitelist-title-input")
       ).value = items.whiteListUntranslateTitle.join("\n");
@@ -340,20 +378,39 @@ function checkboxUpdate() {
   );
 }
 
+function subtitlesUpdate() {
+  const subtitlesLanguageSelect = /** @type {HTMLSelectElement} */ (
+    document.getElementById("subtitles-language-select")
+  );
+  const subtitlesCheckbox = /** @type {HTMLInputElement} */ (
+    document.getElementById("subtitles-checkbox")
+  );
+
+  const subtitlesLanguage = subtitlesLanguageSelect.value || "original";
+
+  chrome.storage.sync.set(
+    {
+      subtitlesLanguage,
+      subtitlesEnabled: subtitlesCheckbox.checked,
+    },
+    () => {
+      reloadActiveYouTubeTab();
+    },
+  );
+}
+
 function validateAndSaveWhitelist(textareaId, statusTextId, storageKey) {
   chrome.storage.sync.get(
     {
       autoreloadOption: true,
     },
     function (items) {
-      // Verify that the textarea has:
-      // - one handle per line
+      // Verify that each line has one valid handle:
       // - begins with @
-      // - at least one character after @
-      // - have no spaces
-      // - does not contain urls special characters
-      // note: underscores (_), hyphens (-), periods (.), Latin middle dots (·) allowed
-      //       with exceptions of usage the beginning or end of a handle
+      // - does not contain spaces
+      // - supports Unicode letters/marks/numbers
+      // - underscores (_), hyphens (-), periods (.), Latin middle dots (·) are allowed inside the handle
+      // - separators are not allowed right after @ or at the end
 
       const textarea = /** @type {HTMLTextAreaElement} */ (
         document.getElementById(textareaId)
@@ -368,15 +425,8 @@ function validateAndSaveWhitelist(textareaId, statusTextId, storageKey) {
         if (trimmed.length === 0) {
           continue; // Skip empty lines
         }
-        if (
-          trimmed.startsWith("@") &&
-          !trimmed.includes(" ") &&
-          !/[^\w\s_\-.·@]/.test(trimmed) &&
-          !/[_.\-·]$/.test(trimmed) &&
-          !/^@[_.\-·]/.test(trimmed) &&
-          !/^@+$/.test(trimmed)
-        ) {
-          validLines.push(trimmed);
+        if (CHANNEL_HANDLE_PATTERN.test(trimmed)) {
+          validLines.push(normalizeWhitelistHandle(trimmed));
         } else {
           invalidLines.push(trimmed);
         }
@@ -404,9 +454,7 @@ function validateAndSaveWhitelist(textareaId, statusTextId, storageKey) {
       button.disabled = true;
 
       //dedupe valid lines (case insensitive)
-      validLines = Array.from(
-        new Set(validLines.map((line) => line.toLowerCase())),
-      );
+      validLines = Array.from(new Set(validLines));
 
       chrome.storage.sync.set(
         {
@@ -656,6 +704,12 @@ function addListeners() {
   document
     .getElementById("thumbnail-checkbox")
     .addEventListener("click", checkboxUpdate);
+  document
+    .getElementById("subtitles-checkbox")
+    .addEventListener("click", subtitlesUpdate);
+  document
+    .getElementById("subtitles-language-select")
+    .addEventListener("change", subtitlesUpdate);
   document
     .getElementById("save-api-key-button")
     .addEventListener("click", apiKeyUpdate);

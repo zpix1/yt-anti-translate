@@ -9,6 +9,8 @@ chrome.storage.sync.get(
     untranslateChannelBranding: true,
     untranslateNotification: true,
     untranslateThumbnail: true,
+    subtitlesLanguage: "original",
+    subtitlesEnabled: false,
   },
   async function (items) {
     if (!items.disabled) {
@@ -54,6 +56,15 @@ chrome.storage.sync.get(
           "src/background_description.js",
         );
         document.body.appendChild(descriptionScript);
+      }
+
+      if (items.subtitlesEnabled) {
+        const subtitlesScript = document.createElement("script");
+        subtitlesScript.type = "module";
+        subtitlesScript.src = chrome.runtime.getURL(
+          "src/background_subtitles.js",
+        );
+        document.body.appendChild(subtitlesScript);
       }
     }
   },

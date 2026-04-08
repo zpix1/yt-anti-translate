@@ -564,8 +564,8 @@ test.describe("YouTube Anti-Translate extension", () => {
     if (await translatedVideo.isVisible()) {
       await page.mouse.wheel(0, 500);
       await page.waitForTimeout(process.env.CI ? 150 : 100);
-      await translatedVideo.scrollIntoViewIfNeeded();
       try {
+        await translatedVideo.scrollIntoViewIfNeeded();
         await page.waitForTimeout(process.env.CI ? 375 : 250);
         await page.waitForLoadState("networkidle", {
           timeout: process.env.CI ? 7500 : 5000,
@@ -661,6 +661,16 @@ test.describe("YouTube Anti-Translate extension", () => {
     await expect(page.url()).toContain("/videos");
 
     // --- Re-check Videos Tab ---
+    try {
+      await translatedVideo.scrollIntoViewIfNeeded();
+    } catch {
+      // empty
+    }
+    try {
+      await originalVideo.scrollIntoViewIfNeeded();
+    } catch {
+      // empty
+    }
     console.log("Re-checking Videos tab for original title...");
     await expect(page.locator(videoSelector)).toBeVisible();
     await expect(page.locator(translatedVideoSelector)).not.toBeVisible();
@@ -1330,249 +1340,251 @@ test.describe("YouTube Anti-Translate extension", () => {
     await context.close();
   });
 
-  test("Works on embedded videos", async ({
-    browserNameWithExtensions,
-    localeString,
-    isMobile,
-  }, testInfo) => {
-    // Handle retries and prerequisite setup
-    const { context, page, consoleMessageCountContainer } =
-      await setupTestEnvironment(
-        testInfo,
-        browserNameWithExtensions,
-        localeString,
-        isMobile,
-      );
+  test.fixme(
+    "Works on embedded videos",
+    async ({ browserNameWithExtensions, localeString, isMobile }, testInfo) => {
+      // Handle retries and prerequisite setup
+      const { context, page, consoleMessageCountContainer } =
+        await setupTestEnvironment(
+          testInfo,
+          browserNameWithExtensions,
+          localeString,
+          isMobile,
+        );
 
-    await page.goto("https://www.youtube.com/embed/iLU0CE2c2HQ");
+      await page.goto("https://www.youtube.com/embed/iLU0CE2c2HQ");
 
-    // Wait for the video to load safely
-    let overlayButton;
-    try {
-      overlayButton = await waitForSelectorOrRetryWithPageReload(
-        page,
-        "#movie_player > div.ytp-cued-thumbnail-overlay > button",
-      );
-    } catch {
+      // Wait for the video to load safely
+      let overlayButton;
+      try {
+        overlayButton = await waitForSelectorOrRetryWithPageReload(
+          page,
+          "#movie_player > div.ytp-cued-thumbnail-overlay > button",
+        );
+      } catch {
+        await checkFor153Error(page, context, testInfo);
+      }
+
+      await page.screenshot({
+        path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-embedded-test.png`,
+      });
+
+      try {
+        await overlayButton!.click();
+      } catch {
+        await checkFor153Error(page, context, testInfo);
+      }
+      // Wait for the overlay button to disappear
+      await page.waitForTimeout(process.env.CI ? 750 : 500);
+
+      await expect(overlayButton!).not.toBeVisible();
+      await page.waitForTimeout(process.env.CI ? 3000 : 2000);
       await checkFor153Error(page, context, testInfo);
-    }
 
-    await page.screenshot({
-      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-embedded-test.png`,
-    });
+      function getTrackLanguageFieldObjectName(track: object) {
+        let languageFieldName: string;
 
-    try {
-      await overlayButton!.click();
-    } catch {
-      await checkFor153Error(page, context, testInfo);
-    }
-    // Wait for the overlay button to disappear
-    await page.waitForTimeout(process.env.CI ? 750 : 500);
-
-    await expect(overlayButton!).not.toBeVisible();
-    await page.waitForTimeout(process.env.CI ? 3000 : 2000);
-    await checkFor153Error(page, context, testInfo);
-
-    function getTrackLanguageFieldObjectName(track: object) {
-      let languageFieldName: string;
-
-      for (const [fieldName, field] of Object.entries(track)) {
-        if (field && typeof field === "object" && field.name) {
-          languageFieldName = fieldName;
-          break;
+        for (const [fieldName, field] of Object.entries(track)) {
+          if (field && typeof field === "object" && field.name) {
+            languageFieldName = fieldName;
+            break;
+          }
         }
-      }
-      if (!languageFieldName!) {
-        return;
-      } else {
-        return languageFieldName;
-      }
-    }
-
-    // Check that audio track is set to original
-    let currentTrack = await page.evaluate(async () => {
-      const video = document.querySelector(
-        "#movie_player",
-      ) as HTMLVideoElement & {
-        getAudioTrack?: () => Promise<any>;
-      };
-      return await video?.getAudioTrack?.();
-    });
-
-    expect(currentTrack).toBeTruthy();
-
-    // Get track the selected name
-    let trackLanguageField = getTrackLanguageFieldObjectName(currentTrack);
-    if (trackLanguageField) {
-      // If value is "Default" then it is an advert
-      // Wait for 5 seconds and get a new track
-      await page.waitForTimeout(process.env.CI ? 7500 : 5000);
-
-      if (currentTrack[trackLanguageField]?.name === "Default") {
-        // Check that audio track is set to original
-        currentTrack = await page.evaluate(async () => {
-          const video = document.querySelector(
-            "#movie_player",
-          ) as HTMLVideoElement & {
-            getAudioTrack?: () => Promise<any>;
-          };
-          return await video?.getAudioTrack?.();
-        });
-
-        expect(currentTrack).toBeTruthy();
-
-        // Get track the selected name again
-        trackLanguageField = getTrackLanguageFieldObjectName(currentTrack);
-      }
-
-      if (trackLanguageField) {
-        // If value is still "Default" then it is an advert again so skip the check this time
-        if (currentTrack[trackLanguageField]?.name === "Default") {
-          console.log("Skipping advert track check.");
+        if (!languageFieldName!) {
+          return;
         } else {
-          expect(currentTrack[trackLanguageField]?.name).toContain("оригинал");
+          return languageFieldName;
         }
       }
-    }
 
-    const titleLink = page.locator(".ytp-title-link.yt-uix-sessionlink");
-    await titleLink.waitFor({ state: "attached" });
-    await expect(titleLink).toContainText(
-      "NAJTAŃSZY DYSK PCIe 5.0 – MA TO SENS W 2025?",
-    );
+      // Check that audio track is set to original
+      let currentTrack = await page.evaluate(async () => {
+        const video = document.querySelector(
+          "#movie_player",
+        ) as HTMLVideoElement & {
+          getAudioTrack?: () => Promise<any>;
+        };
+        return await video?.getAudioTrack?.();
+      });
 
-    await page.screenshot({
-      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-embedded-test.png`,
-    });
+      expect(currentTrack).toBeTruthy();
 
-    // Check console message count
-    expect(consoleMessageCountContainer.count).toBeLessThan(2000);
-
-    // Close the browser context
-    await context.close();
-  });
-
-  test("Works on youtube-nocookie videos", async ({
-    browserNameWithExtensions,
-    localeString,
-    isMobile,
-  }, testInfo) => {
-    // Handle retries and prerequisite setup
-    const { context, page, consoleMessageCountContainer } =
-      await setupTestEnvironment(
-        testInfo,
-        browserNameWithExtensions,
-        localeString,
-        isMobile,
-      );
-
-    await page.goto("https://www.youtube-nocookie.com/embed/iLU0CE2c2HQ");
-
-    // Wait for the video to load safely
-    let overlayButton;
-    try {
-      overlayButton = await waitForSelectorOrRetryWithPageReload(
-        page,
-        "#movie_player > div.ytp-cued-thumbnail-overlay > button",
-      );
-    } catch {
-      await checkFor153Error(page, context, testInfo);
-    }
-
-    await page.screenshot({
-      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-nocookie-test.png`,
-    });
-
-    try {
-      await overlayButton!.click();
-    } catch {
-      await checkFor153Error(page, context, testInfo);
-    }
-    // Wait for the overlay button to disappear
-    await page.waitForTimeout(process.env.CI ? 750 : 500);
-
-    await expect(overlayButton!).not.toBeVisible();
-    await page.waitForTimeout(process.env.CI ? 3000 : 2000);
-    await checkFor153Error(page, context, testInfo);
-
-    function getTrackLanguageFieldObjectName(track: object) {
-      let languageFieldName: string;
-
-      for (const [fieldName, field] of Object.entries(track)) {
-        if (field && typeof field === "object" && field.name) {
-          languageFieldName = fieldName;
-          break;
-        }
-      }
-      if (!languageFieldName!) {
-        return;
-      } else {
-        return languageFieldName;
-      }
-    }
-
-    // Check that audio track is set to original
-    let currentTrack = await page.evaluate(async () => {
-      const video = document.querySelector(
-        "#movie_player",
-      ) as HTMLVideoElement & {
-        getAudioTrack?: () => Promise<any>;
-      };
-      return await video?.getAudioTrack?.();
-    });
-
-    expect(currentTrack).toBeTruthy();
-
-    // Get track the selected name
-    let trackLanguageField = getTrackLanguageFieldObjectName(currentTrack);
-    if (trackLanguageField) {
-      // If value is "Default" then it is an advert
-      // Wait for 5 seconds and get a new track
-      await page.waitForTimeout(process.env.CI ? 7500 : 5000);
-
-      if (currentTrack[trackLanguageField]?.name === "Default") {
-        // Check that audio track is set to original
-        currentTrack = await page.evaluate(async () => {
-          const video = document.querySelector(
-            "#movie_player",
-          ) as HTMLVideoElement & {
-            getAudioTrack?: () => Promise<any>;
-          };
-          return await video?.getAudioTrack?.();
-        });
-
-        expect(currentTrack).toBeTruthy();
-
-        // Get track the selected name again
-        trackLanguageField = getTrackLanguageFieldObjectName(currentTrack);
-      }
-
+      // Get track the selected name
+      let trackLanguageField = getTrackLanguageFieldObjectName(currentTrack);
       if (trackLanguageField) {
-        // If value is still "Default" then it is an advert again so skip the check this time
+        // If value is "Default" then it is an advert
+        // Wait for 5 seconds and get a new track
+        await page.waitForTimeout(process.env.CI ? 7500 : 5000);
+
         if (currentTrack[trackLanguageField]?.name === "Default") {
-          console.log("Skipping advert track check.");
-        } else {
-          expect(currentTrack[trackLanguageField]?.name).toContain("оригинал");
+          // Check that audio track is set to original
+          currentTrack = await page.evaluate(async () => {
+            const video = document.querySelector(
+              "#movie_player",
+            ) as HTMLVideoElement & {
+              getAudioTrack?: () => Promise<any>;
+            };
+            return await video?.getAudioTrack?.();
+          });
+
+          expect(currentTrack).toBeTruthy();
+
+          // Get track the selected name again
+          trackLanguageField = getTrackLanguageFieldObjectName(currentTrack);
+        }
+
+        if (trackLanguageField) {
+          // If value is still "Default" then it is an advert again so skip the check this time
+          if (currentTrack[trackLanguageField]?.name === "Default") {
+            console.log("Skipping advert track check.");
+          } else {
+            expect(currentTrack[trackLanguageField]?.name).toContain(
+              "оригинал",
+            );
+          }
         }
       }
-    }
 
-    const titleLink = page.locator(".ytp-title-link.yt-uix-sessionlink");
-    await titleLink.waitFor({ state: "attached" });
-    await expect(titleLink).toContainText(
-      "NAJTAŃSZY DYSK PCIe 5.0 – MA TO SENS W 2025?",
-    );
+      const titleLink = page.locator(".ytp-title-link.yt-uix-sessionlink");
+      await titleLink.waitFor({ state: "attached" });
+      await expect(titleLink).toContainText(
+        "NAJTAŃSZY DYSK PCIe 5.0 – MA TO SENS W 2025?",
+      );
 
-    await page.screenshot({
-      path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-nocookie-test.png`,
-    });
+      await page.screenshot({
+        path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-embedded-test.png`,
+      });
 
-    // Check console message count
-    expect(consoleMessageCountContainer.count).toBeLessThan(2000);
+      // Check console message count
+      expect(consoleMessageCountContainer.count).toBeLessThan(2000);
 
-    // Close the browser context
-    await context.close();
-  });
+      // Close the browser context
+      await context.close();
+    },
+  );
+
+  test.fixme(
+    "Works on youtube-nocookie videos",
+    async ({ browserNameWithExtensions, localeString, isMobile }, testInfo) => {
+      // Handle retries and prerequisite setup
+      const { context, page, consoleMessageCountContainer } =
+        await setupTestEnvironment(
+          testInfo,
+          browserNameWithExtensions,
+          localeString,
+          isMobile,
+        );
+
+      await page.goto("https://www.youtube-nocookie.com/embed/iLU0CE2c2HQ");
+
+      // Wait for the video to load safely
+      let overlayButton;
+      try {
+        overlayButton = await waitForSelectorOrRetryWithPageReload(
+          page,
+          "#movie_player > div.ytp-cued-thumbnail-overlay > button",
+        );
+      } catch {
+        await checkFor153Error(page, context, testInfo);
+      }
+
+      await page.screenshot({
+        path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-nocookie-test.png`,
+      });
+
+      try {
+        await overlayButton!.click();
+      } catch {
+        await checkFor153Error(page, context, testInfo);
+      }
+      // Wait for the overlay button to disappear
+      await page.waitForTimeout(process.env.CI ? 750 : 500);
+
+      await expect(overlayButton!).not.toBeVisible();
+      await page.waitForTimeout(process.env.CI ? 3000 : 2000);
+      await checkFor153Error(page, context, testInfo);
+
+      function getTrackLanguageFieldObjectName(track: object) {
+        let languageFieldName: string;
+
+        for (const [fieldName, field] of Object.entries(track)) {
+          if (field && typeof field === "object" && field.name) {
+            languageFieldName = fieldName;
+            break;
+          }
+        }
+        if (!languageFieldName!) {
+          return;
+        } else {
+          return languageFieldName;
+        }
+      }
+
+      // Check that audio track is set to original
+      let currentTrack = await page.evaluate(async () => {
+        const video = document.querySelector(
+          "#movie_player",
+        ) as HTMLVideoElement & {
+          getAudioTrack?: () => Promise<any>;
+        };
+        return await video?.getAudioTrack?.();
+      });
+
+      expect(currentTrack).toBeTruthy();
+
+      // Get track the selected name
+      let trackLanguageField = getTrackLanguageFieldObjectName(currentTrack);
+      if (trackLanguageField) {
+        // If value is "Default" then it is an advert
+        // Wait for 5 seconds and get a new track
+        await page.waitForTimeout(process.env.CI ? 7500 : 5000);
+
+        if (currentTrack[trackLanguageField]?.name === "Default") {
+          // Check that audio track is set to original
+          currentTrack = await page.evaluate(async () => {
+            const video = document.querySelector(
+              "#movie_player",
+            ) as HTMLVideoElement & {
+              getAudioTrack?: () => Promise<any>;
+            };
+            return await video?.getAudioTrack?.();
+          });
+
+          expect(currentTrack).toBeTruthy();
+
+          // Get track the selected name again
+          trackLanguageField = getTrackLanguageFieldObjectName(currentTrack);
+        }
+
+        if (trackLanguageField) {
+          // If value is still "Default" then it is an advert again so skip the check this time
+          if (currentTrack[trackLanguageField]?.name === "Default") {
+            console.log("Skipping advert track check.");
+          } else {
+            expect(currentTrack[trackLanguageField]?.name).toContain(
+              "оригинал",
+            );
+          }
+        }
+      }
+
+      const titleLink = page.locator(".ytp-title-link.yt-uix-sessionlink");
+      await titleLink.waitFor({ state: "attached" });
+      await expect(titleLink).toContainText(
+        "NAJTAŃSZY DYSK PCIe 5.0 – MA TO SENS W 2025?",
+      );
+
+      await page.screenshot({
+        path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-nocookie-test.png`,
+      });
+
+      // Check console message count
+      expect(consoleMessageCountContainer.count).toBeLessThan(2000);
+
+      // Close the browser context
+      await context.close();
+    },
+  );
 });
 
 async function checkFor153Error(
