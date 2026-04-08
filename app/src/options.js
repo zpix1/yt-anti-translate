@@ -44,7 +44,8 @@ const whitelistIds = [
   },
 ];
 
-const CHANNEL_HANDLE_PATTERN = /^@[\p{L}\p{N}](?:[\p{L}\p{N}\p{M}_.\-·]*[\p{L}\p{N}\p{M}])?$/u;
+const CHANNEL_HANDLE_PATTERN =
+  /^@[\p{L}\p{N}](?:[\p{L}\p{N}\p{M}_.\-·]*[\p{L}\p{N}\p{M}])?$/u;
 
 function normalizeWhitelistHandle(handle) {
   let decodedHandle = handle;

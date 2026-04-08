@@ -9,7 +9,9 @@ describe("content_start", () => {
     window.chrome = /** @type {any} */ ({
       storage: {
         sync: {
-          get: vi.fn((defaults, callback) => callback({ ...defaults, ...items })),
+          get: vi.fn((defaults, callback) =>
+            callback({ ...defaults, ...items }),
+          ),
         },
       },
       runtime: {

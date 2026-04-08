@@ -62,7 +62,9 @@ describe("background_subtitles", () => {
     expect(window.YoutubeAntiTranslate.logInfo).toHaveBeenCalledWith(
       "Subtitles disabled.",
     );
-    expect(window.YoutubeAntiTranslate.getPlayerResponseSafely).toHaveBeenCalled();
+    expect(
+      window.YoutubeAntiTranslate.getPlayerResponseSafely,
+    ).toHaveBeenCalled();
   });
 
   it("sets the selected manual track when subtitles are enabled", async () => {
