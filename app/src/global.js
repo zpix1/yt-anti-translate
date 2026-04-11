@@ -152,7 +152,8 @@ window.YoutubeAntiTranslate = {
     }
   },
 
-  CORE_ATTRIBUTED_STRING_SELECTOR: ".yt-core-attributed-string",
+  CORE_ATTRIBUTED_STRING_SELECTOR:
+    ":is(.yt-core-attributed-string, .ytAttributedStringHost)",
   ALL_ARRAYS_VIDEOS_SELECTOR: `ytd-video-renderer,
 ytd-rich-item-renderer,
 ytd-compact-video-renderer,

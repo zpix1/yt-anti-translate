@@ -157,7 +157,7 @@ function updateBrandingHeaderTitleContent(container, originalBrandingData) {
   if (originalBrandingData["title"]) {
     // Find the title text containers
     const titleTextContainer = container.querySelector(
-      `h1 ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}, h1 .ytAttributedStringHost`,
+      `h1 ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}`,
     );
 
     if (!titleTextContainer) {
@@ -216,11 +216,8 @@ function updateBrandingHeaderDescriptionContent(
   if (originalBrandingData["description"]) {
     // Find the description text container
     const selector = `yt-description-preview-view-model .yt-truncated-text__truncated-text-content > ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}:nth-child(1),
-    yt-description-preview-view-model .yt-truncated-text__truncated-text-content > .ytAttributedStringHost:nth-child(1),
     yt-description-preview-view-model .truncated-text-wiz__truncated-text-content > ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}:nth-child(1),
-    yt-description-preview-view-model .truncated-text-wiz__truncated-text-content > .ytAttributedStringHost:nth-child(1),
-    yt-description-preview-view-model truncated-text.ytTruncatedTextHost truncated-text-content.ytTruncatedTextTruncatedTextContent:not(.ytTruncatedTextHiddenTextContent) > ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}:nth-child(1),
-    yt-description-preview-view-model truncated-text.ytTruncatedTextHost truncated-text-content.ytTruncatedTextTruncatedTextContent:not(.ytTruncatedTextHiddenTextContent) > .ytAttributedStringHost:nth-child(1)`;
+    yt-description-preview-view-model truncated-text.ytTruncatedTextHost truncated-text-content.ytTruncatedTextTruncatedTextContent:not(.ytTruncatedTextHiddenTextContent) > ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}:nth-child(1)`;
 
     let descriptionTextContainer = container.querySelector(selector);
 
@@ -371,8 +368,7 @@ function updateBrandingAboutDescriptionContent(
   // Desktop selector
   let descriptionTextContainer = container.querySelector(
     `#description-container > ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}:nth-child(1),
-    #description-container > .ytAttributedStringHost:nth-child(1),
-    #description-container .ytAttributedStringHost`,
+    #description-container ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}`,
   );
 
   // Mobile selector – description is inside .user-text
