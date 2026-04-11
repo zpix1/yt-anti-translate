@@ -1549,6 +1549,12 @@ async function untranslateOtherShortsVideos(
         const shortTitleElement =
           titleElement ||
           shortElement.querySelector(
+            "a.shortsLockupViewModelHostOutsideMetadataEndpoint .ytAttributedStringHost",
+          ) ||
+          shortElement.querySelector(
+            ".shortsLockupViewModelHostMetadataTitle .ytAttributedStringHost",
+          ) ||
+          shortElement.querySelector(
             ".ytLockupMetadataViewModelHeadingReset .ytAttributedStringHost",
           ) ||
           shortElement.querySelector(
@@ -1780,7 +1786,7 @@ async function untranslateOtherShortsVideos(
 
                     // Mark as successfully untranslated
                     shortElement.setAttribute(
-                      "data-ytat-untranslated-other-title",
+                      "data-ytat-untranslated-other-thumbnail",
                       `${videoId}__${window.YoutubeAntiTranslate.MAX_ATTEMPTS}`,
                     );
                   }
