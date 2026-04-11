@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased 
 
+## [1.20.4.2] - 2026-04-11
+
+### Fixed
+
+- YouTube changed classes: updated them
+
 ## [1.20.4] - 2026-04-08
 
 ### New Feature

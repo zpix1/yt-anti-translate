@@ -1,6 +1,6 @@
 // Support both desktop and mobile YouTube layouts
 const CHANNELBRANDING_HEADER_SELECTOR =
-  "#page-header-container #page-header .page-header-view-model-wiz__page-header-headline-info, .page-header-view-model-wiz__page-header-headline-info, .page-header-view-model__page-header-headline-info, .yt-page-header-view-model__page-header-headline-info, #page-header";
+  "#page-header-container #page-header .page-header-view-model-wiz__page-header-headline-info, .page-header-view-model-wiz__page-header-headline-info, .page-header-view-model__page-header-headline-info, .yt-page-header-view-model__page-header-headline-info, .ytPageHeaderViewModelHeadlineInfo, .ytPageHeaderViewModelHeadline, #page-header";
 const CHANNELBRANDING_ABOUT_SELECTOR =
   "ytd-engagement-panel-section-list-renderer, ytm-engagement-panel-section-list-renderer";
 const CHANNEL_LOCATION_REGEXES = [
@@ -215,7 +215,9 @@ function updateBrandingHeaderDescriptionContent(
 ) {
   if (originalBrandingData["description"]) {
     // Find the description text container
-    const selector = `yt-description-preview-view-model .yt-truncated-text__truncated-text-content > ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}:nth-child(1), yt-description-preview-view-model .truncated-text-wiz__truncated-text-content > ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}:nth-child(1), yt-description-preview-view-model truncated-text.ytTruncatedTextHost truncated-text-content.ytTruncatedTextTruncatedTextContent:not(.ytTruncatedTextHiddenTextContent) > ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}:nth-child(1)`;
+    const selector = `yt-description-preview-view-model .yt-truncated-text__truncated-text-content > ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}:nth-child(1),
+    yt-description-preview-view-model .truncated-text-wiz__truncated-text-content > ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}:nth-child(1),
+    yt-description-preview-view-model truncated-text.ytTruncatedTextHost truncated-text-content.ytTruncatedTextTruncatedTextContent:not(.ytTruncatedTextHiddenTextContent) > ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}:nth-child(1)`;
 
     let descriptionTextContainer = container.querySelector(selector);
 
@@ -365,7 +367,8 @@ function updateBrandingAboutDescriptionContent(
 
   // Desktop selector
   let descriptionTextContainer = container.querySelector(
-    `#description-container > ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}:nth-child(1)`,
+    `#description-container > ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}:nth-child(1),
+    #description-container ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}`,
   );
 
   // Mobile selector – description is inside .user-text
