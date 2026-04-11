@@ -944,7 +944,8 @@ async function untranslateOtherVideos(intersectElements = null, mutations) {
 
         // Get thumbnail container elements
         const thumbnailElements = video.querySelectorAll(
-          `img[src*="i.ytimg.com"]:not(.ytd-moving-thumbnail-renderer):not([src*="ytimg.com/an_webp/"]),
+          `yt-thumbnail-view-model img:not(.ytd-moving-thumbnail-renderer),
+          img[src*="i.ytimg.com"]:not(.ytd-moving-thumbnail-renderer):not([src*="ytimg.com/an_webp/"]),
           div[style*="i.ytimg.com"][style*="background-image"]`,
         );
         if (!thumbnailElements || thumbnailElements.length === 0) {
@@ -1149,7 +1150,8 @@ async function untranslateOtherVideos(intersectElements = null, mutations) {
                     /url\(["']?([^"']+)["']?\)/,
                   )?.[1];
                 } else {
-                  imageSrc = thumbnailElement.src;
+                  imageSrc =
+                    thumbnailElement.currentSrc || thumbnailElement.src;
                 }
 
                 if (!thumbnailElement || !imageSrc) {
