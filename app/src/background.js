@@ -1164,6 +1164,22 @@ async function untranslateOtherVideos(intersectElements = null, mutations) {
                 ) {
                   continue;
                 }
+                if (
+                  !thumbnailElement.matches("[style*='background-image']") &&
+                  thumbnailElement.style.width === "118%" &&
+                  thumbnailElement.style.height === "118%" &&
+                  thumbnailElement.style.position === "absolute" &&
+                  thumbnailElement.style.top === "50%" &&
+                  thumbnailElement.style.left === "50%"
+                ) {
+                  // Cleanup legacy shorts zoom styling if it was accidentally applied to regular videos
+                  thumbnailElement.style.width = "";
+                  thumbnailElement.style.height = "";
+                  thumbnailElement.style.position = "";
+                  thumbnailElement.style.top = "";
+                  thumbnailElement.style.left = "";
+                  thumbnailElement.style.transform = "";
+                }
                 // Only update if the thumbnail is different
                 if (!imageSrc.includes(originalThumbnail)) {
                   const { width, height } =
@@ -1479,13 +1495,41 @@ async function untranslateOtherShortsVideos(
           return;
         }
 
+        const isShortsLikeRenderer =
+          shortElement.matches("ytm-shorts-lockup-view-model") ||
+          !!shortElement.querySelector(
+            "a.shortsLockupViewModelHostEndpoint, .shortsLockupViewModelHostMetadataTitle, .shortsLockupViewModelHostOutsideMetadataEndpoint, ytd-reel-item-renderer",
+          );
+        if (!isShortsLikeRenderer) {
+          // Cleanup legacy shorts zoom styling if it was accidentally applied
+          const thumbnails = shortElement.querySelectorAll("img");
+          for (const thumbnailElement of thumbnails) {
+            if (
+              thumbnailElement.style.width === "118%" &&
+              thumbnailElement.style.height === "118%" &&
+              thumbnailElement.style.position === "absolute" &&
+              thumbnailElement.style.top === "50%" &&
+              thumbnailElement.style.left === "50%"
+            ) {
+              thumbnailElement.style.width = "";
+              thumbnailElement.style.height = "";
+              thumbnailElement.style.position = "";
+              thumbnailElement.style.top = "";
+              thumbnailElement.style.left = "";
+              thumbnailElement.style.transform = "";
+            }
+          }
+          return;
+        }
         // Find link element to get URL
         let linkElement =
           shortElement.querySelector(
             'a.shortsLockupViewModelHostEndpoint[href*="/shorts/"]',
-          ) ||
-          shortElement.querySelector(`a[href*="/shorts/"]`) ||
-          shortElement.querySelector(`a[href*="/watch?v="]`); // This is for compatibility with [No YouTube Shorts](https://addons.mozilla.org/en-US/firefox/addon/no-youtube-shorts/)
+          ) || shortElement.querySelector(`a[href*="/shorts/"]`);
+        if (!linkElement && isShortsLikeRenderer) {
+          // Compatibility with [No YouTube Shorts](https://addons.mozilla.org/en-US/firefox/addon/no-youtube-shorts/)
+          linkElement = shortElement.querySelector(`a[href*="/watch?v="]`);
+        }
         if (!linkElement || !linkElement.href) {
           if (!linkElement) {
             // extract video id from thumbnail as last resort
