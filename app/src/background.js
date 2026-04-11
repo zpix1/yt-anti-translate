@@ -823,19 +823,19 @@ async function untranslateOtherVideos(intersectElements = null, mutations) {
         if (
           (video.hasAttribute("data-ytat-untranslated-video-title") &&
             video.getAttribute("data-ytat-untranslated-video-title") ===
-              `${videoId}_${window.YoutubeAntiTranslate.MAX_ATTEMPTS}` &&
+              `${videoId}__${window.YoutubeAntiTranslate.MAX_ATTEMPTS}` &&
             video.hasAttribute("data-ytat-untranslated-video-thumbnail") &&
             video.getAttribute("data-ytat-untranslated-video-thumbnail") ===
-              `${videoId}_${window.YoutubeAntiTranslate.MAX_ATTEMPTS}` &&
+              `${videoId}__${window.YoutubeAntiTranslate.MAX_ATTEMPTS}` &&
             video.hasAttribute("data-ytat-untranslated-video-desc") &&
             video.getAttribute("data-ytat-untranslated-video-desc") ===
-              `${videoId}_${window.YoutubeAntiTranslate.MAX_ATTEMPTS}` &&
+              `${videoId}__${window.YoutubeAntiTranslate.MAX_ATTEMPTS}` &&
             video.hasAttribute(
               "data-ytat-untranslated-video-channel-branding",
             ) &&
             video.getAttribute(
               "data-ytat-untranslated-video-channel-branding",
-            ) === `${videoId}_${window.YoutubeAntiTranslate.MAX_ATTEMPTS}`) ||
+            ) === `${videoId}__${window.YoutubeAntiTranslate.MAX_ATTEMPTS}`) ||
           (video.hasAttribute("data-ytat-untranslated-video-failed-attempts") &&
             video.getAttribute(
               "data-ytat-untranslated-video-failed-attempts",
@@ -851,7 +851,13 @@ async function untranslateOtherVideos(intersectElements = null, mutations) {
             ".compact-media-item-headline .yt-core-attributed-string",
           ) ||
           video.querySelector(
+            ".compact-media-item-headline .ytAttributedStringHost",
+          ) ||
+          video.querySelector(
             ".YtmCompactMediaItemHeadline .yt-core-attributed-string",
+          ) ||
+          video.querySelector(
+            ".YtmCompactMediaItemHeadline .ytAttributedStringHost",
           ) ||
           video.querySelector(
             "ytd-playlist-panel-video-renderer #video-title",
@@ -860,8 +866,12 @@ async function untranslateOtherVideos(intersectElements = null, mutations) {
             "ytm-video-card-renderer .video-card-title .yt-core-attributed-string",
           ) ||
           video.querySelector(
+            "ytm-video-card-renderer .video-card-title .ytAttributedStringHost",
+          ) ||
+          video.querySelector(
             ".media-item-headline .yt-core-attributed-string",
           ) ||
+          video.querySelector(".media-item-headline .ytAttributedStringHost") ||
           video.querySelector(
             "div.media-item-metadata > a > h3.media-item-headline",
           ) ||
@@ -869,10 +879,19 @@ async function untranslateOtherVideos(intersectElements = null, mutations) {
             ".yt-lockup-metadata-view-model__heading-reset .yt-core-attributed-string",
           ) ||
           video.querySelector(
+            ".yt-lockup-metadata-view-model__heading-reset .ytAttributedStringHost",
+          ) ||
+          video.querySelector(
             ".ytLockupMetadataViewModelHeadingReset .yt-core-attributed-string",
           ) ||
           video.querySelector(
+            ".ytLockupMetadataViewModelHeadingReset .ytAttributedStringHost",
+          ) ||
+          video.querySelector(
             "a.ytLockupMetadataViewModelTitle .yt-core-attributed-string",
+          ) ||
+          video.querySelector(
+            "a.ytLockupMetadataViewModelTitle .ytAttributedStringHost",
           ) ||
           video.querySelector("span.ytp-videowall-still-info-title") ||
           video.querySelector("div.ytp-ce-video-title") ||
@@ -892,13 +911,25 @@ async function untranslateOtherVideos(intersectElements = null, mutations) {
               ".yt-lockup-metadata-view-model-wiz__title>.yt-core-attributed-string",
             ) ||
             video.querySelector(
+              ".yt-lockup-metadata-view-model-wiz__title>.ytAttributedStringHost",
+            ) ||
+            video.querySelector(
               ".ytLockupMetadataViewModelTitle>.yt-core-attributed-string",
+            ) ||
+            video.querySelector(
+              ".ytLockupMetadataViewModelTitle>.ytAttributedStringHost",
             ) ||
             video.querySelector(
               ".compact-media-item-headline .yt-core-attributed-string",
             ) ||
             video.querySelector(
+              ".compact-media-item-headline .ytAttributedStringHost",
+            ) ||
+            video.querySelector(
               ".YtmCompactMediaItemHeadline .yt-core-attributed-string",
+            ) ||
+            video.querySelector(
+              ".YtmCompactMediaItemHeadline .ytAttributedStringHost",
             );
 
           if (!titleElement) {
@@ -1494,13 +1525,13 @@ async function untranslateOtherShortsVideos(
         if (
           (shortElement.hasAttribute("data-ytat-untranslated-other-title") &&
             shortElement.getAttribute("data-ytat-untranslated-other-title") ===
-              `${videoId}_${window.YoutubeAntiTranslate.MAX_ATTEMPTS}` &&
+              `${videoId}__${window.YoutubeAntiTranslate.MAX_ATTEMPTS}` &&
             shortElement.hasAttribute(
               "data-ytat-untranslated-other-thumbnail",
             ) &&
             shortElement.getAttribute(
               "data-ytat-untranslated-other-thumbnail",
-            ) === `${videoId}_${window.YoutubeAntiTranslate.MAX_ATTEMPTS}`) ||
+            ) === `${videoId}__${window.YoutubeAntiTranslate.MAX_ATTEMPTS}`) ||
           (shortElement.hasAttribute(
             "data-ytat-untranslated-other-failed-attempts",
           ) &&
@@ -1515,7 +1546,15 @@ async function untranslateOtherShortsVideos(
         const titleElement = shortElement.querySelector(
           `${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}.yt-core-attributed-string--white-space-pre-wrap`,
         );
-        if (!titleElement) {
+        const shortTitleElement =
+          titleElement ||
+          shortElement.querySelector(
+            ".ytLockupMetadataViewModelHeadingReset .ytAttributedStringHost",
+          ) ||
+          shortElement.querySelector(
+            "a.ytLockupMetadataViewModelTitle .ytAttributedStringHost",
+          );
+        if (!shortTitleElement) {
           // Mark if title element is missing to avoid repeated failed attempts
           window.YoutubeAntiTranslate.increaseVideoAttemptAttribute(
             shortElement,
@@ -1539,7 +1578,7 @@ async function untranslateOtherShortsVideos(
 
         // If none of the supported elements are found, skip
         if (
-          !titleElement &&
+          !shortTitleElement &&
           (!thumbnailElements || thumbnailElements.length === 0)
         ) {
           return;
@@ -1589,7 +1628,7 @@ async function untranslateOtherShortsVideos(
           if (settings.untranslateTitle || settings.untranslateThumbnail) {
             /* -------- Handle video title untranslation -------- */
             const realTitle = response.data.title;
-            const currentTitle = titleElement?.textContent?.trim(); // Use textContent for typical title spans
+            const currentTitle = shortTitleElement?.textContent?.trim(); // Use textContent for typical title spans
             if (
               !isPlaylist &&
               settings.untranslateTitle &&
@@ -1619,10 +1658,10 @@ async function untranslateOtherShortsVideos(
                   `${videoId}__${window.YoutubeAntiTranslate.MAX_ATTEMPTS}`,
                 );
               } else {
-                titleElement.textContent = realTitle;
+                shortTitleElement.textContent = realTitle;
                 // Update title attribute if it exists (for tooltips)
-                if (titleElement.hasAttribute("title")) {
-                  titleElement.title = realTitle;
+                if (shortTitleElement.hasAttribute("title")) {
+                  shortTitleElement.title = realTitle;
                 }
                 const titleA = shortElement.querySelector(
                   "a.shortsLockupViewModelHostEndpoint.shortsLockupViewModelHostOutsideMetadataEndpoint",
@@ -1683,7 +1722,7 @@ async function untranslateOtherShortsVideos(
                     continue;
                   }
 
-                  if (linkElement.includes("/shorts/")) {
+                  if (linkElement.href.includes("/shorts/")) {
                     for (const maxResName of ["maxresdefault", "oardefault"]) {
                       if (!originalThumbnail.includes(maxResName)) {
                         originalThumbnail = originalThumbnail.replace(
