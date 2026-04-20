@@ -5,7 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased 
+## Unreleased
+
+## [1.20.4.3] - 2026-04-20
+
+### Fixed
+
+- Fix [#177](https://github.com/zpix1/yt-anti-translate/issues/177) profile link styling in video descriptions
 
 ## [1.20.4.2] - 2026-04-11
 

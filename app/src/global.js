@@ -774,7 +774,8 @@ ytm-shorts-lockup-view-model`,
 
     // Create the container span
     const span = document.createElement("span");
-    span.className = "yt-core-attributed-string--link-inherit-color";
+    span.className =
+      "yt-core-attributed-string--link-inherit-color ytAttributedStringLinkInheritColor";
     span.dir = "auto";
     span.style.color = this.isDarkTheme()
       ? "rgb(62, 166, 255)"
@@ -783,7 +784,7 @@ ytm-shorts-lockup-view-model`,
     // Create the anchor element
     const link = document.createElement("a");
     link.className =
-      "yt-core-attributed-string__link yt-core-attributed-string__link--call-to-action-color yt-timecode-link";
+      "yt-core-attributed-string__link yt-core-attributed-string__link--call-to-action-color ytAttributedStringLink ytAttributedStringLinkCallToActionColor yt-timecode-link";
     link.tabIndex = 0;
     link.href = `/watch?v=${this.getCurrentVideoId()}&t=${seconds}s`;
     link.target = "";
@@ -800,7 +801,8 @@ ytm-shorts-lockup-view-model`,
 
     // Create the container span
     const span = document.createElement("span");
-    span.className = "yt-core-attributed-string--link-inherit-color";
+    span.className =
+      "yt-core-attributed-string--link-inherit-color ytAttributedStringLinkInheritColor";
     span.dir = "auto";
     span.style.color = this.isDarkTheme()
       ? "rgb(62, 166, 255)"
@@ -809,7 +811,7 @@ ytm-shorts-lockup-view-model`,
     // Create the anchor element
     const link = document.createElement("a");
     link.className =
-      "yt-core-attributed-string__link yt-core-attributed-string__link--call-to-action-color";
+      "yt-core-attributed-string__link yt-core-attributed-string__link--call-to-action-color ytAttributedStringLink ytAttributedStringLinkCallToActionColor";
     link.tabIndex = 0;
     if (type === "hashtag") {
       link.href = `/hashtag/${encodeURIComponent(value)}`;
@@ -922,7 +924,7 @@ ytm-shorts-lockup-view-model`,
     );
     const contentElement = document.createElement("span");
     contentElement.className =
-      "yt-core-attributed-string yt-core-attributed-string--white-space-pre-wrap";
+      "yt-core-attributed-string yt-core-attributed-string--white-space-pre-wrap ytAttributedStringHost ytAttributedStringWhiteSpacePreWrap";
     contentElement.dir = "auto";
 
     const textLines = text.split("\n");
