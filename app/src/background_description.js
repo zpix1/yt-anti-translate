@@ -46,18 +46,19 @@ const CHAPTER_STYLE = `
 
 /* Hide translated chapter titles in horizontal cards (desktop) */
 ytd-macro-markers-list-item-renderer h4[data-original-chapter-title] {
-    color: transparent !important;
+    visibility: hidden !important;
     position: relative;
 }
 
 /* Show original chapter title using attribute (desktop) */
 ytd-macro-markers-list-item-renderer h4[data-original-chapter-title]::after {
     content: attr(data-original-chapter-title);
+    visibility: visible !important;
     position: absolute;
     left: 0;
     top: 0;
     right: 0;
-    color: var(--yt-spec-text-primary) !important;
+    color: inherit !important;
     font-size: inherit;
     line-height: inherit;
     font-family: inherit;
