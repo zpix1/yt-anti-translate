@@ -149,8 +149,8 @@ async function untranslateCurrentVideo() {
   }
 
   const fakeNodeID = "yt-anti-translate-fake-node-current-video";
-  const originalNodeSelector = `#title > h1 > yt-formatted-string:not(#${fakeNodeID}), .slim-video-information-title .yt-core-attributed-string:not(#${fakeNodeID})`;
-  const originalNodePartialSelector = `yt-formatted-string:not(#${fakeNodeID}), .yt-core-attributed-string:not(#${fakeNodeID})`;
+  const originalNodeSelector = `#title > h1 > yt-formatted-string:not(#${fakeNodeID}), .slim-video-information-title ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}:not(#${fakeNodeID})`;
+  const originalNodePartialSelector = `yt-formatted-string:not(#${fakeNodeID}), ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}:not(#${fakeNodeID})`;
 
   await createOrUpdateUntranslatedFakeNode(
     fakeNodeID,
@@ -209,11 +209,11 @@ async function untranslateCurrentVideoFullScreenEdu() {
 async function untranslateCurrentEmbeddedVideoMobileFullScreen() {
   const fakeNodeID =
     "yt-anti-translate-fake-node-embedded-mobilefullscreen-title";
-  const originalNodeSelector = `#player-controls a.ytmVideoInfoVideoTitle > span.yt-core-attributed-string:not(#${fakeNodeID})`;
-  const originalNodePartialSelector = `span.yt-core-attributed-string:not(#${fakeNodeID})`;
+  const originalNodeSelector = `#player-controls a.ytmVideoInfoVideoTitle > span${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}:not(#${fakeNodeID})`;
+  const originalNodePartialSelector = `span${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}:not(#${fakeNodeID})`;
 
   const authorFakeNodeID = `${fakeNodeID}-author`;
-  const videoAuthorSelector = `#player-controls a.ytmVideoInfoChannelTitle > span.yt-core-attributed-string:not(#${authorFakeNodeID})`;
+  const videoAuthorSelector = `#player-controls a.ytmVideoInfoChannelTitle > span${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}:not(#${authorFakeNodeID})`;
 
   await createOrUpdateUntranslatedFakeNode(
     fakeNodeID,
@@ -255,8 +255,8 @@ async function untranslateCurrentMobileVideoDescriptionHeader() {
     return;
   }
   const fakeNodeID = "yt-anti-translate-fake-node-mobile-video-description";
-  const originalNodeSelector = `ytm-video-description-header-renderer .title > span.yt-core-attributed-string:not(#${fakeNodeID})`;
-  const originalNodePartialSelector = `span.yt-core-attributed-string:not(#${fakeNodeID})`;
+  const originalNodeSelector = `ytm-video-description-header-renderer .title > span${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}:not(#${fakeNodeID})`;
+  const originalNodePartialSelector = `span${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}:not(#${fakeNodeID})`;
 
   await createOrUpdateUntranslatedFakeNode(
     fakeNodeID,
@@ -275,8 +275,8 @@ async function untranslateCurrentMobileFeaturedVideoChannel() {
   }
   const fakeNodeID =
     "yt-anti-translate-fake-node-mobile-featured-video-channel";
-  const originalNodeSelector = `ytm-channel-featured-video-renderer > a > h3 > span.yt-core-attributed-string:not(#${fakeNodeID})`;
-  const originalNodePartialSelector = `span.yt-core-attributed-string:not(#${fakeNodeID})`;
+  const originalNodeSelector = `ytm-channel-featured-video-renderer > a > h3 > span${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}:not(#${fakeNodeID})`;
+  const originalNodePartialSelector = `span${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}:not(#${fakeNodeID})`;
 
   await createOrUpdateUntranslatedFakeNode(
     fakeNodeID,
@@ -882,7 +882,7 @@ async function untranslateOtherVideos(intersectElements = null, mutations) {
           ) ||
           video.querySelector("div.ytp-autonav-endscreen-upnext-title") ||
           video.querySelector(
-            "div.autonav-endscreen-video-title > .yt-core-attributed-string",
+            `div.autonav-endscreen-video-title > ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}`,
           ) ||
           video.querySelector("span.ytp-modern-videowall-still-info-title");
         if (!titleElement) {
@@ -1559,7 +1559,7 @@ async function untranslateOtherShortsVideos(
 
         // Find title element (Common patterns: #video-title inside the renderer)
         const titleElement = shortElement.querySelector(
-          `${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}.yt-core-attributed-string--white-space-pre-wrap`,
+          `${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_PRE_WRAP_SELECTOR}`,
         );
         const shortTitleElement =
           titleElement ||

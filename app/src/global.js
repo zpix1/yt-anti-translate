@@ -154,6 +154,10 @@ window.YoutubeAntiTranslate = {
 
   CORE_ATTRIBUTED_STRING_SELECTOR:
     ":is(.yt-core-attributed-string, .ytAttributedStringHost)",
+  CORE_ATTRIBUTED_STRING_LINK_SELECTOR:
+    "a:is(.yt-core-attributed-string__link, .ytAttributedStringLink)",
+  CORE_ATTRIBUTED_STRING_PRE_WRAP_SELECTOR:
+    ":is(.yt-core-attributed-string--white-space-pre-wrap, .ytAttributedStringWhiteSpacePreWrap)",
   ALL_ARRAYS_VIDEOS_SELECTOR: `ytd-video-renderer,
 ytd-rich-item-renderer,
 ytd-compact-video-renderer,

@@ -526,8 +526,8 @@ function updateChannelRendererAuthor(container, originalBrandingData) {
     #channel-title yt-formatted-string,
     #channel-info #title,
     #endpoint yt-formatted-string.title,
-    h4.compact-media-item-headline > .yt-core-attributed-string,
-    h4.YtmCompactMediaItemHeadline > .yt-core-attributed-string`,
+    h4.compact-media-item-headline > ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR},
+    h4.YtmCompactMediaItemHeadline > ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}`,
   );
   if (!authorTextContainer) {
     window.YoutubeAntiTranslate.logDebug(
@@ -636,14 +636,17 @@ async function restoreCollaboratorsDialog() {
     // Anchor that contains the channel name (bold title area)
     let linkEl =
       item.querySelector(
-        ".yt-list-item-view-model__text-wrapper a.yt-core-attributed-string__link",
-      ) || item.querySelector("a.yt-core-attributed-string__link");
+        `.yt-list-item-view-model__text-wrapper ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_LINK_SELECTOR}`,
+      ) ||
+      item.querySelector(
+        window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_LINK_SELECTOR,
+      );
     if (!linkEl) {
       const channelInfoEl = item.querySelector(
         `.yt-list-item-view-model__text-wrapper > span${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}`,
       );
       const channelNameEl = item.querySelector(
-        ".yt-list-item-view-model__title-wrapper .yt-core-attributed-string > span > span",
+        `.yt-list-item-view-model__title-wrapper ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR} > span > span`,
       );
       if (channelInfoEl) {
         // Create a link element from the channel handle text if found
