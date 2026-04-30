@@ -6,7 +6,6 @@ ytm-slim-owner-renderer div.slim-owner-bylines,
 div.cbox > a.reel-player-header-channel-endpoint.cbox`;
 const ATTRIBUTED_STRING_SELECTOR = "yt-attributed-string";
 
-const ATTRIBUTED_STRING_CLASS_SELECTOR = ".yt-core-attributed-string";
 const FORMATTED_STRING_SELECTOR = "yt-formatted-string";
 const SNIPPET_TEXT_SELECTOR =
   "#attributed-snippet-text, #formatted-snippet-text, #plain-snippet-text";
@@ -46,18 +45,19 @@ const CHAPTER_STYLE = `
 
 /* Hide translated chapter titles in horizontal cards (desktop) */
 ytd-macro-markers-list-item-renderer h4[data-original-chapter-title] {
-    color: transparent !important;
+    visibility: hidden !important;
     position: relative;
 }
 
 /* Show original chapter title using attribute (desktop) */
 ytd-macro-markers-list-item-renderer h4[data-original-chapter-title]::after {
     content: attr(data-original-chapter-title);
+    visibility: visible !important;
     position: absolute;
     left: 0;
     top: 0;
     right: 0;
-    color: var(--yt-spec-text-primary) !important;
+    color: inherit !important;
     font-size: inherit;
     line-height: inherit;
     font-family: inherit;
@@ -397,7 +397,7 @@ function updateStoryboardChapter() {
   );
   const titleElement =
     window.YoutubeAntiTranslate.querySelector(
-      ".ytPlayerStoryboardTitle .yt-core-attributed-string",
+      `.ytPlayerStoryboardTitle ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}`,
       storyboard,
     ) ||
     window.YoutubeAntiTranslate.querySelector(
@@ -505,7 +505,7 @@ function updateMobileChapterButton(targetChapter, currentTime) {
 
   const textContainer =
     window.YoutubeAntiTranslate.querySelector(
-      ".yt-core-attributed-string",
+      window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR,
       mobileChapterButton,
     ) || mobileChapterButton;
 
@@ -1021,7 +1021,7 @@ function updateDescriptionContent(container, originalText) {
   // Find the text containers
   const mainTextContainer = window.YoutubeAntiTranslate.getFirstVisible(
     window.YoutubeAntiTranslate.querySelectorAll(
-      `${ATTRIBUTED_STRING_SELECTOR}, ${ATTRIBUTED_STRING_CLASS_SELECTOR}, ${FORMATTED_STRING_SELECTOR}`,
+      `${ATTRIBUTED_STRING_SELECTOR}, ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}, ${FORMATTED_STRING_SELECTOR}`,
       container,
     ),
   );
@@ -1137,8 +1137,8 @@ function updateAuthorContent(container, originalText) {
   const singularChannelNameTextContainer =
     window.YoutubeAntiTranslate.getFirstVisible(
       window.YoutubeAntiTranslate.querySelectorAll(
-        `#channel-name ${FORMATTED_STRING_SELECTOR} a, #channel-name ${ATTRIBUTED_STRING_SELECTOR}, #channel-name ${ATTRIBUTED_STRING_CLASS_SELECTOR}, .slim-owner-channel-name > ${ATTRIBUTED_STRING_CLASS_SELECTOR},
-        .reel-player-header-channel-title > ${ATTRIBUTED_STRING_CLASS_SELECTOR}`,
+        `#channel-name ${FORMATTED_STRING_SELECTOR} a, #channel-name ${ATTRIBUTED_STRING_SELECTOR}, #channel-name ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}, .slim-owner-channel-name > ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR},
+        .reel-player-header-channel-title > ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}`,
         container,
       ),
     );
@@ -1146,7 +1146,7 @@ function updateAuthorContent(container, originalText) {
   const multipleChannelNameContainers =
     window.YoutubeAntiTranslate.getFirstVisible(
       window.YoutubeAntiTranslate.querySelectorAll(
-        `#attributed-channel-name ${ATTRIBUTED_STRING_CLASS_SELECTOR} a.yt-core-attributed-string__link`,
+        `#attributed-channel-name ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR} ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_LINK_SELECTOR}`,
         container,
       ),
     );
@@ -1292,7 +1292,7 @@ async function updateCollaboratorAuthors(avatarStack, originalAuthor) {
         const multipleChannelNameContainer =
           window.YoutubeAntiTranslate.getFirstVisible(
             window.YoutubeAntiTranslate.querySelectorAll(
-              `#attributed-channel-name ${ATTRIBUTED_STRING_CLASS_SELECTOR} a.yt-core-attributed-string__link`,
+              `#attributed-channel-name ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR} ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_LINK_SELECTOR}`,
               avatarStack.closest("#owner"),
             ),
           );
@@ -1551,7 +1551,7 @@ function updateHorizontalChapters() {
           if (isMobileChapterItem) {
             const mobileTitleContainer =
               window.YoutubeAntiTranslate.querySelector(
-                ".yt-core-attributed-string",
+                window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR,
                 titleElement,
               ) || titleElement;
             if (mobileTitleContainer.textContent !== targetChapter.title) {
