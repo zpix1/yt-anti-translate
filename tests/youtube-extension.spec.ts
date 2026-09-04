@@ -541,6 +541,47 @@ test.describe("YouTube Anti-Translate extension", () => {
     await context.close();
   });
 
+  test("YouTube Shorts linked video title is not translated", async ({
+    browserNameWithExtensions,
+    localeString,
+    isMobile,
+  }, testInfo) => {
+    const { context, page, consoleMessageCountContainer } =
+      await setupTestEnvironment(
+        testInfo,
+        browserNameWithExtensions,
+        localeString,
+        isMobile,
+      );
+
+    await loadPageAndVerifyAuth(
+      page,
+      "https://www.youtube.com/shorts/5mU6SRS2Bxo",
+      browserNameWithExtensions,
+    );
+
+    const linkedVideo = page.locator(
+      'yt-reel-carousel-view-model a[href*="watch?v=Qtl8lJwbd4g"]',
+    );
+    await expect(linkedVideo).toBeVisible();
+    const originalTitle = linkedVideo.locator(
+      "#yt-anti-translate-fake-node-current-short-video-links",
+    );
+    const translatedTitle = linkedVideo.locator(
+      '.ytSpecButtonShapeNextButtonTextContent span.ytAttributedStringHost > span:not(#yt-anti-translate-fake-node-current-short-video-links)',
+    );
+    await expect(originalTitle).toHaveText("Escape 100 Cops, Win $500,000");
+    await expect(originalTitle).toBeVisible();
+    await expect(translatedTitle).toBeHidden();
+    await expect(linkedVideo).toHaveAttribute(
+      "aria-label",
+      "Escape 100 Cops, Win $500,000",
+    );
+
+    expect(consoleMessageCountContainer.count).toBeLessThan(2000);
+    await context.close();
+  });
+
   test("YouTube channel Videos and Shorts tabs retain original titles", async ({
     browserNameWithExtensions,
     localeString,

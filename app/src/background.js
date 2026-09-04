@@ -129,17 +129,25 @@ async function untranslateCurrentShortVideoEngagementPanel() {
 // Changes featured video link title on "/shorts/shortid" pages
 async function untranslateCurrentShortVideoLinks() {
   const fakeNodeID = "yt-anti-translate-fake-node-current-short-video-links";
-  const originalNodeSelector = `.ytReelMultiFormatLinkViewModelEndpoint span${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}>span:not(#${fakeNodeID})`;
+  const originalNodeSelector = `.ytReelMultiFormatLinkViewModelEndpoint span${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}>span:not(#${fakeNodeID}), yt-reel-carousel-view-model a[href*="/watch?v="] .ytSpecButtonShapeNextButtonTextContent span.ytAttributedStringHost > span:not(#${fakeNodeID})`;
   const originalNodePartialSelector = `span:not(#${fakeNodeID})`;
 
   await createOrUpdateUntranslatedFakeNode(
     fakeNodeID,
     originalNodeSelector,
     originalNodePartialSelector,
-    (el) => el?.parentElement?.parentElement?.parentElement?.href,
+    (el) =>
+      el?.closest("a")?.href ??
+      el?.parentElement?.parentElement?.parentElement?.href,
     "span",
     false,
   );
+
+  const fakeNode = window.YoutubeAntiTranslate.querySelector(`#${fakeNodeID}`);
+  const linkElement = fakeNode?.closest("a");
+  if (linkElement && fakeNode.textContent) {
+    linkElement.setAttribute("aria-label", fakeNode.textContent);
+  }
 }
 
 // Changes main video title on "/watch?v=videoid" pages
