@@ -1896,12 +1896,11 @@ ytm-shorts-lockup-view-model`,
       return false;
     }
     try {
-      const response = await this.cachedRequest(src);
-      return (
-        response?.response.ok &&
-        response?.response.status >= 200 &&
-        response?.response.status < 300
-      );
+      // Image responses cannot use cachedRequest because it always parses JSON.
+      // Avoid custom headers here so cross-origin thumbnail checks stay simple
+      // requests and do not trigger a failing CORS preflight on i.ytimg.com.
+      const response = await fetch(src, { method: "HEAD" });
+      return response.ok && response.status >= 200 && response.status < 300;
     } catch {
       return false;
     }

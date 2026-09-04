@@ -63,8 +63,8 @@ let cachedRequest = null;
 // Changes main short title on "/shorts/shortid" pages
 async function untranslateCurrentShortVideo() {
   const fakeNodeID = "yt-anti-translate-fake-node-current-short-video";
-  const originalNodeSelector = `yt-shorts-video-title-view-model > h2 > span:not(#${fakeNodeID})`;
-  const originalNodePartialSelector = `span:not(#${fakeNodeID})`;
+  const originalNodeSelector = `yt-shorts-video-title-view-model > h1.ytShortsVideoTitleViewModelShortsVideoTitle:not(#${fakeNodeID}), yt-shorts-video-title-view-model > h2 > span:not(#${fakeNodeID})`;
+  const originalNodePartialSelector = `h1.ytShortsVideoTitleViewModelShortsVideoTitle:not(#${fakeNodeID}), span:not(#${fakeNodeID})`;
 
   await createOrUpdateUntranslatedFakeNode(
     fakeNodeID,

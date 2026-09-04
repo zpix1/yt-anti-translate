@@ -26,7 +26,7 @@ export default defineConfig<TestOptions>({
   /* Retry 3 times on CI, or once locally */
   retries: process.env.CI ? 5 : 1,
   /* Limit parallel workers on CI as they cause random failures some of the times */
-  workers: process.env.CI ? 3 : undefined,
+  workers: 3,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [["github"], ["html"]],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
@@ -40,18 +40,16 @@ export default defineConfig<TestOptions>({
 
   /* Configure projects for major browsers */
   projects: [
-    // Desktop Chrome
     {
-      name: "setup-auth-and-ublock-chromium",
-      testMatch: /.*setup\.spec\.ts/,
+      name: "setup-ublock",
+      testMatch: /.*ublock\.setup\.spec\.ts/,
       use: {
-        allBrowserNameWithExtensions: ["chromium"],
-        allLocaleStrings: ["ru-RU", "th-TH"],
-        isMobile: false,
+        allBrowserNameWithExtensions: ["chromium", "firefox"],
         actionTimeout: process.env.CI ? 60_000 : 30_000,
         navigationTimeout: process.env.CI ? 60_000 : 30_000,
       },
     },
+    // Desktop Chrome
     {
       name: "chromium-extension-ru-RU",
       testMatch: /.*extension\.spec\.ts/,
@@ -71,7 +69,7 @@ export default defineConfig<TestOptions>({
         actionTimeout: process.env.CI ? 60_000 : 30_000,
         navigationTimeout: process.env.CI ? 60_000 : 30_000,
       },
-      dependencies: ["setup-auth-and-ublock-chromium"],
+      dependencies: ["setup-ublock"],
     },
     {
       name: "chromium-extension-extra-th-TH",
@@ -92,21 +90,10 @@ export default defineConfig<TestOptions>({
         actionTimeout: process.env.CI ? 60_000 : 30_000,
         navigationTimeout: process.env.CI ? 60_000 : 30_000,
       },
-      dependencies: ["setup-auth-and-ublock-chromium"],
+      dependencies: ["setup-ublock"],
     },
 
     // Desktop Firefox
-    {
-      name: "setup-auth-and-ublock-firefox",
-      testMatch: /.*setup\.spec\.ts/,
-      use: {
-        allBrowserNameWithExtensions: ["firefox"],
-        allLocaleStrings: ["ru-RU", "th-TH"],
-        isMobile: false,
-        actionTimeout: process.env.CI ? 60_000 : 30_000,
-        navigationTimeout: process.env.CI ? 60_000 : 30_000,
-      },
-    },
     {
       name: "firefox-extension-ru-RU",
       testMatch: /.*extension\.spec\.ts/,
@@ -123,7 +110,7 @@ export default defineConfig<TestOptions>({
         actionTimeout: process.env.CI ? 60_000 : 30_000,
         navigationTimeout: process.env.CI ? 60_000 : 30_000,
       },
-      dependencies: ["setup-auth-and-ublock-firefox"],
+      dependencies: ["setup-ublock"],
     },
     {
       name: "firefox-extension-extra-th-TH",
@@ -141,21 +128,10 @@ export default defineConfig<TestOptions>({
         actionTimeout: process.env.CI ? 60_000 : 30_000,
         navigationTimeout: process.env.CI ? 60_000 : 30_000,
       },
-      dependencies: ["setup-auth-and-ublock-firefox"],
+      dependencies: ["setup-ublock"],
     },
 
     // Mobile Chrome
-    {
-      name: "setup-auth-and-ublock-mobile",
-      testMatch: /.*setup\.spec\.ts/,
-      use: {
-        ...devices["Pixel 5"],
-        allBrowserNameWithExtensions: ["chromium"],
-        allLocaleStrings: ["ru-RU", "th-TH"],
-        actionTimeout: process.env.CI ? 60_000 : 30_000,
-        navigationTimeout: process.env.CI ? 60_000 : 30_000,
-      },
-    },
     {
       name: "chromium-extension-mobile-ru-RU",
       testMatch: /.*extension-mobile\.spec\.ts/,
@@ -174,7 +150,7 @@ export default defineConfig<TestOptions>({
         actionTimeout: process.env.CI ? 60_000 : 30_000,
         navigationTimeout: process.env.CI ? 60_000 : 30_000,
       },
-      dependencies: ["setup-auth-and-ublock-mobile"],
+      dependencies: ["setup-ublock"],
     },
     {
       name: "chromium-extension-mobile-extra-th-TH",
@@ -194,7 +170,7 @@ export default defineConfig<TestOptions>({
         actionTimeout: process.env.CI ? 60_000 : 30_000,
         navigationTimeout: process.env.CI ? 60_000 : 30_000,
       },
-      dependencies: ["setup-auth-and-ublock-mobile"],
+      dependencies: ["setup-ublock"],
     },
   ],
 });
