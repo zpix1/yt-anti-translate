@@ -568,7 +568,7 @@ test.describe("YouTube Anti-Translate extension", () => {
       "#yt-anti-translate-fake-node-current-short-video-links",
     );
     const translatedTitle = linkedVideo.locator(
-      '.ytSpecButtonShapeNextButtonTextContent span.ytAttributedStringHost > span:not(#yt-anti-translate-fake-node-current-short-video-links)',
+      ".ytSpecButtonShapeNextButtonTextContent span.ytAttributedStringHost > span:not(#yt-anti-translate-fake-node-current-short-video-links)",
     );
     await expect(originalTitle).toHaveText("Escape 100 Cops, Win $500,000");
     await expect(originalTitle).toBeVisible();
