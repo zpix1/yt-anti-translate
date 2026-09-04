@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fix [#190](https://github.com/zpix1/yt-anti-translate/issues/190) untranslated title not appearing in the Shorts player
 - Fix [#191](https://github.com/zpix1/yt-anti-translate/issues/191) low-resolution thumbnail in the paused video player
+- Untranslate linked video titles in the Shorts carousel, including their accessible labels
 
 ## [1.20.4.4] - 2026-04-30
 
