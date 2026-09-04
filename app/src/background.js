@@ -63,8 +63,8 @@ let cachedRequest = null;
 // Changes main short title on "/shorts/shortid" pages
 async function untranslateCurrentShortVideo() {
   const fakeNodeID = "yt-anti-translate-fake-node-current-short-video";
-  const originalNodeSelector = `yt-shorts-video-title-view-model > h2 > span:not(#${fakeNodeID})`;
-  const originalNodePartialSelector = `span:not(#${fakeNodeID})`;
+  const originalNodeSelector = `yt-shorts-video-title-view-model > h1.ytShortsVideoTitleViewModelShortsVideoTitle:not(#${fakeNodeID}), yt-shorts-video-title-view-model > h2 > span:not(#${fakeNodeID})`;
+  const originalNodePartialSelector = `h1.ytShortsVideoTitleViewModelShortsVideoTitle:not(#${fakeNodeID}), span:not(#${fakeNodeID})`;
 
   await createOrUpdateUntranslatedFakeNode(
     fakeNodeID,
@@ -129,17 +129,25 @@ async function untranslateCurrentShortVideoEngagementPanel() {
 // Changes featured video link title on "/shorts/shortid" pages
 async function untranslateCurrentShortVideoLinks() {
   const fakeNodeID = "yt-anti-translate-fake-node-current-short-video-links";
-  const originalNodeSelector = `.ytReelMultiFormatLinkViewModelEndpoint span${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}>span:not(#${fakeNodeID})`;
+  const originalNodeSelector = `.ytReelMultiFormatLinkViewModelEndpoint span${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}>span:not(#${fakeNodeID}), yt-reel-carousel-view-model a[href*="/watch?v="] .ytSpecButtonShapeNextButtonTextContent span.ytAttributedStringHost > span:not(#${fakeNodeID})`;
   const originalNodePartialSelector = `span:not(#${fakeNodeID})`;
 
   await createOrUpdateUntranslatedFakeNode(
     fakeNodeID,
     originalNodeSelector,
     originalNodePartialSelector,
-    (el) => el?.parentElement?.parentElement?.parentElement?.href,
+    (el) =>
+      el?.closest("a")?.href ??
+      el?.parentElement?.parentElement?.parentElement?.href,
     "span",
     false,
   );
+
+  const fakeNode = window.YoutubeAntiTranslate.querySelector(`#${fakeNodeID}`);
+  const linkElement = fakeNode?.closest("a");
+  if (linkElement && fakeNode.textContent) {
+    linkElement.setAttribute("aria-label", fakeNode.textContent);
+  }
 }
 
 // Changes main video title on "/watch?v=videoid" pages

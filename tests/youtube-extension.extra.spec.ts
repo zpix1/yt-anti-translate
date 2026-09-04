@@ -20,7 +20,10 @@ test.describe("YouTube Anti-Translate extension - Extras", () => {
     localeString,
     isMobile,
   }, testInfo) => {
-    expect(process.env.YOUTUBE_API_KEY?.trim() || "").not.toBe("");
+    test.skip(
+      !process.env.YOUTUBE_API_KEY?.trim(),
+      "YOUTUBE_API_KEY is required for this variant",
+    );
 
     // --- Update Extension Settings and distribute a test copy ---
     // The object to be passed and inserted into the start.js file

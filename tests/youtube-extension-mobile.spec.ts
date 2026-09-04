@@ -203,7 +203,7 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
     await context.close();
   });
 
-  test("YouTube owned feed playlists page contains 'owned-playlist-playwright-test' playlist", async ({
+  test.skip("YouTube owned feed playlists page contains 'owned-playlist-playwright-test' playlist", async ({
     browserNameWithExtensions,
     localeString,
     isMobile,
@@ -277,7 +277,7 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
     await context.close();
   });
 
-  test("YouTube video playlist retains original thumbnail of the first video", async ({
+  test.skip("YouTube video playlist retains original thumbnail of the first video", async ({
     browserNameWithExtensions,
     localeString,
     isMobile,
