@@ -6,6 +6,7 @@ export default defineConfig({
     globals: true,
     setupFiles: ["./vitest.setup.js"],
     include: ["**/*.test.js", "**/__tests__/**/*.js"],
+    pool: "threads",
     coverage: {
       reporter: ["text", "json", "html"],
       include: ["app/src/**/*.js"],
