@@ -65,6 +65,7 @@ There's also a [Firefox Manifest v3 version](https://addons.mozilla.org/firefox/
      > These `.env` values should be valid credentials to a Google (YouTube) Account with 2FA OTP enabled and OTP as the highest level of security on the account (aka no "Google prompt" or "Passkeys and security keys" configured).
      > `GOOGLE_OTP_SECRET` is the "secret" query parameter of the QR Code that is provided when configuring the 2FA OTP Authenticathor. You can use a QR Code reader to read the text value.
      > It is recommended that you create a test account for this purpose.
+   - To test everything, run `npm run test`. For more granular testing, the complete list of commands is specified in `package.json`. 
 
 #### Testing in Browser
 
