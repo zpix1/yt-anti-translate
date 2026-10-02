@@ -6,29 +6,6 @@ const YOUTUBE_REQUEST_INTERVAL_MS = 1000;
 let youtubeRequestQueue = Promise.resolve();
 let nextYoutubeRequestAt = 0;
 
-function queueYoutubeRequest(request) {
-  const queued = youtubeRequestQueue.then(async () => {
-    const delay = nextYoutubeRequestAt - Date.now();
-    if (delay > 0) {
-      await new Promise((resolve) => setTimeout(resolve, delay));
-    }
-    nextYoutubeRequestAt = Date.now() + YOUTUBE_REQUEST_INTERVAL_MS;
-    return request();
-  });
-  youtubeRequestQueue = queued.catch(() => {});
-  return queued;
-}
-
-async function readChannelLookupCache(key) {
-  const storage = typeof chrome !== "undefined" ? chrome.storage?.local : null;
-  return (await storage?.get(key).catch(() => ({})))?.[key];
-}
-
-async function writeChannelLookupCache(key, value) {
-  const storage = typeof chrome !== "undefined" ? chrome.storage?.local : null;
-  await storage?.set({ [key]: value }).catch(() => {});
-}
-
 // Cache for player element to avoid repeated querySelector calls
 let cachedPlayer = null;
 let cachedPlayerSelector = null;
@@ -1401,9 +1378,17 @@ ytm-shorts-lockup-view-model`,
     if (pendingThrottledRequests.has(cacheKey)) {
       return pendingThrottledRequests.get(cacheKey);
     }
-    const requestPromise = queueYoutubeRequest(request).finally(() =>
-      pendingThrottledRequests.delete(cacheKey),
-    );
+    const requestPromise = youtubeRequestQueue
+      .then(async () => {
+        const delay = nextYoutubeRequestAt - Date.now();
+        if (delay > 0) {
+          await new Promise((resolve) => setTimeout(resolve, delay));
+        }
+        nextYoutubeRequestAt = Date.now() + YOUTUBE_REQUEST_INTERVAL_MS;
+        return request();
+      })
+      .finally(() => pendingThrottledRequests.delete(cacheKey));
+    youtubeRequestQueue = requestPromise.catch(() => {});
     pendingThrottledRequests.set(cacheKey, requestPromise);
     return requestPromise;
   },
@@ -2178,9 +2163,13 @@ ytm-shorts-lockup-view-model`,
     const requestIdentifier = `youtubei/v1/search_${JSON.stringify(body)}`;
 
     // Check cache
+    const storage =
+      typeof chrome !== "undefined" ? chrome.storage?.local : null;
     const storedResponse =
       this.getSessionCache(requestIdentifier) ||
-      (await readChannelLookupCache(requestIdentifier));
+      (await storage?.get(requestIdentifier).catch(() => ({})))?.[
+        requestIdentifier
+      ];
     if (storedResponse) {
       this.setSessionCache(requestIdentifier, storedResponse);
       return storedResponse;
@@ -2283,7 +2272,7 @@ ytm-shorts-lockup-view-model`,
 
     // Store in cache
     this.setSessionCache(requestIdentifier, response);
-    await writeChannelLookupCache(requestIdentifier, response);
+    await storage?.set({ [requestIdentifier]: response }).catch(() => {});
 
     return response;
   },

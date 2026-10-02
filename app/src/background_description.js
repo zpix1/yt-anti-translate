@@ -1023,17 +1023,6 @@ async function handleAuthor(originalAuthor, originalTitle = null) {
   }
 }
 
-function removeOrphanedOriginalDescriptions(container) {
-  for (const node of window.YoutubeAntiTranslate.querySelectorAll(
-    ORIGINAL_DESCRIPTION_SELECTOR,
-    container,
-  )) {
-    if (!node.previousElementSibling?.matches(NATIVE_DESCRIPTION_SELECTOR)) {
-      node.remove();
-    }
-  }
-}
-
 function findDescriptionTextContainer(container, selector) {
   return Array.from(
     window.YoutubeAntiTranslate.querySelectorAll(selector, container),
@@ -1059,15 +1048,6 @@ function getNativeDescriptionText(textContainer) {
     : textContainer;
 }
 
-function ensureDescriptionStyle() {
-  if (!document.getElementById(DESCRIPTION_STYLE_ID)) {
-    const style = document.createElement("style");
-    style.id = DESCRIPTION_STYLE_ID;
-    style.textContent = DESCRIPTION_STYLE;
-    document.head.appendChild(style);
-  }
-}
-
 function replaceDescriptionText(textContainer, formattedContent) {
   const nativeText = getNativeDescriptionText(textContainer);
   if (nativeText.nextElementSibling?.matches(ORIGINAL_DESCRIPTION_SELECTOR)) {
@@ -1088,7 +1068,14 @@ function replaceDescriptionText(textContainer, formattedContent) {
  * @param {string} originalText - Original (untranslated) description.
  */
 function updateDescriptionContent(container, originalText) {
-  removeOrphanedOriginalDescriptions(container);
+  for (const node of window.YoutubeAntiTranslate.querySelectorAll(
+    ORIGINAL_DESCRIPTION_SELECTOR,
+    container,
+  )) {
+    if (!node.previousElementSibling?.matches(NATIVE_DESCRIPTION_SELECTOR)) {
+      node.remove();
+    }
+  }
   // Find the text containers
   const mainTextContainer = findDescriptionTextContainer(
     container,
@@ -1165,7 +1152,12 @@ function updateDescriptionContent(container, originalText) {
       window.YoutubeAntiTranslate.createFormattedContent(originalText);
   }
 
-  ensureDescriptionStyle();
+  if (!document.getElementById(DESCRIPTION_STYLE_ID)) {
+    const style = document.createElement("style");
+    style.id = DESCRIPTION_STYLE_ID;
+    style.textContent = DESCRIPTION_STYLE;
+    document.head.appendChild(style);
+  }
   if (mainNeedsUpdate && mainTextContainer) {
     replaceDescriptionText(mainTextContainer, formattedContent);
   }
