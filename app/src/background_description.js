@@ -9,6 +9,18 @@ const ATTRIBUTED_STRING_SELECTOR = "yt-attributed-string";
 const FORMATTED_STRING_SELECTOR = "yt-formatted-string";
 const SNIPPET_TEXT_SELECTOR =
   "#attributed-snippet-text, #formatted-snippet-text, #plain-snippet-text";
+const ORIGINAL_DESCRIPTION_ATTRIBUTE = "data-ytat-original-description";
+const NATIVE_DESCRIPTION_ATTRIBUTE = "data-ytat-native-description";
+const ORIGINAL_DESCRIPTION_SELECTOR = `[${ORIGINAL_DESCRIPTION_ATTRIBUTE}]`;
+const NATIVE_DESCRIPTION_SELECTOR = `[${NATIVE_DESCRIPTION_ATTRIBUTE}]`;
+const DESCRIPTION_CONTROL_SELECTOR =
+  'button, [role="button"], ytd-video-description-transcript-section-renderer, ytd-video-description-infocards-section-renderer';
+const DESCRIPTION_STYLE_ID = "ytat-description-style";
+const DESCRIPTION_STYLE = `
+  ${NATIVE_DESCRIPTION_SELECTOR} { display: none !important; }
+  ${ORIGINAL_DESCRIPTION_SELECTOR} { display: none; }
+  ${NATIVE_DESCRIPTION_SELECTOR} + ${ORIGINAL_DESCRIPTION_SELECTOR} { display: inline; }
+`;
 const HORIZONTAL_CHAPTERS_SELECTOR =
   "ytd-horizontal-card-list-renderer, ytd-macro-markers-list-renderer, ytm-macro-markers-list-renderer, ytm-horizontal-card-list-renderer";
 const CHAPTER_ITEM_SELECTOR =
@@ -1011,6 +1023,64 @@ async function handleAuthor(originalAuthor, originalTitle = null) {
   }
 }
 
+function removeOrphanedOriginalDescriptions(container) {
+  for (const node of window.YoutubeAntiTranslate.querySelectorAll(
+    ORIGINAL_DESCRIPTION_SELECTOR,
+    container,
+  )) {
+    if (!node.previousElementSibling?.matches(NATIVE_DESCRIPTION_SELECTOR)) {
+      node.remove();
+    }
+  }
+}
+
+function findDescriptionTextContainer(container, selector) {
+  return Array.from(
+    window.YoutubeAntiTranslate.querySelectorAll(selector, container),
+  ).find(
+    (node) =>
+      !node.closest(
+        `${ORIGINAL_DESCRIPTION_SELECTOR}, ${DESCRIPTION_CONTROL_SELECTOR}`,
+      ) &&
+      window.YoutubeAntiTranslate.isVisible(
+        node.matches(NATIVE_DESCRIPTION_SELECTOR) ? node.parentElement : node,
+        false,
+      ),
+  );
+}
+
+function getNativeDescriptionText(textContainer) {
+  return textContainer.matches(ATTRIBUTED_STRING_SELECTOR) &&
+    !textContainer.matches(NATIVE_DESCRIPTION_SELECTOR)
+    ? window.YoutubeAntiTranslate.querySelector(
+        `${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}:not(${ORIGINAL_DESCRIPTION_SELECTOR})`,
+        textContainer,
+      ) || textContainer
+    : textContainer;
+}
+
+function ensureDescriptionStyle() {
+  if (!document.getElementById(DESCRIPTION_STYLE_ID)) {
+    const style = document.createElement("style");
+    style.id = DESCRIPTION_STYLE_ID;
+    style.textContent = DESCRIPTION_STYLE;
+    document.head.appendChild(style);
+  }
+}
+
+function replaceDescriptionText(textContainer, formattedContent) {
+  const nativeText = getNativeDescriptionText(textContainer);
+  if (nativeText.nextElementSibling?.matches(ORIGINAL_DESCRIPTION_SELECTOR)) {
+    nativeText.nextElementSibling.remove();
+  }
+  // YouTube keeps references to these children and renders them after scrolling.
+  // Preserve its nodes and display the original in an adjacent element.
+  const node = formattedContent.cloneNode(true);
+  node.setAttribute(ORIGINAL_DESCRIPTION_ATTRIBUTE, "");
+  nativeText.after(node);
+  nativeText.setAttribute(NATIVE_DESCRIPTION_ATTRIBUTE, "");
+}
+
 /**
  * Replaces the translated description shown to the user with the provided original text.
  *
@@ -1018,18 +1088,15 @@ async function handleAuthor(originalAuthor, originalTitle = null) {
  * @param {string} originalText - Original (untranslated) description.
  */
 function updateDescriptionContent(container, originalText) {
+  removeOrphanedOriginalDescriptions(container);
   // Find the text containers
-  const mainTextContainer = window.YoutubeAntiTranslate.getFirstVisible(
-    window.YoutubeAntiTranslate.querySelectorAll(
-      `${ATTRIBUTED_STRING_SELECTOR}, ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}, ${FORMATTED_STRING_SELECTOR}`,
-      container,
-    ),
+  const mainTextContainer = findDescriptionTextContainer(
+    container,
+    `${ATTRIBUTED_STRING_SELECTOR}, ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}, ${FORMATTED_STRING_SELECTOR}`,
   );
-  const snippetTextContainer = window.YoutubeAntiTranslate.getFirstVisible(
-    window.YoutubeAntiTranslate.querySelectorAll(
-      SNIPPET_TEXT_SELECTOR,
-      container,
-    ),
+  const snippetTextContainer = findDescriptionTextContainer(
+    container,
+    SNIPPET_TEXT_SELECTOR,
   );
 
   if (!mainTextContainer && !snippetTextContainer) {
@@ -1040,32 +1107,27 @@ function updateDescriptionContent(container, originalText) {
   }
 
   let formattedContent = null;
-  const originalTextFirstLine = originalText.split("\n")[0];
 
   // Helper function to check if a container needs updating
   function needsUpdate(textContainer) {
-    if (!textContainer || !textContainer.hasChildNodes()) {
+    if (
+      !textContainer ||
+      !getNativeDescriptionText(textContainer).textContent?.trim()
+    ) {
       return false;
     }
 
-    // Check first line comparison
-    if (
-      textContainer.firstChild.hasChildNodes() &&
-      textContainer.firstChild.firstChild.textContent === originalTextFirstLine
-    ) {
-      // If first lines match, create formatted content and do full comparison
+    const originalNode =
+      getNativeDescriptionText(textContainer).nextElementSibling;
+    if (originalNode?.matches(ORIGINAL_DESCRIPTION_SELECTOR)) {
       if (!formattedContent) {
         formattedContent =
           window.YoutubeAntiTranslate.createFormattedContent(originalText);
       }
 
-      // Compare full content
-      return (
-        textContainer.firstChild.textContent !== formattedContent.textContent
-      );
+      return originalNode.textContent !== formattedContent.textContent;
     }
 
-    // First line is different, so update is needed
     return true;
   }
 
@@ -1103,19 +1165,13 @@ function updateDescriptionContent(container, originalText) {
       window.YoutubeAntiTranslate.createFormattedContent(originalText);
   }
 
-  // Update containers that need updating
+  ensureDescriptionStyle();
   if (mainNeedsUpdate && mainTextContainer) {
-    window.YoutubeAntiTranslate.replaceContainerContent(
-      mainTextContainer,
-      formattedContent.cloneNode(true),
-    );
+    replaceDescriptionText(mainTextContainer, formattedContent);
   }
 
   if (snippetNeedsUpdate && snippetTextContainer) {
-    window.YoutubeAntiTranslate.replaceContainerContent(
-      snippetTextContainer,
-      formattedContent.cloneNode(true),
-    );
+    replaceDescriptionText(snippetTextContainer, formattedContent);
   }
 }
 
