@@ -1,6 +1,10 @@
 /* eslint-disable @typescript-eslint/no-this-alias */
 
 const pendingRequests = new Map();
+const pendingThrottledRequests = new Map();
+const YOUTUBE_REQUEST_INTERVAL_MS = 1000;
+let youtubeRequestQueue = Promise.resolve();
+let nextYoutubeRequestAt = 0;
 
 // Cache for player element to avoid repeated querySelector calls
 let cachedPlayer = null;
@@ -1352,6 +1356,43 @@ ytm-shorts-lockup-view-model`,
     return {};
   },
 
+  throttledCachedRequest: function throttledCachedRequest(
+    url,
+    postData = null,
+    headersData = { "content-type": "application/json" },
+    doNotCache = false,
+    cacheDotNotationProperty = null,
+  ) {
+    const cacheKey = url + "|" + postData + "|" + cacheDotNotationProperty;
+    const request = () =>
+      this.cachedRequest(
+        url,
+        postData,
+        headersData,
+        doNotCache,
+        cacheDotNotationProperty,
+      );
+    if (this.getSessionCache(cacheKey)) {
+      return request();
+    }
+    if (pendingThrottledRequests.has(cacheKey)) {
+      return pendingThrottledRequests.get(cacheKey);
+    }
+    const requestPromise = youtubeRequestQueue
+      .then(async () => {
+        const delay = nextYoutubeRequestAt - Date.now();
+        if (delay > 0) {
+          await new Promise((resolve) => setTimeout(resolve, delay));
+        }
+        nextYoutubeRequestAt = Date.now() + YOUTUBE_REQUEST_INTERVAL_MS;
+        return request();
+      })
+      .finally(() => pendingThrottledRequests.delete(cacheKey));
+    youtubeRequestQueue = requestPromise.catch(() => {});
+    pendingThrottledRequests.set(cacheKey, requestPromise);
+    return requestPromise;
+  },
+
   cachedRequest: async function cachedRequest(
     url,
     postData = null,
@@ -1690,7 +1731,7 @@ ytm-shorts-lockup-view-model`,
     }
 
     const search = `https://${this.isMobile() ? "m" : "www"}.youtube.com/youtubei/v1/search?prettyPrint=false`;
-    const response = await this.cachedRequest(
+    const response = await this.throttledCachedRequest(
       search,
       JSON.stringify(body),
       // If we have a valid TOK to delete the suggestion afterwards we can login; else search anonymously
@@ -2122,13 +2163,20 @@ ytm-shorts-lockup-view-model`,
     const requestIdentifier = `youtubei/v1/search_${JSON.stringify(body)}`;
 
     // Check cache
-    const storedResponse = this.getSessionCache(requestIdentifier);
+    const storage =
+      typeof chrome !== "undefined" ? chrome.storage?.local : null;
+    const storedResponse =
+      this.getSessionCache(requestIdentifier) ||
+      (await storage?.get(requestIdentifier).catch(() => ({})))?.[
+        requestIdentifier
+      ];
     if (storedResponse) {
+      this.setSessionCache(requestIdentifier, storedResponse);
       return storedResponse;
     }
 
     const search = `https://${this.isMobile() ? "m" : "www"}.youtube.com/youtubei/v1/search?prettyPrint=false`;
-    const result = await this.cachedRequest(
+    const result = await this.throttledCachedRequest(
       search,
       JSON.stringify(body),
       // If we have a valid TOK to delete the suggestion afterwards we can login; else search anonymously
@@ -2224,6 +2272,7 @@ ytm-shorts-lockup-view-model`,
 
     // Store in cache
     this.setSessionCache(requestIdentifier, response);
+    await storage?.set({ [requestIdentifier]: response }).catch(() => {});
 
     return response;
   },

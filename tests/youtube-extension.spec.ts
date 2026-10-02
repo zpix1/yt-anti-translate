@@ -53,7 +53,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     const descriptionLocator = await getFirstVisibleLocator(
       page.locator("#description-inline-expander"),
     );
-    const descriptionText = await descriptionLocator.textContent();
+    const descriptionText = await descriptionLocator.innerText();
     console.log("Description text:", descriptionText?.trim());
 
     // Get the video title
@@ -139,7 +139,7 @@ test.describe("YouTube Anti-Translate extension", () => {
       page.locator("#description-inline-expander"),
     );
     await descriptionLocator2.scrollIntoViewIfNeeded();
-    const descriptionText2 = await descriptionLocator2.textContent();
+    const descriptionText2 = await descriptionLocator2.innerText();
     // Check that the description contains the original English text and not the Russian translation
     expect(descriptionText2).toContain("believe who they picked");
     expect(descriptionText2).toContain(
@@ -204,7 +204,7 @@ test.describe("YouTube Anti-Translate extension", () => {
       page.locator("#description-inline-expander"),
     );
     await descriptionLocator.scrollIntoViewIfNeeded();
-    const descriptionText = await descriptionLocator.textContent();
+    const descriptionText = await descriptionLocator.innerText();
     console.log("Description text:", descriptionText?.trim());
 
     // Check that the description contains the original English title as fallback and not the Russian title translation fallback
@@ -265,7 +265,7 @@ test.describe("YouTube Anti-Translate extension", () => {
       page.locator("#description-inline-expander"),
     );
     await descriptionLocator.scrollIntoViewIfNeeded();
-    const descriptionText = await descriptionLocator.textContent();
+    const descriptionText = await descriptionLocator.innerText();
     console.log("Description text:", descriptionText?.trim());
 
     // Verify description contains expected English text
