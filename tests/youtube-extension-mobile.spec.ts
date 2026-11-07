@@ -72,9 +72,12 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
     });
 
     // Expand the description section ("Show more" button)
-    const showMoreSelector = ".slim-video-information-show-more";
-    await page.waitForSelector(showMoreSelector);
-    await page.locator(showMoreSelector).click();
+    await page
+      .locator(
+        '.slim-video-information-show-more:visible, ytm-watch yt-video-metadata-view-model[role="button"]:visible',
+      )
+      .first()
+      .click();
 
     // Wait for the original (untranslated) description text to appear
     const expectedText = "In Loving Memory of Coach Tyler Wall*";
