@@ -744,6 +744,10 @@ function addListeners() {
   }
 }
 
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("extension-version").textContent =
+    chrome.runtime.getManifest().version;
+});
 document.addEventListener("DOMContentLoaded", optionTabChanges);
 document.addEventListener("DOMContentLoaded", renderFooterLinks);
 document.addEventListener("DOMContentLoaded", checkPermissions);

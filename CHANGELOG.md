@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [1.20.6.1]
+
+### Fixed
+
+- Restore clickable YouTube channel links without `https://` in original video descriptions
+- Fix [#201](https://github.com/zpix1/yt-anti-translate/issues/201) flickering hover previews in video recommendations
+
+## [1.20.6]
+
+### Fixed
+
+- Fix [#194](https://github.com/zpix1/yt-anti-translate/issues/194) duplicated video descriptions and overwritten transcript links after scrolling
+- Fix [#193](https://github.com/zpix1/yt-anti-translate/issues/193) bursts of YouTube search requests with request queuing and persistent channel ID caching
+- Restore the original audio track on mobile YouTube for videos and Shorts while preserving playback formats
+- Restore the original video and tab titles in the updated mobile watch layout
+- Restore original collaborator names in search results and in the collaborators dialog
+
 ## [1.20.5] - 2026-09-04
 
 ### Fixed

@@ -1,6 +1,10 @@
 /* eslint-disable @typescript-eslint/no-this-alias */
 
 const pendingRequests = new Map();
+const pendingThrottledRequests = new Map();
+const YOUTUBE_REQUEST_INTERVAL_MS = 1000;
+let youtubeRequestQueue = Promise.resolve();
+let nextYoutubeRequestAt = 0;
 
 // Cache for player element to avoid repeated querySelector calls
 let cachedPlayer = null;
@@ -702,7 +706,12 @@ ytm-shorts-lockup-view-model`,
   createLinkElement: function (url) {
     this.logDebug(`createLinkElement called for URL: ${url}`);
     const link = document.createElement("a");
-    link.href = url;
+    const href = url.startsWith("www.youtube.com/") ? `https://${url}` : url;
+    // Some descriptions put a channel ID in the @handle URL format.
+    link.href = href.replace(
+      /^(https?:\/\/(?:www\.|m\.)?youtube\.com)\/@(UC[\w-]{22})(?=[/?#]|$)/,
+      "$1/channel/$2",
+    );
     link.textContent = url;
     link.rel = "nofollow";
     link.target = "_blank";
@@ -834,7 +843,7 @@ ytm-shorts-lockup-view-model`,
   convertUrlsToLinks: function (text) {
     this.logDebug(`convertUrlsToLinks called with text length: ${text.length}`);
     const container = document.createElement("span");
-    // Group 1: URL (https?:\/\/[^\s]+)
+    // Group 1: HTTP(S) URL or a www.youtube.com URL without the scheme
     // Group 2: Full timecode match including preceding space/start of line `(?:^|\s)((?:\d{1,2}:)?\d{1,2}:\d{2})`
     // Group 3: The actual timecode `(\d{1,2}:)?\d{1,2}:\d{2}`
     // Group 4: Hashtag has prefix "#" and possibly space `(?:^|\s)#([\p{L}\p{N}_\p{Script=Han}-]{1,50})`
@@ -842,7 +851,7 @@ ytm-shorts-lockup-view-model`,
     // Group 6: Mention has prefix "@" and possibly space `(?:^|\s)@([\w\-]{3,100})`
     // Group 7: Mention only `([\w\-]{3,100})`
     const combinedPattern =
-      /(https?:\/\/[^\s]+)|((?:^|\s)((?:\d{1,2}:)?\d{1,2}:\d{2}))(?=\s|$)|((?:^|\s)#([A-Za-z0-9_\-\u0080-\u02af\u0370-\u1fff\u2e80-\u2fdf\u3040-\ufdff]{1,50}))|((?:^|\s)@([\w-]{3,100}))/g;
+      /(https?:\/\/[^\s]+|(?<![\w@./-])www\.youtube\.com\/[^\s]+)|((?:^|\s)((?:\d{1,2}:)?\d{1,2}:\d{2}))(?=\s|$)|((?:^|\s)#([A-Za-z0-9_\-\u0080-\u02af\u0370-\u1fff\u2e80-\u2fdf\u3040-\ufdff]{1,50}))|((?:^|\s)@([\w-]{3,100}))/g;
 
     let lastIndex = 0;
     let match;
@@ -1352,6 +1361,43 @@ ytm-shorts-lockup-view-model`,
     return {};
   },
 
+  throttledCachedRequest: function throttledCachedRequest(
+    url,
+    postData = null,
+    headersData = { "content-type": "application/json" },
+    doNotCache = false,
+    cacheDotNotationProperty = null,
+  ) {
+    const cacheKey = url + "|" + postData + "|" + cacheDotNotationProperty;
+    const request = () =>
+      this.cachedRequest(
+        url,
+        postData,
+        headersData,
+        doNotCache,
+        cacheDotNotationProperty,
+      );
+    if (this.getSessionCache(cacheKey)) {
+      return request();
+    }
+    if (pendingThrottledRequests.has(cacheKey)) {
+      return pendingThrottledRequests.get(cacheKey);
+    }
+    const requestPromise = youtubeRequestQueue
+      .then(async () => {
+        const delay = nextYoutubeRequestAt - Date.now();
+        if (delay > 0) {
+          await new Promise((resolve) => setTimeout(resolve, delay));
+        }
+        nextYoutubeRequestAt = Date.now() + YOUTUBE_REQUEST_INTERVAL_MS;
+        return request();
+      })
+      .finally(() => pendingThrottledRequests.delete(cacheKey));
+    youtubeRequestQueue = requestPromise.catch(() => {});
+    pendingThrottledRequests.set(cacheKey, requestPromise);
+    return requestPromise;
+  },
+
   cachedRequest: async function cachedRequest(
     url,
     postData = null,
@@ -1690,7 +1736,7 @@ ytm-shorts-lockup-view-model`,
     }
 
     const search = `https://${this.isMobile() ? "m" : "www"}.youtube.com/youtubei/v1/search?prettyPrint=false`;
-    const response = await this.cachedRequest(
+    const response = await this.throttledCachedRequest(
       search,
       JSON.stringify(body),
       // If we have a valid TOK to delete the suggestion afterwards we can login; else search anonymously
@@ -2122,13 +2168,20 @@ ytm-shorts-lockup-view-model`,
     const requestIdentifier = `youtubei/v1/search_${JSON.stringify(body)}`;
 
     // Check cache
-    const storedResponse = this.getSessionCache(requestIdentifier);
+    const storage =
+      typeof chrome !== "undefined" ? chrome.storage?.local : null;
+    const storedResponse =
+      this.getSessionCache(requestIdentifier) ||
+      (await storage?.get(requestIdentifier).catch(() => ({})))?.[
+        requestIdentifier
+      ];
     if (storedResponse) {
+      this.setSessionCache(requestIdentifier, storedResponse);
       return storedResponse;
     }
 
     const search = `https://${this.isMobile() ? "m" : "www"}.youtube.com/youtubei/v1/search?prettyPrint=false`;
-    const result = await this.cachedRequest(
+    const result = await this.throttledCachedRequest(
       search,
       JSON.stringify(body),
       // If we have a valid TOK to delete the suggestion afterwards we can login; else search anonymously
@@ -2224,6 +2277,7 @@ ytm-shorts-lockup-view-model`,
 
     // Store in cache
     this.setSessionCache(requestIdentifier, response);
+    await storage?.set({ [requestIdentifier]: response }).catch(() => {});
 
     return response;
   },
