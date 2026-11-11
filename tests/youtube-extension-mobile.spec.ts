@@ -97,6 +97,117 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
     await context.close();
   });
 
+  for (const [kind, videoId, videoPath] of [
+    ["video", "pe_ejTiIcSs", "/watch?v=pe_ejTiIcSs"],
+    ["Short", "41UzbuW6wJs", "/shorts/41UzbuW6wJs"],
+  ]) {
+    test(`Restores original audio and keeps a mobile ${kind} playing`, async ({
+      browserNameWithExtensions,
+      localeString,
+      isMobile,
+    }, testInfo) => {
+      const { context, page } = await setupTestEnvironment(
+        testInfo,
+        browserNameWithExtensions,
+        localeString,
+        isMobile,
+      );
+
+      try {
+        await page.goto("https://m.youtube.com" + videoPath, {
+          waitUntil: "domcontentloaded",
+        });
+        const player = page
+          .locator("#movie_player:visible, #shorts-player:visible")
+          .first();
+        const video = player.locator("video.html5-main-video");
+        await video.evaluate((element) => {
+          const media = element as HTMLVideoElement;
+          media.muted = true;
+          void media.play().catch(() => {});
+        });
+        const frames = () =>
+          video.evaluate(
+            (element) =>
+              (element as HTMLVideoElement).getVideoPlaybackQuality()
+                .totalVideoFrames,
+          );
+
+        type AudioTrack = { id: string };
+        type YouTubePlayer = HTMLElement & {
+          getAudioTrack?: () => AudioTrack | undefined;
+          getAvailableAudioTracks?: () => AudioTrack[];
+          getPlayerResponse?: () => { videoDetails?: { videoId?: string } };
+          setAudioTrack: (track: AudioTrack) => boolean | Promise<boolean>;
+        };
+
+        await expect
+          .poll(
+            () =>
+              player.evaluate((element) => {
+                const p = element as YouTubePlayer;
+                return {
+                  videoId: p.getPlayerResponse?.()?.videoDetails?.videoId,
+                  multipleTracks:
+                    (p.getAvailableAudioTracks?.()?.length ?? 0) > 1,
+                };
+              }),
+            { timeout: 25_000 },
+          )
+          .toEqual({ videoId, multipleTracks: true });
+        await expect.poll(frames, { timeout: 20_000 }).toBeGreaterThan(0);
+
+        const switched = await player.evaluate(async (element) => {
+          const p = element as YouTubePlayer;
+          const tracks = p.getAvailableAudioTracks?.() ?? [];
+          const trackType = ({ id }: AudioTrack) => {
+            try {
+              return atob(id.split(";")[1] ?? "");
+            } catch {
+              return "";
+            }
+          };
+          const original = tracks.find((track) =>
+            trackType(track).includes("original"),
+          );
+          const dubbed = tracks.find((track) =>
+            trackType(track).includes("dubbed"),
+          );
+          if (!original || !dubbed) {
+            throw new Error(
+              "Expected original and dubbed tracks for the test video",
+            );
+          }
+          return {
+            originalId: original.id,
+            dubbedId: dubbed.id,
+            accepted: await p.setAudioTrack(dubbed),
+            selectedId: p.getAudioTrack?.()?.id,
+          };
+        });
+        expect(switched.accepted).toBe(true);
+        expect(switched.selectedId).toBe(switched.dubbedId);
+
+        await expect
+          .poll(
+            () =>
+              player.evaluate(
+                (element) => (element as YouTubePlayer).getAudioTrack?.()?.id,
+              ),
+            { timeout: 15_000 },
+          )
+          .toBe(switched.originalId);
+
+        const framesAfterSwitch = await frames();
+        await expect
+          .poll(frames, { timeout: 15_000 })
+          .toBeGreaterThan(framesAfterSwitch);
+      } finally {
+        await context.close();
+      }
+    });
+  }
+
   test("Restores original channel branding on mobile channel page", async ({
     browserNameWithExtensions,
     localeString,
