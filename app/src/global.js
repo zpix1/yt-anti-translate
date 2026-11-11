@@ -706,7 +706,12 @@ ytm-shorts-lockup-view-model`,
   createLinkElement: function (url) {
     this.logDebug(`createLinkElement called for URL: ${url}`);
     const link = document.createElement("a");
-    link.href = url;
+    const href = url.startsWith("www.youtube.com/") ? `https://${url}` : url;
+    // Some descriptions put a channel ID in the @handle URL format.
+    link.href = href.replace(
+      /^(https?:\/\/(?:www\.|m\.)?youtube\.com)\/@(UC[\w-]{22})(?=[/?#]|$)/,
+      "$1/channel/$2",
+    );
     link.textContent = url;
     link.rel = "nofollow";
     link.target = "_blank";
@@ -838,7 +843,7 @@ ytm-shorts-lockup-view-model`,
   convertUrlsToLinks: function (text) {
     this.logDebug(`convertUrlsToLinks called with text length: ${text.length}`);
     const container = document.createElement("span");
-    // Group 1: URL (https?:\/\/[^\s]+)
+    // Group 1: HTTP(S) URL or a www.youtube.com URL without the scheme
     // Group 2: Full timecode match including preceding space/start of line `(?:^|\s)((?:\d{1,2}:)?\d{1,2}:\d{2})`
     // Group 3: The actual timecode `(\d{1,2}:)?\d{1,2}:\d{2}`
     // Group 4: Hashtag has prefix "#" and possibly space `(?:^|\s)#([\p{L}\p{N}_\p{Script=Han}-]{1,50})`
@@ -846,7 +851,7 @@ ytm-shorts-lockup-view-model`,
     // Group 6: Mention has prefix "@" and possibly space `(?:^|\s)@([\w\-]{3,100})`
     // Group 7: Mention only `([\w\-]{3,100})`
     const combinedPattern =
-      /(https?:\/\/[^\s]+)|((?:^|\s)((?:\d{1,2}:)?\d{1,2}:\d{2}))(?=\s|$)|((?:^|\s)#([A-Za-z0-9_\-\u0080-\u02af\u0370-\u1fff\u2e80-\u2fdf\u3040-\ufdff]{1,50}))|((?:^|\s)@([\w-]{3,100}))/g;
+      /(https?:\/\/[^\s]+|(?<![\w@./-])www\.youtube\.com\/[^\s]+)|((?:^|\s)((?:\d{1,2}:)?\d{1,2}:\d{2}))(?=\s|$)|((?:^|\s)#([A-Za-z0-9_\-\u0080-\u02af\u0370-\u1fff\u2e80-\u2fdf\u3040-\ufdff]{1,50}))|((?:^|\s)@([\w-]{3,100}))/g;
 
     let lastIndex = 0;
     let match;

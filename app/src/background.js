@@ -931,10 +931,13 @@ async function untranslateOtherVideos(intersectElements = null, mutations) {
           }
         }
 
-        // Get thumbnail container elements
+        // Skip YouTube's hover previews even before their animated source loads.
         const thumbnailElements = video.querySelectorAll(
-          `yt-thumbnail-view-model img:not(.ytd-moving-thumbnail-renderer),
-          img[src*="i.ytimg.com"]:not(.ytd-moving-thumbnail-renderer):not([src*="ytimg.com/an_webp/"]),
+          `:is(yt-thumbnail-view-model img, img[src*="i.ytimg.com"]):not(
+            .ytd-moving-thumbnail-renderer,
+            .ytAnimatedThumbnailOverlayViewModelHost img,
+            [src*="ytimg.com/an_webp/"]
+          ),
           div[style*="i.ytimg.com"][style*="background-image"]`,
         );
         if (!thumbnailElements || thumbnailElements.length === 0) {
@@ -1151,6 +1154,7 @@ async function untranslateOtherVideos(intersectElements = null, mutations) {
 
                 if (
                   imageSrc.includes("https://i.ytimg.com/vi/") || // path of not-localized thumbnails
+                  thumbnailElement.src?.includes("ytimg.com/an_webp/") ||
                   imageSrc.includes("?youtube-anti-translate")
                 ) {
                   continue;
@@ -1173,8 +1177,12 @@ async function untranslateOtherVideos(intersectElements = null, mutations) {
                 }
                 // Only update if the thumbnail is different
                 if (!imageSrc.includes(originalThumbnail)) {
+                  const previousSrc = thumbnailElement.getAttribute("src");
                   const { width, height } =
                     await window.YoutubeAntiTranslate.getImageSize(imageSrc);
+                  if (thumbnailElement.getAttribute("src") !== previousSrc) {
+                    continue;
+                  }
                   if (thumbnailElement.matches("[style*='background-image']")) {
                     thumbnailElement.style.backgroundImage = `url("${originalThumbnail}?youtube-anti-translate=${Date.now()}")`;
                   } else {

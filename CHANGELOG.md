@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [1.20.6.1]
+
+### Fixed
+
+- Restore clickable YouTube channel links without `https://` in original video descriptions
+- Fix [#201](https://github.com/zpix1/yt-anti-translate/issues/201) flickering hover previews in video recommendations
+
 ## [1.20.6]
 
 ### Fixed
