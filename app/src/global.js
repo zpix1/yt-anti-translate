@@ -2,8 +2,9 @@
 
 const pendingRequests = new Map();
 const pendingThrottledRequests = new Map();
+const pendingChannelIdLookups = new Map();
 const YOUTUBE_REQUEST_INTERVAL_MS = 1000;
-let youtubeRequestQueue = Promise.resolve();
+let youtubeRequestStartQueue = Promise.resolve();
 let nextYoutubeRequestAt = 0;
 
 // Cache for player element to avoid repeated querySelector calls
@@ -1383,17 +1384,18 @@ ytm-shorts-lockup-view-model`,
     if (pendingThrottledRequests.has(cacheKey)) {
       return pendingThrottledRequests.get(cacheKey);
     }
-    const requestPromise = youtubeRequestQueue
-      .then(async () => {
-        const delay = nextYoutubeRequestAt - Date.now();
-        if (delay > 0) {
-          await new Promise((resolve) => setTimeout(resolve, delay));
-        }
-        nextYoutubeRequestAt = Date.now() + YOUTUBE_REQUEST_INTERVAL_MS;
-        return request();
-      })
+    const start = youtubeRequestStartQueue.then(async () => {
+      const delay = nextYoutubeRequestAt - Date.now();
+      if (delay > 0) {
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
+      nextYoutubeRequestAt = Date.now() + YOUTUBE_REQUEST_INTERVAL_MS;
+    });
+    // Space out request starts without holding up the queue for responses.
+    youtubeRequestStartQueue = start;
+    const requestPromise = start
+      .then(request)
       .finally(() => pendingThrottledRequests.delete(cacheKey));
-    youtubeRequestQueue = requestPromise.catch(() => {});
     pendingThrottledRequests.set(cacheKey, requestPromise);
     return requestPromise;
   },
@@ -2165,16 +2167,32 @@ ytm-shorts-lockup-view-model`,
       params: "EgIQAg==",
     };
 
-    const requestIdentifier = `youtubei/v1/search_${JSON.stringify(body)}`;
+    const postData = JSON.stringify(body);
+    const requestIdentifier = `youtubei/v1/search_${postData}`;
+    const pendingLookup = pendingChannelIdLookups.get(requestIdentifier);
+    if (pendingLookup) {
+      return pendingLookup;
+    }
+    const cached = this.getSessionCache(requestIdentifier);
+    if (cached) {
+      return cached;
+    }
 
-    // Check cache
+    const lookup = this.requestChannelId(
+      decodedQuery,
+      postData,
+      requestIdentifier,
+    ).finally(() => pendingChannelIdLookups.delete(requestIdentifier));
+    pendingChannelIdLookups.set(requestIdentifier, lookup);
+    return lookup;
+  },
+
+  requestChannelId: async function (query, postData, requestIdentifier) {
     const storage =
       typeof chrome !== "undefined" ? chrome.storage?.local : null;
-    const storedResponse =
-      this.getSessionCache(requestIdentifier) ||
-      (await storage?.get(requestIdentifier).catch(() => ({})))?.[
-        requestIdentifier
-      ];
+    const storedResponse = (
+      await storage?.get(requestIdentifier).catch(() => ({}))
+    )?.[requestIdentifier];
     if (storedResponse) {
       this.setSessionCache(requestIdentifier, storedResponse);
       return storedResponse;
@@ -2183,7 +2201,7 @@ ytm-shorts-lockup-view-model`,
     const search = `https://${this.isMobile() ? "m" : "www"}.youtube.com/youtubei/v1/search?prettyPrint=false`;
     const result = await this.throttledCachedRequest(
       search,
-      JSON.stringify(body),
+      postData,
       // If we have a valid TOK to delete the suggestion afterwards we can login; else search anonymously
       // this is to avoid filling user search history with unwanted queries */
       await this.getYoutubeIHeadersWithCredentials(true),
