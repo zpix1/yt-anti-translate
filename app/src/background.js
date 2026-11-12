@@ -157,18 +157,20 @@ async function untranslateCurrentVideo() {
   }
 
   const fakeNodeID = "yt-anti-translate-fake-node-current-video";
+  const isMobile = window.YoutubeAntiTranslate.isMobile();
   const attributedTitle = `${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}:not(#${fakeNodeID})`;
-  const originalNodeSelector = `#title > h1 > yt-formatted-string:not(#${fakeNodeID}),
-    .slim-video-information-title ${attributedTitle},
-    ytm-watch yt-video-metadata-view-model .ytVideoMetadataViewModelTitle > ${attributedTitle}`;
-  const originalNodePartialSelector = `yt-formatted-string:not(#${fakeNodeID}), ${attributedTitle}`;
+  const desktopTitle = `yt-formatted-string:not(#${fakeNodeID})`;
+  const originalNodeSelector = isMobile
+    ? `.slim-video-information-title ${attributedTitle},
+       ytm-watch yt-video-metadata-view-model .ytVideoMetadataViewModelTitle > ${attributedTitle}`
+    : `#title > h1 > ${desktopTitle}`;
 
   await createOrUpdateUntranslatedFakeNode(
     fakeNodeID,
     originalNodeSelector,
-    originalNodePartialSelector,
+    isMobile ? attributedTitle : desktopTitle,
     () => document.location.href,
-    window.YoutubeAntiTranslate.isMobile() ? "span" : "div",
+    isMobile ? "span" : "div",
     false,
     true,
   );
@@ -388,14 +390,19 @@ async function createOrUpdateUntranslatedFakeNode(
   ) {
     const settings = await window.YoutubeAntiTranslate.getSettings();
 
-    let translatedElement = window.YoutubeAntiTranslate.getFirstVisible(
-      window.YoutubeAntiTranslate.querySelectorAll(originalNodeSelector),
-    );
+    const titleCandidates =
+      window.YoutubeAntiTranslate.querySelectorAll(originalNodeSelector);
+    let translatedElement =
+      window.YoutubeAntiTranslate.getFirstVisible(titleCandidates);
 
-    if (!translatedElement || !translatedElement.textContent) {
+    if (
+      translatedElement?.classList.contains("cbCustomTitle") &&
+      !translatedElement.textContent
+    ) {
+      const fallbackSelector = `${originalNodeSelector}:not(.cbCustomTitle)`;
       translatedElement = window.YoutubeAntiTranslate.getFirstVisible(
-        window.YoutubeAntiTranslate.querySelectorAll(
-          `${originalNodeSelector}:not(.cbCustomTitle)`,
+        Array.from(titleCandidates).filter((candidate) =>
+          candidate.matches(fallbackSelector),
         ),
       );
     }

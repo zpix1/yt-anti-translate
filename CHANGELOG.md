@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [1.20.6.5]
+
+### Changed
+
+- Reduce DOM queries for video titles during scrolling on desktop and mobile YouTube
+
 ## [1.20.6.1]
 
 ### Fixed
