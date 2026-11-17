@@ -619,12 +619,16 @@ async function restoreCollaboratorsDialog() {
   }
 
   const listItems = dialog.querySelectorAll(
-    "yt-list-item-view-model .yt-list-item-view-model__label",
+    "yt-list-item-view-model :is(.yt-list-item-view-model__label, .ytListItemViewModelMainContainer)",
   );
   if (!listItems || listItems.length === 0) {
     return;
   }
 
+  const textWrapper =
+    ":is(.yt-list-item-view-model__text-wrapper, .ytListItemViewModelTextWrapper)";
+  const titleWrapper =
+    ":is(.yt-list-item-view-model__title-wrapper, .ytListItemViewModelTitleWrapper)";
   const tasks = Array.from(listItems).map(async (item) => {
     if (
       item.getAttribute("data-ytat-collab-untranslated") ===
@@ -636,17 +640,17 @@ async function restoreCollaboratorsDialog() {
     // Anchor that contains the channel name (bold title area)
     let linkEl =
       item.querySelector(
-        `.yt-list-item-view-model__text-wrapper ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_LINK_SELECTOR}`,
+        `${textWrapper} ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_LINK_SELECTOR}`,
       ) ||
       item.querySelector(
         window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_LINK_SELECTOR,
       );
     if (!linkEl) {
       const channelInfoEl = item.querySelector(
-        `.yt-list-item-view-model__text-wrapper > span${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}`,
+        `${textWrapper} > span${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR}`,
       );
       const channelNameEl = item.querySelector(
-        `.yt-list-item-view-model__title-wrapper ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR} > span > span`,
+        `${titleWrapper} ${window.YoutubeAntiTranslate.CORE_ATTRIBUTED_STRING_SELECTOR} > span > span`,
       );
       if (channelInfoEl) {
         // Create a link element from the channel handle text if found

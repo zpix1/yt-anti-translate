@@ -73,18 +73,20 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
     await context.close();
   });
 
-  test.fixme(
-    "YouTube search results video with collaborator retain original content",
-    async ({ browserNameWithExtensions, localeString, isMobile }, testInfo) => {
-      // Handle retries and prerequisite setup
-      const { context, page, consoleMessageCountContainer } =
-        await setupTestEnvironment(
-          testInfo,
-          browserNameWithExtensions,
-          localeString,
-          isMobile,
-        );
+  test("YouTube search results video with collaborator retain original content", async ({
+    browserNameWithExtensions,
+    localeString,
+    isMobile,
+  }, testInfo) => {
+    const { context, page, consoleMessageCountContainer } =
+      await setupTestEnvironment(
+        testInfo,
+        browserNameWithExtensions,
+        localeString,
+        isMobile,
+      );
 
+    try {
       const searchUrl =
         "https://m.youtube.com/results?search_query=mark+rober+can+you+safely+drink+your+own+pee";
       await loadPageAndVerifyAuth(
@@ -94,50 +96,29 @@ test.describe("YouTube Anti-Translate extension on m.youtube.com", () => {
         isMobile,
       );
 
-      // Screenshot for visual verification
-      try {
-        await page.screenshot({
-          path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-collaborator-video-search-result-mobile-test.png`,
+      const videoCard = page
+        .locator("ytm-video-with-context-renderer, ytm-compact-video-renderer")
+        .filter({
+          has: page.locator('a[href*="watch?v=KRhofr57Na8"]'),
         });
-      } catch {
-        // First screenshot is not essential so it is allowed to fail
-      }
-
-      // Wait until at least one video renderer for Mark Rober appears
-      const videoRenderer = (
-        await waitForSelectorOrRetryWithPageReload(
-          page,
-          'ytm-video-with-context-renderer:has-text("Mark Rober")',
-        )
-      ).first();
-      await expect(videoRenderer).toBeVisible();
-
-      // Locate the channel name element inside the renderer
-      const authorLocator = videoRenderer
+      const byline = videoCard
         .locator(
-          "div.media-item-metadata .YtmBadgeAndBylineRendererHost .yt-core-attributed-string",
+          ".ytmBadgeAndBylineRendererItemByline:visible, .YtmBadgeAndBylineRendererHost :is(.yt-core-attributed-string, .ytAttributedStringHost):visible",
         )
         .first();
-      await authorLocator.waitFor();
-      await expect(authorLocator).toBeVisible();
-
-      const authorText = (await authorLocator.textContent()) ?? "";
-      console.log("Search result author:", authorText.trim());
-
-      // Check that original English text is present and Thai translation is absent
-      expect(authorText).toContain("MrBeast");
-      expect(authorText).not.toContain("มิสเตอร์บีสต์");
-
-      // Screenshot for visual verification
-      await page.screenshot({
-        path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-collaborator-video-search-result-mobile-test.png`,
+      await expect(byline).toBeVisible();
+      await expect(byline).toHaveText("Mark Rober และ MrBeast", {
+        timeout: 15_000,
       });
 
-      // Ensure console output not flooded
+      await page.screenshot({
+        path: testInfo.outputPath(
+          "youtube-collaborator-video-search-result-mobile-test.png",
+        ),
+      });
       expect(consoleMessageCountContainer.count).toBeLessThan(2000);
-
-      // Close context
+    } finally {
       await context.close();
-    },
-  );
+    }
+  });
 });

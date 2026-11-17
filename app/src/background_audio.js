@@ -126,15 +126,25 @@ function getOriginalTrack(tracks) {
   `);
 }
 
+function getAudioTrackKey(track) {
+  const id = track.id;
+  // The prefix identifies the audio format, which can change with quality.
+  return typeof id === "string" && id ? id.split(";")[1] || id : String(track);
+}
+
+const pendingAudioSwitches = new WeakSet();
+
 async function untranslateAudioTrack() {
+  const playerSelector = window.YoutubeAntiTranslate.isMobile()
+    ? "#movie_player, #shorts-player"
+    : window.YoutubeAntiTranslate.getPlayerSelector();
   const player = window.YoutubeAntiTranslate.getFirstVisible(
-    window.YoutubeAntiTranslate.querySelectorAll(
-      window.YoutubeAntiTranslate.getPlayerSelector(),
-    ),
+    window.YoutubeAntiTranslate.querySelectorAll(playerSelector),
   );
 
   if (
     !player ||
+    pendingAudioSwitches.has(player) ||
     !player["getPlayerResponse"] ||
     typeof player["getPlayerResponse"] !== "function" ||
     !player["getAvailableAudioTracks"] ||
@@ -163,10 +173,11 @@ async function untranslateAudioTrack() {
     return;
   }
 
-  const currentVideoId = playerResponse.videoDetails.videoId;
+  const currentVideoId = playerResponse.videoDetails?.videoId;
+  const currentTrackId = getAudioTrackKey(currentTrack);
   if (
     !currentVideoId ||
-    player["lastUntranslated"] === `${currentVideoId}+${currentTrack}`
+    player["lastUntranslated"] === `${currentVideoId}+${currentTrackId}`
   ) {
     return;
   }
@@ -187,25 +198,46 @@ async function untranslateAudioTrack() {
 
   const originalTrack = getOriginalTrack(tracks);
 
-  // Respect user's manual audio language choice
-  if (originalTrack) {
-    // skip set if we already have the right track
-    if (`${originalTrack}` === `${currentTrack}`) {
-      if (player["lastUntranslated"] !== `${currentVideoId}+${currentTrack}`) {
-        // video id changed so still update the value
-        player["lastUntranslated"] = `${currentVideoId}+${originalTrack}`;
-      }
+  if (!originalTrack || pendingAudioSwitches.has(player)) {
+    return;
+  }
+  const originalTrackId = getAudioTrackKey(originalTrack);
+  if (originalTrackId === currentTrackId) {
+    player["lastUntranslated"] = `${currentVideoId}+${originalTrackId}`;
+    return;
+  }
+
+  pendingAudioSwitches.add(player);
+  try {
+    // The same player can be reused when navigating to another video.
+    const activeResponse = await player["getPlayerResponse"]();
+    const activeTrack = await player["getAudioTrack"]();
+    if (
+      !player.isConnected ||
+      activeResponse?.videoDetails?.videoId !== currentVideoId ||
+      !activeTrack ||
+      getAudioTrackKey(activeTrack) !== currentTrackId
+    ) {
       return;
     }
-    const isAudioTrackSet = await player["setAudioTrack"](originalTrack);
-    if (isAudioTrackSet) {
-      player["lastUntranslated"] = `${currentVideoId}+${originalTrack}`;
+
+    if (await player["setAudioTrack"](originalTrack)) {
+      player["lastUntranslated"] = `${currentVideoId}+${originalTrackId}`;
     }
+  } finally {
+    pendingAudioSwitches.delete(player);
   }
 }
 
 async function untranslate() {
-  await untranslateAudioTrack();
+  try {
+    await untranslateAudioTrack();
+  } catch (error) {
+    window.YoutubeAntiTranslate.logDebug(
+      "Could not select original audio",
+      error,
+    );
+  }
 }
 
 // Initialize the extension, waiting for window.YoutubeAntiTranslate to be available
@@ -221,10 +253,14 @@ async function untranslate() {
       attributes: true,
       attributeFilter: ["style", "class"],
     };
-    const observer = new MutationObserver(
-      window.YoutubeAntiTranslate.debounce(untranslate),
-    );
+    const schedule = window.YoutubeAntiTranslate.debounce(untranslate);
+    const observer = new MutationObserver(schedule);
     observer.observe(target, config);
+    if (window.YoutubeAntiTranslate.isMobile()) {
+      document.addEventListener("loadedmetadata", schedule, true);
+      document.addEventListener("playing", schedule, true);
+      schedule();
+    }
   } else {
     setTimeout(waitForYoutubeAntiTranslate, 8);
   }

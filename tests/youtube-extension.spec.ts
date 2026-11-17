@@ -39,9 +39,12 @@ test.describe("YouTube Anti-Translate extension", () => {
     // Wait for the video page to fully load
     await waitForSelectorOrRetryWithPageReload(page, "ytd-watch-metadata");
 
+    const descriptionLocator = page.locator("#description-inline-expander");
+    await expect(descriptionLocator).toBeVisible({ timeout: 15_000 });
+
     // Expand the description if it's collapsed
-    const moreButton = page.locator(
-      "#description-inline-expander ytd-text-inline-expander #expand",
+    const moreButton = descriptionLocator.locator(
+      "ytd-text-inline-expander #expand",
     );
     if (await moreButton.isVisible()) {
       await moreButton.click();
@@ -50,10 +53,7 @@ test.describe("YouTube Anti-Translate extension", () => {
     }
 
     // Get the description text
-    const descriptionLocator = await getFirstVisibleLocator(
-      page.locator("#description-inline-expander"),
-    );
-    const descriptionText = await descriptionLocator.textContent();
+    const descriptionText = await descriptionLocator.innerText();
     console.log("Description text:", descriptionText?.trim());
 
     // Get the video title
@@ -139,7 +139,7 @@ test.describe("YouTube Anti-Translate extension", () => {
       page.locator("#description-inline-expander"),
     );
     await descriptionLocator2.scrollIntoViewIfNeeded();
-    const descriptionText2 = await descriptionLocator2.textContent();
+    const descriptionText2 = await descriptionLocator2.innerText();
     // Check that the description contains the original English text and not the Russian translation
     expect(descriptionText2).toContain("believe who they picked");
     expect(descriptionText2).toContain(
@@ -204,7 +204,7 @@ test.describe("YouTube Anti-Translate extension", () => {
       page.locator("#description-inline-expander"),
     );
     await descriptionLocator.scrollIntoViewIfNeeded();
-    const descriptionText = await descriptionLocator.textContent();
+    const descriptionText = await descriptionLocator.innerText();
     console.log("Description text:", descriptionText?.trim());
 
     // Check that the description contains the original English title as fallback and not the Russian title translation fallback
@@ -265,7 +265,7 @@ test.describe("YouTube Anti-Translate extension", () => {
       page.locator("#description-inline-expander"),
     );
     await descriptionLocator.scrollIntoViewIfNeeded();
-    const descriptionText = await descriptionLocator.textContent();
+    const descriptionText = await descriptionLocator.innerText();
     console.log("Description text:", descriptionText?.trim());
 
     // Verify description contains expected English text
@@ -561,21 +561,23 @@ test.describe("YouTube Anti-Translate extension", () => {
     );
 
     const linkedVideo = page.locator(
-      'yt-reel-carousel-view-model a[href*="watch?v=Qtl8lJwbd4g"]',
+      'yt-reel-carousel-view-model a[href*="watch?v=_c2e1NcI3Sc"], a.ytReelMultiFormatLinkViewModelEndpoint[href*="watch?v=_c2e1NcI3Sc"]',
     );
     await expect(linkedVideo).toBeVisible();
     const originalTitle = linkedVideo.locator(
       "#yt-anti-translate-fake-node-current-short-video-links",
     );
     const translatedTitle = linkedVideo.locator(
-      ".ytSpecButtonShapeNextButtonTextContent span.ytAttributedStringHost > span:not(#yt-anti-translate-fake-node-current-short-video-links)",
+      ":is(.yt-core-attributed-string, .ytAttributedStringHost) > span:not(#yt-anti-translate-fake-node-current-short-video-links)",
     );
-    await expect(originalTitle).toHaveText("Escape 100 Cops, Win $500,000");
+    await expect(originalTitle).toHaveText(
+      "Beat Professional Athlete, Win $100,000",
+    );
     await expect(originalTitle).toBeVisible();
     await expect(translatedTitle).toBeHidden();
     await expect(linkedVideo).toHaveAttribute(
       "aria-label",
-      "Escape 100 Cops, Win $500,000",
+      "Beat Professional Athlete, Win $100,000",
     );
 
     expect(consoleMessageCountContainer.count).toBeLessThan(2000);
@@ -602,163 +604,62 @@ test.describe("YouTube Anti-Translate extension", () => {
       browserNameWithExtensions,
     );
 
-    // Take a screenshot for visual verification
-    try {
-      await page.screenshot({
-        path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-channel-tabs-test.png`,
-      });
-    } catch {
-      // First screenshot is not essential so it is allowed to fail
-    }
-
-    // Wait for the video grid to appear
-    await waitForSelectorOrRetryWithPageReload(page, "ytd-rich-grid-media");
-
-    // --- Check Videos Tab ---
-    const originalVideoTitle = "World's Fastest Car Vs Cheetah!";
-    const translatedVideoTitle = "Самая Быстрая Машина в Мире vs Гепард!";
-    const videoSelector = `ytd-rich-item-renderer:has-text("${originalVideoTitle}")`;
-    const translatedVideoSelector = `ytd-rich-item-renderer:has-text("${translatedVideoTitle}")`;
-
-    const originalVideo = page.locator(videoSelector).first();
-    if (await originalVideo.isVisible()) {
-      await page.mouse.wheel(0, 500);
-      await page.waitForTimeout(process.env.CI ? 150 : 100);
-      await originalVideo.scrollIntoViewIfNeeded();
-      try {
-        await page.waitForTimeout(process.env.CI ? 375 : 250);
-        await page.waitForLoadState("networkidle", {
-          timeout: process.env.CI ? 7500 : 5000,
-        });
-      } catch {
-        // empty
-      }
-    }
-    const translatedVideo = page.locator(translatedVideoSelector).first();
-    if (await translatedVideo.isVisible()) {
-      await page.mouse.wheel(0, 500);
-      await page.waitForTimeout(process.env.CI ? 150 : 100);
-      try {
-        await translatedVideo.scrollIntoViewIfNeeded();
-        await page.waitForTimeout(process.env.CI ? 375 : 250);
-        await page.waitForLoadState("networkidle", {
-          timeout: process.env.CI ? 7500 : 5000,
-        });
-      } catch {
-        // empty
-      }
-    }
-
-    console.log("Checking Videos tab for original title...");
-    await originalVideo.waitFor();
-    await expect(originalVideo).toBeVisible();
-    await expect(translatedVideo).not.toBeVisible();
-    console.log("Original video title found, translated title not found.");
-
-    // --- Switch to Shorts Tab ---
-    console.log("Clicking Shorts tab...");
-    await page.locator("#tabsContent").getByText("Shorts").click();
-    try {
-      await page.waitForTimeout(process.env.CI ? 375 : 250);
-      await page.waitForLoadState("networkidle", {
-        timeout: process.env.CI ? 7500 : 5000,
-      });
-    } catch {
-      // empty
-    }
-    // Wait for the video grid to appear
-    await waitForSelectorOrRetryWithPageReload(page, "ytd-rich-item-renderer");
-    await expect(page.url()).toContain("/shorts");
-
-    // --- Check Shorts Tab ---
-    const originalShortTitle = "Answer The Call, Win $10,000";
-    const translatedShortTitle = "Ответь На Звонок, Выиграй $10,000"; // Adjust if needed
-    const shortSelector = `ytd-rich-item-renderer:has-text("${originalShortTitle}")`;
-    const translatedShortSelector = `ytd-rich-item-renderer:has-text("${translatedShortTitle}")`;
-
-    console.log("Checking Shorts tab for original title...");
-    // Shorts might load dynamically, scroll into view to ensure it's loaded
-    const originalShort = page.locator(shortSelector).first();
-    if (await originalShort.isVisible()) {
-      await page.mouse.wheel(0, 500);
-      await page.waitForTimeout(process.env.CI ? 150 : 100);
-      await originalShort.scrollIntoViewIfNeeded();
-      try {
-        await page.waitForTimeout(process.env.CI ? 375 : 250);
-        await page.waitForLoadState("networkidle", {
-          timeout: process.env.CI ? 7500 : 5000,
-        });
-      } catch {
-        // empty
-      }
-    }
-    const translatedShort = page.locator(translatedShortSelector).first();
-    if (await translatedShort.isVisible()) {
-      await page.mouse.wheel(0, 500);
-      await page.waitForTimeout(process.env.CI ? 150 : 100);
-      try {
-        // might be already translated
-        await translatedShort.scrollIntoViewIfNeeded();
-      } catch {
-        // empty
-      }
-      try {
-        await page.waitForTimeout(process.env.CI ? 375 : 250);
-        await page.waitForLoadState("networkidle", {
-          timeout: process.env.CI ? 7500 : 5000,
-        });
-      } catch {
-        // empty
-      }
-    }
-
-    await originalShort.waitFor();
-    await expect(originalShort).toBeVisible(); // Increased timeout for dynamic loading
-    await expect(translatedShort).not.toBeVisible();
-    console.log(
-      "Original short title found, translated short title not found.",
+    const tabs = page.locator("#tabsContent");
+    const popular = page.getByRole("tab", { name: "Популярные", exact: true });
+    const videoTitle = page.locator(
+      'ytd-rich-item-renderer h3 a[href*="v=0e3GPea1Tyg"]',
     );
 
-    // --- Switch back to Videos Tab ---
-    console.log("Clicking Videos tab...");
-    await page.locator("#tabsContent").getByText("Видео").click();
-    try {
-      await page.waitForTimeout(process.env.CI ? 375 : 250);
-      await page.waitForLoadState("networkidle", {
-        timeout: process.env.CI ? 7500 : 5000,
-      });
-    } catch {
-      // empty
+    async function selectPopular() {
+      await expect(async () => {
+        if (
+          (await popular.getAttribute("aria-selected", { timeout: 2_000 })) !==
+          "true"
+        ) {
+          await popular.click({ timeout: 2_000 });
+        }
+        await expect(popular).toHaveAttribute("aria-selected", "true", {
+          timeout: 2_000,
+        });
+      }).toPass({ timeout: 15_000 });
     }
-    // Wait for the video grid to appear
-    await waitForSelectorOrRetryWithPageReload(page, "ytd-rich-grid-media");
-    await expect(page.url()).toContain("/videos");
 
-    // --- Re-check Videos Tab ---
-    try {
-      await translatedVideo.scrollIntoViewIfNeeded();
-    } catch {
-      // empty
-    }
-    try {
-      await originalVideo.scrollIntoViewIfNeeded();
-    } catch {
-      // empty
-    }
-    console.log("Re-checking Videos tab for original title...");
-    await expect(page.locator(videoSelector)).toBeVisible();
-    await expect(page.locator(translatedVideoSelector)).not.toBeVisible();
-    console.log("Original video title confirmed on Videos tab again.");
+    await selectPopular();
+    await expect(videoTitle).toBeVisible();
+    await expect(videoTitle).toHaveText("$456,000 Squid Game In Real Life!");
 
-    // Take a screenshot for visual verification
+    await tabs.getByText("Shorts", { exact: true }).click();
+    await expect(page).toHaveURL(/\/@MrBeast\/shorts(?:[?#]|$)/i);
+    await expect(
+      page
+        .locator('ytd-rich-item-renderer a[href^="/shorts/"]:visible')
+        .first(),
+    ).toBeVisible();
+    await selectPopular();
+    const shortCard = page.locator("ytd-rich-item-renderer").filter({
+      has: page.locator('a[href^="/shorts/50G0kIty7Cg"]'),
+    });
+    await expect(
+      shortCard.getByText("Answer The Call, Win $10,000", { exact: true }),
+    ).toBeVisible();
+    await expect(
+      shortCard.getByText("Ответь На Звонок, Выиграй $10,000", { exact: true }),
+    ).toBeHidden();
+
+    await tabs.getByText("Видео", { exact: true }).click();
+    await expect(page).toHaveURL(/\/@MrBeast\/videos(?:[?#]|$)/i);
+    await expect(
+      page.locator('ytd-rich-item-renderer a[href^="/watch"]:visible').first(),
+    ).toBeVisible();
+    await selectPopular();
+    await expect(videoTitle).toBeVisible();
+    await expect(videoTitle).toHaveText("$456,000 Squid Game In Real Life!");
+
     await page.screenshot({
       path: `images/tests/${browserNameWithExtensions}/${localeString}/youtube-channel-tabs-test.png`,
     });
 
-    // Check console message count
     expect(consoleMessageCountContainer.count).toBeLessThan(2000);
-
-    // Close the browser context
     await context.close();
   });
 
@@ -781,223 +682,78 @@ test.describe("YouTube Anti-Translate extension", () => {
       "https://www.youtube.com/@MrBeast/shorts",
       browserNameWithExtensions,
     );
+    await page
+      .locator('ytd-rich-item-renderer a[href^="/shorts/"]')
+      .first()
+      .click();
+    await expect(page).toHaveURL(/\/shorts\/[\w-]{11}(?:[?#]|$)/);
 
-    // Wait for the video page to fully load
-    await waitForSelectorOrRetryWithPageReload(page, "ytd-rich-item-renderer");
-
-    // Find the first short and click to open
-    const firstShort = page.locator("ytd-rich-item-renderer").first();
-    if (await firstShort.isVisible()) {
-      await firstShort.scrollIntoViewIfNeeded();
-      await page.waitForTimeout(process.env.CI ? 150 : 100);
-      await firstShort.click();
-      try {
-        await page.waitForTimeout(process.env.CI ? 375 : 250);
-        await page.waitForLoadState("networkidle", {
-          timeout: process.env.CI ? 7500 : 5000,
-        });
-      } catch {
-        // empty
-      }
-    }
-    await page.waitForTimeout(process.env.CI ? 3000 : 2000);
-
-    // Wait for the video page to fully load
-    await page.waitForSelector("#shorts-player");
-
-    function getTrackLanguageFieldObjectName(track: object) {
-      let languageFieldName: string;
-
-      for (const [fieldName, field] of Object.entries(track)) {
-        if (field && typeof field === "object" && field.name) {
-          languageFieldName = fieldName;
-          break;
-        }
-      }
-      if (!languageFieldName!) {
-        return;
-      } else {
-        return languageFieldName;
-      }
-    }
-
-    let [currentTrack, currentId] = await page.evaluate(async () => {
-      type PlayerResponse = {
-        videoDetails?: { videoId?: string };
-      };
-      const video = document.querySelector(
-        "#shorts-player",
-      ) as HTMLVideoElement & {
-        getAudioTrack?: () => Promise<any>;
-        getPlayerResponse?: () => Promise<PlayerResponse>;
-      };
-      return [
-        await video?.getAudioTrack?.(),
-        (await video?.getPlayerResponse?.())?.videoDetails?.videoId,
-      ];
-    });
-
-    // When we detect an Ads short then go next and return the new audio track and video id
-    [currentTrack, currentId] = await IfAdvertThenReturnNext(
-      currentTrack,
-      currentId,
-    );
-
-    // Check original track is the selected one
-    expect(
-      currentTrack[getTrackLanguageFieldObjectName(currentTrack)!]?.name,
-    ).toContain("оригинал");
-    expect(currentId).not.toBeNull();
-
-    // Go to next short
-    const buttonDown = page.locator("#navigation-button-down button").first();
-    if (await buttonDown.isVisible()) {
-      await buttonDown.scrollIntoViewIfNeeded();
-      await page.waitForTimeout(process.env.CI ? 150 : 100);
-      await buttonDown.click();
-      try {
-        await page.waitForTimeout(process.env.CI ? 375 : 250);
-        await page.waitForLoadState("networkidle", {
-          timeout: process.env.CI ? 7500 : 5000,
-        });
-      } catch {
-        // empty
-      }
-    }
-    await page.waitForTimeout(process.env.CI ? 3000 : 2000);
-
-    let [currentTrack2, currentId2] = await page.evaluate(async () => {
-      type PlayerResponse = {
-        videoDetails?: { videoId?: string };
-      };
-      const video = document.querySelector(
-        "#shorts-player",
-      ) as HTMLVideoElement & {
-        getAudioTrack?: () => Promise<any>;
-        getPlayerResponse?: () => Promise<PlayerResponse>;
-      };
-      return [
-        await video?.getAudioTrack?.(),
-        (await video?.getPlayerResponse?.())?.videoDetails?.videoId,
-      ];
-    });
-
-    // When we detect an Ads short then go next and return the new audio track and video id
-    [currentTrack2, currentId2] = await IfAdvertThenReturnNext(
-      currentTrack2,
-      currentId2,
-    );
-
-    // Check original track is the selected one
-    expect(
-      currentTrack2[getTrackLanguageFieldObjectName(currentTrack2)!]?.name,
-    ).toContain("оригинал");
-    expect(currentId2).not.toBe(currentId);
-
-    // Go to next short
-    const buttonDown2 = page.locator("#navigation-button-down button").first();
-    if (await buttonDown2.isVisible()) {
-      await buttonDown2.scrollIntoViewIfNeeded();
-      await page.waitForTimeout(process.env.CI ? 150 : 100);
-      await buttonDown2.click();
-      try {
-        await page.waitForTimeout(process.env.CI ? 375 : 250);
-        await page.waitForLoadState("networkidle", {
-          timeout: process.env.CI ? 7500 : 5000,
-        });
-      } catch {
-        // empty
-      }
-    }
-    await page.waitForTimeout(process.env.CI ? 3000 : 2000);
-
-    let [currentTrack3, currentId3] = await page.evaluate(async () => {
-      type PlayerResponse = {
-        videoDetails?: { videoId?: string };
-      };
-      const video = document.querySelector(
-        "#shorts-player",
-      ) as HTMLVideoElement & {
-        getAudioTrack?: () => Promise<any>;
-        getPlayerResponse?: () => Promise<PlayerResponse>;
-      };
-      return [
-        await video?.getAudioTrack?.(),
-        (await video?.getPlayerResponse?.())?.videoDetails?.videoId,
-      ];
-    });
-
-    // When we detect an Ads short then go next and return the new audio track and video id
-    [currentTrack3, currentId3] = await IfAdvertThenReturnNext(
-      currentTrack3,
-      currentId3,
-    );
-
-    // Check original track is the selected one
-    expect(
-      currentTrack3[getTrackLanguageFieldObjectName(currentTrack3)!]?.name,
-    ).toContain("оригинал");
-    expect(currentId3).not.toBe(currentId2);
-
-    // Check console message count
-    expect(consoleMessageCountContainer.count).toBeLessThan(2000);
-
-    // Close the browser context
-    await context.close();
-
-    /**
-     * If Track name is "Default" that is always an advert.
-     * Retries up to 3 times to skip adverts and get a valid track.
-     * @param currentTrack - the audio track that could be of an advert
-     * @param currentVideoId - the video id that could be of an advert
-     * @returns a new short audio track and video id
-     */
-    async function IfAdvertThenReturnNext(
-      currentTrack: any,
-      currentVideoId: string | undefined,
-    ): Promise<[any, string | undefined]> {
-      let retries = 3;
-      while (
-        retries-- > 0 &&
-        currentTrack[getTrackLanguageFieldObjectName(currentTrack)!]?.name ===
-          "Default"
-      ) {
-        const buttonDown2 = page
-          .locator("#navigation-button-down button")
-          .first();
-        if (await buttonDown2.isVisible()) {
-          await buttonDown2.scrollIntoViewIfNeeded();
-          await page.waitForTimeout(process.env.CI ? 150 : 100);
-          await buttonDown2.click();
-          try {
-            await page.waitForTimeout(process.env.CI ? 375 : 250);
-            await page.waitForLoadState("networkidle", {
-              timeout: process.env.CI ? 7500 : 5000,
-            });
-          } catch {
-            // empty
-          }
-        }
-        await page.waitForTimeout(process.env.CI ? 3000 : 2000);
-
-        [currentTrack, currentVideoId] = await page.evaluate(async () => {
-          type PlayerResponse = {
+    const readShortAudio = () =>
+      page.evaluate(async () => {
+        type ShortsPlayer = HTMLElement & {
+          getAudioTrack?: () => Promise<Record<string, unknown>>;
+          getPlayerResponse?: () => Promise<{
             videoDetails?: { videoId?: string };
-          };
-          const video = document.querySelector(
-            "#shorts-player",
-          ) as HTMLVideoElement & {
-            getAudioTrack?: () => Promise<any>;
-            getPlayerResponse?: () => Promise<PlayerResponse>;
-          };
-          return [
-            await video?.getAudioTrack?.(),
-            (await video?.getPlayerResponse?.())?.videoDetails?.videoId,
-          ];
-        });
+          }>;
+        };
+        const player = document.querySelector<ShortsPlayer>("#shorts-player");
+        const track = await player?.getAudioTrack?.();
+        const language = Object.values(track ?? {}).find(
+          (value): value is { name: string } =>
+            !!value &&
+            typeof value === "object" &&
+            "name" in value &&
+            typeof value.name === "string",
+        );
+        return {
+          videoId: (await player?.getPlayerResponse?.())?.videoDetails?.videoId,
+          trackName: language?.name,
+        };
+      });
+
+    let checkedShorts = 0;
+    for (let attempt = 0; attempt < 6 && checkedShorts < 3; attempt++) {
+      if (attempt > 0) {
+        const previousUrl = page.url();
+        // YouTube ignores navigation input while the Shorts feed is loading.
+        await expect(async () => {
+          if (page.url() === previousUrl) {
+            await page.keyboard.press("ArrowDown");
+          }
+          await expect(page).not.toHaveURL(previousUrl, { timeout: 1_500 });
+        }).toPass({ timeout: 15_000 });
       }
-      return [currentTrack, currentVideoId];
+
+      const videoId = new URL(page.url()).pathname.split("/").at(-1);
+      expect(videoId).toMatch(/^[\w-]{11}$/);
+      let trackName: string | undefined;
+      await expect
+        .poll(
+          async () => {
+            const audio = await readShortAudio();
+            trackName = audio.trackName;
+            return audio;
+          },
+          {
+            message:
+              "Wait for the current Short to select its original audio track",
+            timeout: 15_000,
+          },
+        )
+        .toEqual({
+          videoId,
+          trackName: expect.stringMatching(/оригинал|^Default$/),
+        });
+
+      // The player reports "Default" as the audio track for ads.
+      if (trackName !== "Default") {
+        checkedShorts++;
+      }
     }
+    expect(checkedShorts).toBe(3);
+
+    expect(consoleMessageCountContainer.count).toBeLessThan(2000);
+    await context.close();
   });
 
   test("YouTube channel playlist page contains 'Popular Shorts' playlist", async ({
@@ -1029,15 +785,10 @@ test.describe("YouTube Anti-Translate extension", () => {
       // First screenshot is not essential so it is allowed to fail
     }
 
-    // Locate the elements with the text "Popular Shorts"
-    const popularShortsLocator = await waitForSelectorOrRetryWithPageReload(
-      page,
-      '.yt-lockup-metadata-view-model__heading-reset span:has-text("Popular Shorts")',
-    );
-
-    // Assert that at least one matching element exists
-    const popularShortsCount = await popularShortsLocator.count();
-    expect(popularShortsCount).toBeGreaterThan(0);
+    const playlistTitle = page
+      .locator("yt-lockup-view-model, ytd-grid-playlist-renderer")
+      .getByText("Popular Shorts", { exact: true });
+    await expect(playlistTitle).toBeVisible();
 
     // Take a screenshot for visual verification
     await page.screenshot({
